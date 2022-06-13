@@ -1,0 +1,22 @@
+name: gnn-charge-models-test
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+    # Base depends
+  - python
+  - pip
+
+  - openff-toolkit
+  - openff-units
+
+    # Testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - codecov
+
+    # Pip-only installs
+  #- pip:
+  #  - codecov
+

@@ -1,0 +1,45 @@
+[build-system]
+requires = [
+  "setuptools >= 40.9.0",
+  "versioneer-518",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gnn-charge-models"
+version = "0.0.0"
+description = "A short description of the project."
+license = { file = "LICENSE" }
+authors = [
+    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
+]
+maintainers = [
+    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "openff-toolkit",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-xdist>=2.5",
+    "pytest-cov>=3.0",
+]
+doc = [
+    "sphinx>=1.8",
+    "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
+]
+
+# [project.urls]
+# source = "https://github.com/lilyminium/gnn-charge-models"
+# documentation = "https://gnn-charge-models.readthedocs.io"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "gnn-charge-models/tests",
+]

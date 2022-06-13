@@ -1,0 +1,199 @@
+name: GH Actions CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  # Specific group naming so CI is only cancelled
+  # within same PR or on merge to main
+  group: ${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  main_tests:
+    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [macOS-latest, ubuntu-latest, windows-latest]
+          python-version: ["3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Make oe_license.txt file from GH org secret "OE_LICENSE"
+      shell: bash
+      env:
+        OE_LICENSE_TEXT: ${{ secrets.OE_LICENSE }}
+      run: |
+        echo "${OE_LICENSE_TEXT}" > ${OE_LICENSE}
+
+    - name: Build information
+      run: |
+        uname -a
+        df -h
+        ulimit -a
+
+    # More info on options: https://github.com/conda-incubator/setup-miniconda
+    - name: Install conda dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        environment-file: devtools/conda-envs/test_env.yaml
+        add-pip-as-python-dependency: true
+        architecture: x64
+        mamba-version: "*"
+        channels: conda-forge, defaults
+        activate-environment: gnn-charge-models-test
+        auto-update-conda: true
+        auto-activate-base: false
+        show-channel-urls: true
+
+    - name: Install package
+      run: |
+        python -m pip install . --no-deps
+
+    - name: Python information
+      run: |
+        which python
+        conda info
+        conda list
+
+    - name: Run tests
+        pytest -n 4 -v --cov=gnn-charge-models --cov-report=xml --color=yes gnn-charge-models/tests/
+
+    - name: codecov
+      uses: codecov/codecov-action@v2
+      with:
+        file: coverage.xml
+        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        verbose: True
+
+
+  pylint_check:
+    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.9
+
+    - name: Install Pylint
+      run: |
+        which pip
+        which python
+        pip install pylint
+
+    - name: Run Pylint
+      env:
+        PYLINTRC: .pylintrc
+      run: |
+        pylint gnn-charge-models
+
+
+  pypi_check:
+    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install conda dependencies
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        add-pip-as-python-dependency: true
+        architecture: x64
+        mamba-version: "*"
+        channels: conda-forge, defaults
+        auto-update-conda: true
+        show-channel-urls: true
+
+    - name: Install dependencies
+      run: |
+        pip install setuptools twine
+
+    - name: Build package
+      run: |
+        python setup.py sdist
+
+    - name: Check package build
+      run: |
+        DISTRIBUTION=$(ls -t1 dist/gnn-charge-models-*.tar.gz | head -n 1)
+        test -n "${DISTRIBUTION}" || { echo "no distribution dist/gnn-charge-models-*.tar.gz found"; exit 1; }
+        echo "twine check $DISTRIBUTION"
+        twine check $DISTRIBUTION
+  
+  install_from_source_pip:
+    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+        matrix:
+          python-version: ["3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build from source
+      run: |
+        python --version
+        pip install -e ".[test,doc]"
+
+    - name: Check success
+      run: |
+        python -c "import gnn-charge-models ; print(gnn-charge-models.__version__)"
+
+  install_from_source_conda:
+    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+        matrix:
+          python-version: ["3.8", "3.9", "3.10"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        add-pip-as-python-dependency: true
+        architecture: x64
+        auto-update-conda: true
+        show-channel-urls: true
+        mamba-version: "*"
+        channels: conda-forge, defaults
+
+    - name: Build from source
+      run: |
+        conda create --name gnn-charge-models
+        conda activate gnn-charge-models
+        conda env update --name gnn-charge-models --file devtools/conda-envs/test_env.yaml
+        conda env update --name gnn-charge-models --file docs/requirements.yaml
+        pip install -e .
+        conda list
+
+    - name: Check success
+      run: |
+        conda activate gnn-charge-models
+        python -c "import gnn-charge-models ; print(gnn-charge-models.__version__)"
