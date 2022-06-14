@@ -21,7 +21,7 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='gnn-charge-models',
+    name='gnn_charge_models',
     author='Lily Wang',
     author_email='lily.wang@openforcefield.org',
     description=short_description,
@@ -46,7 +46,9 @@ setup(
     # Required packages, pulls from pip if needed
     # do not use for Conda deployment
     install_requires=[
+        "click",
         "openff-toolkit",
+        "tqdm",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='gnn-charge-models.readthedocs.io/en/latest/',  # Website

@@ -9,7 +9,7 @@ Global pytest fixtures
 
 import pytest
 
-from gnn-charge-models.data.files import MDANALYSIS_LOGO
+from gnn_charge_models.data.files import MDANALYSIS_LOGO
 
 
 @pytest.fixture
