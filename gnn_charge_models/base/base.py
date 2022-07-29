@@ -10,7 +10,7 @@ import networkx as nx
 from openff.units import unit
 from rdkit import Chem
 
-from .utils import round_floats
+from ..utils.utils import round_floats
 
 
 class MutableModel(BaseModel):

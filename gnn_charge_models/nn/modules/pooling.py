@@ -1,0 +1,64 @@
+import abc
+from typing import Union, ClassVar, Dict
+
+import torch.nn
+import dgl
+from dgl.udf import EdgeBatch
+
+from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
+from gnn_charge_models.nn import SequentialLayers
+
+
+class PoolingLayer(torch.nn.Module, abc.ABC):
+    """A convenience class for pooling together node feature vectors produced by
+    a graph convolutional layer.
+    """
+
+    n_feature_columns: ClassVar[int] = 0
+
+    @abc.abstractmethod
+    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+        """Returns the pooled feature vector."""
+
+
+class PoolAtomFeatures(PoolingLayer):
+    """A convenience class for pooling the node feature vectors produced by
+    a graph convolutional layer.
+
+    This class simply returns the features "h" from the graphs node data.
+    """
+
+    n_feature_columns: ClassVar[int] = 1
+
+    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+        return molecule.graph.ndata["h"]
+
+
+class PoolBondFeatures(PoolingLayer):
+    """A convenience class for pooling the node feature vectors produced by
+    a graph convolutional layer into a set of symmetric bond (edge) features.
+    """
+
+    n_feature_columns: ClassVar[int] = 2
+
+    def __init__(self, layers: SequentialLayers):
+        super().__init__()
+        self.layers = layers
+
+    @staticmethod
+    def _apply_edges(edges: EdgeBatch) -> Dict[str, torch.Tensor]:
+        h_u = edges.src["h"]
+        h_v = edges.dst["h"]
+        return {"h": torch.cat([h_u, h_v], 1)}
+
+    def _directionwise_forward(self, graph: dgl.DGLHeteroGraph, edge_type: str = "forward"):
+        with graph.local_scope():
+            edges = graph.edges[edge_type].data["h"]
+        return self.layers(edges)
+
+    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+
+        graph = molecule.graph
+        h_forward = self._directionwise_forward(graph, "forward")
+        h_reverse = self._directionwise_forward(graph, "reverse")
+        return h_forward + h_reverse

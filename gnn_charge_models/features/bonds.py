@@ -7,6 +7,7 @@ from .feature import Feature, CategoricalMixin, FeatureMeta
 from .utils import one_hot_encode
 from ..utils import get_openff_molecule_bond_indices
 
+
 class BondFeatureMeta(FeatureMeta):
     registry: ClassVar[Dict[str, Type]] = {}
 
@@ -38,6 +39,19 @@ class BondIsInRing(BondFeature):
             for bond in molecule_bonds
         ])
         return tensor
+
+
+class BondIsInRingOfSize(BondFeature):
+    ring_size: int
+
+    def _encode(self, molecule) -> torch.Tensor:
+        rdmol = molecule.to_rdkit()
+        is_in_ring = []
+        for bond in molecule.bonds:
+            rdbond = rdmol.GetBondBetweenAtoms(
+                bond.atom1_index, bond.atom2_index)
+            is_in_ring.append(rdbond.IsInRingSize(self.ring_size))
+        return torch.tensor(is_in_ring, dtype=int)
 
 
 class WibergBondOrder(BondFeature):

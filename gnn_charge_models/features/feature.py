@@ -1,6 +1,5 @@
 import abc
-import copy
-from typing import TYPE_CHECKING, List, Any, Tuple, ClassVar, Dict, Type
+from typing import TYPE_CHECKING, List, Any, Optional, ClassVar, Dict, Type, Union
 
 from pydantic import validator
 from pydantic.main import ModelMetaclass
@@ -9,6 +8,7 @@ from ..base import ImmutableModel
 
 if TYPE_CHECKING:
     import torch
+    from openff.toolkit.topology import Molecule as OFFMolecule
 
 
 class FeatureMeta(ModelMetaclass):
@@ -16,22 +16,37 @@ class FeatureMeta(ModelMetaclass):
 
     def __init__(self, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace, **kwargs)
-        if hasattr(self, "feature_name") and self.feature_name:
-            self.registry[self.feature_name] = self
+        _key = self.feature_name if hasattr(self, "feature_name") else None
+        if _key == "":
+            _key = name
+
+        self.registry[_key] = self
+
+    def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
+        if isinstance(feature_name_or_class, self):
+            return feature_name_or_class
+
+        try:
+            return self.registry[feature_name_or_class]
+        except KeyError:
+            raise KeyError(
+                f"Unknown feature type: {feature_name_or_class}. "
+                f"Supported types: {list(self.registry.keys())}"
+            )
 
 
 class Feature(ImmutableModel, abc.ABC):
-    feature_name: ClassVar[str]
+    feature_name: ClassVar[Optional[str]] = ""
     _feature_length: ClassVar[int] = 1
 
-    def encode(self, molecule) -> torch.Tensor:
+    def encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         """
         Encode the molecule feature into a tensor.
         """
         return self._encode(molecule).reshape(self.tensor_shape)
 
     @abc.abstractmethod
-    def _encode(self, molecule) -> torch.Tensor:
+    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         """
         Encode the molecule feature into a tensor.
         """

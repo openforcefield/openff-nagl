@@ -48,10 +48,18 @@ class DGLMolecule(DGLBase):
     @property
     def n_atoms(self):
         return self.n_graph_nodes / self.n_representations
+    
+    @property
+    def n_atoms_per_molecule(self):
+        return (self.n_atoms,)
 
     @property
     def n_bonds(self):
         return self.n_graph_edges / self.n_representations
+
+    @property
+    def n_representations_per_molecule(self):
+        return (self.n_representations,)
 
     @classmethod
     def openff_molecule_to_dgl_graph(
@@ -76,7 +84,7 @@ class DGLMolecule(DGLBase):
             atom_features=atom_features,
             bond_features=bond_features,
         )
-        return cls(grpah=graph, n_representations=1)
+        return cls(graph=graph, n_representations=1)
 
     @classmethod
     def from_smiles(

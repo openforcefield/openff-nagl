@@ -1,4 +1,4 @@
-from typing import List, Union, TYPE_CHECKING, Tuple
+from typing import List, Union, TYPE_CHECKING, Any, Iterable
 
 import numpy as np
 
@@ -21,3 +21,20 @@ def round_floats(
     return rounded
 
 
+def assert_same_lengths(*values):
+    try:
+        lengths = [len(value) for value in values]
+    except TypeError:
+        raise TypeError("All values must be iterable.") from None
+    err = f"All values must have the same length: {lengths}"
+    assert len(set(lengths)) == 1, err
+
+
+def is_iterable(obj: Any) -> bool:
+    from collections.abc import Iterable
+    return isinstance(obj, Iterable) and not isinstance(obj, str)
+
+def as_iterable(obj: Any) -> Iterable:
+    if not is_iterable(obj):
+        return [obj]
+    return obj
