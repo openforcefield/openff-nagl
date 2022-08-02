@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List, Any, Optional, ClassVar, Dict, Type, Uni
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from ..base import ImmutableModel
+from ..base.base import ImmutableModel
 
 if TYPE_CHECKING:
     import torch
@@ -21,6 +21,7 @@ class FeatureMeta(ModelMetaclass):
             _key = name
 
         self.registry[_key] = self
+        self.feature_name = _key
 
     def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
         if isinstance(feature_name_or_class, self):
@@ -39,14 +40,14 @@ class Feature(ImmutableModel, abc.ABC):
     feature_name: ClassVar[Optional[str]] = ""
     _feature_length: ClassVar[int] = 1
 
-    def encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
         """
         return self._encode(molecule).reshape(self.tensor_shape)
 
     @abc.abstractmethod
-    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def _encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
         """
@@ -58,7 +59,7 @@ class Feature(ImmutableModel, abc.ABC):
         """
         return (-1, len(self))
 
-    def __call__(self, molecule) -> torch.Tensor:
+    def __call__(self, molecule) -> "torch.Tensor":
         return self.encode(molecule)
 
     def __len__(self):

@@ -3,9 +3,19 @@ from typing import ClassVar, List, Tuple, Dict, Type
 from pydantic.main import ModelMetaclass
 import torch
 
-from .feature import Feature, CategoricalMixin, FeatureMeta
+from .base import Feature, CategoricalMixin, FeatureMeta
 from .utils import one_hot_encode
-from ..utils import get_openff_molecule_bond_indices
+from gnn_charge_models.utils.openff import get_openff_molecule_bond_indices
+
+__all__ = [
+    "BondFeatureMeta",
+    "BondFeature",
+    "BondIsAromatic",
+    "BondIsInRing",
+    "BondInRingOfSize",
+    "WibergBondOrder",
+    "BondOrder",
+]
 
 
 class BondFeatureMeta(FeatureMeta):
@@ -41,7 +51,7 @@ class BondIsInRing(BondFeature):
         return tensor
 
 
-class BondIsInRingOfSize(BondFeature):
+class BondInRingOfSize(BondFeature):
     ring_size: int
 
     def _encode(self, molecule) -> torch.Tensor:

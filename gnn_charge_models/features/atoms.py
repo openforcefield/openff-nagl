@@ -3,12 +3,24 @@ from typing import ClassVar, List, TYPE_CHECKING, Dict, Type
 import torch
 import numpy as np
 
-from .feature import Feature, CategoricalMixin, FeatureMeta
+from .base import Feature, CategoricalMixin, FeatureMeta
 from .utils import one_hot_encode
 
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
+
+__all__ = [
+    "AtomFeatureMeta",
+    "AtomFeature",
+    "AtomicElement",
+    "AtomConnectivity",
+    "AtomIsAromatic",
+    "AtomIsInRing",
+    "AtomInRingOfSize",
+    "AtomFormalCharge",
+    "AtomAverageFormalCharge"
+]
 
 
 class AtomFeatureMeta(FeatureMeta):
