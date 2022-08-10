@@ -1,5 +1,4 @@
-import copy
-from typing import List
+from typing import Tuple
 
 import dgl.function
 import torch
@@ -76,8 +75,8 @@ class DGLMolecule(DGLBase):
     def from_openff(
         cls,
         molecule: OFFMolecule,
-        atom_features: List[AtomFeature] = [],
-        bond_features: List[BondFeature] = [],
+        atom_features: Tuple[AtomFeature] = tuple(),
+        bond_features: Tuple[BondFeature] = tuple(),
     ):
         graph = openff_molecule_to_dgl_graph(
             molecule=molecule,
@@ -91,8 +90,8 @@ class DGLMolecule(DGLBase):
         cls,
         smiles: str,
         mapped: bool = False,
-        atom_features: List[AtomFeature] = [],
-        bond_features: List[BondFeature] = [],
+        atom_features: Tuple[AtomFeature] = tuple(),
+        bond_features: Tuple[BondFeature] = tuple(),
     ):
         func = OFFMolecule.from_smiles
         if mapped:
