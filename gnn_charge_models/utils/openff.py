@@ -174,10 +174,8 @@ def get_best_rmsd(
 
         rdconf = Chem.Conformer(len(conformer))
         for i, coord in enumerate(conformer):
-            print("coord", coord)
             rdconf.SetAtomPosition(i, Point3D(*coord))
         rdconfs.append(rdconf)
-        print("xxxxxx")
 
     rdmol1 = molecule.to_rdkit()
     rdmol1.RemoveAllConformers()

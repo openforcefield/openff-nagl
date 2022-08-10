@@ -14,10 +14,20 @@ T = TypeVar("T", bound=Feature)
 
 
 class Featurizer(Generic[T]):
-    def featurize(cls, molecule: "OFFMolecule", features: List[T]) -> torch.Tensor:
+
+    features: List[T]
+
+    def __init__(self, features: List[T]):
+        self.features = []
+        for feature in features:
+            if isinstance(feature, type):
+                feature = feature()
+            self.features.append(feature)
+
+    def featurize(self, molecule: "OFFMolecule") -> torch.Tensor:
         return torch.hstack([
             feature.encode(molecule)
-            for feature in features
+            for feature in self.features
         ])
 
 

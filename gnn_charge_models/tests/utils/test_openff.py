@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from numpy.testing import assert_allclose
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule, unit as offunit
 
 from gnn_charge_models.utils.openff import (
@@ -167,3 +168,24 @@ def test_not_is_conformer_identical():
     perturbed_conformer[4, :] = hydrogen_coordinates + 0.1
 
     assert not is_conformer_identical(offmol, conformer, perturbed_conformer)
+
+
+def test_get_best_rmsd():
+    from rdkit.Chem import rdMolAlign
+
+    offmol = OFFMolecule.from_smiles("CCC")
+    offmol._conformers = [
+        np.random.random((11, 3)) * offunit.angstrom,
+        np.random.random((11, 3)) * offunit.angstrom,
+    ]
+
+    rdmol = offmol.to_rdkit()
+    assert rdmol.GetNumConformers() == 2
+
+    reference_rmsd = rdMolAlign.GetBestRMS(rdmol, rdmol, 0, 1)
+    rmsd = get_best_rmsd(
+        offmol,
+        offmol.conformers[0].value_in_unit(offunit.angstrom),
+        offmol.conformers[1].value_in_unit(offunit.angstrom)
+    )
+    assert_allclose(rmsd, reference_rmsd)

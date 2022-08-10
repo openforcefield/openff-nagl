@@ -55,9 +55,8 @@ def openff_molecule_to_dgl_graph(
 
     # add atom features
     if len(atom_features):
-        molecule_graph.ndata[FEATURE] = AtomFeaturizer.featurize(
-            molecule, atom_features
-        )
+        atom_featurizer = AtomFeaturizer(atom_features)
+        molecule_graph.ndata[FEATURE] = atom_featurizer.featurize(molecule)
 
     # add additional information
     molecule_info = get_openff_molecule_information(molecule)
@@ -72,7 +71,8 @@ def openff_molecule_to_dgl_graph(
 
     bond_feature_tensor = None
     if len(bond_features):
-        bond_feature_tensor = BondFeaturizer.featurize(molecule, bond_features)
+        bond_featurizer = BondFeaturizer(bond_features)
+        bond_feature_tensor = bond_featurizer.featurize(molecule)
 
     for direction in (forward, reverse):
         if bond_feature_tensor is not None:
@@ -99,5 +99,4 @@ def dgl_heterograph_to_homograph(graph: dgl.DGLHeteroGraph) -> dgl.DGLGraph:
             except KeyError:
                 homo_graph = dgl.to_homogeneous(graph, ndata=[], edata=[])
 
-    else:
-        return homo_graph
+    return homo_graph
