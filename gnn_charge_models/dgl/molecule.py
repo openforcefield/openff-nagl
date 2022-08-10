@@ -9,10 +9,10 @@ from openff.toolkit.topology.molecule import (
     unit as off_unit,
 )
 
-from ..base import ImmutableModel
+from ..base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
-from .utils import FORWARD, FEATURE, openff_molecule_to_dgl_graph, dgl_hetereograph_to_homogenous
+from .utils import FORWARD, FEATURE, openff_molecule_to_dgl_graph, dgl_heterograph_to_homograph
 
 
 class DGLBase(ImmutableModel):
@@ -27,7 +27,7 @@ class DGLBase(ImmutableModel):
         return self.to_homogenous()
 
     def to_homogenous(self):
-        return dgl_hetereograph_to_homogenous(self.graph)
+        return dgl_heterograph_to_homograph(self.graph)
 
     def to(self, device: str):
         copied = self.copy(deep=False, update={"graph": self.graph.to(device)})
@@ -48,7 +48,7 @@ class DGLMolecule(DGLBase):
     @property
     def n_atoms(self):
         return self.n_graph_nodes / self.n_representations
-    
+
     @property
     def n_atoms_per_molecule(self):
         return (self.n_atoms,)

@@ -142,6 +142,8 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         return [pathlib.Path(path) for path in as_iterable(obj)]
 
     def _prepare_data_from_paths(self, paths: List[Pathlike]) -> ConcatDataset:
+        from gnn_charge_models.nn.datasets import DGLMoleculeDataset
+        from gnn_charge_models.storage.store import MoleculeStore
         if not paths:
             return
 
@@ -182,6 +184,8 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             self._train_data, self._val_data, self._test_data = pickle.load(f)
 
     def _default_dataloader(self, data_name, batch_size):
+        from gnn_charge_models.nn.datasets import DGLMoleculeDataLoader
+
         def dataloader():
             data = getattr(self, data_name)
             if batch_size is None:

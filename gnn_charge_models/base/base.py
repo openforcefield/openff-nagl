@@ -138,7 +138,7 @@ class MutableModel(BaseModel):
         return cls(**dct)
 
     @classmethod
-    def validate(cls: Type['Model'], value: Any) -> 'Model':
+    def validate(cls: Type['MutableModel'], value: Any) -> 'MutableModel':
         if isinstance(value, dict):
             return cls(**value)
         elif isinstance(value, cls):

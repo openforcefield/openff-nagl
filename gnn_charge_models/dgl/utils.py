@@ -82,7 +82,7 @@ def openff_molecule_to_dgl_graph(
     return molecule_graph
 
 
-def dgl_hetereograph_to_homogenous(graph: dgl.DGLHeteroGraph) -> dgl.DGLGraph:
+def dgl_heterograph_to_homograph(graph: dgl.DGLHeteroGraph) -> dgl.DGLGraph:
     try:
         homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[FEATURE])
     except KeyError:

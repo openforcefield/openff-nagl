@@ -6,13 +6,14 @@ import torch
 import numpy as np
 
 from openff.utilities import requires_package
-from openff.utilities.utilities import MissingOptionalDependency
+from openff.utilities.exceptions import MissingOptionalDependency
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
+
 def get_unitless_charge(charge, dtype=float):
-    from openff.toolkit.topology import unit as off_unit
+    from openff.toolkit.topology.molecule import unit as off_unit
     return dtype(charge / off_unit.elementary_charge)
 
 
@@ -115,9 +116,9 @@ def _rd_normalize_molecule(
                 f"{smarts}"
             )
 
-        offmol = OFFMolecule.from_mapped_smiles(
-            new_smiles, allow_undefined_stero=True)
-        return offmol
+    offmol = OFFMolecule.from_mapped_smiles(
+        new_smiles, allow_undefined_stereo=True)
+    return offmol
 
 
 def normalize_molecule(
@@ -165,21 +166,26 @@ def get_best_rmsd(
     conformer_b: np.ndarray,
 ):
     from rdkit import Chem
+    from rdkit.Chem import rdMolAlign
     from rdkit.Geometry import Point3D
 
     rdconfs = []
     for conformer in (conformer_a, conformer_b):
+
         rdconf = Chem.Conformer(len(conformer))
         for i, coord in enumerate(conformer):
+            print("coord", coord)
             rdconf.SetAtomPosition(i, Point3D(*coord))
         rdconfs.append(rdconf)
+        print("xxxxxx")
 
     rdmol1 = molecule.to_rdkit()
-    rdmol2 = molecule.to_rdkit()
+    rdmol1.RemoveAllConformers()
+    rdmol2 = Chem.Mol(rdmol1)
     rdmol1.AddConformer(rdconfs[0])
     rdmol2.AddConformer(rdconfs[1])
 
-    return Chem.rdGeometry.GetBestRMS(rdmol1, rdmol2)
+    return rdMolAlign.GetBestRMS(rdmol1, rdmol2)
 
 
 def is_conformer_identical(
