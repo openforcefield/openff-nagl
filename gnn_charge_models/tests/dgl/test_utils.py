@@ -69,6 +69,7 @@ def test_dgl_heterograph_to_homograph(methane_dgl_heterograph):
     assert methane_dgl_heterograph.number_of_edges() == 8
 
     homograph = dgl_heterograph_to_homograph(methane_dgl_heterograph)
+    assert homograph.is_homogenous
     assert homograph.number_of_nodes() == 5
     assert homograph.number_of_edges() == 8  # 4 forward + 4 reverse
     indices_a, indices_b = homograph.edges()

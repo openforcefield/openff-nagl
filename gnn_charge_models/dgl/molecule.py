@@ -61,16 +61,16 @@ class DGLMolecule(DGLBase):
     def n_representations_per_molecule(self):
         return (self.n_representations,)
 
-    @classmethod
-    def openff_molecule_to_dgl_graph(
-        cls,
-        molecule: OFFMolecule,
-        atom_features: List[AtomFeature] = [],
-        bond_features: List[BondFeature] = [],
-    ) -> dgl.DGLGraph:
-        return openff_molecule_to_dgl_graph(
-            molecule, atom_features, bond_features
-        )
+    # @classmethod
+    # def openff_molecule_to_dgl_graph(
+    #     cls,
+    #     molecule: OFFMolecule,
+    #     atom_features: List[AtomFeature] = [],
+    #     bond_features: List[BondFeature] = [],
+    # ) -> dgl.DGLGraph:
+    #     return openff_molecule_to_dgl_graph(
+    #         molecule, atom_features, bond_features
+    #     )
 
     @classmethod
     def from_openff(
@@ -79,7 +79,7 @@ class DGLMolecule(DGLBase):
         atom_features: List[AtomFeature] = [],
         bond_features: List[BondFeature] = [],
     ):
-        graph = cls.openff_molecule_to_dgl_graph(
+        graph = openff_molecule_to_dgl_graph(
             molecule=molecule,
             atom_features=atom_features,
             bond_features=bond_features,
@@ -90,10 +90,14 @@ class DGLMolecule(DGLBase):
     def from_smiles(
         cls,
         smiles: str,
+        mapped: bool = False,
         atom_features: List[AtomFeature] = [],
         bond_features: List[BondFeature] = [],
     ):
-        molecule = OFFMolecule.from_smiles(smiles)
+        func = OFFMolecule.from_smiles
+        if mapped:
+            func = OFFMolecule.from_mapped_smiles
+        molecule = func(smiles)
         return cls.from_openff(
             molecule=molecule,
             atom_features=atom_features,
