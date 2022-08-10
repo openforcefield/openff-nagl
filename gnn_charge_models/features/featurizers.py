@@ -30,6 +30,8 @@ class Featurizer(Generic[T]):
             for feature in self.features
         ])
 
+    __call__ = featurize
+
 
 class AtomFeaturizer(Featurizer[AtomFeature]):
     pass
