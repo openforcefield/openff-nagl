@@ -12,9 +12,11 @@ BONDTYPES = {
 
 BONDTYPE_TO_INTEGERS = {v: k for k, v in BONDTYPES.items()}
 
+
 def translate_bondtype(original_bond: Chem.BondType, increment: int = 0):
     original_int = BONDTYPE_TO_INTEGERS[original_bond]
     return BONDTYPES[original_int + increment]
+
 
 def translate_bond(bond: Chem.Bond, increment: int = 0):
     old_bondtype = bond.GetBondType()
@@ -24,7 +26,7 @@ def translate_bond(bond: Chem.Bond, increment: int = 0):
 
 def increment_bond(bond: Chem.Bond):
     translate_bond(bond, 1)
-    
 
-def increment_bond(bond: Chem.Bond):
+
+def decrement_bond(bond: Chem.Bond):
     translate_bond(bond, -1)

@@ -6,11 +6,13 @@ class ResonanceAtomType(enum.Enum):
     Acceptor = "A"
     Donor = "D"
 
+
 _ATOMIC_NUMBERS = {
     "O": 8,
     "S": 16,
     "N": 7,
 }
+
 
 class ResonanceTypeKey(NamedTuple):
     """A convenient data structure for storing information used to recognize a possible
@@ -39,8 +41,6 @@ class ResonanceTypeValue(NamedTuple):
         return RESONANCE_KEYS_BY_ID[self.conjugate_id]
 
 
-
-
 RESONANCE_TYPES: Dict[ResonanceTypeKey, ResonanceTypeValue] = {
     ResonanceTypeKey("O", 0, (2,)): ResonanceTypeValue("A", 0.0, 1, 2),
     ResonanceTypeKey("O", -1, (1,)): ResonanceTypeValue("D", 5.0, 2, 1),
@@ -62,6 +62,7 @@ RESONANCE_KEYS_BY_ID: Dict[int, ResonanceTypeValue] = {
     value.id: key
     for key, value in RESONANCE_TYPES.items()
 }
+
 
 def get_resonance_type(
     element: Literal["O", "S", "N"],

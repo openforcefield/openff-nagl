@@ -1,17 +1,25 @@
 
-from typing import List, Tuple, Dict, Generator, Optional, TYPE_CHECKING, ClassVar, Any, Union
+from typing import List, Tuple, Dict, Generator, Optional, TYPE_CHECKING, ClassVar, Any, Union, Type
 from rdkit import Chem
 import json
+import itertools
 import hashlib
 
 import numpy as np
 
+from openff.toolkit.topology import Molecule as OFFMolecule
 from gnn_charge_models.resonance.types import get_resonance_type, ResonanceAtomType, ResonanceTypeValue
 from .paths import PathGenerator
 from .bonds import increment_bond, decrement_bond
 
-if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+
+CURRENT_TRANSFER_PATH = "current_transfer_path"
+
+
+def _remove_radicals(rdmol: Chem.Mol):
+    for atom in rdmol.GetAtoms():
+        atom.SetNoImplicit(False)
+        atom.SetNumRadicalElectrons(0)
 
 
 class ResonanceEnumerator:
@@ -22,12 +30,25 @@ class ResonanceEnumerator:
     acceptor_donor_fragments: List["FragmentEnumerator"]
 
     @classmethod
+    def from_smiles(
+        cls,
+        smiles: str,
+        mapped: bool = False,
+        allow_undefined_stereo: bool = True,
+    ):
+        func = OFFMolecule.from_smiles
+        if mapped:
+            func = OFFMolecule.from_mapped_smiles
+        offmol = func(smiles, allow_undefined_stereo=allow_undefined_stereo)
+        return cls.from_openff(offmol)
+
+    @classmethod
     def from_openff(cls, openff_molecule: "OFFMolecule"):
         rdmol = openff_molecule.to_rdkit()
         return cls(rdmol)
 
     def __init__(self, rdkit_molecule) -> None:
-        self.original_rdkit_molecule = rdkit_molecule
+        # self.original_rdkit_molecule = rdkit_molecule
         self.rdkit_molecule = Chem.Mol(rdkit_molecule)
         self.acceptor_donor_fragments = []
         self.resonance_fragments = []
@@ -56,12 +77,17 @@ class ResonanceEnumerator:
 
         return Chem.Mol(editable)
 
+    def _clean_molecule(self):
+        rdmol = self.remove_hydrogens(self.rdkit_molecule)
+        rdmol = self.remove_uncharged_sp3_carbons(rdmol)
+        _remove_radicals(rdmol)
+        return rdmol
+
     def select_acceptor_donor_fragments(
         self,
         max_path_length: Optional[int] = None,
     ):
-        rdmol = self.remove_hydrogens(self.rdkit_molecule)
-        rdmol = self.remove_uncharged_sp3_carbons(rdmol)
+        rdmol = self._clean_molecule()
 
         fragments = [
             FragmentEnumerator(rdfragment, max_path_length=max_path_length)
@@ -78,13 +104,12 @@ class ResonanceEnumerator:
                 acceptor_donor_fragments.append(fragment)
 
         self.acceptor_donor_fragments = acceptor_donor_fragments
-        return acceptor_donor_fragments
+        return self.acceptor_donor_fragments
 
     def enumerate_resonance_fragments(
         self,
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
-        # as_dicts: bool = False,
         include_all_transfer_pathways: bool = False,
     ) -> List[Dict[bytes, Union["FragmentEnumerator", Dict[str, Any]]]]:
         self.select_acceptor_donor_fragments(max_path_length=max_path_length)
@@ -97,15 +122,47 @@ class ResonanceEnumerator:
         ]
 
         self.resonance_fragments = fragments
-        # if as_dicts:
-        #     fragments = [
-        #         {
-        #             k: v.to_resonance_dict()
-        #             for k, v in fragment.items()
-        #         }
-        #         for fragment in fragments
-        #     ]
         return fragments
+
+    def as_fragment(self):
+        return FragmentEnumerator(self.rdkit_molecule)
+
+
+    def enumerate_resonance_molecules(
+        self,
+        lowest_energy_only: bool = True,
+        max_path_length: Optional[int] = None,
+        include_all_transfer_pathways: bool = False,
+        moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
+    ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
+
+        fragments = self.enumerate_resonance_fragments(
+            lowest_energy_only=lowest_energy_only,
+            max_path_length=max_path_length,
+            include_all_transfer_pathways=include_all_transfer_pathways,
+        )
+
+        rdkit_molecules = []
+        for combination in itertools.product(*fragments):
+            molecule = self.as_fragment()
+            for unit in combination:
+                # we can skip the check since we just made these fragments
+                molecule._substitute_fragment(unit)
+            Chem.SanitizeMol(molecule.rdkit_molecule)
+            rdkit_molecules.append(molecule.rdkit_molecule)
+
+        if moleculetype is Chem.rdchem.Mol:
+            return rdkit_molecules
+        elif moleculetype is OFFMolecule:
+            return [
+                OFFMolecule.from_rdkit(rdmol, allow_undefined_stereo=True)
+                for rdmol in rdkit_molecules
+            ]
+        raise NotImplementedError(
+            f"Molecule type {moleculetype} not supported"
+        )
+        
+
 
     def get_resonance_atoms(self) -> Generator[List[Chem.rdchem.Atom], None, None]:
         for original_index in range(self.rdkit_molecule.n_atoms):
@@ -116,63 +173,118 @@ class ResonanceEnumerator:
             ]
             yield rdatoms
 
+    @classmethod
+    def _get_original_index(cls, rdkit_atom):
+        try:
+            return rdkit_atom.GetIntProp(cls._idx_property)
+        except KeyError:
+            return rdkit_atom.GetIdx()
+
 
 class FragmentEnumerator:
     def __init__(
         self,
         rdkit_molecule: Chem.Mol,
         max_path_length: Optional[int] = None,
+        clean_molecule: bool = False,
     ):
         self.rdkit_molecule = Chem.Mol(rdkit_molecule)
-        Chem.KekulizeMol(self.rdkit_molecule)
+        if clean_molecule:
+            _remove_radicals(self.rdkit_molecule)
+            Chem.Kekulize(self.rdkit_molecule)
+
         self.current_to_original_atom_indices = {
-            atom.GetIdx(): atom.GetIntProp(ResonanceEnumerator._idx_property)
+            atom.GetIdx(): ResonanceEnumerator._get_original_index(atom)
             for atom in self.rdkit_molecule.GetAtoms()
         }
         self.original_to_current_atom_indices = {
             v: k for k, v in self.current_to_original_atom_indices.items()
         }
 
-        self.path_generator = PathGenerator(rdkit_molecule)
+        self.path_generator = PathGenerator(self.rdkit_molecule)
         self.max_path_length = max_path_length
         self.acceptor_indices = []
         self.donor_indices = []
 
-        self.resonance_types = self.get_resonance_types(rdkit_molecule)
+        self.resonance_types = self.get_resonance_types()
         self.original_resonance_types = {
             self.current_to_original_atom_indices[k]: v
             for k, v in self.resonance_types.items()
         }
         for index, resonance_type in self.resonance_types.items():
-            if resonance_type.type == ResonanceAtomType.Acceptor:
+            if resonance_type.type == ResonanceAtomType.Acceptor.value:
                 self.acceptor_indices.append(index)
-            elif resonance_type.type == ResonanceAtomType.Donor:
+            elif resonance_type.type == ResonanceAtomType.Donor.value:
                 self.donor_indices.append(index)
+
+    def substitute_fragment(self, fragment: "FragmentEnumerator"):
+        original_indices = set(self.original_to_current_atom_indices)
+        fragment_indices = set(fragment.original_to_current_atom_indices)
+        if not fragment_indices.issubset(original_indices):
+            raise ValueError(
+                "Fragment original indices must be a subset "
+                "of the original molecule indices to substitute in. "
+                f"{fragment_indices} is not a subset of {original_indices}"
+            )
+        
+        self._substitute_fragment(fragment)
+
+    def _substitute_fragment(self, fragment: "FragmentEnumerator"):
+        fragment_to_self = {
+            fragment_index: self.original_to_current_atom_indices[original_index]
+            for fragment_index, original_index in fragment.current_to_original_atom_indices.items()
+        }
+
+        for fragment_index, current_index in fragment_to_self.items():
+            rdatom = self.rdkit_molecule.GetAtomWithIdx(current_index)
+            fragment_atom = fragment.rdkit_molecule.GetAtomWithIdx(fragment_index)
+            self._substitute_atom(rdatom, fragment_atom)
+        
+        for fragment_bond in fragment.rdkit_molecule.GetBonds():
+            fragment_i = fragment_bond.GetBeginAtomIdx()
+            fragment_j = fragment_bond.GetEndAtomIdx()
+            current_i = fragment_to_self[fragment_i]
+            current_j = fragment_to_self[fragment_j]
+
+            self_bond = self.rdkit_molecule.GetBondBetweenAtoms(current_i, current_j)
+            self._substitute_bond(self_bond, fragment_bond)
+
+
+
+    @staticmethod
+    def _substitute_atom(current, new):
+        current.SetFormalCharge(new.GetFormalCharge())
+    
+    @staticmethod
+    def _substitute_bond(current, new):
+        current.SetBondType(new.GetBondType())
 
     def get_atom_with_original_idx(self, idx: int):
         current_idx = self.original_to_current_atom_indices[idx]
         return self.rdkit_molecule.GetAtomWithIdx(current_idx)
 
-    def to_resonance_dict(self, include_bonds: bool = True) -> Dict[str, List[int]]:
+    def to_resonance_dict(self, include_bonds: bool = True, include_formal_charges: bool = False) -> Dict[str, List[int]]:
         hash_dict = {
             "acceptor_indices": self.acceptor_indices,
             "donor_indices": self.donor_indices,
         }
         if include_bonds:
-            hash_dict["bond_orders"] = [
-                int(bond.GetBondTypeAsDouble())
-                for bond in self.rdkit_molecule.GetBonds()
-            ]
+            hash_dict["bond_orders"] = self.get_bond_orders()
+
+        if include_formal_charges:
+            hash_dict["formal_charges"] = self.get_formal_charges()
         return hash_dict
 
-    def to_resonance_json(self, include_bonds: bool = True) -> str:
+    def to_resonance_json(self, include_bonds: bool = True, include_formal_charges: bool = False) -> str:
         return json.dumps(
-            self.to_resonance_dict(include_bonds=include_bonds),
+            self.to_resonance_dict(
+                include_bonds=include_bonds, include_formal_charges=include_formal_charges),
             sort_keys=True
         )
 
-    def to_resonance_hash(self, include_bonds: bool = True) -> bytes:
-        json_str = self.to_resonance_json(include_bonds=include_bonds)
+    def to_resonance_hash(self, include_bonds: bool = True, include_formal_charges: bool = False) -> bytes:
+        json_str = self.to_resonance_json(
+            include_bonds=include_bonds, include_formal_charges=include_formal_charges)
         return hashlib.sha1(
             json_str.encode(),
             usedforsecurity=False
@@ -187,33 +299,37 @@ class FragmentEnumerator:
         donor: int,
         acceptor: int,
     ) -> Generator["FragmentEnumerator", None, None]:
+        for path in self.get_transfer_paths(donor, acceptor):
+            transferred = self.as_transferred(path)
+            yield transferred
+
+    def get_transfer_paths(self, donor: int, acceptor: int) -> Generator[Tuple[int, ...], None, None]:
         donor_to_acceptor = self.path_generator.all_odd_node_simple_paths(
             donor, acceptor, self.max_path_length
         )
         for path in donor_to_acceptor:
             if self.is_transfer_path(path):
-                transferred = self.as_transferred(path)
-                yield transferred
+                yield path
 
     def enumerate_donor_acceptor_resonance_forms(self) -> Generator["FragmentEnumerator", None, None]:
         for acceptor_index in self.acceptor_indices:
             for donor_index in self.donor_indices:
-                form = self.get_donor_acceptance_resonance_forms(
-                    donor_index, acceptor_index)
-                yield form
+                for form in self.get_donor_acceptance_resonance_forms(
+                    donor_index, acceptor_index
+                ):
+                    yield form
 
     def enumerate_resonance_forms(
         self,
         include_all_transfer_pathways: bool = False,
         lowest_energy_only: bool = True
     ) -> Dict[bytes, "FragmentEnumerator"]:
+
+        self_hash = self.to_resonance_hash(include_bonds=True)
+        open_forms: Dict[bytes, FragmentEnumerator] = {self_hash: self}
         closed_forms: Dict[bytes, FragmentEnumerator] = {}
-        open_forms: Dict[bytes, FragmentEnumerator] = {
-            self.to_resonance_hash(include_bonds=True): self
-        }
 
         while len(open_forms):
-
             current_forms: Dict[bytes, FragmentEnumerator] = {}
 
             for current_key, current_fragment in open_forms.items():
@@ -269,13 +385,15 @@ class FragmentEnumerator:
             rdatom.SetAtomicNum(conjugate_key.atomic_number)
             rdatom.SetFormalCharge(conjugate_key.formal_charge)
 
-        edges = zip(path[:-1], path[1:])
+        edges = list(zip(path[:-1], path[1:]))
         for bond_index, (i, j) in enumerate(edges):
             bond = transferred.GetBondBetweenAtoms(i, j)
             if bond_index % 2:
                 decrement_bond(bond)
             else:
                 increment_bond(bond)
+        for atom in transferred.GetAtoms():
+            atom.UpdatePropertyCache()
 
         return Chem.Mol(transferred)
 
@@ -310,14 +428,42 @@ class FragmentEnumerator:
     def get_atom_resonance_type(self, index: int) -> ResonanceTypeValue:
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
-        bonds = sorted(
+        bonds = [
             int(bond.GetBondTypeAsDouble())
             for bond in atom.GetBonds()
-        )
+        ]
+        n_imp_h = atom.GetNumImplicitHs()
+        bonds += [1] * n_imp_h
 
+        orders = tuple(sorted(bonds))
         atom_type = get_resonance_type(
             element=atom.GetSymbol(),
             formal_charge=atom.GetFormalCharge(),
-            bond_orders=tuple(bonds)
+            bond_orders=orders
         )
+
         return atom_type
+
+    def get_formal_charges(self):
+        return [
+            atom.GetFormalCharge()
+            for atom in self.rdkit_molecule.GetAtoms()
+        ]
+
+    def get_bond_orders(self):
+        return {
+            i: int(bond.GetBondTypeAsDouble())
+            for i, bond in enumerate(self.rdkit_molecule.GetBonds())
+        }
+        # bond_orders = {}
+        # for bond in self.rdkit_molecule.GetBonds():
+        #     i = bond.GetBeginAtomIdx()
+        #     j = bond.GetEndAtomIdx()
+        #     if with_original_index:
+        #         i = self.current_to_original_atom_indices[i]
+        #         j = self.current_to_original_atom_indices[j]
+        #     key = (i, j) if i < j else (j, i)
+        #     bond_orders[key] = int(bond.GetBondTypeAsDouble())
+        # return bond_orders
+
+    

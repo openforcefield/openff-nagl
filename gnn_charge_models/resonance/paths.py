@@ -1,4 +1,3 @@
-import functools
 from typing import Optional, Generator, List, Tuple
 from rdkit import Chem
 
@@ -57,7 +56,6 @@ class PathGenerator:
     ) -> Tuple[Tuple[int, ...]]:
 
         key = (source, target)
-
         if key in self.cache:
             return self.cache[key]
         
