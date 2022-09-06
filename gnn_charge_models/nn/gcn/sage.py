@@ -1,17 +1,17 @@
 import dgl
 import torch
 
-from .base import GCNStack, ActivationFunction
+from .base import BaseGCNStack, ActivationFunction
 
 
-class SAGEConvStack(GCNStack[dgl.nn.pytorch.SAGEConv]):
+class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):
     """A wrapper around a stack of SAGEConv graph convolutional layers"""
 
     layer_type = "SAGEConv"
     available_aggregator_types = ["mean", "gcn", "pool", "lstm"]
     default_aggregator_type = "mean"
     default_dropout = 0.0
-    default_activation_function = torch.nn.functional.relu
+    default_activation_function = ActivationFunction.ReLU
 
     @classmethod
     def _create_gcn_layer(

@@ -10,6 +10,8 @@ from .db import (
     DBMoleculeRecord,
     DBPartialChargeSet,
     DBWibergBondOrderSet,
+    DBSoftwareProvenance,
+    DBGeneralProvenance,
 
 )
 
@@ -96,19 +98,52 @@ class DBSessionManager:
 
     def __init__(self, session: "Session"):
         self.session = session
+        self._db_info = None
 
     def query(self, *args, **kwargs):
         return self.db.query(args, **kwargs)
 
     def check_version(self, version=DB_VERSION):
-        db_info = self.db.query(DBInformation).first()
-        if not db_info:
+        if not self.db_info:
             db_info = DBInformation(version=version)
             self.db.add(db_info)
+            self._db_info = db_info
 
-        if db_info.version != version:
+        if self.db_info.version != version:
             raise IncompatibleDBVersion(db_info.version, version)
-        return db_info.version
+        return self.db_info.version
+
+    def get_general_provenance(self):
+        return {
+            provenance.key: provenance.value
+            for provenance in self.db_info.general_provenance
+        }
+
+    def get_software_provenance(self):
+        return {
+            provenance.key: provenance.value
+            for provenance in self.db_info.software_provenance
+        }
+
+    def set_provenance(
+        self,
+        general_provenance: Dict[str, str],
+        software_provenance: Dict[str, str],
+    ):
+        self.db_info.general_provenance = [
+            DBGeneralProvenance(key=key, value=value)
+            for key, value in general_provenance.items()
+        ]
+        self.db_info.software_provenance = [
+            DBSoftwareProvenance(key=key, value=value)
+            for key, value in software_provenance.items()
+        ]
+
+    @property
+    def db_info(self):
+        if self._db_info is None:
+            self._db_info = self.db.query(DBInformation).first()
+        return self._db_info
 
     @property
     def db(self):

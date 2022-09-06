@@ -9,6 +9,9 @@ class ArrayMeta(type):
 
 
 class Array(np.ndarray, metaclass=ArrayMeta):
+    """
+    A typeable numpy array.
+    """
     @classmethod
     def __get_validators__(cls):
         yield cls.validate_type

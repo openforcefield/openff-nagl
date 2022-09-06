@@ -32,6 +32,7 @@ class ActivationFunction(enum.Enum):
     @classmethod
     def get_value(cls, name: str) -> Callable[[torch.tensor], torch.Tensor]:
         try:
-            return cls.get(name).value
+            return cls.get(name).value()
         except ValueError:
             return name
+

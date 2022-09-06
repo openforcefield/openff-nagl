@@ -231,3 +231,16 @@ def train(
     console.print(NewLine())
     console.rule("training")
     console.print(NewLine())
+
+    # Train the model
+    n_gpus = 0 if not torch.cuda.is_available() else 1
+    print(f"Using {n_gpus} GPUs")
+
+    version_string = (
+        f"{training_batch_size}-"
+        f"{n_gcn_layers}-"
+        f"{n_gcn_hidden_features}-"
+        f"{n_am1_layers}-"
+        f"{n_am1_hidden_features}-"
+        f"{learning_rate}"
+    )

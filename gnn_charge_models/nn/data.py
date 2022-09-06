@@ -1,7 +1,6 @@
-from typing import NamedTuple, Dict, Tuple, TYPE_CHECKING, List, Union, Optional
+from typing import NamedTuple, Dict, Tuple, TYPE_CHECKING, List, Union, Optional, Callable
 from collections import defaultdict
 
-import dgl
 import tqdm
 import torch
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
@@ -10,7 +9,7 @@ from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.dgl.batch import DGLMoleculeBatch
 from gnn_charge_models.features import AtomFeature, BondFeature
 from gnn_charge_models.utils.utils import as_iterable
-from .labellers import LabelPrecomputedMolecule, LabelFunctionLike
+from .label import LabelPrecomputedMolecule, LabelFunctionLike
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
@@ -53,7 +52,7 @@ class DGLMoleculeDataset(Dataset):
 
     def __len__(self):
         return len(self.entries)
-    
+
     def __getitem__(self, index_or_slice):
         return self.entries[index_or_slice]
 

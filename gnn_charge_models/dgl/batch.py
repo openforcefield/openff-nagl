@@ -2,7 +2,7 @@ from typing import Tuple, List
 
 import dgl.function
 
-from ..base import ImmutableModel
+from gnn_charge_models.base import ImmutableModel
 from .molecule import DGLMolecule, DGLBase
 
 

@@ -1,8 +1,8 @@
 from typing import List, Optional, Union
 
-from .gcn import ActivationFunction, GCNStackMeta
+from ..gcn.base import ActivationFunction, GCNStackMeta
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
-from .sequential import SequentialLayers
+from ..sequential import SequentialLayers
 from .pooling import PoolingLayer
 from .postprocess import PostprocessLayer
 

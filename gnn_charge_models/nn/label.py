@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class LabelFunction(abc.ABC):
     def __call__(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
         return self.run(molecule)
-        
+
     @abc.abstractmethod
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
         raise NotImplementedError
@@ -40,7 +40,7 @@ class LabelPrecomputedMolecule(LabelFunction):
             bond_order_label = f"{self.bond_order_method.name}-wbo"
             orders = [bond.fractional_bond_order for bond in molecule.bonds]
             labels[bond_order_label] = torch.tensor(orders, dtype=torch.float)
-        
+
         return labels
 
 

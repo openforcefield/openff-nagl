@@ -9,7 +9,9 @@ import torch.nn
 import torch.nn.functional
 from typing_extensions import Literal
 
-ActivationFunction = Callable[[torch.tensor], torch.Tensor]
+from gnn_charge_models.nn.activation import ActivationFunction
+
+# ActivationFunction = Callable[[torch.tensor], torch.Tensor]
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 
@@ -22,13 +24,24 @@ class GCNStackMeta(type):
         if hasattr(cls, "layer_type") and cls.layer_type:
             cls.registry[cls.layer_type] = cls
 
+    def get_gcn_class(self, class_name: str):
+        try:
+            return self.registry[class_name]
+        except KeyError:
+            raise ValueError(
+                f"Unknown GCN layer type: {class_name}. "
+                f"Supported types: {list(self.registry.keys())}"
+            )
 
-class GCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
+
+class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
     """A wrapper around a stack of GCN graph convolutional layers.
 
     Note:
         This class is based on the ``dgllife.model.SAGEConv`` module.
     """
+
+    hidden_feature_sizes: List[GCNLayerType]
 
     @property
     @classmethod
@@ -81,6 +94,19 @@ class GCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
         if layer_aggregator_types is None:
             layer_aggregator_types = [cls.default_aggregator_type] * n_layers
 
+        all_lengths = [
+            n_layers,
+            len(layer_activation_functions),
+            len(layer_dropout),
+            len(layer_aggregator_types),
+        ]
+        if not len(set(all_lengths)) == 1:
+            raise ValueError(
+                "`hidden_feature_sizes`, `layer_activation_functions`, "
+                "`layer_dropout` and `layer_aggregator_types` must "
+                f"be lists of the same length ({all_lengths})"
+            )
+
         for i in range(n_layers):
             n_output_features = hidden_feature_sizes[i]
             activation_function = layer_activation_functions[i]
@@ -95,6 +121,7 @@ class GCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
                 dropout=dropout,
             )
             n_input_features = n_output_features
+        return obj
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -144,6 +171,9 @@ class GCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
             dropout = cls.default_dropout
         if activation_function is None:
             activation_function = cls.default_activation_function
+        else:
+            activation_function = ActivationFunction.get_value(
+                activation_function)
         return cls._create_gcn_layer(
             n_input_features=n_input_features,
             n_output_features=n_output_features,
@@ -199,33 +229,3 @@ class GCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
             inputs = gnn(graph, inputs)
 
         return inputs
-
-
-class SAGEConvStack(GCNStack[dgl.nn.pytorch.SAGEConv]):
-    """A wrapper around a stack of SAGEConv graph convolutional layers"""
-
-    layer_type = "SAGEConv"
-    available_aggregator_types = ["mean", "gcn", "pool", "lstm"]
-    default_aggregator_type = "mean"
-    default_dropout = 0.0
-    default_activation_function = torch.nn.functional.relu
-
-    @classmethod
-    def _create_gcn_layer(
-        cls,
-        n_input_features: int,
-        n_output_features: int,
-        aggregator_type: str,
-        dropout: float,
-        activation_function: ActivationFunction,
-        **kwargs,
-    ) -> dgl.nn.pytorch.SAGEConv:
-
-        return dgl.nn.pytorch.SAGEConv(
-            in_feats=n_input_features,
-            out_feats=n_output_features,
-            activation=activation_function,
-            feat_drop=dropout,
-            aggregator_type=aggregator_type,
-
-        )
