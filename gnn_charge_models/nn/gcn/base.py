@@ -9,32 +9,36 @@ import torch.nn
 import torch.nn.functional
 from typing_extensions import Literal
 
+from gnn_charge_models.utils.utils import is_iterable
+
 from gnn_charge_models.nn.activation import ActivationFunction
 
 # ActivationFunction = Callable[[torch.tensor], torch.Tensor]
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 
-class GCNStackMeta(type):
+class GCNStackMeta(abc.ABCMeta):
 
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace, **kwargs)
+        print(namespace, name)
         if hasattr(cls, "layer_type") and cls.layer_type:
             cls.registry[cls.layer_type] = cls
 
-    def get_gcn_class(self, class_name: str):
+    @classmethod
+    def get_gcn_class(cls, class_name: str):
         try:
-            return self.registry[class_name]
+            return cls.registry[class_name]
         except KeyError:
             raise ValueError(
                 f"Unknown GCN layer type: {class_name}. "
-                f"Supported types: {list(self.registry.keys())}"
+                f"Supported types: {list(cls.registry.keys())}"
             )
 
 
-class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
+class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC, metaclass=GCNStackMeta):
     """A wrapper around a stack of GCN graph convolutional layers.
 
     Note:
@@ -87,12 +91,20 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC):
         n_layers = len(hidden_feature_sizes)
 
         if layer_activation_functions is None:
-            layer_activation_functions = [
-                cls.default_activation_function] * n_layers
+            layer_activation_functions = cls.default_activation_function
         if layer_dropout is None:
-            layer_dropout = [cls.default_dropout] * n_layers
+            layer_dropout = cls.default_dropout
         if layer_aggregator_types is None:
-            layer_aggregator_types = [cls.default_aggregator_type] * n_layers
+            layer_aggregator_types = cls.default_aggregator_type
+
+        if not is_iterable(layer_activation_functions):
+            layer_activation_functions = [layer_activation_functions] * n_layers
+        if not is_iterable(layer_dropout):
+            layer_dropout = [layer_dropout] * n_layers
+        if not is_iterable(layer_aggregator_types):
+            layer_aggregator_types = [layer_aggregator_types] * n_layers
+        
+
 
         all_lengths = [
             n_layers,

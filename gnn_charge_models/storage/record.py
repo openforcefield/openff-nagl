@@ -1,7 +1,7 @@
 import copy
 import enum
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 from gnn_charge_models.base.array import Array
 from gnn_charge_models.base.quantity import Quantity

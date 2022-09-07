@@ -45,7 +45,8 @@ class SequentialLayers(torch.nn.Sequential):
                 hidden_feature_sizes[i], hidden_feature_sizes[i + 1])
             activation = ActivationFunction.get_value(
                 layer_activation_functions[i])
-            dropout = torch.nn.Dropout(p=layer_dropout[i]),
-            layers.extend([linear, activation(), dropout])
+            dropout = torch.nn.Dropout(p=layer_dropout[i])
+            layers.extend([linear, activation, dropout])
 
+        print(layers)
         return cls(*layers)
