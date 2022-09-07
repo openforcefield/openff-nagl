@@ -58,7 +58,11 @@ class TestSAGEConvStack:
         assert h.detach().numpy().shape == (5, 2)
 
     def test_invalid_lengths(self):
-        with pytest.raises(ValueError, match="must be lists of the same length"):
+        expected_err = (
+            r"`layer_dropout` \(length 1\) must be a list of same length "
+            r"as `hidden_feature_sizes` \(length 2\)."
+        )
+        with pytest.raises(ValueError, match=expected_err):
             SAGEConvStack.with_layers(
                 n_input_features=1,
                 hidden_feature_sizes=[2, 3],

@@ -2,10 +2,10 @@ from typing import ClassVar, List, Optional
 
 import torch.nn
 from .activation import ActivationFunction
-from gnn_charge_models.utils.utils import assert_same_lengths
+from .base import ContainsLayersMixin
 
 
-class SequentialLayers(torch.nn.Sequential):
+class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
 
     default_activation_function: ClassVar[ActivationFunction] = ActivationFunction.ReLU
     default_dropout: ClassVar[float] = 0.0
@@ -20,22 +20,11 @@ class SequentialLayers(torch.nn.Sequential):
     ):
 
         n_layers = len(hidden_feature_sizes)
-
-        if layer_activation_functions is None:
-            layer_activation_functions = [
-                cls.default_activation_function] * n_layers
-        if layer_dropout is None:
-            layer_dropout = [cls.default_dropout] * n_layers
-
-        try:
-            assert_same_lengths(hidden_feature_sizes,
-                                layer_activation_functions, layer_dropout)
-        except AssertionError as e:
-            err = (
-                "`hidden_feature_sizes`, `layer_activation_functions`, and `layer_dropout` must be the same length. "
-                + e.msg
-            )
-            raise ValueError(err) from None
+        layer_activation_functions, layer_dropout = cls._check_input_lengths(
+            n_layers,
+            layer_activation_functions,
+            layer_dropout,
+        )
 
         hidden_feature_sizes = [n_input_features, *hidden_feature_sizes]
         layers = []
@@ -48,5 +37,4 @@ class SequentialLayers(torch.nn.Sequential):
             dropout = torch.nn.Dropout(p=layer_dropout[i])
             layers.extend([linear, activation, dropout])
 
-        print(layers)
         return cls(*layers)

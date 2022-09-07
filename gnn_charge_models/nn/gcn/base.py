@@ -10,6 +10,7 @@ import torch.nn.functional
 from typing_extensions import Literal
 
 from gnn_charge_models.utils.utils import is_iterable
+from gnn_charge_models.nn.base import ContainsLayersMixin
 
 from gnn_charge_models.nn.activation import ActivationFunction
 
@@ -38,7 +39,7 @@ class GCNStackMeta(abc.ABCMeta):
             )
 
 
-class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC, metaclass=GCNStackMeta):
+class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], ContainsLayersMixin, abc.ABC, metaclass=GCNStackMeta):
     """A wrapper around a stack of GCN graph convolutional layers.
 
     Note:
@@ -78,6 +79,29 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC, metaclas
         """The aggregator options to use for the GCN layers."""
 
     @classmethod
+    def _check_input_lengths(
+        cls,
+        n_layers: int,
+        layer_activation_functions: Optional[List[ActivationFunction]] = None,
+        layer_dropout: Optional[List[float]] = None,
+        layer_aggregator_types: Optional[List[str]] = None,
+    ):
+        layer_activation_functions, layer_dropout = super()._check_input_lengths(
+            n_layers,
+            layer_activation_functions,
+            layer_dropout,
+        )
+
+        if layer_aggregator_types is None:
+            layer_aggregator_types = cls.default_aggregator_type
+        layer_aggregator_types = cls._check_argument_input_length(
+            n_layers,
+            layer_aggregator_types,
+            "layer_aggregator_types",
+        )
+        return layer_activation_functions, layer_dropout, layer_aggregator_types
+
+    @classmethod
     def with_layers(
         cls,
         n_input_features: int,
@@ -89,35 +113,12 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], abc.ABC, metaclas
         obj = cls()
 
         n_layers = len(hidden_feature_sizes)
-
-        if layer_activation_functions is None:
-            layer_activation_functions = cls.default_activation_function
-        if layer_dropout is None:
-            layer_dropout = cls.default_dropout
-        if layer_aggregator_types is None:
-            layer_aggregator_types = cls.default_aggregator_type
-
-        if not is_iterable(layer_activation_functions):
-            layer_activation_functions = [layer_activation_functions] * n_layers
-        if not is_iterable(layer_dropout):
-            layer_dropout = [layer_dropout] * n_layers
-        if not is_iterable(layer_aggregator_types):
-            layer_aggregator_types = [layer_aggregator_types] * n_layers
-        
-
-
-        all_lengths = [
+        layer_activation_functions, layer_dropout, layer_aggregator_types = cls._check_input_lengths(
             n_layers,
-            len(layer_activation_functions),
-            len(layer_dropout),
-            len(layer_aggregator_types),
-        ]
-        if not len(set(all_lengths)) == 1:
-            raise ValueError(
-                "`hidden_feature_sizes`, `layer_activation_functions`, "
-                "`layer_dropout` and `layer_aggregator_types` must "
-                f"be lists of the same length ({all_lengths})"
-            )
+            layer_activation_functions,
+            layer_dropout,
+            layer_aggregator_types,
+        )
 
         for i in range(n_layers):
             n_output_features = hidden_feature_sizes[i]
