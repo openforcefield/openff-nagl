@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, ClassVar
 
 import dgl.function
 import torch
@@ -16,6 +16,10 @@ from .utils import FORWARD, FEATURE, openff_molecule_to_dgl_graph, dgl_heterogra
 
 class DGLBase(ImmutableModel):
     graph: dgl.DGLHeteroGraph
+
+    _graph_feature_name: ClassVar[str] = "h"
+    _graph_forward_edge_type: ClassVar[str] = "forward"
+    _graph_backward_edge_type: ClassVar[str] = "backward"
 
     @property
     def atom_features(self) -> torch.Tensor:
@@ -82,6 +86,8 @@ class DGLMolecule(DGLBase):
             molecule=molecule,
             atom_features=atom_features,
             bond_features=bond_features,
+            forward=cls._graph_forward_edge_type,
+            reverse=cls._graph_backward_edge_type,
         )
         return cls(graph=graph, n_representations=1)
 

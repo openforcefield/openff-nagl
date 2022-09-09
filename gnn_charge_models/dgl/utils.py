@@ -51,7 +51,11 @@ def openff_molecule_to_dgl_graph(
     reverse: str = REVERSE,
 ) -> dgl.DGLHeteroGraph:
     # create base undirected graph
-    molecule_graph = openff_molecule_to_base_dgl_graph(molecule)
+    molecule_graph = openff_molecule_to_base_dgl_graph(
+        molecule,
+        forward=forward,
+        reverse=reverse,
+    )
 
     # add atom features
     if len(atom_features):
