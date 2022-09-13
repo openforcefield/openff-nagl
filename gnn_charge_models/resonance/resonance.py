@@ -145,7 +145,8 @@ class ResonanceEnumerator:
         rdkit_molecules = []
         for combination in itertools.product(*fragments):
             molecule = self.as_fragment()
-            for unit in combination:
+            for fragment_index, unit_key in enumerate(combination):
+                unit = fragments[fragment_index][unit_key]
                 # we can skip the check since we just made these fragments
                 molecule._substitute_fragment(unit)
             Chem.SanitizeMol(molecule.rdkit_molecule)

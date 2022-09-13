@@ -45,7 +45,8 @@ class TestDGLMolecule:
             "[H:1][C:2](=[O:3])[O-:4]",
             mapped=True,
             atom_features=[AtomConnectivity()],
-            bond_features=[BondIsInRing()]
+            bond_features=[BondIsInRing()],
+
         )
 
         dgl_graph = dgl_molecule.graph
@@ -63,7 +64,7 @@ class TestDGLMolecule:
         assert_allclose(node_features, connectivity)
 
         forward_features = dgl_graph.edges["forward"].data["feat"].numpy()
-        reverse_features = dgl_graph.edges["reverse"].data["feat"].numpy()
+        reverse_features = dgl_graph.edges["backward"].data["feat"].numpy()
 
         assert forward_features.shape == reverse_features.shape
         assert forward_features.shape == (3, 1)

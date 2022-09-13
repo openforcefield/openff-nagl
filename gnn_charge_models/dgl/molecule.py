@@ -1,4 +1,4 @@
-from typing import Tuple, ClassVar
+from typing import Tuple, ClassVar, Optional
 
 import dgl.function
 import torch
@@ -12,6 +12,7 @@ from ..base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
 from .utils import FORWARD, FEATURE, openff_molecule_to_dgl_graph, dgl_heterograph_to_homograph
+from gnn_charge_models.resonance.resonance import ResonanceEnumerator
 
 
 class DGLBase(ImmutableModel):
@@ -81,15 +82,42 @@ class DGLMolecule(DGLBase):
         molecule: OFFMolecule,
         atom_features: Tuple[AtomFeature] = tuple(),
         bond_features: Tuple[BondFeature] = tuple(),
+        enumerate_resonance_forms: bool = False,
+        lowest_energy_only: bool = True,
+        max_path_length: Optional[int] = None,
+        include_all_transfer_pathways: bool = False,
+
     ):
-        graph = openff_molecule_to_dgl_graph(
-            molecule=molecule,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            forward=cls._graph_forward_edge_type,
-            reverse=cls._graph_backward_edge_type,
+        offmols = [molecule]
+        if enumerate_resonance_forms:
+            enumerator = ResonanceEnumerator.from_openff(molecule)
+            offmols = enumerator.enumerate_resonance_molecules(
+                lowest_energy_only=lowest_energy_only,
+                max_path_length=max_path_length,
+                include_all_transfer_pathways=include_all_transfer_pathways,
+                moleculetype=OFFMolecule,
+            )
+
+        subgraphs = [
+            openff_molecule_to_dgl_graph(
+                offmol,
+                atom_features,
+                bond_features,
+                forward=cls._graph_forward_edge_type,
+                reverse=cls._graph_backward_edge_type,
+            )
+            for offmol in offmols
+        ]
+        graph = dgl.batch(subgraphs)
+        graph.set_batch_num_nodes(graph.batch_num_nodes().sum().reshape((-1,)))
+        graph.set_batch_num_edges(
+            {
+                e_type: graph.batch_num_edges(e_type).sum().reshape((-1,))
+                for e_type in graph.canonical_etypes
+            }
         )
-        return cls(graph=graph, n_representations=1)
+
+        return cls(graph=graph, n_representations=len(offmols))
 
     @classmethod
     def from_smiles(
@@ -98,6 +126,10 @@ class DGLMolecule(DGLBase):
         mapped: bool = False,
         atom_features: Tuple[AtomFeature] = tuple(),
         bond_features: Tuple[BondFeature] = tuple(),
+        enumerate_resonance_forms: bool = False,
+        lowest_energy_only: bool = True,
+        max_path_length: Optional[int] = None,
+        include_all_transfer_pathways: bool = False,
     ):
         func = OFFMolecule.from_smiles
         if mapped:
@@ -107,4 +139,8 @@ class DGLMolecule(DGLBase):
             molecule=molecule,
             atom_features=atom_features,
             bond_features=bond_features,
+            enumerate_resonance_forms=enumerate_resonance_forms,
+            lowest_energy_only=lowest_energy_only,
+            max_path_length=max_path_length,
+            include_all_transfer_pathways=include_all_transfer_pathways,
         )

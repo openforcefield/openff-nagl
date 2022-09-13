@@ -48,3 +48,10 @@ def dgl_methane(openff_methane_uncharged):
         atom_features=[AtomConnectivity()],
         bond_features=[BondIsInRing()]
     )
+
+
+@pytest.fixture()
+def openff_carboxylate():
+    from openff.toolkit.topology.molecule import Molecule
+
+    return Molecule.from_mapped_smiles("[H:1][C:2](=[O:3])[O-:4]")

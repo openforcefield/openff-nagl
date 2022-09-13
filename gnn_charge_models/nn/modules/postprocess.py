@@ -35,7 +35,6 @@ class ComputePartialCharges(PostprocessLayer):
         hardness: torch.Tensor,
         total_charge: float,
     ) -> torch.Tensor:
-
         """
         Equation borrowed from Wang et al's preprint on Espaloma (Eq 15)
         """
@@ -60,23 +59,27 @@ class ComputePartialCharges(PostprocessLayer):
         formal_charges = molecule.graph.ndata["formal_charge"]
 
         all_charges = []
-        counter = 0
         for n_atoms, n_representations in zip(
             molecule.n_atoms_per_molecule,
             molecule.n_representations_per_molecule,
         ):
             representation_charges = []
-            for i in range(n_representations, counter):
-                atom_slice = slice(i, i + n_atoms)
+            for i in range(n_representations):
+                atom_slice = slice(
+                    int(i * n_atoms),
+                    int((i + 1) * n_atoms),
+                )
+
+            # for i in range(n_representations, counter):
+            #     atom_slice = slice(i, i + n_atoms)
                 charges = self._calculate_partial_charges(
                     electronegativity[atom_slice],
                     hardness[atom_slice],
                     formal_charges[atom_slice].sum(),
                 )
                 representation_charges.append(charges)
-                counter += n_atoms
-            
+
             mean_charges = torch.stack(representation_charges).mean(dim=0)
             all_charges.append(mean_charges)
-        
+
         return torch.vstack(all_charges)

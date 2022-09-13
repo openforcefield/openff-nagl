@@ -19,3 +19,11 @@ class DGLMoleculeBatch(DGLBase):
         )
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
         return cls(graph=graph, n_representations=n_representations, n_atoms=n_atoms)
+
+    @property
+    def n_atoms_per_molecule(self):
+        return self.n_atoms
+
+    @property
+    def n_representations_per_molecule(self):
+        return self.n_representations
