@@ -12,6 +12,14 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 
+def get_coordinates_in_angstrom(conformer):
+    from openff.toolkit.topology.molecule import unit as off_unit
+
+    if hasattr(conformer, "m_as"):
+        return conformer.m_as(off_unit.angstrom)
+    return conformer.value_in_unit(off_unit.angstrom)
+
+
 def get_unitless_charge(charge, dtype=float):
     from openff.toolkit.topology.molecule import unit as off_unit
     return dtype(charge / off_unit.elementary_charge)

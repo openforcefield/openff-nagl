@@ -179,62 +179,77 @@ class MoleculeRecord(Record):
     def from_openff(
         cls,
         openff_molecule,
-        charge_methods: List[ChargeMethod] = [],
-        bond_order_methods: List[WibergBondOrderMethod] = [],
+        partial_charge_methods: Tuple[ChargeMethod] = tuple(),
+        bond_order_methods: Tuple[WibergBondOrderMethod] = tuple(),
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
         rms_cutoff: float = 0.05
     ):
-        from openff.toolkit.topology.molecule import unit as toolkit_unit
-        openff_molecule = copy.deepcopy(openff_molecule)
-        openff_molecule.generate_conformers(
+        from openff.toolkit.topology.molecule import unit as off_unit
+        from gnn_charge_models.storage.record import (
+            PartialChargeRecord, WibergBondOrderRecord, WibergBondOrder, ConformerRecord)
+        from gnn_charge_models.utils.openff import get_unitless_charge, get_coordinates_in_angstrom
+
+        partial_charge_methods = [
+            ChargeMethod(method) for method in partial_charge_methods
+        ]
+        bond_order_methods = [
+            WibergBondOrderMethod(method) for method in bond_order_methods
+        ]
+
+        molecule = copy.deepcopy(openff_molecule)
+
+        molecule.generate_conformers(
             n_conformers=n_conformer_pool,
-            rms_cutoff=rms_cutoff * toolkit_unit.angstrom,
+            rms_cutoff=rms_cutoff * off_unit.angstrom,
         )
-        openff_molecule.apply_elf_conformer_selection(limit=n_conformers)
+        molecule.apply_elf_conformer_selection(limit=n_conformers)
 
-        conformers = []
-        for conformer in openff_molecule.conformers:
-            charges = {}
-            for method in charge_methods:
-                openff_molecule.assign_partial_charges(
-                    method=method.to_openff_method(),
-                    use_conformers=[conformer]
+        conformer_records = []
+        for conformer in molecule.conformers:
+            charge_sets = {}
+            for method in partial_charge_methods:
+                molecule.assign_partial_charges(
+                    method.to_openff_method(),
+                    use_conformers=[conformer],
                 )
-                charges[method] = PartialChargeRecord(
+                charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=conformer.partial_charges,
+                    values=[
+                        get_unitless_charge(x)
+                        for x in molecule.partial_charges
+                    ],
                 )
 
-            bond_orders = {}
+            bond_order_sets = {}
             for method in bond_order_methods:
-                openff_molecule.assign_fractional_bond_orders(
-                    method=method.to_openff_method(),
-                    use_conformers=[conformer]
+                molecule.assign_fractional_bond_orders(
+                    method.to_openff_method(),
+                    use_conformers=[conformer],
                 )
-                bond_orders[method] = WibergBondOrderRecord(
+                bond_order_sets[method] = WibergBondOrderRecord(
                     method=method,
                     values=[
                         WibergBondOrder.from_openff(bond)
-                        for bond in openff_molecule.bonds
+                        for bond in molecule.bonds
                     ],
                 )
-            conformer_record = ConformerRecord(
-                coordinates=conformer,
-                partial_charges=charges,
-                bond_orders=bond_orders,
+
+            conformer_records.append(
+                ConformerRecord(
+                    coordinates=get_coordinates_in_angstrom(conformer),
+                    partial_charges=charge_sets,
+                    bond_orders=bond_order_sets,
+                )
             )
-            conformers.append(conformer_record)
 
         return cls(
             mapped_smiles=openff_molecule.to_smiles(mapped=True, isomeric=True),
-            conformers=conformers,
+            conformers=conformer_records,
         )
 
     def to_openff(self, partial_charge_method: Optional[ChargeMethod] = None, bond_order_method: Optional[WibergBondOrderMethod] = None):
         from openff.toolkit.topology.molecule import Molecule, unit as off_unit
-
-        print(self.smiles)
 
         offmol = Molecule.from_mapped_smiles(
             self.mapped_smiles, allow_undefined_stereo=True)
@@ -278,7 +293,6 @@ class MoleculeRecord(Record):
 
     def average_bond_orders(self, bond_order_method: WibergBondOrderMethod) -> Dict[Tuple[int, int], float]:
         bond_orders = self.get_bond_orders(bond_order_method)
-        print(bond_orders)
         return {
             k: np.mean(v)
             for k, v in bond_orders.items()

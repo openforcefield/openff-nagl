@@ -35,9 +35,12 @@ class AtomicElement(CategoricalMixin, AtomFeature):
     categories: List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P"]
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+        elements = [atom.element for atom in molecule.atoms]
+        if not all(isinstance(el, str) for el in elements):
+            elements = [el.symbol for el in elements]
         return torch.vstack([
-            one_hot_encode(atom.element, self.categories)
-            for atom in molecule.atoms
+            one_hot_encode(el, self.categories)
+            for el in elements
         ])
 
 

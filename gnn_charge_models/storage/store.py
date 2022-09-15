@@ -243,12 +243,14 @@ class MoleculeStore:
         """
         from gnn_charge_models.utils.openff import smiles_to_inchi_key, capture_toolkit_warnings
 
-        records = as_iterable(records)
+        if isinstance(records, MoleculeRecord):
+            records = [records]
 
         with capture_toolkit_warnings(run=suppress_toolkit_warnings):
             records_by_inchi_key = defaultdict(list)
 
             for record in tqdm(records, desc="grouping records to store by InChI key"):
+                print(record)
                 inchi_key = smiles_to_inchi_key(record.mapped_smiles)
                 records_by_inchi_key[inchi_key].append(record)
 

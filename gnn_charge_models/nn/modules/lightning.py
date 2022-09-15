@@ -94,6 +94,10 @@ class DGLMoleculeLightningModel(pl.LightningModule):
 
 class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
+    @property
+    def n_atom_features(self) -> Optional[int]:
+        return sum(len(feature) for feature in self.atom_features)
+
     def __init__(
         self,
         atom_features: List[AtomFeature],
@@ -110,6 +114,11 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         use_cached_data: bool = False,
     ):
         super().__init__()
+
+        if partial_charge_method is not None:
+            partial_charge_method = ChargeMethod(partial_charge_method)
+        if bond_order_method is not None:
+            bond_order_method = WibergBondOrderMethod(bond_order_method)
 
         self.atom_features = list(atom_features)
         self.bond_features = list(bond_features)
