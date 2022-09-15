@@ -132,8 +132,6 @@ class DGLMoleculeDataset(Dataset):
             )
         ]
 
-        print(molecule_records)
-
         entries = []
         labeller = LabelPrecomputedMolecule(
             partial_charge_method=partial_charge_method,
@@ -182,11 +180,12 @@ class DGLMoleculeDataLoader(DataLoader):
 
         molecules, labels = zip(*graph_entries)
 
-        batched_molecules = DGLMoleculeBatch(*molecules)
+        batched_molecules = DGLMoleculeBatch.from_dgl_molecules(molecules)
         batched_labels = defaultdict(list)
 
-        for label_name, label_value in labels.items():
-            batched_labels[label_name].append(label_value.reshape(-1, 1))
+        for molecule_labels in labels:
+            for label_name, label_value in molecule_labels.items():
+                batched_labels[label_name].append(label_value.reshape(-1, 1))
 
         batched_labels = {
             k: torch.vstack(v)

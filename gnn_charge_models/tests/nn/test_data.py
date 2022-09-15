@@ -4,8 +4,8 @@ import pytest
 import torch
 import numpy as np
 
-from gnn_charge_models.nn.data import DGLMoleculeDataset
-from gnn_charge_models.dgl import DGLMolecule
+from gnn_charge_models.nn.data import DGLMoleculeDataset, DGLMoleculeDataLoader
+from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
 from gnn_charge_models.storage.store import MoleculeStore, MoleculeRecord, ConformerRecord, PartialChargeRecord, WibergBondOrderRecord
 
@@ -88,3 +88,21 @@ def test_data_set_from_molecule_stores(tmpdir):
     assert "am1-wbo" in labels
     assert labels["am1-wbo"].numpy().shape == (1,)
     assert np.allclose(labels["am1-wbo"].numpy(), [1.1])
+
+
+def test_data_set_loader():
+    data_loader = DGLMoleculeDataLoader(
+        dataset=DGLMoleculeDataset.from_openff(
+            molecules=[OFFMolecule.from_smiles(
+                "C"), OFFMolecule.from_smiles("C[O-]")],
+            label_function=label_formal_charge,
+            atom_features=[AtomConnectivity()],
+        ),
+    )
+
+    entries = [*data_loader]
+    for dgl_molecule, labels in entries:
+        assert isinstance(
+            dgl_molecule, DGLMoleculeBatch
+        ) and dgl_molecule.n_atoms_per_molecule == (5,)
+        assert "formal_charges" in labels
