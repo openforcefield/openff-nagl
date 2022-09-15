@@ -83,15 +83,13 @@ def db_columns_to_models(
         for conformer_args in molecule_args["conformers"].values():
             conformer = ConformerRecord.construct(
                 coordinates=conformer_args["coordinates"],
-                partial_charges=list(
-                    conformer_args[PartialChargeRecord].values()),
-                bond_orders=list(
-                    conformer_args[WibergBondOrderRecord].values()),
+                partial_charges=conformer_args[PartialChargeRecord],
+                bond_orders=conformer_args[WibergBondOrderRecord],
             )
             conformers.append(conformer)
 
         molecule = MoleculeRecord.construct(
-            smiles=molecule_args["smiles"], conformers=conformers)
+            mapped_smiles=molecule_args["smiles"], conformers=conformers)
         records.append(molecule)
 
     return records
@@ -129,7 +127,7 @@ class MoleculeStore:
 
     @contextmanager
     def _get_session(self) -> ContextManager[Session]:
-        session = self._session_maker()
+        session = self._sessionmaker()
         try:
             yield DBSessionManager(session)
             session.commit()
@@ -199,9 +197,11 @@ class MoleculeStore:
             The retrieved records.
         """
         if partial_charge_methods is not None:
-            partial_charge_methods = as_iterable(partial_charge_methods)
+            partial_charge_methods = [
+                ChargeMethod(x) for x in as_iterable(partial_charge_methods)]
         if bond_order_methods is not None:
-            bond_order_methods = as_iterable(bond_order_methods)
+            bond_order_methods = [
+                WibergBondOrderMethod(x) for x in as_iterable(bond_order_methods)]
 
         with self._get_session() as db:
             db_partial_charge_columns = []
@@ -225,9 +225,9 @@ class MoleculeStore:
             with PerformanceTimer(
                 LOGGER,
                 start_message="converting SQL columns to entries",
-                end_meessage="converted SQL columns to entries",
+                end_message="converted SQL columns to entries",
             ):
-                records = self._db_columns_to_models(
+                records = db_columns_to_models(
                     db_partial_charge_columns, db_bond_order_columns
                 )
 
@@ -249,7 +249,7 @@ class MoleculeStore:
             records_by_inchi_key = defaultdict(list)
 
             for record in tqdm(records, desc="grouping records to store by InChI key"):
-                inchi_key = smiles_to_inchi_key(record.smiles)
+                inchi_key = smiles_to_inchi_key(record.mapped_smiles)
                 records_by_inchi_key[inchi_key].append(record)
 
             with self._get_session() as db:

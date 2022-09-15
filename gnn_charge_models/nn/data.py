@@ -1,25 +1,29 @@
-from typing import NamedTuple, Dict, Tuple, TYPE_CHECKING, List, Union, Optional, Callable
+from typing import NamedTuple, Dict, Tuple, TYPE_CHECKING, List, Union, Optional, Callable, Collection
 from collections import defaultdict
 
 import tqdm
 import torch
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
+from openff.toolkit.topology import Molecule as OFFMolecule
 
 from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.dgl.batch import DGLMoleculeBatch
 from gnn_charge_models.features import AtomFeature, BondFeature
 from gnn_charge_models.utils.utils import as_iterable
-from .label import LabelPrecomputedMolecule, LabelFunctionLike
+from .label import LabelPrecomputedMolecule, LabelFunctionLike, EmptyLabeller
+
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+
     from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
     from gnn_charge_models.storage.store import MoleculeStore
     from gnn_charge_models.storage.record import MoleculeRecord
 
 
-OpenFFToDGLConverter = Callable[[
-    OFFMolecule, List[AtomFeature], List[BondFeature]], DGLMolecule]
+OpenFFToDGLConverter = Callable[
+    ["OFFMolecule", List[AtomFeature], List[BondFeature]],
+    DGLMolecule
+]
 
 
 class DGLMoleculeDatasetEntry(NamedTuple):
@@ -31,13 +35,13 @@ class DGLMoleculeDatasetEntry(NamedTuple):
     labels: Dict[str, torch.Tensor]
 
     @classmethod
-    def from_openff_molecule(
+    def from_openff(
         cls,
         openff_molecule: "OFFMolecule",
         atom_features: List[AtomFeature],
         bond_features: List[BondFeature],
         label_function: LabelFunctionLike,
-        openff_to_dgl_converter: OpenFFToDGLConverter = DGLMolecule.from_openff_molecule,
+        openff_to_dgl_converter: OpenFFToDGLConverter = DGLMolecule.from_openff,
     ):
         labels: Dict[str, torch.Tensor] = label_function(openff_molecule)
         dglmol = openff_to_dgl_converter(
@@ -58,6 +62,48 @@ class DGLMoleculeDataset(Dataset):
 
     def __init__(self, entries: Tuple[DGLMoleculeDatasetEntry, ...] = tuple()):
         self.entries = list(entries)
+
+    @property
+    def n_features(self) -> int:
+        """Returns the number of atom features"""
+        if not len(self):
+            return 0
+
+        return self[0][0].atom_features.shape[1]
+
+    @classmethod
+    def from_openff(
+        cls,
+        molecules: Collection["OFFMolecule"],
+        label_function: LabelFunctionLike,
+        atom_features: Tuple[AtomFeature] = tuple(),
+        bond_features: Tuple[BondFeature] = tuple(),
+    ):
+        entries = [
+            DGLMoleculeDatasetEntry.from_openff(
+                mol,
+                atom_features,
+                bond_features,
+                label_function,
+            )
+            for mol in tqdm.tqdm(molecules, desc="Featurizing molecules")
+        ]
+        return cls(entries)
+
+    @classmethod
+    def from_sdf(
+        cls,
+        *sdf_files,
+        label_function: LabelFunctionLike = EmptyLabeller,
+        atom_features: Tuple[AtomFeature] = tuple(),
+        bond_features: Tuple[BondFeature] = tuple(),
+    ):
+        offmols = []
+        for file in sdf_files:
+            mols = as_iterable(OFFMolecule.from_file(file, file_format="sdf"))
+            offmols.extend(mols)
+
+        return cls.from_openff(offmols, label_function, atom_features, bond_features)
 
     @classmethod
     def from_molecule_stores(
@@ -86,6 +132,8 @@ class DGLMoleculeDataset(Dataset):
             )
         ]
 
+        print(molecule_records)
+
         entries = []
         labeller = LabelPrecomputedMolecule(
             partial_charge_method=partial_charge_method,
@@ -97,7 +145,7 @@ class DGLMoleculeDataset(Dataset):
                     partial_charge_method=partial_charge_method,
                     bond_order_method=bond_order_method,
                 )
-                entry = DGLMoleculeDatasetEntry.from_openff_molecule(
+                entry = DGLMoleculeDatasetEntry.from_openff(
                     offmol,
                     atom_features,
                     bond_features,

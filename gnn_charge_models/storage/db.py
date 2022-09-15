@@ -3,9 +3,11 @@ import logging
 
 import numpy as np
 
-from sqlalchemy import Column, ForeignKey, Integer, PickleType, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Integer, PickleType, String, UniqueConstraint, Enum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, Session
+
+from .record import ChargeMethod, WibergBondOrderMethod
 
 DBBase = declarative_base()
 
@@ -25,7 +27,7 @@ class DBPartialChargeSet(DBBase):
     parent_id = Column(Integer, ForeignKey(
         "conformers.id"), nullable=False, index=True)
 
-    method = Column(String(10), nullable=False)
+    method = Column(Enum(ChargeMethod), nullable=False)
     values = Column(PickleType, nullable=False)
 
     __table_args__ = (
@@ -41,7 +43,7 @@ class DBWibergBondOrderSet(DBBase):
     parent_id = Column(Integer, ForeignKey(
         "conformers.id"), nullable=False, index=True)
 
-    method = Column(String(10), nullable=False)
+    method = Column(Enum(WibergBondOrderMethod), nullable=False)
     values = Column(PickleType, nullable=False)
 
     __table_args__ = (
@@ -67,16 +69,16 @@ class DBConformerRecord(DBBase):
     def _store_new_data(
         self,
         new_record,
-        smiles,
+        mapped_smiles,
         db_class=DBPartialChargeSet,
         container_name: str = "partial_charges",
     ):
         db_container = getattr(self, container_name)
         existing_methods = [x.method for x in db_container]
-        for new_data in getattr(new_record, container_name):
+        for new_data in getattr(new_record, container_name).values():
             if new_data.method in existing_methods:
                 raise RuntimeError(
-                    f"{new_data.method} {container_name} already stored for {smiles} "
+                    f"{new_data.method} {container_name} already stored for {mapped_smiles} "
                     f"with coordinates {new_record.coordinates}"
                 )
             db_data = db_class(method=new_data.method, values=new_data.values)
@@ -90,7 +92,7 @@ class DBMoleculeRecord(DBBase):
     id = Column(Integer, primary_key=True, index=True)
 
     inchi_key = Column(String(20), nullable=False, index=True)
-    smiles = Column(String, nullable=False)
+    mapped_smiles = Column(String, nullable=False)
 
     conformers = relationship("DBConformerRecord", cascade="all, delete-orphan")
 
@@ -101,12 +103,12 @@ class DBMoleculeRecord(DBBase):
 
         if len(self.conformers) > 0:
             LOGGER.warning(
-                f"An entry for {self.smiles} is already present in the molecule store. "
+                f"An entry for {self.mapped_smiles} is already present in the molecule store. "
                 f"Trying to find matching conformers."
             )
 
         conformer_matches = match_conformers(
-            self.smiles, self.conformers, records)
+            self.mapped_smiles, self.conformers, records)
 
         # Create new database conformers for those unmatched conformers.
         for i, record in enumerate(records):
@@ -127,7 +129,7 @@ class DBMoleculeRecord(DBBase):
             record = records[index]
             for container_name, db_class in DB_CLASSES.items():
                 db_record._store_new_data(
-                    record, self.smiles, db_class, container_name)
+                    record, self.mapped_smiles, db_class, container_name)
 
 
 class DBGeneralProvenance(DBBase):
@@ -168,7 +170,7 @@ class DBInformation(DBBase):
 
 
 def match_conformers(
-    indexed_smiles: str,
+    indexed_mapped_smiles: str,
     db_conformers: List[DBConformerRecord],
     query_conformers: List["ConformerRecord"],
 ) -> Dict[int, int]:
@@ -177,7 +179,7 @@ def match_conformers(
     two sets.
 
     Args:
-        indexed_smiles: The indexed SMILES pattern associated with the conformers.
+        indexed_mapped_smiles: The indexed mapped_smiles pattern associated with the conformers.
         db_conformers: The database conformers.
         conformers: The conformers to store.
 
@@ -191,7 +193,7 @@ def match_conformers(
     from gnn_charge_models.utils.openff import is_conformer_identical
 
     molecule = Molecule.from_mapped_smiles(
-        indexed_smiles, allow_undefined_stereo=True
+        indexed_mapped_smiles, allow_undefined_stereo=True
     )
 
     # See if any of the conformers to add are already in the DB.

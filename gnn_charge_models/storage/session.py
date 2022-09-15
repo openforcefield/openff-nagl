@@ -31,7 +31,7 @@ class DBQueryResult(NamedTuple):
     def to_nested_dict(self):
         return {
             self.molecule_id: {
-                "smiles": self.molecule_smiles,
+                "mapped_smiles": self.molecule_smiles,
                 "conformers": {
                     self.conformer_id: {
                         "coordinates"
@@ -89,7 +89,7 @@ class DBSessionManager:
         records = defaultdict(list)
         for record in db_records:
             offmol = Molecule.from_smiles(
-                record.smiles,
+                record.mapped_smiles,
                 allow_undefined_stereo=True,
             )
             canonical_smiles = offmol.to_smiles(mapped=False)
@@ -175,7 +175,7 @@ class DBSessionManager:
         results = (
             self.db.query(
                 DBMoleculeRecord.id,
-                DBMoleculeRecord.smiles,
+                DBMoleculeRecord.mapped_smiles,
                 DBConformerRecord.id,
                 DBConformerRecord.coordinates,
                 model_type.method,
@@ -218,11 +218,11 @@ class DBSessionManager:
 
         if existing_db_record is None:
             existing_db_record = DBMoleculeRecord(
-                inchi_key=inchi_key, smiles=records[0].smiles)
+                inchi_key=inchi_key, mapped_smiles=records[0].mapped_smiles)
 
         # Retrieve the DB indexed SMILES that defines the ordering the atoms in each
         # record should have and re-order the incoming records to match.
-        expected_smiles = existing_db_record.smiles
+        expected_smiles = existing_db_record.mapped_smiles
 
         conformer_records = [
             conformer_record
@@ -259,12 +259,16 @@ class DBSessionManager:
         db_records_by_smiles = self.map_records_by_smiles(existing_db_records)
         # Sanity check that no two DB records have the same InChI key AND the
         # same canonical SMILES pattern.
-        if len(db_records_by_smiles) < len(records):
-            smiles = [k for k, v in db_records_by_smiles.items() if len(v) > 1]
+        multiple = [
+            smiles
+            for smiles, dbrecords in db_records_by_smiles.items()
+            if len(dbrecords) > 1
+        ]
+        if multiple:
             raise RuntimeError(
                 "The database is not self consistent."
                 "There are multiple records with the same InChI key and SMILES."
-                f"InChI key: {inchi_key} and SMILES: {smiles}"
+                f"InChI key: {inchi_key} and SMILES: {multiple}"
             )
 
         records_by_smiles = self.map_records_by_smiles(records)
