@@ -101,6 +101,7 @@ class DBSessionManager:
         self._db_info = None
 
     def query(self, *args, **kwargs):
+        # print(args)
         return self.db.query(args, **kwargs)
 
     def check_version(self, version=DB_VERSION):
@@ -110,7 +111,7 @@ class DBSessionManager:
             self._db_info = db_info
 
         if self.db_info.version != version:
-            raise IncompatibleDBVersion(db_info.version, version)
+            raise IncompatibleDBVersion(self.db_info.version, version)
         return self.db_info.version
 
     def get_general_provenance(self):
@@ -270,6 +271,8 @@ class DBSessionManager:
                 "There are multiple records with the same InChI key and SMILES."
                 f"InChI key: {inchi_key} and SMILES: {multiple}"
             )
+        db_records_by_smiles = {k: v[0]
+                                for k, v in db_records_by_smiles.items()}
 
         records_by_smiles = self.map_records_by_smiles(records)
         for smiles, smiles_records in records_by_smiles.items():

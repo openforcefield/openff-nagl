@@ -138,7 +138,10 @@ class ConformerRecord(Record):
 
     @validator("coordinates")
     def _validate_coordinates(cls, v):
-        v = v.reshape((-1, 3))
+        try:
+            v = v.reshape((-1, 3))
+        except ValueError:
+            raise ValueError("coordinates must be re-shapable to `(n_atoms, 3)`")
         v.flags.writeable = False
         return v
 

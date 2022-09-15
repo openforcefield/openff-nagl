@@ -78,7 +78,7 @@ class DBConformerRecord(DBBase):
         for new_data in getattr(new_record, container_name).values():
             if new_data.method in existing_methods:
                 raise RuntimeError(
-                    f"{new_data.method} {container_name} already stored for {mapped_smiles} "
+                    f"{new_data.method.value} {container_name} already stored for {mapped_smiles} "
                     f"with coordinates {new_record.coordinates}"
                 )
             db_data = db_class(method=new_data.method, values=new_data.values)

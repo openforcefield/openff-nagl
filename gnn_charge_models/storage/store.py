@@ -102,7 +102,7 @@ class MoleculeStore:
 
     def __len__(self):
         with self._get_session() as db:
-            return db.query(DBMoleculeRecord.smiles).count()
+            return db.db.query(DBMoleculeRecord.mapped_smiles).count()
 
     def __init__(self, database_path: Pathlike = "molecule-store.sqlite"):
         database_path = pathlib.Path(database_path)
@@ -157,13 +157,15 @@ class MoleculeStore:
         with self._get_session() as db:
             db.set_provenance(general_provenance=general_provenance,
                               software_provenance=software_provenance)
+            self.general_provenance = db.get_general_provenance()
+            self.software_provenance = db.get_software_provenance()
 
     def get_charge_methods(self) -> List[str]:
         """A list of the methods used to compute the partial charges in the store."""
 
         with self._get_session() as db:
             return [
-                method for (method,) in db.query(DBPartialChargeSet.method).distinct()
+                method for (method,) in db.db.query(DBPartialChargeSet.method).distinct()
             ]
 
     def get_wbo_methods(self) -> List[str]:
@@ -171,13 +173,13 @@ class MoleculeStore:
 
         with self._get_session() as db:
             return [
-                method for (method,) in db.query(DBWibergBondOrderSet.method).distinct()
+                method for (method,) in db.db.query(DBWibergBondOrderSet.method).distinct()
             ]
 
     def get_smiles(self) -> List[str]:
         with self._get_session() as db:
             return [
-                smiles for (smiles,) in db.query(DBMoleculeRecord.smiles).distinct()
+                smiles for (smiles,) in db.db.query(DBMoleculeRecord.mapped_smiles).distinct()
             ]
 
     def retrieve(
@@ -250,7 +252,6 @@ class MoleculeStore:
             records_by_inchi_key = defaultdict(list)
 
             for record in tqdm(records, desc="grouping records to store by InChI key"):
-                print(record)
                 inchi_key = smiles_to_inchi_key(record.mapped_smiles)
                 records_by_inchi_key[inchi_key].append(record)
 
