@@ -1,3 +1,5 @@
+"""Utilities for working with OpenFF Toolkit molecules."""
+
 import contextlib
 import json
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union
@@ -12,6 +14,7 @@ if TYPE_CHECKING:
 
 
 def get_coordinates_in_angstrom(conformer):
+    """Get coordinates of conformer in angstrom, without units"""
     from openff.toolkit.topology.molecule import unit as off_unit
 
     if hasattr(conformer, "m_as"):
@@ -20,6 +23,7 @@ def get_coordinates_in_angstrom(conformer):
 
 
 def get_unitless_charge(charge, dtype=float):
+    """Strip units from a charge and convert to the specified dtype"""
     from openff.toolkit.topology.molecule import unit as off_unit
 
     return dtype(charge / off_unit.elementary_charge)

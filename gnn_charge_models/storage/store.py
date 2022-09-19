@@ -1,6 +1,5 @@
 import logging
 import pathlib
-import time
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import ContextManager, Dict, List, Optional, Tuple
@@ -92,9 +91,9 @@ def db_columns_to_models(
 
 
 class MoleculeStore:
-
-    # match_conformers = staticmethod(match_conformers)
-    # store_conformer_records = staticmethod(store_conformer_records)
+    """A class used to store and retrieve calculated sets of partial charges and
+    Wiberg bond orders for sets of molecules.
+    """
 
     def __len__(self):
         with self._get_session() as db:
@@ -250,6 +249,8 @@ class MoleculeStore:
         ----------
         records
             The records to store.
+        suppress_toolkit_warnings: bool
+            Whether to suppress toolkit warnings when loading molecules.
         """
         from gnn_charge_models.utils.openff import (
             capture_toolkit_warnings,

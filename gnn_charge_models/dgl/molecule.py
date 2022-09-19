@@ -3,13 +3,11 @@ from typing import ClassVar, Optional, Tuple
 import dgl.function
 import torch
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
-from openff.toolkit.topology.molecule import unit as off_unit
-
-from gnn_charge_models.resonance.resonance import ResonanceEnumerator
 
 from ..base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
+from ..resonance.resonance import ResonanceEnumerator
 from .utils import (
     FEATURE,
     FORWARD,
@@ -68,17 +66,6 @@ class DGLMolecule(DGLBase):
     def n_representations_per_molecule(self):
         return (self.n_representations,)
 
-    # @classmethod
-    # def openff_molecule_to_dgl_graph(
-    #     cls,
-    #     molecule: OFFMolecule,
-    #     atom_features: List[AtomFeature] = [],
-    #     bond_features: List[BondFeature] = [],
-    # ) -> dgl.DGLGraph:
-    #     return openff_molecule_to_dgl_graph(
-    #         molecule, atom_features, bond_features
-    #     )
-
     @classmethod
     def from_openff(
         cls,
@@ -92,7 +79,7 @@ class DGLMolecule(DGLBase):
     ):
         offmols = [molecule]
         if enumerate_resonance_forms:
-            enumerator = ResonanceEnumerator.from_openff(molecule)
+            enumerator = ResonanceEnumerator(molecule)
             offmols = enumerator.enumerate_resonance_molecules(
                 lowest_energy_only=lowest_energy_only,
                 max_path_length=max_path_length,

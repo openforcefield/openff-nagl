@@ -4,7 +4,7 @@ Location of data files
 
 Use as ::
 
-    from gnn-charge-models.data.files import *
+    from gnn_charge_models.data.files import *
 
 """
 

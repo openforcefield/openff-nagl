@@ -96,7 +96,7 @@ class AtomAverageFormalCharge(AtomFeature):
         from gnn_charge_models.utils.openff import normalize_molecule
 
         molecule = normalize_molecule(molecule)
-        enumerator = ResonanceEnumerator.from_openff(molecule)
+        enumerator = ResonanceEnumerator(molecule)
         enumerator.enumerate_resonance_fragments(
             lowest_energy_only=True,
             include_all_transfer_pathways=False,

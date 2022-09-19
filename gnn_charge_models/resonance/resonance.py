@@ -2,7 +2,6 @@ import hashlib
 import itertools
 import json
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Dict,
@@ -37,6 +36,65 @@ def _remove_radicals(rdmol: Chem.Mol):
 
 
 class ResonanceEnumerator:
+    """Enumerate resonance structures for a molecule.
+
+    This class is for recursively attempting to find all resonance structures of a molecule
+    according to a modified version of the algorithm proposed by Gilson et al [1].
+
+    Enumeration proceeds by:
+
+    1. The molecule is turned into an RDKit molecule
+    2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
+       will not be involved in electron transfer.
+    3. Disjoint sub-graphs are detected and separated out.
+    4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
+    5. For each disjoint subgraph:
+        a) The original v-charge algorithm is applied to yield the resonance structures
+           of that subgraph.
+
+    This will lead to ``M_i`` resonance structures for each of the ``N`` sub-graphs.
+
+    If run with ``enumerate_resonance_forms``, then the resonance states in each
+    sub-graph are returned in the form of a :class:`FragmentEnumerator`.
+    If run with ``enumerate_resonance_molecules``, then the resonance states are
+    combinatorially combined to yield molecule ojects in the requested type
+    (either an OpenFF Molecule or an RDKit Mol).
+
+
+    Notes
+    -----
+        * This method will strip all stereochemistry and aromaticity information from
+          the input molecule.
+        * The method only attempts to enumerate resonance forms that occur when a
+          pair of electrons can be transferred along a conjugated path from a donor to
+          an acceptor. Other types of resonance, e.g. different Kekule structures, are
+          not enumerated.
+
+
+    Parameters
+    ----------
+    openff_molecule: openff.toolkit.topology.Molecule
+
+
+    Attributes
+    ----------
+    openff_molecule: openff.toolkit.topology.Molecule
+        The molecule to enumerate resonance structures for.
+    rdkit_molecule: rdkit.Chem.Mol
+        The molecule in RDKit format
+    acceptor_donor_fragments: List[FragmentEnumerator]
+        The fragments of the molecule that contain acceptor or donor atoms.
+    resonance_fragments: Dict[bytes, FragmentEnumerator]
+        The resonance fragments of the molecule.
+
+
+    References
+    ----------
+    [1] Gilson, Michael K., Hillary SR Gilson, and Michael J. Potter. "Fast
+        assignment of accurate partial atomic charges: an electronegativity
+        equalization method that accounts for alternate resonance forms." Journal of
+        chemical information and computer sciences 43.6 (2003): 1982-1997.
+    """
 
     _idx_property: ClassVar[str] = "original_idx"
 
@@ -54,18 +112,13 @@ class ResonanceEnumerator:
         if mapped:
             func = OFFMolecule.from_mapped_smiles
         offmol = func(smiles, allow_undefined_stereo=allow_undefined_stereo)
-        return cls.from_openff(offmol)
+        return cls(offmol)
 
-    @classmethod
-    def from_openff(cls, openff_molecule: "OFFMolecule"):
-        rdmol = openff_molecule.to_rdkit()
-        return cls(rdmol)
-
-    def __init__(self, rdkit_molecule) -> None:
-        # self.original_rdkit_molecule = rdkit_molecule
-        self.rdkit_molecule = Chem.Mol(rdkit_molecule)
+    def __init__(self, openff_molecule: "OFFMolecule"):
+        self.openff_molecule = openff_molecule
+        self.rdkit_molecule = openff_molecule.to_rdkit()
         self.acceptor_donor_fragments = []
-        self.resonance_fragments = []
+        self.resonance_fragments = {}
 
         self.label_molecule()
 
@@ -98,6 +151,18 @@ class ResonanceEnumerator:
         self,
         max_path_length: Optional[int] = None,
     ):
+        """Select the fragments of the molecule that contain acceptor or donor atoms.
+
+        Parameters
+        ----------
+        max_path_length: int, optional
+            The maximum number of bonds between a donor and acceptor to
+            consider.
+
+        Returns
+        -------
+        List[FragmentEnumerator]
+        """
         rdmol = self._clean_molecule()
 
         fragments = [
@@ -119,7 +184,28 @@ class ResonanceEnumerator:
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-    ) -> List[Dict[bytes, Union["FragmentEnumerator", Dict[str, Any]]]]:
+    ) -> List[Dict[bytes, "FragmentEnumerator"]]:
+        """Enumerate the resonance fragments of the molecule.
+
+        Parameters
+        ----------
+        lowest_energy_only: bool, optional
+            Whether to only return the resonance forms with the lowest "energy"
+        max_path_length: int, optional
+            The maximum number of bonds between a donor and acceptor to
+            consider.
+        include_all_transfer_pathways: bool, optional
+            Whether to include resonance forms that have
+            the same formal charges but have different arrangements of bond orders. Such
+            cases occur when there exists multiple electron transfer pathways between
+            electron donor-acceptor pairs e.g. in cyclic systems.
+
+        Returns
+        -------
+        List[Dict[bytes, FragmentEnumerator]]
+            Each item in the list is a dictionary mapping the resonance hash
+            to the actual FragmentEnumerator.
+        """
         self.select_acceptor_donor_fragments(max_path_length=max_path_length)
         fragments: List[Dict[bytes, FragmentEnumerator]] = [
             fragment.enumerate_resonance_forms(
@@ -132,7 +218,7 @@ class ResonanceEnumerator:
         self.resonance_fragments = fragments
         return fragments
 
-    def as_fragment(self):
+    def as_fragment(self) -> "FragmentEnumerator":
         return FragmentEnumerator(self.rdkit_molecule)
 
     def enumerate_resonance_molecules(
@@ -142,6 +228,27 @@ class ResonanceEnumerator:
         include_all_transfer_pathways: bool = False,
         moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
     ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
+        """Combinatorially enumerate all resonance forms of the molecule.
+
+        Parameters
+        ----------
+        lowest_energy_only: bool, optional
+            Whether to only return the resonance forms with the lowest "energy"
+        max_path_length: int, optional
+            The maximum number of bonds between a donor and acceptor to
+            consider.
+        include_all_transfer_pathways: bool, optional
+            Whether to include resonance forms that have
+            the same formal charges but have different arrangements of bond orders. Such
+            cases occur when there exists multiple electron transfer pathways between
+            electron donor-acceptor pairs e.g. in cyclic systems.
+        moleculetype: type, optional
+            The type of molecule to return.
+
+        Returns
+        -------
+        Union[List[rdkit.Chem.rdchem.Mol], List[openff.toolkit.topology.Molecule]]
+        """
 
         fragments = self.enumerate_resonance_fragments(
             lowest_energy_only=lowest_energy_only,
@@ -186,6 +293,40 @@ class ResonanceEnumerator:
 
 
 class FragmentEnumerator:
+    """A class for enumerating the resonance forms of a fragment of a molecule.
+
+    If this has been returned as a result of ResonanceEnumerator,
+    the fragment is the ``rdkit_molecule`` attribute.
+    It can be mapped back to the original molecule using the
+    ``current_to_original_atom_indices`` and
+    ``original_to_current_atom_indices`` attributes.
+
+
+    Parameters
+    ----------
+    rdkit_molecule: rdkit.Chem.rdchem.Mol
+        The molecule to enumerate the resonance forms of.
+    max_path_length: int, optional
+        The maximum number of bonds between a donor and acceptor to
+        consider.
+    clean_molecule: bool, optional
+        Whether to clean the valence of the molecule by removing radicals
+        and kekulizing it.
+
+
+    Attributes
+    ----------
+    rdkit_molecule: rdkit.Chem.rdchem.Mol
+        The molecule to enumerate the resonance forms of.
+    current_to_original_atom_indices: Dict[int, int]
+        A mapping from the current atom indices of ``rdkit_molecule``
+        to the original atom indices of the larger molecule in the
+        :class:`ResonanceEnumerator`.
+    original_to_current_atom_indices: Dict[int, int]
+        A mapping from the original atom indices of the larger molecule
+        in the :class:`ResonanceEnumerator` to the current atom indices
+    """
+
     def __init__(
         self,
         rdkit_molecule: Chem.Mol,

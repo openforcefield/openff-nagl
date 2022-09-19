@@ -1,5 +1,4 @@
 import dgl
-import torch
 
 from .base import ActivationFunction, BaseGCNStack
 

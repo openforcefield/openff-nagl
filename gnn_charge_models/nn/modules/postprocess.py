@@ -1,13 +1,38 @@
 import abc
-from typing import Union
+from typing import ClassVar, Dict, Type, Union
 
 import torch
 
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
 
 
-class PostprocessLayer(torch.nn.Module, abc.ABC):
+class PostprocessLayerMeta(abc.ABCMeta):
+    registry: ClassVar[Dict[str, Type]] = {}
+
+    def __init__(cls, name, bases, namespace, **kwargs):
+        super().__init__(name, bases, namespace, **kwargs)
+        if hasattr(cls, "name") and cls.name:
+            cls.registry[cls.name.lower()] = cls
+
+    @classmethod
+    def get_layer_class(cls, class_name: str):
+        if isinstance(class_name, cls):
+            return class_name
+        if isinstance(type(class_name), cls):
+            return type(class_name)
+        try:
+            return cls.registry[class_name.lower()]
+        except KeyError:
+            raise ValueError(
+                f"Unknown PostprocessLayer type: {class_name}. "
+                f"Supported types: {list(cls.registry.keys())}"
+            )
+
+
+class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta):
     """A layer to apply to the final readout of a neural network."""
+
+    name: ClassVar[str] = ""
 
     @abc.abstractmethod
     def forward(
@@ -26,6 +51,8 @@ class ComputePartialCharges(PostprocessLayer):
             equalization method that accounts for alternate resonance forms." Journal of
             chemical information and computer sciences 43.6 (2003): 1982-1997.
     """
+
+    name: ClassVar[str] = "compute_partial_charges"
 
     @staticmethod
     def _calculate_partial_charges(

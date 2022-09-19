@@ -5,6 +5,8 @@ import torch
 
 
 class ActivationFunction(enum.Enum):
+    """Activation function options"""
+
     Identity = torch.nn.Identity
     Tanh = torch.nn.Tanh
     ReLU = torch.nn.ReLU

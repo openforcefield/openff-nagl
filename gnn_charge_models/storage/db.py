@@ -1,7 +1,6 @@
 import logging
-from typing import TYPE_CHECKING, Dict, List, NamedTuple, Type, Union
+from typing import TYPE_CHECKING, Dict, List
 
-import numpy as np
 from sqlalchemy import (
     Column,
     Enum,
@@ -12,7 +11,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import relationship
 
 from .record import ChargeMethod, WibergBondOrderMethod
 

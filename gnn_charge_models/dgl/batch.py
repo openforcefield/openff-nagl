@@ -2,8 +2,6 @@ from typing import List, Tuple
 
 import dgl.function
 
-from gnn_charge_models.base import ImmutableModel
-
 from .molecule import DGLBase, DGLMolecule
 
 

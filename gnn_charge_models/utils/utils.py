@@ -1,9 +1,6 @@
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Optional, Union
 
 import numpy as np
-
-if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
 
 FloatArrayLike = Union[List, np.ndarray, float]
 
@@ -22,6 +19,7 @@ def round_floats(
 
 
 def assert_same_lengths(*values):
+    """Assert that all values have the same length."""
     try:
         lengths = [len(value) for value in values]
     except TypeError:
@@ -31,12 +29,14 @@ def assert_same_lengths(*values):
 
 
 def is_iterable(obj: Any) -> bool:
+    """Check if an object is iterable."""
     from collections.abc import Iterable
 
     return isinstance(obj, Iterable) and not isinstance(obj, str)
 
 
 def as_iterable(obj: Any) -> Iterable:
+    """Convert an object to an iterable if it isn't one already."""
     if not is_iterable(obj):
         return [obj]
     return obj

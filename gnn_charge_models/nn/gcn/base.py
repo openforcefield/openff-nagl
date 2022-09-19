@@ -1,42 +1,36 @@
 import abc
-import enum
-from typing import (
-    Callable,
-    ClassVar,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-)
+from typing import ClassVar, Dict, Generic, List, Optional, Type, TypeVar
 
 import dgl
 import dgl.nn.pytorch
 import torch.nn
 import torch.nn.functional
-from typing_extensions import Literal
 
 from gnn_charge_models.nn.activation import ActivationFunction
 from gnn_charge_models.nn.base import ContainsLayersMixin
-from gnn_charge_models.utils.utils import is_iterable
 
-# ActivationFunction = Callable[[torch.tensor], torch.Tensor]
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 
 class GCNStackMeta(abc.ABCMeta):
+    """A metaclass for GCN stacks.
+
+    This metaclass is used to register GCN layers by name.
+    """
 
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace, **kwargs)
-        print(namespace, name)
         if hasattr(cls, "layer_type") and cls.layer_type:
             cls.registry[cls.layer_type] = cls
 
     @classmethod
     def get_gcn_class(cls, class_name: str):
+        if isinstance(class_name, cls):
+            return class_name
+        if isinstance(type(class_name), cls):
+            return type(class_name)
         try:
             return cls.registry[class_name]
         except KeyError:
@@ -123,6 +117,7 @@ class BaseGCNStack(
         layer_dropout: Optional[List[float]] = None,
         layer_aggregator_types: Optional[List[str]] = None,
     ):
+        """Create this model with layers with the specified parameters."""
         obj = cls()
 
         n_layers = len(hidden_feature_sizes)
@@ -202,14 +197,13 @@ class BaseGCNStack(
             dropout = cls.default_dropout
         if activation_function is None:
             activation_function = cls.default_activation_function
-        else:
-            activation_function = ActivationFunction.get_value(activation_function)
+        activation = ActivationFunction.get_value(activation_function)
         return cls._create_gcn_layer(
             n_input_features=n_input_features,
             n_output_features=n_output_features,
             aggregator_type=aggregator_type,
             dropout=dropout,
-            activation_function=activation_function,
+            activation_function=activation,
             **kwargs,
         )
 

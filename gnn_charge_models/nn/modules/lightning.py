@@ -27,6 +27,19 @@ def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 class DGLMoleculeLightningModel(pl.LightningModule):
     """A model which applies a graph convolutional step followed by multiple (labelled)
     pooling and readout steps.
+
+    Parameters
+    ----------
+    convolution_module
+        The graph convolutional module.
+    readout_modules
+        A dictionary of readout modules, keyed by the name of the readout.
+    learning_rate
+        The learning rate.
+    loss_function
+        The loss function. This is RMSE by default, but can be any function
+        that takes a predicted and target tensor and returns a scalar loss
+        in the form of a ``torch.Tensor``.
     """
 
     def __init__(
@@ -90,6 +103,57 @@ class DGLMoleculeLightningModel(pl.LightningModule):
 
 
 class DGLMoleculeLightningDataModule(pl.LightningDataModule):
+    """A utility class that makes loading and featurizing train, validation and test
+    sets more compact.
+
+    Parameters
+    ----------
+    atom_features : List[AtomFeature]
+        The set of atom features to compute for each molecule
+    bond_features : List[BondFeature]
+        The set of bond features to compute for each molecule
+    partial_charge_method : Optional[ChargeMethod]
+        The type of partial charges to include in the training labels
+    bond_order_method : Optional[WibergBondOrderMethod]
+        The type of bond orders to include in the training labels
+    training_set_paths : Union[str, Tuple[str]]
+        The path(s) to the training set(s) stored in an SQLite
+        database that can be loaded with an
+        :class:`~gnn_charge_models.storage.store.MoleculeStore`.
+        If multiple paths are provided, the datasets will be concatenated.
+        If no paths are provided, training will not be performed.
+    validation_set_paths : Union[str, Tuple[str]]
+        The path(s) to the validation set(s) stored in an SQLite
+        database that can be loaded with an
+        :class:`~gnn_charge_models.storage.store.MoleculeStore`.
+        If multiple paths are provided, the datasets will be concatenated.
+        If no paths are provided, validation will not be performed.
+    test_set_paths : Union[str, Tuple[str]]
+        The path(s) to the test set(s) stored in an SQLite
+        database that can be loaded with an
+        :class:`~gnn_charge_models.storage.store.MoleculeStore`.
+        If multiple paths are provided, the datasets will be concatenated.
+        If no paths are provided, testing will not be performed.
+    output_path : str
+        The path to pickle the data module in.
+    training_batch_size : Optional[int]
+        The batch size to use for training.
+        If not provided, all data will be in a single batch.
+    validation_batch_size : Optional[int]
+        The batch size to use for validation.
+        If not provided, all data will be in a single batch.
+    test_batch_size : Optional[int]
+        The batch size to use for testing.
+        If not provided, all data will be in a single batch.
+    use_cached_data : bool
+        Whether to simply load any data module found at
+        the ``output_path`` rather re-generating it using the other provided
+        arguments. **No validation is done to ensure the loaded data matches
+        the input arguments so be extra careful when using this option**.
+        If this is false and a file is found at ``output_path`` an exception
+        will be raised.
+    """
+
     @property
     def n_atom_features(self) -> Optional[int]:
         return sum(len(feature) for feature in self.atom_features)
@@ -166,6 +230,12 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         return ConcatDataset(datasets)
 
     def prepare_data(self):
+        """Prepare the data for training, validation, and testing.
+
+        This method will load the data from the provided paths and pickle
+        it in the ``output_path``, as it is not recommended not to assign
+        state in this step.
+        """
         # die if we don't want to use cached data but found it anyway
         if self.output_path.is_file():
             if not self.use_cached_data:

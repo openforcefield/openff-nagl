@@ -2,6 +2,8 @@ import time
 
 
 class PerformanceTimer:
+    """A simple timer class for measuring the performance of a block of code."""
+
     def __init__(
         self,
         logger,

@@ -1,14 +1,6 @@
 import hashlib
 import inspect
-from typing import (
-    Any,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    Type,
-    no_type_check,
-)
+from typing import Any, ClassVar, Dict, List, Optional, Type, no_type_check
 
 import numpy as np
 from openff.units import unit
