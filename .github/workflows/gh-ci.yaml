@@ -35,7 +35,7 @@ jobs:
       env:
         OE_LICENSE_TEXT: ${{ secrets.OE_LICENSE }}
       run: |
-        echo "${OE_LICENSE_TEXT}" > ${OE_LICENSE}
+        echo "${OE_LICENSE_TEXT}" > ~/oe_license.txt
 
     - name: Build information
       run: |
