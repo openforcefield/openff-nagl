@@ -14,19 +14,19 @@ import torch
 import pytorch_lightning as pl
 from openff.toolkit.topology import Molecule as OFFMolecule
 
-from gnn_charge_models.dgl.molecule import DGLMolecule
-from gnn_charge_models.features import FeatureArgs
+from openff.nagl.dgl.molecule import DGLMolecule
+from openff.nagl.features import FeatureArgs
 
-from gnn_charge_models.nn.modules.lightning import DGLMoleculeLightningModel, DGLMoleculeLightningDataModule
-from gnn_charge_models.nn.modules.core import ConvolutionModule, ReadoutModule
-from gnn_charge_models.nn.modules.pooling import PoolAtomFeatures
-from gnn_charge_models.nn.sequential import SequentialLayers
-from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
+from openff.nagl.nn.modules.lightning import DGLMoleculeLightningModel, DGLMoleculeLightningDataModule
+from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
+from openff.nagl.nn.modules.pooling import PoolAtomFeatures
+from openff.nagl.nn.sequential import SequentialLayers
+from openff.nagl.nn.modules.postprocess import ComputePartialCharges
 
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
-from gnn_charge_models.utils.hash import hash_file, hash_dict
+from openff.nagl.utils.hash import hash_file, hash_dict
 
 ExistingFile = click.Path(exists=True, file_okay=True, dir_okay=False)
 

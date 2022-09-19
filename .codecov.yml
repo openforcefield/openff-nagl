@@ -13,4 +13,4 @@ comment:
   flags: null
   paths: null
 ignore:
-  - "gnn-charge-models/_version.py"
+  - "openff/nagl/_version.py"

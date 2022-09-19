@@ -1,4 +1,4 @@
-name: gnn-charge-models-docs
+name: openff-nagl-docs
 channels:
   - conda-forge
 dependencies:

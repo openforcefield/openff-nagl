@@ -19,7 +19,7 @@ defaults:
 
 jobs:
   main_tests:
-    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -53,7 +53,7 @@ jobs:
         architecture: x64
         mamba-version: "*"
         channels: conda-forge, defaults
-        activate-environment: gnn-charge-models-test
+        activate-environment: openff-nagl-test
         auto-update-conda: true
         auto-activate-base: false
         show-channel-urls: true
@@ -69,7 +69,7 @@ jobs:
         conda list
 
     - name: Run tests
-        pytest -n 4 -v --cov=gnn-charge-models --cov-report=xml --color=yes gnn-charge-models/tests/
+        pytest -n 4 -v --cov=openff-nagl --cov-report=xml --color=yes openff/nagl/tests/
 
     - name: codecov
       uses: codecov/codecov-action@v2
@@ -80,7 +80,7 @@ jobs:
 
 
   pylint_check:
-    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -101,11 +101,11 @@ jobs:
       env:
         PYLINTRC: .pylintrc
       run: |
-        pylint gnn-charge-models
+        pylint openff-nagl
 
 
   pypi_check:
-    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -132,13 +132,13 @@ jobs:
 
     - name: Check package build
       run: |
-        DISTRIBUTION=$(ls -t1 dist/gnn-charge-models-*.tar.gz | head -n 1)
-        test -n "${DISTRIBUTION}" || { echo "no distribution dist/gnn-charge-models-*.tar.gz found"; exit 1; }
+        DISTRIBUTION=$(ls -t1 dist/openff-nagl-*.tar.gz | head -n 1)
+        test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff-nagl-*.tar.gz found"; exit 1; }
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
   
   install_from_source_pip:
-    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false
@@ -160,10 +160,10 @@ jobs:
 
     - name: Check success
       run: |
-        python -c "import gnn-charge-models ; print(gnn-charge-models.__version__)"
+        python -c "import openff-nagl ; print(openff.nagl.__version__)"
 
   install_from_source_conda:
-    if: "github.repository == 'lilyminium/gnn-charge-models'"
+    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false
@@ -186,14 +186,14 @@ jobs:
 
     - name: Build from source
       run: |
-        conda create --name gnn-charge-models
-        conda activate gnn-charge-models
-        conda env update --name gnn-charge-models --file devtools/conda-envs/test_env.yaml
-        conda env update --name gnn-charge-models --file docs/requirements.yaml
+        conda create --name openff-nagl
+        conda activate openff-nagl
+        conda env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
+        conda env update --name openff-nagl --file docs/requirements.yaml
         pip install -e .
         conda list
 
     - name: Check success
       run: |
-        conda activate gnn-charge-models
-        python -c "import gnn-charge-models ; print(gnn-charge-models.__version__)"
+        conda activate openff-nagl
+        python -c "import openff-nagl ; print(openff.nagl.__version__)"

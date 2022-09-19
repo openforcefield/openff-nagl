@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=gnn-charge-models
+set SPHINXPROJ=openff-nagl
 
 if "%1" == "" goto help
 

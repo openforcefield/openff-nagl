@@ -5,7 +5,7 @@ To compile the docs, first ensure that Sphinx and the ReadTheDocs theme are inst
 
 ```bash
 conda env create -f requirements.yaml
-conda activate gnn-charge-models-docs
+conda activate openff-nagl-docs
 ```
 
 Once installed, you can use the `Makefile` in this directory to compile static HTML pages by

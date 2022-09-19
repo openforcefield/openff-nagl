@@ -7,7 +7,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gnn_charge_models"
+name = "openff-nagl"
 version = "0.0.0"
 description = "A short description of the project."
 license = { file = "LICENSE" }
@@ -35,11 +35,11 @@ doc = [
 ]
 
 # [project.urls]
-# source = "https://github.com/lilyminium/gnn-charge-models"
-# documentation = "https://gnn-charge-models.readthedocs.io"
+# source = "https://github.com/lilyminium/openff-nagl"
+# documentation = "https://openff-nagl.readthedocs.io"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = [
-    "gnn-charge-models/tests",
+    "openff/nagl/tests",
 ]
