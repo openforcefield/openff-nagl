@@ -1,6 +1,6 @@
 from typing import Any
-from openff.units import unit as off_unit
 
+from openff.units import unit as off_unit
 from pydantic.class_validators import prep_validators
 
 

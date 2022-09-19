@@ -1,10 +1,10 @@
 import abc
-from typing import Generic, TypeVar, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, List, TypeVar
 
 import torch
 
-from .base import Feature
 from .atoms import AtomFeature
+from .base import Feature
 from .bonds import BondFeature
 
 if TYPE_CHECKING:
@@ -25,10 +25,7 @@ class Featurizer(Generic[T]):
             self.features.append(feature)
 
     def featurize(self, molecule: "OFFMolecule") -> torch.Tensor:
-        return torch.hstack([
-            feature.encode(molecule)
-            for feature in self.features
-        ])
+        return torch.hstack([feature.encode(molecule) for feature in self.features])
 
     __call__ = featurize
 

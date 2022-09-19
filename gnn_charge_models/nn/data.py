@@ -1,28 +1,40 @@
-from typing import NamedTuple, Dict, Tuple, TYPE_CHECKING, List, Union, Optional, Callable, Collection
 from collections import defaultdict
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Collection,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+    Union,
+)
 
-import tqdm
 import torch
-from torch.utils.data import ConcatDataset, DataLoader, Dataset
+import tqdm
 from openff.toolkit.topology import Molecule as OFFMolecule
+from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
-from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.dgl.batch import DGLMoleculeBatch
+from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.features import AtomFeature, BondFeature
 from gnn_charge_models.utils.utils import as_iterable
-from .label import LabelPrecomputedMolecule, LabelFunctionLike, EmptyLabeller
 
+from .label import EmptyLabeller, LabelFunctionLike, LabelPrecomputedMolecule
 
 if TYPE_CHECKING:
 
-    from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
+    from gnn_charge_models.storage.record import (
+        ChargeMethod,
+        MoleculeRecord,
+        WibergBondOrderMethod,
+    )
     from gnn_charge_models.storage.store import MoleculeStore
-    from gnn_charge_models.storage.record import MoleculeRecord
 
 
 OpenFFToDGLConverter = Callable[
-    ["OFFMolecule", List[AtomFeature], List[BondFeature]],
-    DGLMolecule
+    ["OFFMolecule", List[AtomFeature], List[BondFeature]], DGLMolecule
 ]
 
 
@@ -53,7 +65,6 @@ class DGLMoleculeDatasetEntry(NamedTuple):
 
 
 class DGLMoleculeDataset(Dataset):
-
     def __len__(self):
         return len(self.entries)
 
@@ -119,8 +130,7 @@ class DGLMoleculeDataset(Dataset):
 
         if not partial_charge_method and not bond_order_method:
             raise ValueError(
-                "Either partial_charge_method or bond_order_method must be "
-                "provided."
+                "Either partial_charge_method or bond_order_method must be " "provided."
             )
         molecule_stores = as_iterable(molecule_stores)
         molecule_records: List["MoleculeRecord"] = [
@@ -135,7 +145,7 @@ class DGLMoleculeDataset(Dataset):
         entries = []
         labeller = LabelPrecomputedMolecule(
             partial_charge_method=partial_charge_method,
-            bond_order_method=bond_order_method
+            bond_order_method=bond_order_method,
         )
         for record in tqdm.tqdm(molecule_records, desc="featurizing molecules"):
             with capture_toolkit_warnings(run=suppress_toolkit_warnings):
@@ -155,14 +165,13 @@ class DGLMoleculeDataset(Dataset):
 
 
 class DGLMoleculeDataLoader(DataLoader):
-
     def __init__(
         self,
         dataset: Union[DGLMoleculeDataset, ConcatDataset],
         batch_size: Optional[int] = 1,
         shuffle: bool = False,
         num_workers: int = 0,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             dataset=dataset,
@@ -170,7 +179,7 @@ class DGLMoleculeDataLoader(DataLoader):
             shuffle=shuffle,
             num_workers=num_workers,
             collate_fn=self._collate,
-            **kwargs
+            **kwargs,
         )
 
     @staticmethod
@@ -187,9 +196,6 @@ class DGLMoleculeDataLoader(DataLoader):
             for label_name, label_value in molecule_labels.items():
                 batched_labels[label_name].append(label_value.reshape(-1, 1))
 
-        batched_labels = {
-            k: torch.vstack(v)
-            for k, v in batched_labels.items()
-        }
+        batched_labels = {k: torch.vstack(v) for k, v in batched_labels.items()}
 
         return batched_molecules, batched_labels

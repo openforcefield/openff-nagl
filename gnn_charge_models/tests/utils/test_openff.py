@@ -1,21 +1,20 @@
-import pytest
-
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule, unit as offunit
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import unit as offunit
 
 from gnn_charge_models.utils.openff import (
-    get_unitless_charge,
+    get_best_rmsd,
     get_openff_molecule_bond_indices,
     get_openff_molecule_formal_charges,
     get_openff_molecule_information,
+    get_unitless_charge,
+    is_conformer_identical,
     map_indexed_smiles,
     normalize_molecule,
-    get_best_rmsd,
-    is_conformer_identical,
     smiles_to_inchi_key,
 )
-
 from gnn_charge_models.utils.utils import transform_coordinates
 
 
@@ -33,12 +32,7 @@ def test_get_unitless_charge(openff_methane_charged):
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
-    assert bond_indices == [
-        (0, 1),
-        (0, 2),
-        (0, 3),
-        (0, 4)
-    ]
+    assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
 
 
 def test_get_openff_molecule_formal_charges(openff_methane_charged):
@@ -75,7 +69,7 @@ def test_smiles_to_inchi_key(smiles, expected):
     "expected_smiles, given_smiles",
     [
         ("CS(=O)(=O)C", "C[S+2]([O-])([O-])C"),
-    ]
+    ],
 )
 def test_normalize_molecule(expected_smiles, given_smiles):
     expected_molecule = OFFMolecule.from_smiles(expected_smiles)
@@ -124,7 +118,7 @@ def test_is_conformer_identical_generated(smiles):
         ordered_conf.copy(),
         scale=1,
         translate=np.random.random(),
-        rotate=np.random.random()
+        rotate=np.random.random(),
     )
     permuted_conf = transformed_conf[permuted_indices, :]
     assert is_conformer_identical(offmol, ordered_conf, ordered_conf)
@@ -135,18 +129,21 @@ def test_is_conformer_identical_generated(smiles):
 
 def test_is_conformer_identical_linear():
     offmol = OFFMolecule.from_smiles("CCC")
-    c_coords = np.array([
-        [1, 0, 0],
-        [2, 0, 0],
-        [3, 0, 0],
-    ], dtype=float)
+    c_coords = np.array(
+        [
+            [1, 0, 0],
+            [2, 0, 0],
+            [3, 0, 0],
+        ],
+        dtype=float,
+    )
     ordered_conf = np.vstack([c_coords, np.random.random((8, 3))])
     permuted_indices = [2, 1, 0, 10, 9, 8, 7, 6, 5, 4, 3]
     permuted_conf = transform_coordinates(
         ordered_conf.copy(),
         scale=1,
         translate=np.random.random(),
-        rotate=np.random.random()
+        rotate=np.random.random(),
     )[permuted_indices]
 
     assert is_conformer_identical(offmol, ordered_conf, permuted_conf)
@@ -186,6 +183,6 @@ def test_get_best_rmsd():
     rmsd = get_best_rmsd(
         offmol,
         offmol.conformers[0].value_in_unit(offunit.angstrom),
-        offmol.conformers[1].value_in_unit(offunit.angstrom)
+        offmol.conformers[1].value_in_unit(offunit.angstrom),
     )
     assert_allclose(rmsd, reference_rmsd)

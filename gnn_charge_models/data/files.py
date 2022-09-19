@@ -9,6 +9,7 @@ Use as ::
 """
 
 __all__ = [
+    "MOLECULE_NORMALIZATION_REACTIONS",
 ]
 
 from pkg_resources import resource_filename

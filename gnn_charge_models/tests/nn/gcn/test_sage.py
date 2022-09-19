@@ -1,15 +1,13 @@
-
-from dgl.nn.pytorch import SAGEConv
 import numpy as np
-import torch
 import pytest
+import torch
+from dgl.nn.pytorch import SAGEConv
 
-from gnn_charge_models.nn.gcn import SAGEConvStack
 from gnn_charge_models.nn.activation import ActivationFunction
+from gnn_charge_models.nn.gcn import SAGEConvStack
 
 
 class TestSAGEConvStack:
-
     def test_default_with_layers(self):
         stack = SAGEConvStack.with_layers(
             n_input_features=1,

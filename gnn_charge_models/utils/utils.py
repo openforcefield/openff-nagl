@@ -1,5 +1,4 @@
-from typing import List, Union, TYPE_CHECKING, Any, Iterable, Optional
-
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Union
 
 import numpy as np
 
@@ -33,6 +32,7 @@ def assert_same_lengths(*values):
 
 def is_iterable(obj: Any) -> bool:
     from collections.abc import Iterable
+
     return isinstance(obj, Iterable) and not isinstance(obj, str)
 
 
@@ -76,11 +76,13 @@ def transform_coordinates(
         scale = np.random.random()
 
     cos_theta, sin_theta = np.cos(rotate), np.sin(rotate)
-    rot_matrix = np.array([
-        [cos_theta, 0.0, -sin_theta],
-        [0.0, 1.0, 0.0],
-        [sin_theta, 0.0, cos_theta],
-    ])
+    rot_matrix = np.array(
+        [
+            [cos_theta, 0.0, -sin_theta],
+            [0.0, 1.0, 0.0],
+            [sin_theta, 0.0, cos_theta],
+        ]
+    )
 
     coordinates = coordinates.reshape((-1, 3))
     centered = coordinates - coordinates.mean(axis=0)

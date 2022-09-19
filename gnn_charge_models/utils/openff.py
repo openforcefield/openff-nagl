@@ -1,10 +1,9 @@
-from typing import List, Union, TYPE_CHECKING, Tuple, Dict
 import contextlib
-
 import json
-import torch
-import numpy as np
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
+import numpy as np
+import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependency
 
@@ -22,28 +21,30 @@ def get_coordinates_in_angstrom(conformer):
 
 def get_unitless_charge(charge, dtype=float):
     from openff.toolkit.topology.molecule import unit as off_unit
+
     return dtype(charge / off_unit.elementary_charge)
 
 
 def get_openff_molecule_bond_indices(molecule: "OFFMolecule") -> List[Tuple[int, int]]:
     return [
-        tuple(sorted((bond.atom1_index, bond.atom2_index)))
-        for bond in molecule.bonds
+        tuple(sorted((bond.atom1_index, bond.atom2_index))) for bond in molecule.bonds
     ]
 
 
 def get_openff_molecule_formal_charges(molecule: "OFFMolecule") -> List[float]:
     from openff.toolkit.topology.molecule import unit as off_unit
+
     # TODO: this division hack should work for both simtk units
     # and pint units. It should probably be removed when we switch to
     # pint only
     return [
-        int(atom.formal_charge / off_unit.elementary_charge)
-        for atom in molecule.atoms
+        int(atom.formal_charge / off_unit.elementary_charge) for atom in molecule.atoms
     ]
 
 
-def get_openff_molecule_information(molecule: "OFFMolecule") -> Dict[str, "torch.Tensor"]:
+def get_openff_molecule_information(
+    molecule: "OFFMolecule",
+) -> Dict[str, "torch.Tensor"]:
     charges = get_openff_molecule_formal_charges(molecule)
     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
     return {
@@ -91,10 +92,7 @@ def _rd_normalize_molecule(
         reaction = rdChemReactions.ReactionFromSmarts(smarts)
         n_iterations = 0
 
-        while (
-            n_iterations < max_iterations
-            and has_changed
-        ):
+        while n_iterations < max_iterations and has_changed:
             n_iterations += 1
             old_smiles = new_smiles
 
@@ -105,9 +103,7 @@ def _rd_normalize_molecule(
             try:
                 ((rdmol,),) = products
             except ValueError:
-                raise ValueError(
-                    f"Reaction produced multiple products: {smarts}"
-                )
+                raise ValueError(f"Reaction produced multiple products: {smarts}")
 
             for atom in rdmol.GetAtoms():
                 atom.SetAtomMapNum(atom.GetIntProp("react_atom_idx") + 1)
@@ -115,17 +111,13 @@ def _rd_normalize_molecule(
             new_smiles = Chem.MolToSmiles(Chem.AddHs(rdmol))
             has_changed = new_smiles != old_smiles
 
-        if (
-            n_iterations == max_iterations
-            and has_changed
-        ):
+        if n_iterations == max_iterations and has_changed:
             raise ValueError(
                 f"{original_smiles} did not normalize after {max_iterations} iterations: "
                 f"{smarts}"
             )
 
-    offmol = OFFMolecule.from_mapped_smiles(
-        new_smiles, allow_undefined_stereo=True)
+    offmol = OFFMolecule.from_mapped_smiles(new_smiles, allow_undefined_stereo=True)
     return offmol
 
 
@@ -138,6 +130,7 @@ def normalize_molecule(
     Normalize a molecule by applying a series of SMARTS reactions.
     """
     from openff.toolkit.topology import Molecule as OFFMolecule
+
     from gnn_charge_models.data.files import MOLECULE_NORMALIZATION_REACTIONS
 
     with open(MOLECULE_NORMALIZATION_REACTIONS, "r") as f:

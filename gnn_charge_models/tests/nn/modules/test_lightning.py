@@ -1,38 +1,40 @@
-import pytest
-import numpy as np
 import os
-import torch
-import pickle
 import pathlib
+import pickle
 
+import numpy as np
+import pytest
+import torch
 from torch.utils.data import ConcatDataset
 
-from gnn_charge_models.nn.sequential import SequentialLayers
-
 from gnn_charge_models.features import (
-    AtomicElement,
     AtomFormalCharge,
+    AtomicElement,
     BondOrder,
 )
-
 from gnn_charge_models.nn.data import DGLMoleculeDataset
-from gnn_charge_models.storage.record import (
-    ChargeMethod,
-    WibergBondOrderMethod,
-    MoleculeRecord, ConformerRecord,
-    PartialChargeRecord,
-    WibergBondOrderRecord
-)
-from gnn_charge_models.storage.store import MoleculeStore
 from gnn_charge_models.nn.gcn.sage import SAGEConvStack
-from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
-from gnn_charge_models.nn.modules.pooling import PoolAtomFeatures, PoolBondFeatures
 from gnn_charge_models.nn.modules.lightning import (
-    DGLMoleculeLightningModel,
-    DGLMoleculeLightningDataModule,
     ConvolutionModule,
+    DGLMoleculeLightningDataModule,
+    DGLMoleculeLightningModel,
     ReadoutModule,
 )
+from gnn_charge_models.nn.modules.pooling import (
+    PoolAtomFeatures,
+    PoolBondFeatures,
+)
+from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
+from gnn_charge_models.nn.sequential import SequentialLayers
+from gnn_charge_models.storage.record import (
+    ChargeMethod,
+    ConformerRecord,
+    MoleculeRecord,
+    PartialChargeRecord,
+    WibergBondOrderMethod,
+    WibergBondOrderRecord,
+)
+from gnn_charge_models.storage.store import MoleculeStore
 
 
 @pytest.fixture()
@@ -130,8 +132,7 @@ class TestDGLMoleculeLightningModel:
     def test_configure_optimizers(self, mock_atom_model):
         optimizer = mock_atom_model.configure_optimizers()
         assert isinstance(optimizer, torch.optim.Adam)
-        assert torch.isclose(torch.tensor(
-            optimizer.defaults["lr"]), torch.tensor(0.01))
+        assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.01))
 
 
 class TestDGLMoleculeLightningDataModule:
@@ -139,7 +140,7 @@ class TestDGLMoleculeLightningDataModule:
     def mock_data_module(self) -> DGLMoleculeLightningDataModule:
         atom_features = [
             AtomicElement(categories=["C", "H", "Cl"]),
-            AtomFormalCharge(categories=[0, 1])
+            AtomFormalCharge(categories=[0, 1]),
         ]
         return DGLMoleculeLightningDataModule(
             atom_features=atom_features,
@@ -161,12 +162,8 @@ class TestDGLMoleculeLightningDataModule:
         store_path = os.path.join(tmpdir, "store.sqlite")
         conformer = ConformerRecord(
             coordinates=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
-            partial_charges=[
-                PartialChargeRecord(method="am1bcc", values=[1.0, -1.0])
-            ],
-            bond_orders=[
-                WibergBondOrderRecord(method="am1", values=[(0, 1, 1.0)])
-            ],
+            partial_charges=[PartialChargeRecord(method="am1bcc", values=[1.0, -1.0])],
+            bond_orders=[WibergBondOrderRecord(method="am1", values=[(0, 1, 1.0)])],
         )
 
         store = MoleculeStore(store_path)
@@ -203,12 +200,10 @@ class TestDGLMoleculeLightningDataModule:
         assert mock_data_module.partial_charge_method is ChargeMethod.AM1BCC
         assert mock_data_module.bond_order_method is WibergBondOrderMethod.AM1
 
-        assert mock_data_module.training_set_paths == [
-            pathlib.Path("train.sqlite")]
+        assert mock_data_module.training_set_paths == [pathlib.Path("train.sqlite")]
         assert mock_data_module.training_batch_size == 1
 
-        assert mock_data_module.validation_set_paths == [
-            pathlib.Path("val.sqlite")]
+        assert mock_data_module.validation_set_paths == [pathlib.Path("val.sqlite")]
         assert mock_data_module.validation_batch_size == 2
 
         assert mock_data_module.test_set_paths == [pathlib.Path("test.sqlite")]
@@ -234,8 +229,7 @@ class TestDGLMoleculeLightningDataModule:
         assert {*labels} == {"am1bcc-charges", "am1-wbo"}
 
     def test_prepare_data_from_multiple_paths(self, mock_data_module, mock_data_store):
-        dataset = mock_data_module._prepare_data_from_paths(
-            [mock_data_store] * 2)
+        dataset = mock_data_module._prepare_data_from_paths([mock_data_store] * 2)
         assert isinstance(dataset, ConcatDataset)
         assert len(dataset.datasets) == 2
         assert len(dataset) == 2
@@ -257,15 +251,13 @@ class TestDGLMoleculeLightningDataModule:
     def test_prepare_cache(self, mock_data_module_with_store, monkeypatch):
         with open(mock_data_module_with_store.output_path, "wb") as file:
             pickle.dump((None, None, None), file)
-        monkeypatch.setattr(mock_data_module_with_store,
-                            "use_cached_data", True)
+        monkeypatch.setattr(mock_data_module_with_store, "use_cached_data", True)
         mock_data_module_with_store.prepare_data()
 
     def test_error_on_cache(self, mock_data_module_with_store, monkeypatch):
         with open(mock_data_module_with_store.output_path, "wb") as file:
             pickle.dump((None, None, None), file)
-        monkeypatch.setattr(mock_data_module_with_store,
-                            "use_cached_data", False)
+        monkeypatch.setattr(mock_data_module_with_store, "use_cached_data", False)
 
         with pytest.raises(FileExistsError):
             mock_data_module_with_store.prepare_data()
@@ -276,7 +268,9 @@ class TestDGLMoleculeLightningDataModule:
         mock_data_module_with_store.setup()
 
         assert isinstance(
-            mock_data_module_with_store._train_data.datasets[0], DGLMoleculeDataset)
+            mock_data_module_with_store._train_data.datasets[0], DGLMoleculeDataset
+        )
         assert isinstance(
-            mock_data_module_with_store._val_data.datasets[0], DGLMoleculeDataset)
+            mock_data_module_with_store._val_data.datasets[0], DGLMoleculeDataset
+        )
         assert mock_data_module_with_store._test_data is None

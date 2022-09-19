@@ -2,18 +2,15 @@ from typing import List
 
 import dgl.function
 import torch
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 
-from openff.toolkit.topology.molecule import (
-    Molecule as OFFMolecule,
-)
-
+from ..features.atoms import AtomFeature
+from ..features.bonds import BondFeature
+from ..features.featurizers import AtomFeaturizer, BondFeaturizer
 from ..utils.openff import (
     get_openff_molecule_bond_indices,
     get_openff_molecule_information,
 )
-from ..features.atoms import AtomFeature
-from ..features.bonds import BondFeature
-from ..features.featurizers import AtomFeaturizer, BondFeaturizer
 
 FORWARD = "forward"
 REVERSE = "reverse"
@@ -69,8 +66,7 @@ def openff_molecule_to_dgl_graph(
 
     # add bond features
     bond_orders = torch.tensor(
-        [bond.bond_order for bond in molecule.bonds],
-        dtype=torch.uint8
+        [bond.bond_order for bond in molecule.bonds], dtype=torch.uint8
     )
 
     bond_feature_tensor = None
@@ -98,8 +94,7 @@ def dgl_heterograph_to_homograph(graph: dgl.DGLHeteroGraph) -> dgl.DGLGraph:
             homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[])
         except KeyError:
             try:
-                homo_graph = dgl.to_homogeneous(
-                    graph, ndata=[], edata=[FEATURE])
+                homo_graph = dgl.to_homogeneous(graph, ndata=[], edata=[FEATURE])
             except KeyError:
                 homo_graph = dgl.to_homogeneous(graph, ndata=[], edata=[])
 

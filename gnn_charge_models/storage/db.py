@@ -1,11 +1,18 @@
-from typing import List, NamedTuple, Union, Type, TYPE_CHECKING, Dict
 import logging
+from typing import TYPE_CHECKING, Dict, List, NamedTuple, Type, Union
 
 import numpy as np
-
-from sqlalchemy import Column, ForeignKey, Integer, PickleType, String, UniqueConstraint, Enum
+from sqlalchemy import (
+    Column,
+    Enum,
+    ForeignKey,
+    Integer,
+    PickleType,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import Session, relationship
 
 from .record import ChargeMethod, WibergBondOrderMethod
 
@@ -24,8 +31,7 @@ class DBPartialChargeSet(DBBase):
     __tablename__ = "partial_charge_sets"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "conformers.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("conformers.id"), nullable=False, index=True)
 
     method = Column(Enum(ChargeMethod), nullable=False)
     values = Column(PickleType, nullable=False)
@@ -40,8 +46,7 @@ class DBWibergBondOrderSet(DBBase):
     __tablename__ = "wiberg_bond_order_sets"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "conformers.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("conformers.id"), nullable=False, index=True)
 
     method = Column(Enum(WibergBondOrderMethod), nullable=False)
     values = Column(PickleType, nullable=False)
@@ -56,15 +61,12 @@ class DBConformerRecord(DBBase):
     __tablename__ = "conformers"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "molecules.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("molecules.id"), nullable=False, index=True)
 
     coordinates = Column(PickleType, nullable=False)
 
-    partial_charges = relationship(
-        "DBPartialChargeSet", cascade="all, delete-orphan")
-    bond_orders = relationship(
-        "DBWibergBondOrderSet", cascade="all, delete-orphan")
+    partial_charges = relationship("DBPartialChargeSet", cascade="all, delete-orphan")
+    bond_orders = relationship("DBWibergBondOrderSet", cascade="all, delete-orphan")
 
     def _store_new_data(
         self,
@@ -96,9 +98,7 @@ class DBMoleculeRecord(DBBase):
 
     conformers = relationship("DBConformerRecord", cascade="all, delete-orphan")
 
-    def store_conformer_records(
-        self, records: List["ConformerRecord"]
-    ):
+    def store_conformer_records(self, records: List["ConformerRecord"]):
         """Store a set of conformer records in an existing DB molecule record."""
 
         if len(self.conformers) > 0:
@@ -108,7 +108,8 @@ class DBMoleculeRecord(DBBase):
             )
 
         conformer_matches = match_conformers(
-            self.mapped_smiles, self.conformers, records)
+            self.mapped_smiles, self.conformers, records
+        )
 
         # Create new database conformers for those unmatched conformers.
         for i, record in enumerate(records):
@@ -129,7 +130,8 @@ class DBMoleculeRecord(DBBase):
             record = records[index]
             for container_name, db_class in DB_CLASSES.items():
                 db_record._store_new_data(
-                    record, self.mapped_smiles, db_class, container_name)
+                    record, self.mapped_smiles, db_class, container_name
+                )
 
 
 class DBGeneralProvenance(DBBase):
@@ -190,6 +192,7 @@ def match_conformers(
     """
 
     from openff.toolkit.topology import Molecule
+
     from gnn_charge_models.utils.openff import is_conformer_identical
 
     molecule = Molecule.from_mapped_smiles(
@@ -201,7 +204,9 @@ def match_conformers(
 
     for q_index, query in enumerate(query_conformers):
         for db_index, db_conformer in enumerate(db_conformers):
-            if is_conformer_identical(molecule, query.coordinates, db_conformer.coordinates):
+            if is_conformer_identical(
+                molecule, query.coordinates, db_conformer.coordinates
+            ):
                 matches[q_index] = db_index
                 break
     return matches

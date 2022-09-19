@@ -1,24 +1,22 @@
-import pytest
-
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose, assert_equal
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule, unit as offunit
-
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import unit as offunit
 
 from gnn_charge_models.features.atoms import (
-    AtomicElement,
+    AtomAverageFormalCharge,
     AtomConnectivity,
+    AtomFormalCharge,
+    AtomicElement,
+    AtomInRingOfSize,
     AtomIsAromatic,
     AtomIsInRing,
-    AtomInRingOfSize,
-    AtomFormalCharge,
-    AtomAverageFormalCharge
 )
-
 from gnn_charge_models.features.bonds import (
+    BondInRingOfSize,
     BondIsAromatic,
     BondIsInRing,
-    BondInRingOfSize,
     BondOrder,
     WibergBondOrder,
 )
@@ -30,10 +28,11 @@ def openff_benzene():
 
 
 @pytest.mark.parametrize(
-    "smiles, connectivity", [
+    "smiles, connectivity",
+    [
         ("C#C", [[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]),
-        ("HCl", [[1, 0, 0, 0], [1, 0, 0, 0]])
-    ]
+        ("HCl", [[1, 0, 0, 0], [1, 0, 0, 0]]),
+    ],
 )
 def test_atom_connectivity(smiles, connectivity):
     feature = AtomConnectivity()
@@ -44,10 +43,11 @@ def test_atom_connectivity(smiles, connectivity):
 
 
 @pytest.mark.parametrize(
-    "smiles, charge", [
+    "smiles, charge",
+    [
         ("[H+]", [[0, 0, 1]]),
         ("[NH2-]", [[0, 1, 0], [1, 0, 0], [1, 0, 0]]),
-    ]
+    ],
 )
 def test_atom_formal_charge(smiles, charge):
     feature = AtomFormalCharge(categories=[0, -1, 1])
@@ -57,7 +57,9 @@ def test_atom_formal_charge(smiles, charge):
     assert_equal(feature(offmol).numpy(), charge)
 
 
-@pytest.mark.parametrize("feature_class", [AtomIsAromatic, AtomIsInRing, BondIsAromatic, BondIsInRing])
+@pytest.mark.parametrize(
+    "feature_class", [AtomIsAromatic, AtomIsInRing, BondIsAromatic, BondIsInRing]
+)
 def test_is_aromatic_and_is_in_ring(openff_benzene, feature_class):
     feature = feature_class()
     assert len(feature) == 1

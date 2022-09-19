@@ -1,7 +1,15 @@
-
 import abc
 import enum
-from typing import Callable, Generic, List, Optional, TypeVar, ClassVar, Dict, Type
+from typing import (
+    Callable,
+    ClassVar,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+)
 
 import dgl
 import dgl.nn.pytorch
@@ -9,10 +17,9 @@ import torch.nn
 import torch.nn.functional
 from typing_extensions import Literal
 
-from gnn_charge_models.utils.utils import is_iterable
-from gnn_charge_models.nn.base import ContainsLayersMixin
-
 from gnn_charge_models.nn.activation import ActivationFunction
+from gnn_charge_models.nn.base import ContainsLayersMixin
+from gnn_charge_models.utils.utils import is_iterable
 
 # ActivationFunction = Callable[[torch.tensor], torch.Tensor]
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
@@ -39,7 +46,13 @@ class GCNStackMeta(abc.ABCMeta):
             )
 
 
-class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], ContainsLayersMixin, abc.ABC, metaclass=GCNStackMeta):
+class BaseGCNStack(
+    torch.nn.ModuleList,
+    Generic[GCNLayerType],
+    ContainsLayersMixin,
+    abc.ABC,
+    metaclass=GCNStackMeta,
+):
     """A wrapper around a stack of GCN graph convolutional layers.
 
     Note:
@@ -113,7 +126,11 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], ContainsLayersMix
         obj = cls()
 
         n_layers = len(hidden_feature_sizes)
-        layer_activation_functions, layer_dropout, layer_aggregator_types = cls._check_input_lengths(
+        (
+            layer_activation_functions,
+            layer_dropout,
+            layer_aggregator_types,
+        ) = cls._check_input_lengths(
             n_layers,
             layer_activation_functions,
             layer_dropout,
@@ -154,7 +171,8 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], ContainsLayersMix
                 n_input_features = self.hidden_feature_sizes[-1]
             except IndexError:
                 raise ValueError(
-                    "Must specify n_input_features if no layers have been created yet.")
+                    "Must specify n_input_features if no layers have been created yet."
+                )
 
         self.hidden_feature_sizes.append(n_output_features)
         self.append(
@@ -185,8 +203,7 @@ class BaseGCNStack(torch.nn.ModuleList, Generic[GCNLayerType], ContainsLayersMix
         if activation_function is None:
             activation_function = cls.default_activation_function
         else:
-            activation_function = ActivationFunction.get_value(
-                activation_function)
+            activation_function = ActivationFunction.get_value(activation_function)
         return cls._create_gcn_layer(
             n_input_features=n_input_features,
             n_output_features=n_output_features,

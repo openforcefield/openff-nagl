@@ -1,5 +1,14 @@
 import abc
-from typing import TYPE_CHECKING, List, Any, Optional, ClassVar, Dict, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Type,
+    Union,
+)
 
 from pydantic import validator
 from pydantic.main import ModelMetaclass

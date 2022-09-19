@@ -1,24 +1,18 @@
-import pytest
 import re
+
 import numpy as np
+import pytest
 
+from gnn_charge_models.storage.db import DB_VERSION, DBInformation
+from gnn_charge_models.storage.session import IncompatibleDBVersion
 from gnn_charge_models.storage.store import (
-    MoleculeStore,
-    MoleculeRecord,
+    ChargeMethod,
     ConformerRecord,
+    MoleculeRecord,
+    MoleculeStore,
     PartialChargeRecord,
-    WibergBondOrderRecord,
     WibergBondOrderMethod,
-    ChargeMethod
-)
-from gnn_charge_models.storage.session import (
-    IncompatibleDBVersion
-)
-from gnn_charge_models.storage.db import (
-    DBInformation,
-    DB_VERSION,
-    DBConformerRecord
-
+    WibergBondOrderRecord,
 )
 
 
@@ -31,8 +25,7 @@ def tmp_molecule_store(tmp_path) -> MoleculeStore:
         conformers=[
             ConformerRecord(
                 coordinates=np.array([[0.0, 0.0, 0.0]]),
-                partial_charges=[PartialChargeRecord(
-                    method="am1", values=[0.5])],
+                partial_charges=[PartialChargeRecord(method="am1", values=[0.5])],
                 bond_orders=[],
             )
         ],
@@ -42,8 +35,7 @@ def tmp_molecule_store(tmp_path) -> MoleculeStore:
         conformers=[
             ConformerRecord(
                 coordinates=np.array([[0.0, 0.0, 0.0]]),
-                partial_charges=[PartialChargeRecord(
-                    method="am1bcc", values=[-0.5])],
+                partial_charges=[PartialChargeRecord(method="am1bcc", values=[-0.5])],
                 bond_orders=[],
             )
         ],
@@ -57,9 +49,7 @@ def tmp_molecule_store(tmp_path) -> MoleculeStore:
                     PartialChargeRecord(method="am1", values=[0.5, -0.5]),
                     PartialChargeRecord(method="am1bcc", values=[0.75, -0.75]),
                 ],
-                bond_orders=[
-                    WibergBondOrderRecord(method="am1", values=[(0, 1, 1.2)])
-                ],
+                bond_orders=[WibergBondOrderRecord(method="am1", values=[(0, 1, 1.2)])],
             )
         ],
     )
@@ -79,12 +69,10 @@ class TestMoleculeStore:
                 ConformerRecord(
                     coordinates=np.arange(6).reshape((2, 3)),
                     partial_charges=[
-                        PartialChargeRecord(
-                            method="am1bcc", values=[0.25, 0.75])
+                        PartialChargeRecord(method="am1bcc", values=[0.25, 0.75])
                     ],
                     bond_orders=[
-                        WibergBondOrderRecord(
-                            method="am1", values=[(0, 1, 0.5)])
+                        WibergBondOrderRecord(method="am1", values=[(0, 1, 0.5)])
                     ],
                 )
             ],
@@ -111,18 +99,17 @@ class TestMoleculeStore:
 
     def test_smiles_property(self, tmp_molecule_store):
         assert set(tmp_molecule_store.get_smiles()) == {
-            "[Ar:1]", "[He:1]", "[Cl:1][Cl:2]"}
+            "[Ar:1]",
+            "[He:1]",
+            "[Cl:1][Cl:2]",
+        }
 
     def test_charge_methods_property(self, tmp_molecule_store):
-        stored_methods = set([
-            x.value
-            for x in tmp_molecule_store.get_charge_methods()
-        ])
+        stored_methods = set([x.value for x in tmp_molecule_store.get_charge_methods()])
         assert stored_methods == {"am1", "am1bcc"}
 
     def test_wbo_methods_property(self, tmp_molecule_store):
-        assert set(tmp_molecule_store.get_wbo_methods()) == {
-            WibergBondOrderMethod.AM1}
+        assert set(tmp_molecule_store.get_wbo_methods()) == {WibergBondOrderMethod.AM1}
 
     def test_db_invalid_version(self, tmp_path):
         """Tests that the correct exception is raised when loading a store
@@ -151,8 +138,7 @@ class TestMoleculeStore:
                     ConformerRecord(
                         coordinates=np.arange(6).reshape((2, 3)),
                         partial_charges=[
-                            PartialChargeRecord(
-                                method="am1", values=[0.50, 1.50])
+                            PartialChargeRecord(method="am1", values=[0.50, 1.50])
                         ],
                     )
                 ],
@@ -172,8 +158,7 @@ class TestMoleculeStore:
 
         with pytest.raises(
             RuntimeError,
-            match=re.escape(
-                "am1bcc partial_charges already stored for [Cl:1][H:2]"),
+            match=re.escape("am1bcc partial_charges already stored for [Cl:1][H:2]"),
         ):
             store.store(hcl_am1bcc)
 
@@ -192,8 +177,8 @@ class TestMoleculeStore:
         assert len(store) == 1
 
         with pytest.raises(
-            RuntimeError, match=re.escape(
-                "am1 bond_orders already stored for [Cl:2][H:1]")
+            RuntimeError,
+            match=re.escape("am1 bond_orders already stored for [Cl:2][H:1]"),
         ):
             store.store(
                 MoleculeRecord(
@@ -203,7 +188,8 @@ class TestMoleculeStore:
                             coordinates=np.arange(6).reshape((2, 3)),
                             bond_orders=[
                                 WibergBondOrderRecord(
-                                    method="am1", values=[(0, 1, 0.5)])
+                                    method="am1", values=[(0, 1, 0.5)]
+                                )
                             ],
                         )
                     ],
@@ -216,8 +202,7 @@ class TestMoleculeStore:
                 ConformerRecord(
                     coordinates=np.zeros((2, 3)),
                     bond_orders=[
-                        WibergBondOrderRecord(
-                            method="am1", values=[(0, 1, 0.5)])
+                        WibergBondOrderRecord(method="am1", values=[(0, 1, 0.5)])
                     ],
                 )
             ],

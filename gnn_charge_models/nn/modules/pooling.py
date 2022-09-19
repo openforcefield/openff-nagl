@@ -1,9 +1,9 @@
 import abc
-from typing import Union, ClassVar, Dict
 import functools
+from typing import ClassVar, Dict, Union
 
-import torch.nn
 import dgl
+import torch.nn
 from dgl.udf import EdgeBatch
 
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
@@ -47,7 +47,9 @@ class PoolBondFeatures(PoolingLayer):
         self.layers = layers
 
     @staticmethod
-    def _apply_edges(edges: EdgeBatch, feature_name: str = "h") -> Dict[str, torch.Tensor]:
+    def _apply_edges(
+        edges: EdgeBatch, feature_name: str = "h"
+    ) -> Dict[str, torch.Tensor]:
         h_u = edges.src[feature_name]
         h_v = edges.dst[feature_name]
         return {feature_name: torch.cat([h_u, h_v], 1)}

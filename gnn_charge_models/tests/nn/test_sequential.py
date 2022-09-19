@@ -1,12 +1,11 @@
-import pytest
-
-import torch
 import numpy as np
+import pytest
+import torch
+
 from gnn_charge_models.nn.sequential import SequentialLayers
 
 
 class TestSequentialLayers:
-
     def test_init_default(self):
         sequential_layers = SequentialLayers.with_layers(
             n_input_features=1,
@@ -45,5 +44,5 @@ class TestSequentialLayers:
             SequentialLayers.with_layers(
                 n_input_features=1,
                 hidden_feature_sizes=[2],
-                layer_activation_functions=["ReLU", "LeakyRELU"]
+                layer_activation_functions=["ReLU", "LeakyRELU"],
             )

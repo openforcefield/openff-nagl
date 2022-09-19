@@ -1,12 +1,13 @@
 from typing import List, Optional, Union
 
-from ..gcn.base import ActivationFunction, GCNStackMeta
+import torch
+
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
+
+from ..gcn.base import ActivationFunction, GCNStackMeta
 from ..sequential import SequentialLayers
 from .pooling import PoolingLayer
 from .postprocess import PostprocessLayer
-
-import torch
 
 
 class ConvolutionModule(torch.nn.Module):

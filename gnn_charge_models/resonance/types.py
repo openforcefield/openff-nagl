@@ -1,5 +1,5 @@
 import enum
-from typing import Literal, Tuple, Dict, NamedTuple
+from typing import Dict, Literal, NamedTuple, Tuple
 
 
 class ResonanceAtomType(enum.Enum):
@@ -59,8 +59,7 @@ RESONANCE_TYPES: Dict[ResonanceTypeKey, ResonanceTypeValue] = {
 }
 
 RESONANCE_KEYS_BY_ID: Dict[int, ResonanceTypeValue] = {
-    value.id: key
-    for key, value in RESONANCE_TYPES.items()
+    value.id: key for key, value in RESONANCE_TYPES.items()
 }
 
 

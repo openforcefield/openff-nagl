@@ -1,14 +1,12 @@
-import pytest
-
 import dgl
+import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
-from gnn_charge_models.dgl.batch import DGLMoleculeBatch, DGLMolecule
+from gnn_charge_models.dgl.batch import DGLMolecule, DGLMoleculeBatch
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
 
 
 class TestDGLMoleculeBatch:
-
     def test_from_molecules(self):
 
         mol1 = DGLMolecule.from_smiles("C")

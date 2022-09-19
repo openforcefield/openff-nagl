@@ -11,9 +11,7 @@ class PostprocessLayer(torch.nn.Module, abc.ABC):
 
     @abc.abstractmethod
     def forward(
-        self,
-        molecule: Union[DGLMolecule, DGLMoleculeBatch],
-        inputs: torch.Tensor
+        self, molecule: Union[DGLMolecule, DGLMoleculeBatch], inputs: torch.Tensor
     ) -> torch.Tensor:
         """Returns the post-processed input vector."""
 
@@ -70,8 +68,8 @@ class ComputePartialCharges(PostprocessLayer):
                     int((i + 1) * n_atoms),
                 )
 
-            # for i in range(n_representations, counter):
-            #     atom_slice = slice(i, i + n_atoms)
+                # for i in range(n_representations, counter):
+                #     atom_slice = slice(i, i + n_atoms)
                 charges = self._calculate_partial_charges(
                     electronegativity[atom_slice],
                     hardness[atom_slice],

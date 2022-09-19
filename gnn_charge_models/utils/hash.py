@@ -1,9 +1,7 @@
-
-
-import pathlib
 import hashlib
 import json
-from typing import Dict, Any
+import pathlib
+from typing import Any, Dict
 
 from .types import Pathlike
 

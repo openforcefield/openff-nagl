@@ -3,9 +3,8 @@ Global pytest fixtures
 """
 
 
-import pytest
-
 import numpy as np
+import pytest
 
 from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
@@ -36,17 +35,18 @@ def openff_methane_uncharged():
 def openff_methane_charged(openff_methane_uncharged):
     from openff.toolkit.topology.molecule import unit
 
-    charges = np.arange(5, dtype=float)/10 * unit.elementary_charge
+    charges = np.arange(5, dtype=float) / 10 * unit.elementary_charge
     openff_methane_uncharged.partial_charges = charges
 
     return openff_methane_uncharged
+
 
 @pytest.fixture()
 def dgl_methane(openff_methane_uncharged):
     return DGLMolecule.from_openff(
         openff_methane_uncharged,
         atom_features=[AtomConnectivity()],
-        bond_features=[BondIsInRing()]
+        bond_features=[BondIsInRing()],
     )
 
 

@@ -1,10 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 
-from gnn_charge_models.storage.db import (
-    match_conformers,
-    DBConformerRecord
-)
+from gnn_charge_models.storage.db import DBConformerRecord, match_conformers
 from gnn_charge_models.storage.record import ConformerRecord
 
 

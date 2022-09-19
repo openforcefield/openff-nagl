@@ -1,16 +1,21 @@
 import os
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import unit as off_unit
 
-from gnn_charge_models.nn.data import DGLMoleculeDataset, DGLMoleculeDataLoader
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
-from gnn_charge_models.storage.store import MoleculeStore, MoleculeRecord, ConformerRecord, PartialChargeRecord, WibergBondOrderRecord
-
-
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule, unit as off_unit
+from gnn_charge_models.nn.data import DGLMoleculeDataLoader, DGLMoleculeDataset
+from gnn_charge_models.storage.store import (
+    ConformerRecord,
+    MoleculeRecord,
+    MoleculeStore,
+    PartialChargeRecord,
+    WibergBondOrderRecord,
+)
 
 
 def label_formal_charge(molecule: OFFMolecule):
@@ -72,7 +77,6 @@ def test_data_set_from_molecule_stores(tmpdir):
         bond_features=[BondIsInRing()],
         partial_charge_method="am1",
         bond_order_method="am1",
-
     )
 
     assert len(data_set) == 1
@@ -93,8 +97,7 @@ def test_data_set_from_molecule_stores(tmpdir):
 def test_data_set_loader():
     data_loader = DGLMoleculeDataLoader(
         dataset=DGLMoleculeDataset.from_openff(
-            molecules=[OFFMolecule.from_smiles(
-                "C"), OFFMolecule.from_smiles("C[O-]")],
+            molecules=[OFFMolecule.from_smiles("C"), OFFMolecule.from_smiles("C[O-]")],
             label_function=label_formal_charge,
             atom_features=[AtomConnectivity()],
         ),

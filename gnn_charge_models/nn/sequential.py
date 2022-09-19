@@ -1,6 +1,7 @@
 from typing import ClassVar, List, Optional
 
 import torch.nn
+
 from .activation import ActivationFunction
 from .base import ContainsLayersMixin
 
@@ -31,9 +32,9 @@ class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
 
         for i in range(n_layers):
             linear = torch.nn.Linear(
-                hidden_feature_sizes[i], hidden_feature_sizes[i + 1])
-            activation = ActivationFunction.get_value(
-                layer_activation_functions[i])
+                hidden_feature_sizes[i], hidden_feature_sizes[i + 1]
+            )
+            activation = ActivationFunction.get_value(layer_activation_functions[i])
             dropout = torch.nn.Dropout(p=layer_dropout[i])
             layers.extend([linear, activation, dropout])
 

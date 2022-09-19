@@ -1,26 +1,30 @@
-from typing import NamedTuple, Optional, Union, Type, TYPE_CHECKING, List, Dict
+"""A module for managing the database session."""
+
 from collections import defaultdict
+from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Type, Union
 
 import numpy as np
 
 from .db import (
     DB_VERSION,
     DBConformerRecord,
+    DBGeneralProvenance,
     DBInformation,
     DBMoleculeRecord,
     DBPartialChargeSet,
-    DBWibergBondOrderSet,
     DBSoftwareProvenance,
-    DBGeneralProvenance,
-
+    DBWibergBondOrderSet,
 )
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
     from .record import MoleculeRecord
 
 
 class DBQueryResult(NamedTuple):
+    """A named tuple representing a single row of a database query."""
+
     molecule_id: int
     molecule_smiles: str
     conformer_id: int
@@ -32,11 +36,7 @@ class DBQueryResult(NamedTuple):
         return {
             self.molecule_id: {
                 "mapped_smiles": self.molecule_smiles,
-                "conformers": {
-                    self.conformer_id: {
-                        "coordinates"
-                    }
-                }
+                "conformers": {self.conformer_id: {"coordinates"}},
             }
         }
 
@@ -69,9 +69,10 @@ class IncompatibleDBVersion(ValueError):
 
 
 class DBSessionManager:
-
     @staticmethod
-    def map_records_by_smiles(db_records: List[DBMoleculeRecord]) -> Dict[str, List[DBMoleculeRecord]]:
+    def map_records_by_smiles(
+        db_records: List[DBMoleculeRecord],
+    ) -> Dict[str, List[DBMoleculeRecord]]:
         """Maps a list of DB records by their SMILES representation.
 
         Parameters
@@ -100,11 +101,8 @@ class DBSessionManager:
         self.session = session
         self._db_info = None
 
-    def query(self, *args, **kwargs):
-        # print(args)
-        return self.db.query(args, **kwargs)
-
     def check_version(self, version=DB_VERSION):
+        """Checks that the database is at the expected version."""
         if not self.db_info:
             db_info = DBInformation(version=version)
             self.db.add(db_info)
@@ -158,17 +156,9 @@ class DBSessionManager:
         """Returns the results of querying the DB for records associated with either a
         set of partial charge or bond order methods
 
-        Returns:
-            A list of tuples of the form::
-
-                (
-                    DBMoleculeRecord.id,
-                    DBMoleculeRecord.smiles,
-                    DBConformerRecord.id,
-                    DBConformerRecord.coordinates,
-                    model_type.method,
-                    model_type.values
-                )
+        Returns
+        -------
+        list[DBQueryResult]
         """
         if allowed_methods is not None and not allowed_methods:
             return []
@@ -208,18 +198,19 @@ class DBSessionManager:
 
         Parameters
         ----------
-        db
-            The current database session.
-        inchi_key
+        inchi_key: str
             The **fixed hydrogen** InChI key representation of the molecule stored in
             the records.
-        records
+        records: List[MoleculeRecord]
             The records to store.
+        existing_db_record: Optional[DBMoleculeRecord]
+            An optional existing DB record to check
         """
 
         if existing_db_record is None:
             existing_db_record = DBMoleculeRecord(
-                inchi_key=inchi_key, mapped_smiles=records[0].mapped_smiles)
+                inchi_key=inchi_key, mapped_smiles=records[0].mapped_smiles
+            )
 
         # Retrieve the DB indexed SMILES that defines the ordering the atoms in each
         # record should have and re-order the incoming records to match.
@@ -242,12 +233,10 @@ class DBSessionManager:
 
         Parameters
         ----------
-        db
-            The current database session.
-        inchi_key
+        inchi_key: str
             The **fixed hydrogen** InChI key representation of the molecule stored in
             the records.
-        records
+        records: List[MoleculeRecord]
             The records to store.
         """
 
@@ -271,8 +260,7 @@ class DBSessionManager:
                 "There are multiple records with the same InChI key and SMILES."
                 f"InChI key: {inchi_key} and SMILES: {multiple}"
             )
-        db_records_by_smiles = {k: v[0]
-                                for k, v in db_records_by_smiles.items()}
+        db_records_by_smiles = {k: v[0] for k, v in db_records_by_smiles.items()}
 
         records_by_smiles = self.map_records_by_smiles(records)
         for smiles, smiles_records in records_by_smiles.items():

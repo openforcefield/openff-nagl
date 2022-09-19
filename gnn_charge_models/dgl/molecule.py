@@ -1,18 +1,21 @@
-from typing import Tuple, ClassVar, Optional
+from typing import ClassVar, Optional, Tuple
 
 import dgl.function
 import torch
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import unit as off_unit
 
-from openff.toolkit.topology.molecule import (
-    Molecule as OFFMolecule,
-    unit as off_unit,
-)
+from gnn_charge_models.resonance.resonance import ResonanceEnumerator
 
 from ..base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
-from .utils import FORWARD, FEATURE, openff_molecule_to_dgl_graph, dgl_heterograph_to_homograph
-from gnn_charge_models.resonance.resonance import ResonanceEnumerator
+from .utils import (
+    FEATURE,
+    FORWARD,
+    dgl_heterograph_to_homograph,
+    openff_molecule_to_dgl_graph,
+)
 
 
 class DGLBase(ImmutableModel):
@@ -86,7 +89,6 @@ class DGLMolecule(DGLBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-
     ):
         offmols = [molecule]
         if enumerate_resonance_forms:

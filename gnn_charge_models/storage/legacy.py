@@ -1,4 +1,3 @@
-
 # def match_conformers(
 #     indexed_smiles: str,
 #     db_conformers: List[DBConformerRecord],

@@ -1,24 +1,21 @@
-
-import pathlib
 import errno
 import os
+import pathlib
 import pickle
-from typing import Dict, Union, Tuple, Callable, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
+import pytorch_lightning as pl
 import torch
 from torch.utils.data import ConcatDataset
-import pytorch_lightning as pl
 
-from gnn_charge_models.nn.modules.core import ConvolutionModule, ReadoutModule
-from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.dgl.batch import DGLMoleculeBatch
-
+from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.features.atoms import AtomFeature
 from gnn_charge_models.features.bonds import BondFeature
+from gnn_charge_models.nn.modules.core import ConvolutionModule, ReadoutModule
 from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
-
-from gnn_charge_models.utils.utils import as_iterable
 from gnn_charge_models.utils.types import Pathlike
+from gnn_charge_models.utils.utils import as_iterable
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 
@@ -93,7 +90,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
 
 
 class DGLMoleculeLightningDataModule(pl.LightningDataModule):
-
     @property
     def n_atom_features(self) -> Optional[int]:
         return sum(len(feature) for feature in self.atom_features)
@@ -153,6 +149,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
     def _prepare_data_from_paths(self, paths: List[Pathlike]) -> ConcatDataset:
         from gnn_charge_models.nn.data import DGLMoleculeDataset
         from gnn_charge_models.storage.store import MoleculeStore
+
         if not paths:
             return
 
@@ -200,4 +197,5 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             if batch_size is None:
                 batch_size = len(data)
             return DGLMoleculeDataLoader(data, batch_size=batch_size)
+
         return dataloader

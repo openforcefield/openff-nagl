@@ -1,16 +1,16 @@
-import pytest
 import numpy as np
+import pytest
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from pydantic import ValidationError
 
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from gnn_charge_models.storage.record import (
     ChargeMethod,
+    ConformerRecord,
+    MoleculeRecord,
     PartialChargeRecord,
+    WibergBondOrder,
     WibergBondOrderMethod,
     WibergBondOrderRecord,
-    WibergBondOrder,
-    MoleculeRecord,
-    ConformerRecord,
 )
 
 
@@ -40,17 +40,12 @@ class TestConformerRecord:
             coordinates=np.ones((4, 3)),
             partial_charges=[
                 PartialChargeRecord(method="am1", values=[0.1, 0.2, 0.3, 0.4]),
-                PartialChargeRecord(method="am1bcc", values=[
-                                    1.0, 2.0, 3.0, 4.0]),
+                PartialChargeRecord(method="am1bcc", values=[1.0, 2.0, 3.0, 4.0]),
             ],
-            bond_orders=[
-                WibergBondOrderRecord(
-                    method="am1", values=[(0, 1, 0.1)])
-            ],
+            bond_orders=[WibergBondOrderRecord(method="am1", values=[(0, 1, 0.1)])],
         )
 
-        charges = {k: tuple(v.values)
-                   for k, v in record.partial_charges.items()}
+        charges = {k: tuple(v.values) for k, v in record.partial_charges.items()}
         assert charges == {
             ChargeMethod.AM1: (0.1, 0.2, 0.3, 0.4),
             ChargeMethod.AM1BCC: (1.0, 2.0, 3.0, 4.0),
@@ -58,28 +53,31 @@ class TestConformerRecord:
 
         bonds = {k: v.values for k, v in record.bond_orders.items()}
         assert bonds == {
-            WibergBondOrderMethod.AM1: [(0, 1, 0.1), ],
+            WibergBondOrderMethod.AM1: [
+                (0, 1, 0.1),
+            ],
         }
 
-    @pytest.mark.parametrize("input_coordinates", [
-        np.arange(6),
-        np.arange(6).reshape((3, 2)),
-    ])
+    @pytest.mark.parametrize(
+        "input_coordinates",
+        [
+            np.arange(6),
+            np.arange(6).reshape((3, 2)),
+        ],
+    )
     def test_validate_coordinates(self, input_coordinates):
         record = ConformerRecord(coordinates=input_coordinates)
         assert record.coordinates.shape == (2, 3)
 
-    @pytest.mark.parametrize("input_coordinates", [
-        np.arange(5),
-        np.arange(4).reshape((-1, 2))
-    ])
+    @pytest.mark.parametrize(
+        "input_coordinates", [np.arange(5), np.arange(4).reshape((-1, 2))]
+    )
     def test_error_for_invalid_coordinates(self, input_coordinates):
         with pytest.raises(ValidationError, match="must be re-shapable"):
             ConformerRecord(coordinates=input_coordinates)
 
 
 class TestMoleculeRecord:
-
     def test_from_openff(self):
         offmol = OFFMolecule.from_smiles("C")
         record = MoleculeRecord.from_openff(
@@ -106,15 +104,13 @@ class TestMoleculeRecord:
                 ConformerRecord(
                     coordinates=np.ones((4, 3)),
                     partial_charges=[
-                        PartialChargeRecord(method="am1", values=[
-                                            0.1, 0.2, 0.3, 0.4]),
+                        PartialChargeRecord(method="am1", values=[0.1, 0.2, 0.3, 0.4]),
                     ],
                 ),
                 ConformerRecord(
                     coordinates=np.zeros((4, 3)),
                     partial_charges=[
-                        PartialChargeRecord(method="am1", values=[
-                                            0.3, 0.4, 0.5, 0.6]),
+                        PartialChargeRecord(method="am1", values=[0.3, 0.4, 0.5, 0.6]),
                     ],
                 ),
             ],
@@ -134,11 +130,11 @@ class TestMoleculeRecord:
             conformers=[
                 ConformerRecord(
                     coordinates=original_coordinates,
-                    partial_charges=[PartialChargeRecord(
-                        method="am1", values=[0.5, 1.5])],
+                    partial_charges=[
+                        PartialChargeRecord(method="am1", values=[0.5, 1.5])
+                    ],
                     bond_orders=[
-                        WibergBondOrderRecord(
-                            method="am1", values=[(0, 1, 0.2)])
+                        WibergBondOrderRecord(method="am1", values=[(0, 1, 0.2)])
                     ],
                 )
             ],
@@ -150,15 +146,13 @@ class TestMoleculeRecord:
         reordered_conformer = reordered_record.conformers[0]
 
         assert np.allclose(
-            reordered_conformer.coordinates,
-            np.flipud(original_coordinates)
+            reordered_conformer.coordinates, np.flipud(original_coordinates)
         )
 
         assert np.allclose(
-            reordered_conformer.partial_charges[ChargeMethod.AM1].values,
-            [1.5, 0.5]
+            reordered_conformer.partial_charges[ChargeMethod.AM1].values, [1.5, 0.5]
         )
         assert np.allclose(
             reordered_conformer.bond_orders[WibergBondOrderMethod.AM1].values,
-            [(1, 0, 0.2)]
+            [(1, 0, 0.2)],
         )

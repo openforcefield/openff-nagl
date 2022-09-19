@@ -1,7 +1,7 @@
 import dgl
 import torch
 
-from .base import BaseGCNStack, ActivationFunction
+from .base import ActivationFunction, BaseGCNStack
 
 
 class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):
@@ -30,5 +30,4 @@ class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):
             activation=activation_function,
             feat_drop=dropout,
             aggregator_type=aggregator_type,
-
         )

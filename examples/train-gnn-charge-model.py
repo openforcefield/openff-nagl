@@ -1,6 +1,7 @@
-from typing import Tuple, List, Union, Dict, Any
+from typing import Tuple, Union, Dict, Any
 import yaml
 import os
+import pickle
 
 import rich
 from pprint import pprint
@@ -21,6 +22,9 @@ from gnn_charge_models.nn.modules.core import ConvolutionModule, ReadoutModule
 from gnn_charge_models.nn.modules.pooling import PoolAtomFeatures
 from gnn_charge_models.nn.sequential import SequentialLayers
 from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
+
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 
 from gnn_charge_models.utils.hash import hash_file, hash_dict
 
@@ -237,10 +241,38 @@ def train(
     print(f"Using {n_gpus} GPUs")
 
     version_string = (
-        f"{training_batch_size}-"
-        f"{n_gcn_layers}-"
-        f"{n_gcn_hidden_features}-"
-        f"{n_am1_layers}-"
-        f"{n_am1_hidden_features}-"
-        f"{learning_rate}"
+        f"tb-{training_batch_size}_"
+        f"gcn-{n_gcn_layers}_"
+        f"gcnfeat-{n_gcn_hidden_features}_"
+        f"am1-{n_am1_layers}_"
+        f"am1feat-{n_am1_hidden_features}_"
+        f"lr-{learning_rate}"
     )
+
+    os.makedirs(output_directory, exist_ok=True)
+    logger = TensorBoardLogger(
+        output_directory, name="default",
+        version=version_string,
+    )
+
+    trainer = pl.Trainer(
+        gpus=n_gpus,
+        min_epochs=n_epochs,
+        max_epochs=n_epochs,
+        logger=logger,
+        callbacks=[
+            ModelCheckpoint(save_top_k=3, monitor="val_loss"),
+            TQDMProgressBar(),
+        ],
+    )
+
+    trainer.fit(model, datamodule=data_module)
+
+    metrics_file = os.path.join(
+        output_directory, "default", version_string, "metrics.pkl")
+
+    with open(metrics_file, "wb") as f:
+        pickle.dump((trainer.callback_metrics, trainer.logged_metrics), f)
+
+    if test_set_paths is not None:
+        trainer.test(model, data_module)

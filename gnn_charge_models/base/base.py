@@ -1,14 +1,19 @@
 import hashlib
 import inspect
-from typing import Any, Dict, Optional, Type, ClassVar, List, no_type_check, Tuple
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Type,
+    no_type_check,
+)
 
-
-from pydantic import BaseModel, validator
-from pydantic.errors import DictError
 import numpy as np
-import networkx as nx
 from openff.units import unit
-from rdkit import Chem
+from pydantic import BaseModel
+from pydantic.errors import DictError
 
 from ..utils.utils import round_floats
 
@@ -50,10 +55,7 @@ class MutableModel(BaseModel):
     @classmethod
     def _get_properties(cls) -> Dict[str, property]:
         return dict(
-            inspect.getmembers(
-                cls,
-                predicate=lambda x: isinstance(x, property)
-            )
+            inspect.getmembers(cls, predicate=lambda x: isinstance(x, property))
         )
 
     @no_type_check
@@ -116,8 +118,7 @@ class MutableModel(BaseModel):
         if decimals is not None:
             for field in self._float_fields:
                 if field in data:
-                    data[field] = round_floats(data[field],
-                                               decimals=decimals)
+                    data[field] = round_floats(data[field], decimals=decimals)
             with np.printoptions(precision=16):
                 return dump(data, default=self.__json_encoder__)
         return dump(data, default=self.__json_encoder__)
@@ -126,19 +127,19 @@ class MutableModel(BaseModel):
         return round_floats(obj, decimals=self._float_decimals)
 
     def to_json(self):
-        return self.json(sort_keys=True, indent=2, separators=(",", ": "),)
+        return self.json(
+            sort_keys=True,
+            indent=2,
+            separators=(",", ": "),
+        )
 
     @classmethod
     def _from_dict(cls, **kwargs):
-        dct = {
-            k: kwargs[k]
-            for k in kwargs
-            if k in cls.__fields__
-        }
+        dct = {k: kwargs[k] for k in kwargs if k in cls.__fields__}
         return cls(**dct)
 
     @classmethod
-    def validate(cls: Type['MutableModel'], value: Any) -> 'MutableModel':
+    def validate(cls: Type["MutableModel"], value: Any) -> "MutableModel":
         if isinstance(value, dict):
             return cls(**value)
         elif isinstance(value, cls):
@@ -177,4 +178,3 @@ class MutableModel(BaseModel):
 class ImmutableModel(MutableModel):
     class Config(MutableModel.Config):
         allow_mutation = False
-

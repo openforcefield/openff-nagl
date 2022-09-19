@@ -1,17 +1,15 @@
 import copy
 import enum
 from collections import defaultdict
-
-from typing import List, Tuple, Dict, Optional, NamedTuple
-
-from gnn_charge_models.base.array import Array
-from gnn_charge_models.base.quantity import Quantity
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
 from openff.units import unit as openff_unit
 from pydantic import validator
 
+from gnn_charge_models.base.array import Array
 from gnn_charge_models.base.base import ImmutableModel
+from gnn_charge_models.base.quantity import Quantity
 from gnn_charge_models.utils.openff import map_indexed_smiles
 
 
@@ -24,6 +22,7 @@ class ChargeMethod(enum.Enum):
     """
     The method used to calculate the partial charges.
     """
+
     AM1 = "am1"
     AM1BCC = "am1bcc"
 
@@ -48,6 +47,7 @@ class PartialChargeRecord(Record):
     def _validate_type(cls, v):
         if hasattr(v, "value_in_unit"):
             from openff.toolkit.topology.molecule import unit as toolkit_unit
+
             v = v.value_in_unit(toolkit_unit.elementary_charge)
         elif isinstance(v, openff_unit.Quantity):
             v = v.m_as(openff_unit.elementary_charge)
@@ -116,9 +116,7 @@ class WibergBondOrderRecord(Record):
     def map_to(self, mapping: Dict[int, int]):
         return type(self)(
             method=self.method,
-            values=[
-                bond.map_to(mapping) for bond in self.values
-            ],
+            values=[bond.map_to(mapping) for bond in self.values],
         )
 
 
@@ -131,6 +129,7 @@ class ConformerRecord(Record):
     def _validate_coordinate_type(cls, v):
         if hasattr(v, "value_in_unit"):
             from openff.toolkit.topology.molecule import unit as toolkit_unit
+
             v = v.value_in_unit(toolkit_unit.angstrom)
         elif isinstance(v, openff_unit.Quantity):
             v = v.m_as(openff_unit.angstrom)
@@ -186,12 +185,20 @@ class MoleculeRecord(Record):
         bond_order_methods: Tuple[WibergBondOrderMethod] = tuple(),
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
-        rms_cutoff: float = 0.05
+        rms_cutoff: float = 0.05,
     ):
         from openff.toolkit.topology.molecule import unit as off_unit
+
         from gnn_charge_models.storage.record import (
-            PartialChargeRecord, WibergBondOrderRecord, WibergBondOrder, ConformerRecord)
-        from gnn_charge_models.utils.openff import get_unitless_charge, get_coordinates_in_angstrom
+            ConformerRecord,
+            PartialChargeRecord,
+            WibergBondOrder,
+            WibergBondOrderRecord,
+        )
+        from gnn_charge_models.utils.openff import (
+            get_coordinates_in_angstrom,
+            get_unitless_charge,
+        )
 
         partial_charge_methods = [
             ChargeMethod(method) for method in partial_charge_methods
@@ -218,10 +225,7 @@ class MoleculeRecord(Record):
                 )
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[
-                        get_unitless_charge(x)
-                        for x in molecule.partial_charges
-                    ],
+                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
                 )
 
             bond_order_sets = {}
@@ -233,8 +237,7 @@ class MoleculeRecord(Record):
                 bond_order_sets[method] = WibergBondOrderRecord(
                     method=method,
                     values=[
-                        WibergBondOrder.from_openff(bond)
-                        for bond in molecule.bonds
+                        WibergBondOrder.from_openff(bond) for bond in molecule.bonds
                     ],
                 )
 
@@ -251,15 +254,20 @@ class MoleculeRecord(Record):
             conformers=conformer_records,
         )
 
-    def to_openff(self, partial_charge_method: Optional[ChargeMethod] = None, bond_order_method: Optional[WibergBondOrderMethod] = None):
-        from openff.toolkit.topology.molecule import Molecule, unit as off_unit
+    def to_openff(
+        self,
+        partial_charge_method: Optional[ChargeMethod] = None,
+        bond_order_method: Optional[WibergBondOrderMethod] = None,
+    ):
+        from openff.toolkit.topology.molecule import Molecule
+        from openff.toolkit.topology.molecule import unit as off_unit
 
         offmol = Molecule.from_mapped_smiles(
-            self.mapped_smiles, allow_undefined_stereo=True)
+            self.mapped_smiles, allow_undefined_stereo=True
+        )
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
-            offmol.partial_charges = np.array(
-                charges) * off_unit.elementary_charge
+            offmol.partial_charges = np.array(charges) * off_unit.elementary_charge
 
         if bond_order_method:
             bond_orders = self.average_bond_orders(bond_order_method)
@@ -271,13 +279,17 @@ class MoleculeRecord(Record):
 
     def get_partial_charges(self, charge_model: ChargeMethod) -> Array[float]:
         charge_model = ChargeMethod(charge_model)
-        return np.array([
-            conformer.partial_charges[charge_model].values
-            for conformer in self.conformers
-            if charge_model in conformer.partial_charges
-        ])
+        return np.array(
+            [
+                conformer.partial_charges[charge_model].values
+                for conformer in self.conformers
+                if charge_model in conformer.partial_charges
+            ]
+        )
 
-    def get_bond_orders(self, bond_order_method: WibergBondOrderMethod) -> Dict[Tuple[int, int], List[float]]:
+    def get_bond_orders(
+        self, bond_order_method: WibergBondOrderMethod
+    ) -> Dict[Tuple[int, int], List[float]]:
         bond_order_method = WibergBondOrderMethod(bond_order_method)
         all_bond_orders = [
             wbo
@@ -289,17 +301,13 @@ class MoleculeRecord(Record):
         orders = defaultdict(list)
         for wbo in all_bond_orders:
             orders[wbo.sorted_atom_indices].append(wbo.bond_order)
-        return {
-            k: orders[k]
-            for k in sorted(orders)
-        }
+        return {k: orders[k] for k in sorted(orders)}
 
-    def average_bond_orders(self, bond_order_method: WibergBondOrderMethod) -> Dict[Tuple[int, int], float]:
+    def average_bond_orders(
+        self, bond_order_method: WibergBondOrderMethod
+    ) -> Dict[Tuple[int, int], float]:
         bond_orders = self.get_bond_orders(bond_order_method)
-        return {
-            k: np.mean(v)
-            for k, v in bond_orders.items()
-        }
+        return {k: np.mean(v) for k, v in bond_orders.items()}
 
     def average_partial_charges(self, charge_model: ChargeMethod) -> Array[float]:
         return np.mean(self.get_partial_charges(charge_model), axis=0)
@@ -314,7 +322,6 @@ class MoleculeRecord(Record):
         return type(self)(
             mapped_smiles=target_mapped_smiles,
             conformers=[
-                conformer.map_to(self_to_target)
-                for conformer in self.conformers
+                conformer.map_to(self_to_target) for conformer in self.conformers
             ],
         )

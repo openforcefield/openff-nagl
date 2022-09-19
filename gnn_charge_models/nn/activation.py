@@ -13,10 +13,7 @@ class ActivationFunction(enum.Enum):
 
     @classmethod
     def _lowercase(cls):
-        return {
-            name.lower(): value
-            for name, value in cls.__members__.items()
-        }
+        return {name.lower(): value for name, value in cls.__members__.items()}
 
     @classmethod
     def get(cls, name: str) -> "ActivationFunction":
@@ -35,4 +32,3 @@ class ActivationFunction(enum.Enum):
             return cls.get(name).value()
         except ValueError:
             return name
-

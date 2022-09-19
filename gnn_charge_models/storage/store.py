@@ -1,37 +1,33 @@
 import logging
 import pathlib
+import time
 from collections import defaultdict
 from contextlib import contextmanager
-import time
 from typing import ContextManager, Dict, List, Optional, Tuple
-
-from gnn_charge_models.utils.types import Pathlike
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from tqdm import tqdm
 
+from gnn_charge_models.utils.time import PerformanceTimer
+from gnn_charge_models.utils.types import Pathlike
+from gnn_charge_models.utils.utils import as_iterable
+
 from .db import (
     DBBase,
+    DBMoleculeRecord,
     DBPartialChargeSet,
     DBWibergBondOrderSet,
-    DBMoleculeRecord,
 )
-
 from .record import (
     ChargeMethod,
-    WibergBondOrderMethod,
+    ConformerRecord,
+    MoleculeRecord,
     PartialChargeRecord,
+    WibergBondOrderMethod,
     WibergBondOrderRecord,
-    ConformerRecord, MoleculeRecord,
 )
-from .session import (
-    DBSessionManager,
-    DBQueryResult
-)
-
-from gnn_charge_models.utils.utils import as_iterable
-from gnn_charge_models.utils.time import PerformanceTimer
+from .session import DBQueryResult, DBSessionManager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -73,8 +69,7 @@ def db_columns_to_models(
             molecule["smiles"] = result.molecule_smiles
             conformer = molecule["conformers"][result.conformer_id]
             conformer["coordinates"] = result.conformer_coordinates
-            model = model_type.construct(
-                method=result.method, values=result.values)
+            model = model_type.construct(method=result.method, values=result.values)
             conformer[model_type][result.method] = model
 
     records = []
@@ -89,7 +84,8 @@ def db_columns_to_models(
             conformers.append(conformer)
 
         molecule = MoleculeRecord.construct(
-            mapped_smiles=molecule_args["smiles"], conformers=conformers)
+            mapped_smiles=molecule_args["smiles"], conformers=conformers
+        )
         records.append(molecule)
 
     return records
@@ -117,7 +113,9 @@ class MoleculeStore:
         DBBase.metadata.create_all(self.engine)
 
         self._sessionmaker = sessionmaker(
-            autocommit=False, autoflush=False, bind=self.engine,
+            autocommit=False,
+            autoflush=False,
+            bind=self.engine,
         )
 
         with self._get_session() as db:
@@ -155,8 +153,10 @@ class MoleculeStore:
         """
 
         with self._get_session() as db:
-            db.set_provenance(general_provenance=general_provenance,
-                              software_provenance=software_provenance)
+            db.set_provenance(
+                general_provenance=general_provenance,
+                software_provenance=software_provenance,
+            )
             self.general_provenance = db.get_general_provenance()
             self.software_provenance = db.get_software_provenance()
 
@@ -165,7 +165,8 @@ class MoleculeStore:
 
         with self._get_session() as db:
             return [
-                method for (method,) in db.db.query(DBPartialChargeSet.method).distinct()
+                method
+                for (method,) in db.db.query(DBPartialChargeSet.method).distinct()
             ]
 
     def get_wbo_methods(self) -> List[str]:
@@ -173,13 +174,15 @@ class MoleculeStore:
 
         with self._get_session() as db:
             return [
-                method for (method,) in db.db.query(DBWibergBondOrderSet.method).distinct()
+                method
+                for (method,) in db.db.query(DBWibergBondOrderSet.method).distinct()
             ]
 
     def get_smiles(self) -> List[str]:
         with self._get_session() as db:
             return [
-                smiles for (smiles,) in db.db.query(DBMoleculeRecord.mapped_smiles).distinct()
+                smiles
+                for (smiles,) in db.db.query(DBMoleculeRecord.mapped_smiles).distinct()
             ]
 
     def retrieve(
@@ -200,10 +203,12 @@ class MoleculeStore:
         """
         if partial_charge_methods is not None:
             partial_charge_methods = [
-                ChargeMethod(x) for x in as_iterable(partial_charge_methods)]
+                ChargeMethod(x) for x in as_iterable(partial_charge_methods)
+            ]
         if bond_order_methods is not None:
             bond_order_methods = [
-                WibergBondOrderMethod(x) for x in as_iterable(bond_order_methods)]
+                WibergBondOrderMethod(x) for x in as_iterable(bond_order_methods)
+            ]
 
         with self._get_session() as db:
             db_partial_charge_columns = []
@@ -212,7 +217,7 @@ class MoleculeStore:
             with PerformanceTimer(
                 LOGGER,
                 start_message="performing SQL queries",
-                end_message="performed SQL query"
+                end_message="performed SQL query",
             ):
                 db_partial_charge_columns = db.query_by_method(
                     DBPartialChargeSet,
@@ -220,8 +225,7 @@ class MoleculeStore:
                 )
 
                 db_bond_order_columns = db.query_by_method(
-                    DBWibergBondOrderSet,
-                    allowed_methods=bond_order_methods
+                    DBWibergBondOrderSet, allowed_methods=bond_order_methods
                 )
 
             with PerformanceTimer(
@@ -235,7 +239,11 @@ class MoleculeStore:
 
         return records
 
-    def store(self, records: Tuple[MoleculeRecord] = tuple(), suppress_toolkit_warnings: bool = True):
+    def store(
+        self,
+        records: Tuple[MoleculeRecord] = tuple(),
+        suppress_toolkit_warnings: bool = True,
+    ):
         """Store the molecules and their computed properties in the data store.
 
         Parameters
@@ -243,7 +251,10 @@ class MoleculeStore:
         records
             The records to store.
         """
-        from gnn_charge_models.utils.openff import smiles_to_inchi_key, capture_toolkit_warnings
+        from gnn_charge_models.utils.openff import (
+            capture_toolkit_warnings,
+            smiles_to_inchi_key,
+        )
 
         if isinstance(records, MoleculeRecord):
             records = [records]
@@ -257,7 +268,6 @@ class MoleculeStore:
 
             with self._get_session() as db:
                 for inchi_key, inchi_records in tqdm(
-                    records_by_inchi_key.items(),
-                    desc="storing grouped records"
+                    records_by_inchi_key.items(), desc="storing grouped records"
                 ):
                     db.store_records_with_inchi_key(inchi_key, inchi_records)

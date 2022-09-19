@@ -1,15 +1,15 @@
-import pytest
-
-import torch
 import numpy as np
-
+import pytest
+import torch
 
 from gnn_charge_models.dgl.molecule import DGLMolecule
-from gnn_charge_models.nn.modules.pooling import PoolAtomFeatures, PoolBondFeatures
+from gnn_charge_models.nn.modules.pooling import (
+    PoolAtomFeatures,
+    PoolBondFeatures,
+)
 
 
 class BaseTestFeatures:
-
     @pytest.fixture
     def array(self):
         return np.arange(5).reshape(-1, 1)
@@ -22,14 +22,12 @@ class BaseTestFeatures:
 
 
 class TestPoolAtomFeatures(BaseTestFeatures):
-
     def test_forward(self, featurized_molecule, array):
         features = PoolAtomFeatures().forward(featurized_molecule).numpy()
         assert np.allclose(features, array)
 
 
 class TestPoolBondFeatures(BaseTestFeatures):
-
     def test_forward(self, featurized_molecule, array):
         bond_pool_layer = PoolBondFeatures(torch.nn.Identity(8))
         features = bond_pool_layer.forward(featurized_molecule).numpy()

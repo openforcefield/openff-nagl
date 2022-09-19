@@ -1,15 +1,12 @@
 import pytest
-
 import torch
+from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from torch.testing import assert_close
-from openff.toolkit.topology.molecule import (
-    Molecule as OFFMolecule,
-)
 
 from gnn_charge_models.dgl.utils import (
+    dgl_heterograph_to_homograph,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
-    dgl_heterograph_to_homograph
 )
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
 
@@ -33,11 +30,14 @@ def test_openff_molecule_to_base_dgl_graph(methane_dgl_heterograph):
         ([AtomConnectivity()], []),
         ([], [BondIsInRing()]),
         ([AtomConnectivity()], [BondIsInRing()]),
-    ]
+    ],
 )
-def test_openff_molecule_to_dgl_graph(openff_methane_uncharged, atom_features, bond_features):
+def test_openff_molecule_to_dgl_graph(
+    openff_methane_uncharged, atom_features, bond_features
+):
     graph = openff_molecule_to_dgl_graph(
-        openff_methane_uncharged, atom_features, bond_features)
+        openff_methane_uncharged, atom_features, bond_features
+    )
     assert graph.number_of_nodes() == 5
     assert graph.number_of_edges() == 8
 
@@ -46,13 +46,9 @@ def test_openff_molecule_to_dgl_graph(openff_methane_uncharged, atom_features, b
         assert atom_tensor.shape == ((5, 4))
         assert_close(
             atom_tensor,
-            torch.Tensor([
-                [0, 0, 0, 1],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0]
-            ])
+            torch.Tensor(
+                [[0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]
+            ),
         )
 
     for direction in ("forward", "reverse"):

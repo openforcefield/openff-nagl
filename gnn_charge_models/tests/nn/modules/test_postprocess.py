@@ -1,9 +1,8 @@
-
-import torch
 import numpy as np
+import torch
 
-from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
 from gnn_charge_models.dgl import DGLMolecule, DGLMoleculeBatch
+from gnn_charge_models.nn.modules.postprocess import ComputePartialCharges
 
 # @pytest.fixture
 # def dgl_carboxylate
@@ -17,13 +16,9 @@ def test_calculate_partial_charges_neutral():
     ).numpy()
 
     assert np.isclose(charges.sum(), 0.0)
-    expected = np.array([
-        -0.03509676,
-        0.00877419,
-        0.00877419,
-        0.00877419,
-        0.00877419
-    ]).reshape((-1, 1))
+    expected = np.array(
+        [-0.03509676, 0.00877419, 0.00877419, 0.00877419, 0.00877419]
+    ).reshape((-1, 1))
     assert np.allclose(charges, expected)
 
 
@@ -35,13 +30,9 @@ def test_calculate_partial_charges_charged():
     ).numpy()
 
     assert np.isclose(charges.sum(), -1.0)
-    expected = np.array([
-        -0.05438471,
-        -0.91055036,
-        -0.01168823,
-        -0.01168823,
-        -0.01168823
-    ]).reshape((-1, 1))
+    expected = np.array(
+        [-0.05438471, -0.91055036, -0.01168823, -0.01168823, -0.01168823]
+    ).reshape((-1, 1))
     assert np.allclose(charges, expected)
 
 
@@ -57,13 +48,15 @@ def test_compute_charges_forward(dgl_methane):
     )
     charges = ComputePartialCharges().forward(dgl_methane, inputs)
     assert np.isclose(charges.sum(), 0.0)
-    expected = np.array([
-        -0.0351,
-        0.0088,
-        0.0088,
-        0.0088,
-        0.0088,
-    ]).reshape((-1, 1))
+    expected = np.array(
+        [
+            -0.0351,
+            0.0088,
+            0.0088,
+            0.0088,
+            0.0088,
+        ]
+    ).reshape((-1, 1))
     assert np.allclose(charges, expected, atol=1e-4)
 
 
@@ -99,13 +92,15 @@ def test_compute_charges_forward_batched(openff_carboxylate):
     # The carboxylate oxygen charges should be identical.
     assert np.allclose(partial_charges[2], partial_charges[3])
 
-    expected = np.array([
-        [-0.1087],
-        [-0.1826],
-        [-0.3543],
-        [-0.3543],
-        [0.0323],
-        [-0.0323],
-    ])
+    expected = np.array(
+        [
+            [-0.1087],
+            [-0.1826],
+            [-0.3543],
+            [-0.3543],
+            [0.0323],
+            [-0.0323],
+        ]
+    )
 
     assert np.allclose(partial_charges, expected, atol=1e-4)

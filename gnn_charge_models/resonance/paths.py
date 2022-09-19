@@ -1,9 +1,9 @@
-from typing import Optional, Generator, List, Tuple
+from typing import Generator, List, Optional, Tuple
+
 from rdkit import Chem
 
 
 class PathGenerator:
-
     def __init__(self, rdkit_molecule: Chem.Mol):
         self.rdkit_molecule = Chem.Mol(rdkit_molecule)
         self.n_atoms = self.rdkit_molecule.GetNumAtoms()
@@ -14,9 +14,8 @@ class PathGenerator:
         for bond in atom.GetBonds():
             yield bond.GetOtherAtomIdx(ix)
 
-
     def all_simple_paths(
-        self, 
+        self,
         source: int,
         target: int,
         cutoff: Optional[int] = None,
@@ -58,7 +57,7 @@ class PathGenerator:
         key = (source, target)
         if key in self.cache:
             return self.cache[key]
-        
+
         paths = tuple(
             tuple(path)
             for path in self.all_simple_paths(source, target, cutoff)
@@ -67,4 +66,3 @@ class PathGenerator:
         self.cache[key] = paths
         self.cache[key[::-1]] = tuple(x[::-1] for x in paths)
         return paths
-    

@@ -1,12 +1,16 @@
 import abc
 import copy
-from typing import TYPE_CHECKING, Dict, Callable, Union, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, Union
 
 import torch
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
-    from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
+
+    from gnn_charge_models.storage.record import (
+        ChargeMethod,
+        WibergBondOrderMethod,
+    )
 
 
 class LabelFunction(abc.ABC):
@@ -24,11 +28,15 @@ class EmptyLabeller(LabelFunction):
 
 
 class LabelPrecomputedMolecule(LabelFunction):
-    def __init__(self,
-                 partial_charge_method: Optional["ChargeMethod"] = None,
-                 bond_order_method: Optional["WibergBondOrderMethod"] = None,
-                 ):
-        from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
+    def __init__(
+        self,
+        partial_charge_method: Optional["ChargeMethod"] = None,
+        bond_order_method: Optional["WibergBondOrderMethod"] = None,
+    ):
+        from gnn_charge_models.storage.record import (
+            ChargeMethod,
+            WibergBondOrderMethod,
+        )
 
         if partial_charge_method is not None:
             partial_charge_method = ChargeMethod(partial_charge_method)
@@ -40,12 +48,12 @@ class LabelPrecomputedMolecule(LabelFunction):
 
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
         from gnn_charge_models.utils.openff import get_unitless_charge
+
         labels = {}
         if self.partial_charge_method is not None:
             charge_label = f"{self.partial_charge_method.value}-charges"
             charges = [
-                get_unitless_charge(atom.partial_charge)
-                for atom in molecule.atoms
+                get_unitless_charge(atom.partial_charge) for atom in molecule.atoms
             ]
             labels[charge_label] = torch.tensor(charges, dtype=torch.float)
 
@@ -65,7 +73,10 @@ class ComputeAndLabelMolecule(LabelFunction):
         n_conformers: int = 500,
         rms_cutoff: float = 0.05,
     ):
-        from gnn_charge_models.storage.record import ChargeMethod, WibergBondOrderMethod
+        from gnn_charge_models.storage.record import (
+            ChargeMethod,
+            WibergBondOrderMethod,
+        )
 
         self.n_conformers = n_conformers
         self.rms_cutoff = rms_cutoff
@@ -77,9 +88,19 @@ class ComputeAndLabelMolecule(LabelFunction):
         ]
 
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
-        from openff.toolkit.topology.molecule import Molecule as OFFMolecule, unit as off_unit
-        from gnn_charge_models.storage.record import (PartialChargeRecord, WibergBondOrderRecord, WibergBondOrder, ConformerRecord)
-        from gnn_charge_models.utils.openff import get_unitless_charge, get_coordinates_in_angstrom
+        from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+        from openff.toolkit.topology.molecule import unit as off_unit
+
+        from gnn_charge_models.storage.record import (
+            ConformerRecord,
+            PartialChargeRecord,
+            WibergBondOrder,
+            WibergBondOrderRecord,
+        )
+        from gnn_charge_models.utils.openff import (
+            get_coordinates_in_angstrom,
+            get_unitless_charge,
+        )
 
         molecule = copy.deepcopy(molecule)
         molecule.generate_conformers(
@@ -98,12 +119,9 @@ class ComputeAndLabelMolecule(LabelFunction):
                 )
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[
-                        get_unitless_charge(x)
-                        for x in molecule.partial_charges
-                    ],
+                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
                 )
-            
+
             bond_order_sets = {}
             for method in self.bond_order_methods:
                 molecule.assign_fractional_bond_orders(
@@ -113,11 +131,10 @@ class ComputeAndLabelMolecule(LabelFunction):
                 bond_order_sets[method] = WibergBondOrderRecord(
                     method=method,
                     values=[
-                        WibergBondOrder.from_openff(bond)
-                        for bond in molecule.bonds
+                        WibergBondOrder.from_openff(bond) for bond in molecule.bonds
                     ],
                 )
-            
+
             conformer_records.append(
                 ConformerRecord(
                     coordinates=get_coordinates_in_angstrom(conformer),
@@ -127,12 +144,6 @@ class ComputeAndLabelMolecule(LabelFunction):
             )
 
 
-
-
 LabelFunctionLike = Union[
-    LabelFunction,
-    Callable[
-        ["OFFMolecule"],
-        Dict[str, torch.Tensor]
-    ]
+    LabelFunction, Callable[["OFFMolecule"], Dict[str, torch.Tensor]]
 ]

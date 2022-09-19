@@ -1,5 +1,5 @@
-from typing import Union, Literal, Optional, List, Any, Dict, Tuple
 import functools
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from .atoms import AtomFeatureMeta
 from .bonds import BondFeatureMeta
@@ -14,7 +14,6 @@ FeatureType = Union[str, AtomFeatureMeta, BondFeatureMeta]
 
 @functools.total_ordering
 class FeatureArgs:
-
     def __eq__(self, other):
         return (
             self.feature_class == other.feature_class
@@ -22,18 +21,17 @@ class FeatureArgs:
         )
 
     def __lt__(self, other):
-        return (
-            self.feature_class.__name__ < other.feature_class.__name__
-            or (
-                self.feature_class.__name__ == other.feature_class.__name__
-                and self.feature_arguments < other.feature_arguments
-            )
+        return self.feature_class.__name__ < other.feature_class.__name__ or (
+            self.feature_class.__name__ == other.feature_class.__name__
+            and self.feature_arguments < other.feature_arguments
         )
 
     @classmethod
     def from_input(
         cls,
-        feature_input: Union[FeatureType, Dict[FeatureType, Any], Tuple[FeatureType, Any]],
+        feature_input: Union[
+            FeatureType, Dict[FeatureType, Any], Tuple[FeatureType, Any]
+        ],
         feature_type: Literal["atoms", "bonds"] = "atoms",
     ) -> "FeatureArgs":
         if isinstance(feature_input, cls):
@@ -46,8 +44,7 @@ class FeatureArgs:
 
         elif isinstance(feature_input, dict):
             if len(feature_input) == 1:
-                feature_class, feature_arguments = list(
-                    feature_input.items())[0]
+                feature_class, feature_arguments = list(feature_input.items())[0]
 
         elif isinstance(feature_input, (list, tuple)):
             if len(feature_input) == 2:
@@ -65,9 +62,9 @@ class FeatureArgs:
         self,
         feature_class: FeatureType,
         feature_arguments: Optional[List[Any]] = None,
-        feature_type: Literal["atoms", "bonds"] = "atoms"
+        feature_type: Literal["atoms", "bonds"] = "atoms",
     ):
-        
+
         metacls = _FEATURE_METACLASSES[feature_type.lower()]
         self.feature_class = metacls.get_feature_class(feature_class)
         if feature_arguments is None:
@@ -82,5 +79,5 @@ class FeatureArgs:
         return {
             "feature_class": self.feature_class.feature_name,
             "feature_arguments": self.feature_arguments,
-            "feature_type": self.feature_type
+            "feature_type": self.feature_type,
         }

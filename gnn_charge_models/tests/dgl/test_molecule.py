@@ -1,13 +1,12 @@
-import pytest
-
 import dgl
+import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from gnn_charge_models.dgl.molecule import DGLMolecule
 from gnn_charge_models.features import AtomConnectivity, BondIsInRing
 
-class TestDGLBase:
 
+class TestDGLBase:
     def test_graph_property(self, dgl_methane):
         assert isinstance(dgl_methane.graph, dgl.DGLHeteroGraph)
 
@@ -26,6 +25,7 @@ class TestDGLBase:
         assert not dgl_methane_to.graph is dgl_methane.graph  # should be a copy.
         assert dgl_methane_to.n_atoms == 5
         assert dgl_methane_to.n_bonds == 4
+
 
 class TestDGLMolecule:
     def test_n_properties(self):
@@ -46,7 +46,6 @@ class TestDGLMolecule:
             mapped=True,
             atom_features=[AtomConnectivity()],
             bond_features=[BondIsInRing()],
-
         )
 
         dgl_graph = dgl_molecule.graph
@@ -54,12 +53,7 @@ class TestDGLMolecule:
         node_features = dgl_molecule.atom_features
         assert node_features.shape == (4, 4)
 
-        connectivity = [
-            [1, 0, 0, 0],
-            [0, 0, 1, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0]
-        ]
+        connectivity = [[1, 0, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0], [1, 0, 0, 0]]
 
         assert_allclose(node_features, connectivity)
 
@@ -71,4 +65,3 @@ class TestDGLMolecule:
 
         assert_allclose(forward_features, reverse_features)
         assert_array_almost_equal(forward_features, 0)
-        

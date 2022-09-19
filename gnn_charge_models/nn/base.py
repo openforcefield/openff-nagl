@@ -1,11 +1,11 @@
-from typing import Optional, List, Any
-from .activation import ActivationFunction
+from typing import Any, List, Optional
 
 from gnn_charge_models.utils.utils import is_iterable
 
+from .activation import ActivationFunction
+
 
 class ContainsLayersMixin:
-
     @classmethod
     def _check_input_lengths(
         cls,
@@ -17,7 +17,7 @@ class ContainsLayersMixin:
             layer_activation_functions = cls.default_activation_function
         if layer_dropout is None:
             layer_dropout = cls.default_dropout
-        
+
         layer_activation_functions = cls._check_argument_input_length(
             n_layers,
             layer_activation_functions,
@@ -40,4 +40,3 @@ class ContainsLayersMixin:
                 f"same length as `hidden_feature_sizes` (length {n_layers})."
             ) from None
         return obj
-    
