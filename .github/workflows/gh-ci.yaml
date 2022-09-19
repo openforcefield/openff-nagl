@@ -69,6 +69,7 @@ jobs:
         conda list
 
     - name: Run tests
+      run: |
         pytest -n 4 -v --cov=openff-nagl --cov-report=xml --color=yes openff/nagl/tests/
 
     - name: codecov
