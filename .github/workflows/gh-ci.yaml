@@ -138,31 +138,6 @@ jobs:
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
   
-  install_from_source_pip:
-    if: "github.repository == 'lilyminium/openff-nagl'"
-    runs-on: ubuntu-latest
-    strategy:
-        fail-fast: false
-        matrix:
-          python-version: ["3.8", "3.9", "3.10"]
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Build from source
-      run: |
-        python --version
-        pip install -e ".[test,doc]"
-
-    - name: Check success
-      run: |
-        python -c "import openff-nagl ; print(openff.nagl.__version__)"
-
   install_from_source_conda:
     if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
@@ -197,4 +172,4 @@ jobs:
     - name: Check success
       run: |
         conda activate openff-nagl
-        python -c "import openff-nagl ; print(openff.nagl.__version__)"
+        python -c "import openff.nagl ; print(openff.nagl.__version__)"

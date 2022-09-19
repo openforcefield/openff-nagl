@@ -47,8 +47,12 @@ setup(
     # do not use for Conda deployment
     install_requires=[
         "click",
-        "openff-toolkit",
+        "click-option-group",
         "tqdm",
+        "openff-toolkit",
+        "openff-units",
+        "pydantic",
+        "rdkit",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='openff-nagl.readthedocs.io/en/latest/',  # Website
