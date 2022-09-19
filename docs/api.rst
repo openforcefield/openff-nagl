@@ -4,4 +4,4 @@ API Documentation
 .. autosummary::
    :toctree: autosummary
 
-   gnn-charge-models.canvas
+   openff-nagl.canvas

@@ -4,7 +4,7 @@ GNN Charge Models was created by Lily Wang in 2022.
 
 
 All contributing authors are listed in this file below.
-The repository history at https://github.com/lilyminium/gnn-charge-models
+The repository history at https://github.com/lilyminium/openff-nagl
 and the CHANGELOG show individual code contributions.
 
 ## Chronological list of authors

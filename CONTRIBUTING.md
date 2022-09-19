@@ -4,12 +4,12 @@ We welcome all contributions to GNN Charge Models!
 
 Contributions can take many forms, such as:
 
-* sharing bug reports or feature requests through the [Issue Tracker](https://github.com/lilyminium/gnn-charge-models/issues)
+* sharing bug reports or feature requests through the [Issue Tracker](https://github.com/lilyminium/openff-nagl/issues)
 * asking or answering questions, or otherwise joining in on discussions
 * adding bug fixes, new features, or otherwise improving the code
 * adding or improving documentation
 
-The second two options both involve making a [pull request](https://github.com/lilyminium/gnn-charge-models/pulls) .
+The second two options both involve making a [pull request](https://github.com/lilyminium/openff-nagl/pulls) .
 
 There are many existing guides on how to make a contribution to an open
 source project on GitHub. In short, the steps are to:

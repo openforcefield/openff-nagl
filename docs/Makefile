@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = gnn-charge-models
+SPHINXPROJ    = openff-nagl
 SOURCEDIR     = .
 BUILDDIR      = _build
 

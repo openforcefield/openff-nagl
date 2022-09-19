@@ -21,7 +21,7 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='gnn_charge_models',
+    name='openff-nagl',
     author='Lily Wang',
     author_email='lily.wang@openforcefield.org',
     description=short_description,
@@ -51,7 +51,7 @@ setup(
         "tqdm",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
-    # url='gnn-charge-models.readthedocs.io/en/latest/',  # Website
+    # url='openff-nagl.readthedocs.io/en/latest/',  # Website
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',

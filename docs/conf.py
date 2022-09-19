@@ -13,7 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # In case the project was not installed
-import gnn-charge-models
+import openff-nagl
 import os
 import sys
 
@@ -117,9 +117,9 @@ html_theme = "openff_sphinx_theme"
 html_theme_options = {
     # Repository integration
     # Set the repo url for the link to appear
-    "repo_url": "https://github.com/lilyminium/gnn-charge-models",
+    "repo_url": "https://github.com/lilyminium/openff-nagl",
     # The name of the repo. If must be set if repo_url is set
-    "repo_name": "gnn-charge-models",
+    "repo_name": "openff-nagl",
     # Must be one of github, gitlab or bitbucket
     "repo_type": "github",
     # Colour for sidebar captions and other accents. One of
@@ -154,7 +154,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'gnn-charge-modelsdoc'
+htmlhelp_basename = 'openff-nagldoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -181,8 +181,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'gnn-charge-models.tex', 'GNN Charge Models Documentation',
-     'gnn-charge-models', 'manual'),
+    (master_doc, 'openff-nagl.tex', 'GNN Charge Models Documentation',
+     'openff-nagl', 'manual'),
 ]
 
 
@@ -191,7 +191,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'gnn-charge-models', 'GNN Charge Models Documentation',
+    (master_doc, 'openff-nagl', 'GNN Charge Models Documentation',
      [author], 1)
 ]
 
@@ -202,8 +202,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'gnn-charge-models', 'GNN Charge Models Documentation',
-     author, 'gnn-charge-models', 'A short description of the project.',
+    (master_doc, 'openff-nagl', 'GNN Charge Models Documentation',
+     author, 'openff-nagl', 'A short description of the project.',
      'Miscellaneous'),
 ]
 

@@ -1,5 +1,7 @@
-name: gnn-charge-models-test
+name: openff-nagl-test
 channels:
+  - dglteam
+  - openeye
   - conda-forge
   - defaults
 dependencies:
@@ -7,18 +9,34 @@ dependencies:
   - python
   - pip
 
+  # UI
   - click
+  - click-option-group
   - tqdm
-  - openff-toolkit
-  - openff-units
 
-    # Testing
+  # chemistry
+  - openff-toolkit >=0.11.0
+  - openff-units
+  - pydantic
+  - rdkit
+  - openeye-toolkits
+
+  # database
+  - sqlalchemy
+  - sqlite
+
+  # gcn
+  - dglteam::dgl >=0.7
+  - pytorch
+  - pytorch-lightning
+
+  # Testing
   - pytest
   - pytest-cov
   - pytest-xdist
   - codecov
 
-    # Pip-only installs
-  #- pip:
-  #  - codecov
+  # Pip-only installs
+  - pip:
+    - rich
 
