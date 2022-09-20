@@ -31,7 +31,7 @@ def openff_benzene():
     "smiles, connectivity",
     [
         ("C#C", [[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]),
-        ("HCl", [[1, 0, 0, 0], [1, 0, 0, 0]]),
+        ("[H]Cl", [[1, 0, 0, 0], [1, 0, 0, 0]]),
     ],
 )
 def test_atom_connectivity(smiles, connectivity):

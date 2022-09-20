@@ -3,5 +3,5 @@ include MANIFEST.in
 include AUTHORS.md CHANGELOG.md CODE_OF_CONDUCT.md README.md
 include versioneer.py
 
-graft openff-nagl
+graft openff
 global-exclude *.py[cod] __pycache__ *.so

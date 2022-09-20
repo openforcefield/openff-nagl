@@ -30,12 +30,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Make oe_license.txt file from GH org secret "OE_LICENSE"
-      shell: bash
-      env:
-        OE_LICENSE_TEXT: ${{ secrets.OE_LICENSE }}
-      run: |
-        echo "${OE_LICENSE_TEXT}" > oe_license.txt
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
 
     - name: Build information
       run: |
@@ -144,7 +141,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          python-version: ["3.8", "3.9", "3.10"]
+          python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v3

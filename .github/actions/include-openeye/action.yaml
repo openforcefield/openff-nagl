@@ -1,0 +1,23 @@
+name: Include OpenEye
+description: Include OpenEye
+inputs:
+  openeye-license-text:
+    description: OpenEye license
+    required: true
+  openeye-license-file:
+    description: License file
+    required: true
+    default: ${{ github.workspace }}/oe_license.txt
+  shell:
+    description: Desired shell
+    required: true
+    default: bash -l {0}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Make oe_license.txt file from GH org secret "OE_LICENSE"
+      shell: ${{ inputs.shell }}
+      run: |
+        echo "${{ inputs.openeye-license-text }}" > ${{ inputs.openeye-license-file }}
+        export OE_LICENSE=${{ inputs.openeye-license-file }}
