@@ -165,7 +165,8 @@ jobs:
     
         mamba env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
         mamba env update --name openff-nagl --file docs/requirements.yaml
-        pip install -e .
+        python --version
+        python -m pip install . --no-deps
         conda list
 
     - name: Check success
