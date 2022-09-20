@@ -161,8 +161,8 @@ jobs:
       run: |
         conda create --name openff-nagl
         conda activate openff-nagl
-        conda env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
-        conda env update --name openff-nagl --file docs/requirements.yaml
+        mamba env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
+        mamba env update --name openff-nagl --file docs/requirements.yaml
         pip install -e .
         conda list
 
