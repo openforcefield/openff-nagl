@@ -1,19 +1,22 @@
-GNN Charge Models
+NAGL
 ==============================
 [//]: # (Badges)
 
 | **Latest release** | [![Last release tag](https://img.shields.io/github/release-pre/lilyminium/openff-nagl.svg)](https://github.com/lilyminium/openff-nagl/releases) ![GitHub commits since latest release (by date) for a branch](https://img.shields.io/github/commits-since/lilyminium/openff-nagl/latest)  [![Documentation Status](https://readthedocs.org/projects/openff/nagl/badge/?version=latest)](https://openff-nagl.readthedocs.io/en/latest/?badge=latest)                                                                                            |
 | :----------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Status**         | [![GH Actions Status](https://github.com/lilyminium/openff-nagl/actions/workflows/gh-ci.yaml/badge.svg)](https://github.com/lilyminium/openff-nagl/actions?query=branch%3Amain+workflow%3Agh-ci) [![codecov](https://codecov.io/gh/lilyminium/openff-nagl/branch/main/graph/badge.svg)](https://codecov.io/gh/lilyminium/openff-nagl/branch/main) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/lilyminium/openff-nagl.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/lilyminium/openff-nagl/context:python) |
-| **Community**      | [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Community**      | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-A short description of the project.
+A playground for applying graph convolutional networks to molecules, with a focus on learning continuous "atom-type" embeddings and from these classical molecule force field parameters.
 
-GNN Charge Models is bound by a [Code of Conduct](https://github.com/lilyminium/openff-nagl/blob/main/CODE_OF_CONDUCT.md).
+This framework is mostly based upon the [*End-to-End Differentiable Molecular Mechanics Force Field Construction*](https://arxiv.org/abs/2010.01196) 
+preprint by Wang, Fass and Chodera.
+
+NAGL is bound by a [Code of Conduct](https://github.com/lilyminium/openff-nagl/blob/main/CODE_OF_CONDUCT.md).
 
 ### Installation
 
-To build GNN Charge Models from source,
+To build NAGL from source,
 we highly recommend using virtual environments.
 If possible, we strongly recommend that you use
 [Anaconda](https://docs.conda.io/en/latest/) as your package manager.
@@ -55,14 +58,13 @@ conda deactivate
 
 ### Copyright
 
-The GNN Charge Models source code is hosted at https://github.com/lilyminium/openff-nagl
-and is available under the GNU General Public License, version 3 (see the file [LICENSE](https://github.com/lilyminium/openff-nagl/blob/main/LICENSE)).
+The NAGL source code is hosted at https://github.com/lilyminium/openff-nagl
+and is available under the MIT license (see the file [LICENSE](https://github.com/lilyminium/openff-nagl/blob/main/LICENSE)). Some parts inherit from code distributed under other licenses, as detailed in [LICENSE-3RD-PARTY](https://github.com/lilyminium/openff-nagl/blob/main/LICENSE-3RD-PARTY)).
 
-Copyright (c) 2022, Lily Wang
+NAGL inherits from Simon Boothroyd's NAGL library at https://github.com/SimonBoothroyd/nagl.
 
 
 #### Acknowledgements
  
 Project based on the 
 [MDAnalysis Cookiecutter](https://github.com/MDAnalysis/cookiecutter-mda) version 0.1.
-Please cite [MDAnalysis](https://github.com/MDAnalysis/mdanalysis#citation) when using GNN Charge Models in published work.
