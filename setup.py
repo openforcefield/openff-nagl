@@ -3,7 +3,7 @@ GNN Charge Models
 A short description of the project.
 """
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 import versioneer
 
 short_description = "A short description of the project.".strip().split("\n")[0]
@@ -34,7 +34,7 @@ setup(
     # Which Python importable modules should be included when your package is installed
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific
     # subpackage(s) from being added, if needed
-    packages=find_packages(),
+    packages=find_namespace_packages(include=['openff.*']),
 
     # Optional include package data to ship with your package
     # Customize MANIFEST.in if the general case does not suit your needs
@@ -47,8 +47,12 @@ setup(
     # do not use for Conda deployment
     install_requires=[
         "click",
-        "openff-toolkit",
+        "click-option-group",
         "tqdm",
+        "openff-toolkit",
+        "openff-units",
+        "pydantic",
+        "rdkit",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='openff-nagl.readthedocs.io/en/latest/',  # Website

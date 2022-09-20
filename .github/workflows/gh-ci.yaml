@@ -24,18 +24,15 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-latest, ubuntu-latest, windows-latest]
-          python-version: ["3.8", "3.9", "3.10"]
+          os: [macOS-latest, ubuntu-latest]
+          python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Make oe_license.txt file from GH org secret "OE_LICENSE"
-      shell: bash
-      env:
-        OE_LICENSE_TEXT: ${{ secrets.OE_LICENSE }}
-      run: |
-        echo "${OE_LICENSE_TEXT}" > ${OE_LICENSE}
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
 
     - name: Build information
       run: |
@@ -138,38 +135,13 @@ jobs:
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
   
-  install_from_source_pip:
-    if: "github.repository == 'lilyminium/openff-nagl'"
-    runs-on: ubuntu-latest
-    strategy:
-        fail-fast: false
-        matrix:
-          python-version: ["3.8", "3.9", "3.10"]
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Build from source
-      run: |
-        python --version
-        pip install -e ".[test,doc]"
-
-    - name: Check success
-      run: |
-        python -c "import openff-nagl ; print(openff.nagl.__version__)"
-
   install_from_source_conda:
     if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false
         matrix:
-          python-version: ["3.8", "3.9", "3.10"]
+          python-version: ["3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v3
@@ -189,12 +161,15 @@ jobs:
       run: |
         conda create --name openff-nagl
         conda activate openff-nagl
-        conda env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
-        conda env update --name openff-nagl --file docs/requirements.yaml
-        pip install -e .
+        conda list
+    
+        mamba env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
+        mamba env update --name openff-nagl --file docs/requirements.yaml
+        python --version
+        python -m pip install . --no-deps
         conda list
 
     - name: Check success
       run: |
         conda activate openff-nagl
-        python -c "import openff-nagl ; print(openff.nagl.__version__)"
+        python -c "import openff.nagl ; print(openff.nagl.__version__)"
