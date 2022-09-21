@@ -193,6 +193,7 @@ class MoleculeRecord(Record):
         openff_molecule: "openff.toolkit.topology.Molecule",
         partial_charge_methods: Tuple[ChargeMethod] = tuple(),
         bond_order_methods: Tuple[WibergBondOrderMethod] = tuple(),
+        generate_conformers: bool = False,
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
         rms_cutoff: float = 0.05,
@@ -207,6 +208,8 @@ class MoleculeRecord(Record):
             The methods used to compute partial charges
         bond_order_methods
             The methods used to compute Wiberg bond orders
+        generate_conformers
+            Whether to generate new conformers to overwrite existing ones
         n_conformer_pool
             The number of conformers to generate as a first step.
             ELF conformers will be selected from these.
@@ -237,11 +240,19 @@ class MoleculeRecord(Record):
 
         molecule = copy.deepcopy(openff_molecule)
 
-        molecule.generate_conformers(
-            n_conformers=n_conformer_pool,
-            rms_cutoff=rms_cutoff * off_unit.angstrom,
-        )
-        molecule.apply_elf_conformer_selection(limit=n_conformers)
+        if generate_conformers:
+            molecule.generate_conformers(
+                n_conformers=n_conformer_pool,
+                rms_cutoff=rms_cutoff * off_unit.angstrom,
+            )
+            molecule.apply_elf_conformer_selection(limit=n_conformers)
+        
+        elif not molecule.conformers:
+            raise ValueError(
+                "Molecule must have conformers to create a record. "
+                "Either pass in a molecule with conformers "
+                "or set generate_conformers=True"
+            )
 
         conformer_records = []
         for conformer in molecule.conformers:
