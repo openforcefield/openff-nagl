@@ -51,14 +51,14 @@ class LabelPrecomputedMolecule(LabelFunction):
 
         labels = {}
         if self.partial_charge_method is not None:
-            charge_label = f"{self.partial_charge_method.value}-charges"
+            charge_label = f"{self.partial_charge_method}-charges"
             charges = [
                 get_unitless_charge(atom.partial_charge) for atom in molecule.atoms
             ]
             labels[charge_label] = torch.tensor(charges, dtype=torch.float)
 
         if self.bond_order_method is not None:
-            bond_order_label = f"{self.bond_order_method.value}-wbo"
+            bond_order_label = f"{self.bond_order_method}-wbo"
             orders = [bond.fractional_bond_order for bond in molecule.bonds]
             labels[bond_order_label] = torch.tensor(orders, dtype=torch.float)
 

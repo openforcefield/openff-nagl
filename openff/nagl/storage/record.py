@@ -2,7 +2,7 @@
 
 import copy
 import enum
-from collections import defaultdict
+from collections import defaultdict, UserString
 from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
@@ -22,25 +22,19 @@ class Record(ImmutableModel):
         orm_mode = True
 
 
-class ChargeMethod(enum.Enum):
-    """The method used to calculate the partial charges"""
-
-    AM1 = "am1"
-    AM1BCC = "am1bcc"
+class ChargeMethod(str):
+    _openff_conversion = {"am1": "am1-mulliken", "am1bcc": "am1bcc"}
 
     def to_openff_method(self) -> str:
-        options = {"am1": "am1-mulliken", "am1bcc": "am1bcc"}
-        return options[self.value]
+        key = self.lower()
+        return self._openff_conversion.get(key, key)
 
-
-class WibergBondOrderMethod(enum.Enum):
-    """The method used to calculate the Wiberg bond orders"""
-
-    AM1 = "am1"
+class WibergBondOrderMethod(str):
+    _openff_conversion = {"am1": "am1-wiberg"}
 
     def to_openff_method(self) -> str:
-        options = {"am1": "am1-wiberg"}
-        return options[self.value]
+        key = self.lower()
+        return self._openff_conversion.get(key, key)
 
 
 class PartialChargeRecord(Record):
@@ -95,7 +89,7 @@ class WibergBondOrder(NamedTuple):
 class WibergBondOrderRecord(Record):
     """A record of the Wiberg bond orders calculated for a conformer using a specific method"""
 
-    method: WibergBondOrderMethod = WibergBondOrderMethod.AM1
+    method: WibergBondOrderMethod = "am1"
     values: List[WibergBondOrder]
 
     def map_to(self, mapping: Dict[int, int]):

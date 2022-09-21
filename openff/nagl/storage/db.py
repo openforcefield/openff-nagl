@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Dict, List
 
 from sqlalchemy import (
     Column,
-    Enum,
+    # Enum,
     ForeignKey,
     Integer,
     PickleType,
@@ -33,7 +33,7 @@ class DBPartialChargeSet(DBBase):
     parent_id = Column(Integer, ForeignKey(
         "conformers.id"), nullable=False, index=True)
 
-    method = Column(Enum(ChargeMethod), nullable=False)
+    method = Column(String(20), nullable=False)
     values = Column(PickleType, nullable=False)
 
     __table_args__ = (
@@ -49,7 +49,7 @@ class DBWibergBondOrderSet(DBBase):
     parent_id = Column(Integer, ForeignKey(
         "conformers.id"), nullable=False, index=True)
 
-    method = Column(Enum(WibergBondOrderMethod), nullable=False)
+    method = Column(String(20), nullable=False)
     values = Column(PickleType, nullable=False)
 
     __table_args__ = (
@@ -84,7 +84,7 @@ class DBConformerRecord(DBBase):
         for new_data in getattr(new_record, container_name).values():
             if new_data.method in existing_methods:
                 raise RuntimeError(
-                    f"{new_data.method.value} {container_name} already stored for {mapped_smiles} "
+                    f"{new_data.method} {container_name} already stored for {mapped_smiles} "
                     f"with coordinates {new_record.coordinates}"
                 )
             db_data = db_class(method=new_data.method, values=new_data.values)
