@@ -3,7 +3,7 @@
 import copy
 import enum
 from collections import defaultdict, UserString
-from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple, ClassVar
 
 import numpy as np
 from openff.units import unit as openff_unit
@@ -134,12 +134,20 @@ class ConformerRecord(Record):
         return v
 
     @validator("partial_charges", "bond_orders", pre=True)
-    def _validate_unique_methods(cls, v):
+    def _validate_unique_methods(cls, v, field):
         if not isinstance(v, dict):
             new_v = {}
             for v_ in v:
                 new_v[v_.method] = v_
-            return new_v
+            v = new_v
+
+        value_classes = tuple([x.type_ for x in field.sub_fields])
+        new_v = {}
+        for k_, v_ in v.items():
+            if not isinstance(v_, (dict, *value_classes)):
+                v_ = {"method": k_, "values": v_}
+            new_v[k_] = v_
+        v = new_v
         return v
 
     def map_to(self, mapping: Dict[int, int]) -> "ConformerRecord":
@@ -176,6 +184,9 @@ class MoleculeRecord(Record):
             "such as partial charges and Wiberg bond orders"
         ),
     )
+
+    _partial_charge_method_name: ClassVar[str] = "partial_charge_method"
+    _bond_order_method_name: ClassVar[str] = "bond_order_method"
 
     @property
     def smiles(self):
@@ -301,6 +312,10 @@ class MoleculeRecord(Record):
         offmol = Molecule.from_mapped_smiles(
             self.mapped_smiles, allow_undefined_stereo=True
         )
+        offmol._conformers = [
+            conformer.coordinates * off_unit.angstrom
+            for conformer in self.conformers
+        ]
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
             offmol.partial_charges = np.array(
@@ -311,6 +326,9 @@ class MoleculeRecord(Record):
             for bond in offmol.bonds:
                 key = tuple(sorted([bond.atom1_index, bond.atom2_index]))
                 bond.fractional_bond_order = bond_orders[key]
+
+        offmol.properties[self._partial_charge_method_name] = partial_charge_method
+        offmol.properties[self._bond_order_method_name] = bond_order_method
 
         return offmol
 

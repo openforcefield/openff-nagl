@@ -2,7 +2,7 @@
 
 import contextlib
 import json
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union, Optional
 
 import numpy as np
 import torch
@@ -11,6 +11,147 @@ from openff.utilities.exceptions import MissingOptionalDependency
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
+
+
+@requires_package("rdkit")
+def _stream_molecules_from_file_rd(file: str):
+    from openff.toolkit.topology import Molecule
+    from rdkit import Chem
+
+    if file.endswith(".gz"):
+        file = file[:-3]
+
+    for rdmol in Chem.SupplierFromFilename(
+        file, removeHs=False, sanitize=True, strictParsing=True
+    ):
+        if rdmol is not None:
+            yield Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
+
+@requires_package("openeye.oechem")
+def _stream_molecules_from_file_oe(file: str):
+    from openeye import oechem
+    from openff.toolkit.topology import Molecule
+
+    stream = oechem.oemolistream()
+    stream.open(file)
+    for oemol in stream.GetOEMols():
+        yield Molecule.from_openeye(oemol, allow_undefined_stereo=True)
+
+
+def _stream_molecules_from_file(file: str):
+    try:
+        for offmol in _stream_molecules_from_file_oe(file):
+            yield offmol
+    except MissingOptionalDependency:
+        for offmol in _stream_molecules_from_file_rd(file):
+            yield offmol
+
+def _stream_molecules_from_smiles(file: str):
+    with open(file, "r") as f:
+        contents = f.readlines()
+    for line in contents:
+        for field in line.split():
+            if field:
+                try:
+                    offmol = Molecule.from_mapped_smiles(field)
+                except ValueError:
+                    offmol = Molecule.from_smiles(field)
+                yield offmol
+
+def get_file_format(file: str, file_format: str = None):
+    if file_format is None:
+        if file.endswith("sdf"):
+            file_format = "sdf"
+        elif file.endswith("sdf.gz"):
+            file_format = "sdf.gz"
+        elif file.endswith("smi") or file.endswith("smiles"):
+            file_format = "smi"
+    return file_format
+
+
+
+def stream_molecules_from_file(
+    file: str,
+    file_format: Optional[str] = None,
+    as_smiles: bool = False,
+    mapped: bool = False
+):
+    file = str(file)
+
+    if not as_smiles:
+        returner = lambda x: x
+    else:
+        returner = lambda x: x.to_smiles(mapped=mapped)
+
+    file_format = get_file_format(file)
+    if file_format == "smi":
+        reader = _stream_molecules_from_smiles
+    else:
+        reader = _stream_molecules_from_file
+    
+    for offmol in reader(file):
+        yield returner(offmol)
+
+@requires_package("openeye.oechem")
+def openff_to_openeye(molecule):
+    from openeye import oechem
+
+    oemol = molecule.to_openeye()
+    if molecule.partial_charges is not None:
+        partial_charges_list = [
+            oeatom.GetPartialCharge() for oeatom in oemol.GetAtoms()
+        ]
+        partial_charges_str = " ".join([f"{val:f}" for val in partial_charges_list])
+        oechem.OESetSDData(oemol, "atom.dprop.PartialCharge", partial_charges_str)
+    return oemol
+
+
+
+@requires_package("openeye.oechem")
+@contextlib.contextmanager
+def _stream_molecules_to_file_oe(file: str):  # pragma: no cover
+    from openeye import oechem
+    from openff.toolkit.topology import Molecule
+
+    stream = oechem.oemolostream(file)
+
+    def writer(molecule: Molecule):
+        oechem.OEWriteMolecule(stream, openff_to_openeye(molecule))
+
+    yield writer
+
+    stream.close()
+
+
+@requires_package("rdkit")
+@contextlib.contextmanager
+def _stream_molecules_to_file_rd(file: str):
+    from rdkit import Chem
+
+    stream = Chem.SDWriter(file)
+
+    def writer(molecule):
+        rdmol = molecule.to_rdkit()
+        n_conf = rdmol.GetNumConformers()
+        if not n_conf:
+            stream.write(rdmol)
+        else:
+            for i in range(n_conf):
+                stream.write(rdmol, confId=i)
+        stream.flush()
+
+    yield writer
+
+    stream.close()
+
+@contextlib.contextmanager
+def stream_molecules_to_file(file: str):
+    try:
+        with _stream_molecules_to_file_oe(file) as writer:
+            yield writer
+    except MissingOptionalDependency:
+        with _stream_molecules_to_file_rd(file) as writer:
+            yield writer
 
 
 def get_coordinates_in_angstrom(conformer):
