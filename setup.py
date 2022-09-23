@@ -74,5 +74,11 @@ setup(
             "sphinx>=1.8",
             "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
         ]
+    },
+
+    entry_points={
+        "console_scripts": [
+            "openff-nagl=openff.nagl.cli:cli",
+        ]
     }
 )
