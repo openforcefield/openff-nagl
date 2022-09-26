@@ -109,6 +109,7 @@ class Trainer(ImmutableModel):
             {f.feature_name: f.dict(exclude={"feature_name"})}
             for f in self.atom_features
         ]
+
         dct["bond_features"] = [
             {f.feature_name: f.dict(exclude={"feature_name"})}
             for f in self.bond_features
@@ -126,11 +127,15 @@ class Trainer(ImmutableModel):
             yaml.dump(self.to_simple_dict(), f)
 
     @classmethod
-    def from_yaml_file(cls, path):
+    def from_yaml_file(cls, *paths):
         import yaml
-        with open(path, "r") as f:
-            dct = yaml.load(f, Loader=yaml.FullLoader)
-        return cls(**dct)
+
+        kwargs = {}
+        for path in paths:
+            with open(str(path), "r") as f:
+                dct = yaml.load(f, Loader=yaml.FullLoader)
+                kwargs.update(dct)
+        return cls(**kwargs)
 
 
     @property
