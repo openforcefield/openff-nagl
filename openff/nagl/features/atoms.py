@@ -3,7 +3,10 @@ from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 import numpy as np
 import torch
 
+from pydantic import validator
+
 from .base import CategoricalMixin, Feature, FeatureMeta
+from openff.nagl.utils.types import HybridizationType
 from .utils import one_hot_encode
 
 if TYPE_CHECKING:
@@ -14,6 +17,7 @@ __all__ = [
     "AtomFeature",
     "AtomicElement",
     "AtomConnectivity",
+    "AtomHybridization",
     "AtomIsAromatic",
     "AtomIsInRing",
     "AtomInRingOfSize",
@@ -41,6 +45,35 @@ class AtomicElement(CategoricalMixin, AtomFeature):
         if not all(isinstance(el, str) for el in elements):
             elements = [el.symbol for el in elements]
         return torch.vstack([one_hot_encode(el, self.categories) for el in elements])
+
+
+class AtomHybridization(CategoricalMixin, AtomFeature):
+
+    categories: List[HybridizationType] = [
+        HybridizationType.OTHER,
+        HybridizationType.SP,
+        HybridizationType.SP2,
+        HybridizationType.SP3,
+        HybridizationType.SP3D,
+        HybridizationType.SP3D2,
+    ]
+
+    @validator("categories", pre=True, each_item=True)
+    def _validate_categories(cls, v):
+        if isinstance(v, str):
+            return HybridizationType[v.upper()]
+        return v
+
+    def _encode(self, molecule) -> torch.Tensor:
+        from openff.nagl.utils.openff import get_molecule_hybridizations
+
+        hybridizations = get_molecule_hybridizations(molecule)
+        return torch.vstack(
+            [
+                one_hot_encode(hyb, self.categories)
+                for hyb in hybridizations
+            ]
+        )
 
 
 class AtomConnectivity(CategoricalMixin, AtomFeature):
@@ -76,8 +109,7 @@ class AtomInRingOfSize(AtomFeature):
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         rdmol = molecule.to_rdkit()
 
-        in_ring_size = [atom.IsInRingSize(self.ring_size)
-                        for atom in rdmol.GetAtoms()]
+        in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
         return torch.tensor(in_ring_size, dtype=int)
 
 

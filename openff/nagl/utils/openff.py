@@ -8,9 +8,66 @@ import numpy as np
 import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependency
+from .types import HybridizationType
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
+
+@requires_package("openeye.oechem")
+def _get_molecule_hybridizations_oe(molecule: "OFFMolecule") -> List[HybridizationType]:
+    from openeye import oechem
+
+    conversions = {
+        oechem.OEHybridization_Unknown: HybridizationType.OTHER,
+        oechem.OEHybridization_sp: HybridizationType.SP,
+        oechem.OEHybridization_sp2: HybridizationType.SP2,
+        oechem.OEHybridization_sp3: HybridizationType.SP3,
+        oechem.OEHybridization_sp3d: HybridizationType.SP3D,
+        oechem.OEHybridization_sp3d2: HybridizationType.SP3D2,
+    }
+
+    hybridizations = []
+    oemol = molecule.to_openeye()
+    oechem.OEAssignHybridization(oemol)
+
+    for atom in oemol.GetAtoms():
+        hybridization = atom.GetHyb()
+        try:
+            hybridizations.append(conversions[hybridization])
+        except KeyError:
+            raise ValueError(f"Unknown hybridization {hybridization}")
+    return hybridizations
+
+@requires_package("rdkit")
+def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[HybridizationType]:
+    from rdkit.Chem import rdchem
+
+    conversions = {
+        rdchem.HybridizationType.S: HybridizationType.OTHER,
+        rdchem.HybridizationType.SP: HybridizationType.SP,
+        rdchem.HybridizationType.SP2: HybridizationType.SP2,
+        rdchem.HybridizationType.SP3: HybridizationType.SP3,
+        rdchem.HybridizationType.SP3D: HybridizationType.SP3D,
+        rdchem.HybridizationType.SP3D2: HybridizationType.SP3D2,
+        rdchem.HybridizationType.OTHER: HybridizationType.OTHER,
+        rdchem.HybridizationType.UNSPECIFIED: HybridizationType.OTHER,
+    }
+
+    hybridizations = []
+    rdmol = molecule.to_rdkit()
+    for atom in rdmol.GetAtoms():
+        hybridization = atom.GetHybridization()
+        try:
+            hybridizations.append(conversions[hybridization])
+        except KeyError:
+            raise ValueError(f"Unknown hybridization {hybridization}")
+    return hybridizations
+
+def get_molecule_hybridizations(molecule: "OFFMolecule") -> List[HybridizationType]:
+    try:
+        return _get_molecule_hybridizations_oe(molecule)
+    except MissingOptionalDependency:
+        return _get_molecule_hybridizations_rd(molecule)
 
 
 @requires_package("rdkit")
