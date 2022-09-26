@@ -68,22 +68,21 @@ def db_columns_to_models(
             molecule["smiles"] = result.molecule_smiles
             conformer = molecule["conformers"][result.conformer_id]
             conformer["coordinates"] = result.conformer_coordinates
-            model = model_type.construct(
-                method=result.method, values=result.values)
+            model = model_type(method=result.method, values=result.values)
             conformer[model_type][result.method] = model
 
     records = []
     for molecule_args in raw_objects.values():
         conformers = []
         for conformer_args in molecule_args["conformers"].values():
-            conformer = ConformerRecord.construct(
+            conformer = ConformerRecord(
                 coordinates=conformer_args["coordinates"],
                 partial_charges=conformer_args[PartialChargeRecord],
                 bond_orders=conformer_args[WibergBondOrderRecord],
             )
             conformers.append(conformer)
 
-        molecule = MoleculeRecord.construct(
+        molecule = MoleculeRecord(
             mapped_smiles=molecule_args["smiles"], conformers=conformers
         )
         records.append(molecule)

@@ -38,6 +38,7 @@ class Manager:
     def reconcile_batch_workers(self):
         if self.batch_size < 0:
             n_batches = 1
+            self.batch_size = self.n_entries
         else:
             n_batches = int(math.ceil(self.n_entries / self.batch_size))
         n_workers = self.n_workers

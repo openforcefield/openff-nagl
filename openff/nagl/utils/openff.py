@@ -28,14 +28,37 @@ def _stream_molecules_from_file_rd(file: str):
             yield Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
 
 @requires_package("openeye.oechem")
+def _copy_sddata_oe(source, target):
+    from openeye import oechem
+    for dp in oechem.OEGetSDDataPairs(source):
+        oechem.OESetSDData(target, dp.GetTag(), dp.GetValue())
+
+@requires_package("openeye.oechem")
 def _stream_molecules_from_file_oe(file: str):
     from openeye import oechem
-    from openff.toolkit.topology import Molecule
 
     stream = oechem.oemolistream()
     stream.open(file)
     for oemol in stream.GetOEMols():
-        yield Molecule.from_openeye(oemol, allow_undefined_stereo=True)
+        if (stream.GetFormat() == oechem.OEFormat_SDF) and hasattr(oemol, "GetConfIter"):
+            for conf in oemol.GetConfIter():
+                confmol = conf.GetMCMol()
+                _copy_sddata_oe(oemol, confmol)
+                _copy_sddata_oe(conf, confmol)
+        else:
+            confmol = oemol
+        yield _stream_conformer_from_oe(confmol)
+
+@requires_package("openeye.oechem")
+def _stream_conformer_from_oe(oemol):
+    from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
+    from openff.toolkit.topology import Molecule
+
+    has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
+    offmol = Molecule.from_openeye(oemol, allow_undefined_stereo=True)
+    if not has_charges:
+        offmol.partial_charges = None
+    return offmol
 
 
 def _stream_molecules_from_file(file: str):
@@ -46,7 +69,11 @@ def _stream_molecules_from_file(file: str):
         for offmol in _stream_molecules_from_file_rd(file):
             yield offmol
 
+
+
 def _stream_molecules_from_smiles(file: str):
+    from openff.toolkit.topology import Molecule
+    
     with open(file, "r") as f:
         contents = f.readlines()
     for line in contents:

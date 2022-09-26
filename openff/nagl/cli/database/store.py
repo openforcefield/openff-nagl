@@ -80,7 +80,7 @@ def store_molecules(
     partial_charge_method: str = None,
     bond_order_method: str = None,
 ):
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
@@ -93,10 +93,11 @@ def store_molecules(
     )
 
     molecules = list(stream_molecules_from_file(input_file))
+
     manager.set_entries(molecules)
 
     single_func = functools.partial(
-        label_precomputed_molecule,
+        MoleculeRecord.from_precomputed_openff,
         partial_charge_method=partial_charge_method,
         bond_order_method=bond_order_method,
     )

@@ -1,5 +1,5 @@
 import functools
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import click
 from click_option_group import optgroup

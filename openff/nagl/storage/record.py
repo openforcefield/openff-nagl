@@ -193,6 +193,49 @@ class MoleculeRecord(Record):
         return self.mapped_smiles
 
     @classmethod
+    def from_precomputed_openff(
+        cls,
+        molecule: "openff.toolkit.topology.Molecule",
+        partial_charge_method: str = None,
+        bond_order_method: str = None,
+    ):
+        from openff.nagl.nn.label import LabelPrecomputedMolecule
+        from openff.nagl.utils.openff import get_coordinates_in_angstrom
+
+        if not len(molecule.conformers) == 1:
+            raise ValueError(
+                "The molecule must have exactly one conformer to be "
+                "converted to a MoleculeRecord "
+                "using Molecule.from_precomputed_openff. "
+                "Try using Molecule.from_openff and generating conformers "
+                "instead"
+            )
+
+        labeller = LabelPrecomputedMolecule(
+            partial_charge_method=partial_charge_method,
+            bond_order_method=bond_order_method,
+        )
+        labels = labeller(molecule)
+
+        charges = {}
+        if labeller.partial_charge_label in labels:
+            charges[partial_charge_method] = labels[labeller.partial_charge_label].numpy()
+        bonds = {}
+        if labeller.bond_order_label in labels:
+            bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
+
+        conformer_record = ConformerRecord(
+            coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
+            partial_charges=charges,
+            bond_orders=bonds,
+        )
+        record = cls(
+            mapped_smiles=molecule.to_smiles(mapped=True, isomeric=True),
+            conformers=[conformer_record],
+        )
+        return record
+
+    @classmethod
     def from_openff(
         cls,
         openff_molecule: "openff.toolkit.topology.Molecule",

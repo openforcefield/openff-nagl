@@ -30,12 +30,15 @@ def openff_methane_uncharged():
 
     return molecule
 
+@pytest.fixture()
+def openff_methane_charges():
+    return np.arange(5, dtype=float) / 10
 
 @pytest.fixture()
-def openff_methane_charged(openff_methane_uncharged):
+def openff_methane_charged(openff_methane_uncharged, openff_methane_charges):
     from openff.toolkit.topology.molecule import unit
 
-    charges = np.arange(5, dtype=float) / 10 * unit.elementary_charge
+    charges = openff_methane_charges * unit.elementary_charge
     openff_methane_uncharged.partial_charges = charges
 
     return openff_methane_uncharged
