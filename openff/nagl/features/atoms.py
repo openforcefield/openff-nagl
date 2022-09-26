@@ -1,3 +1,4 @@
+import functools
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
@@ -24,6 +25,8 @@ __all__ = [
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
 ]
+
+
 
 
 class AtomFeatureMeta(FeatureMeta):
@@ -74,6 +77,12 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
                 for hyb in hybridizations
             ]
         )
+
+    def dict(self, *args, **kwargs):
+        obj = super().dict()
+        obj["categories"] = [hyb.name for hyb in self.categories]
+        return obj
+    
 
 
 class AtomConnectivity(CategoricalMixin, AtomFeature):

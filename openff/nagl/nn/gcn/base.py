@@ -8,37 +8,41 @@ import torch.nn.functional
 
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.base import ContainsLayersMixin
+from openff.nagl.base.metaregistry import create_registry_metaclass
 
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 
-class GCNStackMeta(abc.ABCMeta):
-    """A metaclass for GCN stacks.
+# class GCNStackMeta(abc.ABCMeta):
+#     """A metaclass for GCN stacks.
 
-    This metaclass is used to register GCN layers by name.
-    """
+#     This metaclass is used to register GCN layers by name.
+#     """
 
-    registry: ClassVar[Dict[str, Type]] = {}
+#     registry: ClassVar[Dict[str, Type]] = {}
 
-    def __init__(cls, name, bases, namespace, **kwargs):
-        super().__init__(name, bases, namespace, **kwargs)
-        if hasattr(cls, "layer_type") and cls.layer_type:
-            cls.registry[cls.layer_type] = cls
+#     def __init__(cls, name, bases, namespace, **kwargs):
+#         super().__init__(name, bases, namespace, **kwargs)
+#         if hasattr(cls, "name") and cls.name:
+#             cls.registry[cls.name] = cls
 
-    @classmethod
-    def get_gcn_class(cls, class_name: str):
-        if isinstance(class_name, cls):
-            return class_name
-        if isinstance(type(class_name), cls):
-            return type(class_name)
-        try:
-            return cls.registry[class_name]
-        except KeyError:
-            raise ValueError(
-                f"Unknown GCN layer type: {class_name}. "
-                f"Supported types: {list(cls.registry.keys())}"
-            )
+#     @classmethod
+#     def get_gcn_class(cls, class_name: str):
+#         if isinstance(class_name, cls):
+#             return class_name
+#         if isinstance(type(class_name), cls):
+#             return type(class_name)
+#         try:
+#             return cls.registry[class_name]
+#         except KeyError:
+#             raise ValueError(
+#                 f"Unknown GCN layer type: {class_name}. "
+#                 f"Supported types: {list(cls.registry.keys())}"
+#             )
 
+
+class GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
+    pass
 
 class BaseGCNStack(
     torch.nn.ModuleList,
@@ -58,7 +62,7 @@ class BaseGCNStack(
     @property
     @classmethod
     @abc.abstractmethod
-    def layer_type(cls) -> str:
+    def name(cls) -> str:
         pass
 
     @property

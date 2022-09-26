@@ -49,7 +49,7 @@ class LabelPrecomputedMolecule(LabelFunction):
             self.partial_charge_label = f"{self.partial_charge_method}-charges"
         if bond_order_method is not None:
             self.bond_order_method = WibergBondOrderMethod(bond_order_method)
-            self.bond_order_label = f"{self.bond_order_label}-wbo"
+            self.bond_order_label = f"{self.bond_order_method}-wbo"
 
 
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:

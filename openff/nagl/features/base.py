@@ -14,40 +14,75 @@ from pydantic import validator
 from pydantic.main import ModelMetaclass
 
 from ..base.base import ImmutableModel
+from openff.nagl.base.metaregistry import create_registry_metaclass
 
 if TYPE_CHECKING:
     import torch
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 
-class FeatureMeta(ModelMetaclass):
+class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
     registry: ClassVar[Dict[str, Type]] = {}
 
-    def __init__(self, name, bases, namespace, **kwargs):
+    def __init__(cls, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace, **kwargs)
-        _key = self.feature_name if hasattr(self, "feature_name") else None
-        if _key == "":
-            _key = name
-
-        self.registry[_key] = self
-        self.feature_name = _key
-
-    def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
-        if isinstance(feature_name_or_class, self):
-            return feature_name_or_class
-
         try:
-            return self.registry[feature_name_or_class]
-        except KeyError:
-            raise KeyError(
-                f"Unknown feature type: {feature_name_or_class}. "
-                f"Supported types: {list(self.registry.keys())}"
-            )
+            key = namespace.get(cls._key_attribute)
+        except AttributeError:
+            key = None
+        else:
+            if not key:
+                key = name
+
+        if key is not None:
+            key = cls._key_transform(key)
+            cls.registry[key] = cls
+        setattr(cls, cls._key_attribute, key)
+        
+
+
+    # def __init__(self, name, bases, namespace, **kwargs):
+    #     super().__init__(name, bases, namespace, **kwargs)
+    #     _key = self.feature_name if hasattr(self, "feature_name") else None
+    #     if _key == "":
+    #         _key = name
+
+    #     self.registry[_key] = self
+    #     self.feature_name = _key
+
+    # def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
+    #     if isinstance(feature_name_or_class, self):
+    #         return feature_name_or_class
+
+    #     try:
+    #         return self.registry[feature_name_or_class]
+    #     except KeyError:
+    #         raise KeyError(
+    #             f"Unknown feature type: {feature_name_or_class}. "
+    #             f"Supported types: {list(self.registry.keys())}"
+    #         )
 
 
 class Feature(ImmutableModel, abc.ABC):
     feature_name: ClassVar[Optional[str]] = ""
     _feature_length: ClassVar[int] = 1
+
+    def __init__(self, *args, **kwargs):
+        if not kwargs and args:
+            if len(self.__fields__) == len(args):
+                kwargs = dict(zip(self.__fields__, args))
+                args = tuple()
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def _with_args(cls, *args):
+        if len(cls.__fields__) != len(args):
+            raise ValueError("Wrong number of arguments")
+
+        kwargs = dict(zip(cls.__fields__, args))
+        return cls(**kwargs)
+
+
 
     def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """

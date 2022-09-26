@@ -55,7 +55,7 @@ def try_and_return_error(func, error: str = "Failed"):
 
 def write_error_to_file_object(file_object, error: str, separator: bool = True):
     if separator:
-        file_object.write("=" * 79)
+        file_object.write("=" * 79 + "\n")
     file_object.write(error + "\n")
     file_object.flush()
 

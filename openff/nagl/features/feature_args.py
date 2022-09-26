@@ -66,7 +66,7 @@ class FeatureArgs:
     ):
 
         metacls = _FEATURE_METACLASSES[feature_type.lower()]
-        self.feature_class = metacls.get_feature_class(feature_class)
+        self.feature_class = metacls._get_class(feature_class)
         if feature_arguments is None:
             feature_arguments = tuple()
         self.feature_arguments = tuple(feature_arguments)

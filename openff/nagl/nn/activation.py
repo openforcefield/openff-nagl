@@ -34,3 +34,6 @@ class ActivationFunction(enum.Enum):
             return cls.get(name).value()
         except ValueError:
             return name
+
+    _get_object = get_value
+    _get_class = get
