@@ -101,6 +101,11 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
+    @property
+    def _torch_optimizer(self):
+        optimizer = self.optimizers()
+        return optimizer.optimizer
+
 
 class DGLMoleculeLightningDataModule(pl.LightningDataModule):
     """A utility class that makes loading and featurizing train, validation and test

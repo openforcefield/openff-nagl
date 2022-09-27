@@ -127,15 +127,16 @@ class Trainer(ImmutableModel):
             yaml.dump(self.to_simple_dict(), f)
 
     @classmethod
-    def from_yaml_file(cls, *paths):
+    def from_yaml_file(cls, *paths, **kwargs):
         import yaml
 
-        kwargs = {}
+        yaml_kwargs = {}
         for path in paths:
             with open(str(path), "r") as f:
                 dct = yaml.load(f, Loader=yaml.FullLoader)
-                kwargs.update(dct)
-        return cls(**kwargs)
+                yaml_kwargs.update(dct)
+        yaml_kwargs.update(kwargs)
+        return cls(**yaml_kwargs)
 
 
     @property
@@ -146,8 +147,8 @@ class Trainer(ImmutableModel):
 
     def _set_up_data_module(self):
         return DGLMoleculeLightningDataModule(
-            atom_features=self.instantiate_atom_features(),
-            bond_features=self.instantiate_bond_features(),
+            atom_features=self.atom_features,
+            bond_features=self.bond_features,
             partial_charge_method=self.partial_charge_method,
             bond_order_method=self.bond_order_method,
             training_set_paths=self.training_set_paths,
