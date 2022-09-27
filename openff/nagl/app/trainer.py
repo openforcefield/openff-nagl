@@ -55,8 +55,6 @@ class Trainer(ImmutableModel):
     n_gpus: int = 0
     n_epochs: int = 100
     seed: Optional[int] = None
-    logger_name: str = "default"
-    checkpoint_file: Optional[str] = None
 
     _model = None
     _data_module = None
@@ -141,6 +139,7 @@ class Trainer(ImmutableModel):
         for path in paths:
             with open(str(path), "r") as f:
                 dct = yaml.load(f, Loader=yaml.FullLoader)
+                dct = {k.replace("-", "_"): v for k, v in dct.items()}
                 yaml_kwargs.update(dct)
         yaml_kwargs.update(kwargs)
         return cls(**yaml_kwargs)
@@ -230,7 +229,7 @@ class Trainer(ImmutableModel):
         return self._data_module
 
 
-    def train(self, callbacks=(ModelCheckpoint(save_top_k=3, monitor="val_loss"),)):
+    def train(self, callbacks=(ModelCheckpoint(save_top_k=3, monitor="val_loss"),), logger_name: str = "default", checkpoint_file: Optional[str] = None):
         if self._model is None:
             self.prepare()
 
@@ -253,7 +252,7 @@ class Trainer(ImmutableModel):
 
         self._logger = TensorBoardLogger(
             self.output_directory,
-            name=self.logger_name,
+            name=logger_name,
         )
 
         callbacks_ = [TQDMProgressBar()]
@@ -273,7 +272,7 @@ class Trainer(ImmutableModel):
         self.trainer.fit(
             self.model,
             datamodule=self.data_module,
-            ckpt_path=self.checkpoint_file
+            ckpt_path=checkpoint_file
         )
 
         if self.test_set_paths is not None:
