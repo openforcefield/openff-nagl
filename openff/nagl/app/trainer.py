@@ -61,6 +61,13 @@ class Trainer(ImmutableModel):
     _trainer = None
     _logger = None
 
+    @validator("training_set_paths", "validation_set_paths", "test_set_paths", pre=True)
+    def _validate_paths(cls, v):
+        from openff.nagl.utils.utils import as_iterable
+        v = as_iterable(v)
+        v = [pathlib.Path(x).resolve() for x in v]
+        return v
+
     @validator("convolution_architecture", pre=True)
     def _validate_convolution_architecture(cls, v):
         return GCNStackMeta._get_class(v)
