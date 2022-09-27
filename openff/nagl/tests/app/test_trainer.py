@@ -11,7 +11,9 @@ def test_trainer(tmpdir):
         assert type(trainer.atom_features[0]).__name__ == "AtomicElement"
         assert trainer.atom_features[0].categories == ["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
 
+        trainer.to_yaml_file("output.yaml")
         trainer2 = Trainer.from_yaml_file("output.yaml")
 
         assert trainer.to_simple_dict() == trainer2.to_simple_dict()
+        assert len(trainer.to_simple_hash()) == 64
 

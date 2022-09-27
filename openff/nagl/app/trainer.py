@@ -55,6 +55,8 @@ class Trainer(ImmutableModel):
     n_gpus: int = 0
     n_epochs: int = 100
     seed: Optional[int] = None
+    logger_name: str = "default"
+    checkpoint_file: Optional[str] = None
 
     _model = None
     _data_module = None
@@ -105,15 +107,15 @@ class Trainer(ImmutableModel):
         dct["convolution_architecture"] = self.convolution_architecture.name
         dct["postprocess_layer"] = self.postprocess_layer.name
         dct["activation_function"] = self.activation_function.name
-        dct["atom_features"] = [
+        dct["atom_features"] = tuple([
             {f.feature_name: f.dict(exclude={"feature_name"})}
             for f in self.atom_features
-        ]
+        ])
 
-        dct["bond_features"] = [
+        dct["bond_features"] = tuple([
             {f.feature_name: f.dict(exclude={"feature_name"})}
             for f in self.bond_features
-        ]
+        ])
         new_dict = dict(dct)
         for k, v in dct.items():
             if isinstance(v, pathlib.Path):
@@ -125,6 +127,11 @@ class Trainer(ImmutableModel):
         import yaml
         with open(path, "w") as f:
             yaml.dump(self.to_simple_dict(), f)
+
+    def to_simple_hash(self) -> str:
+        from openff.nagl.utils.hash import hash_dict
+
+        return hash_dict(self.to_simple_dict())
 
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
@@ -197,8 +204,8 @@ class Trainer(ImmutableModel):
     def compute_property(self, molecule: OFFMolecule) -> torch.Tensor:
         dglmol = DGLMolecule.from_openff(
             molecule,
-            atom_features=self.instantiate_atom_features(),
-            bond_features=self.instantiate_bond_features(),
+            atom_features=self.atom_features,
+            bond_features=self.bond_features,
         )
         return self.model.forward(dglmol)[self.readout_name]
 
@@ -223,7 +230,10 @@ class Trainer(ImmutableModel):
         return self._data_module
 
 
-    def train(self):
+    def train(self, callbacks=(ModelCheckpoint(save_top_k=3, monitor="val_loss"),)):
+        if self._model is None:
+            self.prepare()
+
         os.makedirs(str(self.output_directory), exist_ok=True)
 
         self._console = rich.get_console()
@@ -243,24 +253,28 @@ class Trainer(ImmutableModel):
 
         self._logger = TensorBoardLogger(
             self.output_directory,
-            name="default",
+            name=self.logger_name,
         )
+
+        callbacks_ = [TQDMProgressBar()]
+        callbacks_.extend(callbacks)
 
         self._trainer = pl.Trainer(
             gpus=self.n_gpus,
             min_epochs=self.n_epochs,
             max_epochs=self.n_epochs,
             logger=self._logger,
-            callbacks=[
-                ModelCheckpoint(save_top_k=3, monitor="val_loss"),
-                TQDMProgressBar(),
-            ],
+            callbacks=callbacks_,
         )
 
         if self.seed is not None:
             pl.seed_everything(self.seed)
 
-        self.trainer.fit(self.model, datamodule=self.data_module)
+        self.trainer.fit(
+            self.model,
+            datamodule=self.data_module,
+            ckpt_path=self.checkpoint_file
+        )
 
         if self.test_set_paths is not None:
             self.trainer.test(self.model, self.data_module)
