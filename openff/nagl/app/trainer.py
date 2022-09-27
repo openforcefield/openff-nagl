@@ -60,6 +60,7 @@ class Trainer(ImmutableModel):
     _data_module = None
     _trainer = None
     _logger = None
+    _console = None
 
     @validator("training_set_paths", "validation_set_paths", "test_set_paths", pre=True)
     def _validate_paths(cls, v):
