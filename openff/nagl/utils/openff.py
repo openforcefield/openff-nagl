@@ -13,6 +13,31 @@ from .types import HybridizationType
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
+
+def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: bool = False) -> "OFFMolecule":
+    from openff.toolkit.topology.molecule import Molecule
+    from openff.toolkit.utils import UndefinedStereochemistryError
+
+    func = Molecule.from_mapped_smiles if mapped else Molecule.from_smiles
+
+    with capture_toolkit_warnings():
+        try:
+            molecule = func(smiles)
+        except UndefinedStereochemistryError:
+            if not guess_stereochemistry:
+                raise
+
+        molecule = func(smiles, allow_undefined_stereo=True)
+        stereo = molecule.enumerate_stereoisomers(
+            undefined_only=True,
+            max_isomers=1,
+        )
+        if len(stereo) > 0:
+            molecule = stereo[0]
+    
+    return molecule
+
+
 @requires_package("openeye.oechem")
 def _get_molecule_hybridizations_oe(molecule: "OFFMolecule") -> List[HybridizationType]:
     from openeye import oechem

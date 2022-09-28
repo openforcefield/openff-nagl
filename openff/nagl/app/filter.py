@@ -1,0 +1,102 @@
+import functools
+import logging
+import multiprocessing
+from typing import TYPE_CHECKING, List, Tuple, Iterable, Union
+
+from openff.units.elements import MASSES, SYMBOLS
+
+
+if TYPE_CHECKING:
+    from openff.toolkit.topology.molecule import Molecule, unit
+
+logger = logging.getLogger(__name__)
+
+INV_SYMBOLS = {v: k for k, v in SYMBOLS.items()}
+
+def get_atomic_number(el: Union[int, str]) -> int:
+    if isinstance(el, int):
+        return el
+    return INV_SYMBOLS[el]
+
+
+def apply_filter(
+    molecule: "Molecule",
+    allowed_elements: Tuple[int],
+    min_mass: "unit.Quantity",
+    max_mass: "unit.Quantity",
+    n_rotatable_bonds: int,
+) -> bool:
+
+    mass = sum(MASSES[atom.atomic_number] for atom in molecule.atoms)
+
+    return (
+        all(atom.atomic_number in allowed_elements for atom in molecule.atoms)
+        and mass > min_mass
+        and mass < max_mass
+        and len(molecule.find_rotatable_bonds()) <= n_rotatable_bonds
+    )
+
+def split_and_apply_filter(
+    molecule: "Molecule",
+    allowed_elements: Tuple[int],
+    min_mass: "unit.Quantity",
+    max_mass: "unit.Quantity",
+    n_rotatable_bonds: int,
+    only_retain_largest: bool = True,
+):
+    try:
+        if only_retain_largest:
+            split_smiles = molecule.to_smiles().split(".")
+            largest = max(split_smiles, key=len)
+            molecule = Molecule.from_smiles(largest, allow_undefined_stereo=True)
+            logger.debug(f"Keeping '{largest}' from '{split_smiles}'")
+        valid = apply_filter(
+            molecule,
+            allowed_elements=allowed_elements,
+            min_mass=min_mass,
+            max_mass=max_mass,
+            n_rotatable_bonds=n_rotatable_bonds,
+        )
+        if valid:
+            yield molecule
+    except Exception as e:
+        logger.warning(f"Failed to process molecule {molecule}, {e}")
+
+
+
+def filter_molecules(
+    molecules: Iterable["Molecule"],
+    only_retain_largest: bool = True,
+    allowed_elements: Tuple[Union[str, int], ...] = ("H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I"),
+    min_mass: "unit.Quantity" = 250,
+    max_mass: "unit.Quantity" = 350,
+    n_rotatable_bonds: int = 7,
+    n_processes: int = 1,
+) -> Iterable["Molecule"]:
+
+    import tqdm
+    from openff.nagl.utils.openff import capture_toolkit_warnings
+    from openff.toolkit.topology.molecule import unit
+
+    allowed_elements = [get_atomic_number(x) for x in allowed_elements]
+
+    if not isinstance(min_mass, unit.Quantity):
+        min_mass = min_mass * unit.Quantity
+    if not isinstance(max_mass, unit.Quantity):
+        max_mass = max_mass * unit.Quantity
+
+    with capture_toolkit_warnings():
+        filterer = functools.partial(
+            split_and_apply_filter,
+            only_retain_largest=only_retain_largest,
+            allowed_elements=allowed_elements,
+            n_rotatable_bonds=n_rotatable_bonds,
+            min_mass=min_mass,
+            max_mass=max_mass,
+        )
+        with multiprocessing.Pool(processes=n_processes) as pool:
+            for molecule in tqdm.tqdm(
+                pool.imap(filterer, molecules),
+                desc="filtering molecules"
+            ):
+                yield molecule

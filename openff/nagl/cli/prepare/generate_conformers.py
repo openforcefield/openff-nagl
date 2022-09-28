@@ -1,10 +1,12 @@
 import functools
-import os
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 import click
 import tqdm
 from click_option_group import optgroup
+
+if TYPE_CHECKING:
+    from openff.nagl.app.distributed import Manager
 
 
 def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
@@ -33,12 +35,14 @@ def generate_single_molecule_conformers(
     n_conformer_pool: int = 500,
     n_conformers: int = 10,
     rms_cutoff: float = 0.05,
+    guess_stereochemistry: bool = True,
 ):
-    from openff.toolkit.topology.molecule import Molecule
     from openff.toolkit.topology.molecule import unit as off_unit
     from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
+    from openff.nagl.utils.openff import smiles_to_molecule
 
-    molecule = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    molecule = smiles_to_molecule(smiles, guess_stereochemistry=guess_stereochemistry)
+
     QC_KWARG = "canonical_isomeric_explicit_hydrogen_mapped_smiles"
     molecule.properties["smiles"] = molecule.to_smiles()
     molecule.properties[QC_KWARG] = molecule.to_smiles(mapped=True, isomeric=True)
