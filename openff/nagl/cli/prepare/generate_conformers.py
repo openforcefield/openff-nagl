@@ -46,11 +46,13 @@ def generate_single_molecule_conformers(
     QC_KWARG = "canonical_isomeric_explicit_hydrogen_mapped_smiles"
     molecule.properties["smiles"] = molecule.to_smiles()
     molecule.properties[QC_KWARG] = molecule.to_smiles(mapped=True, isomeric=True)
+    print(f"Generating conformers for {molecule.properties[QC_KWARG]} with {len(molecule.atoms)} atoms")
     molecule.generate_conformers(
         n_conformers=n_conformer_pool,
         rms_cutoff=rms_cutoff * off_unit.angstrom,
         make_carboxylic_acids_cis=True,
     )
+    print(f"Generated {len(molecule.conformers)} conformers")
     molecule.apply_elf_conformer_selection(limit=n_conformers)
     # if molecule.conformers is None or not len(molecule.conformers):
     #     raise ValueError(f"Could not generate conformers for {smiles}")
