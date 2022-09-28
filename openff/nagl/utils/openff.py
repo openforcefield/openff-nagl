@@ -27,13 +27,15 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
             if not guess_stereochemistry:
                 raise
 
-        molecule = func(smiles, allow_undefined_stereo=True)
-        stereo = molecule.enumerate_stereoisomers(
-            undefined_only=True,
-            max_isomers=1,
-        )
-        if len(stereo) > 0:
-            molecule = stereo[0]
+            molecule = func(smiles, allow_undefined_stereo=True)
+            stereo = molecule.enumerate_stereoisomers(
+                undefined_only=True,
+                max_isomers=1,
+            )
+            if len(stereo) > 0:
+                molecule = stereo[0]
+            else:
+                raise
     
     return molecule
 
