@@ -173,8 +173,9 @@ def stream_molecules_from_file(
     else:
         reader = _stream_molecules_from_file
     
-    for offmol in reader(file):
-        yield returner(offmol)
+    with capture_toolkit_warnings():
+        for offmol in reader(file):
+            yield returner(offmol)
 
 @requires_package("openeye.oechem")
 def openff_to_openeye(molecule):
