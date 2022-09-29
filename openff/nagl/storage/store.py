@@ -108,6 +108,7 @@ class MoleculeStore:
             )
 
         self.database_url = f"sqlite:///{database_path.resolve()}"
+        print(self.database_url)
         self.engine = create_engine(self.database_url)
         DBBase.metadata.create_all(self.engine)
 
