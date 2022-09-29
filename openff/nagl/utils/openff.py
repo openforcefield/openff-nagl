@@ -19,13 +19,14 @@ def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "O
     from openeye import oechem, oeomega
     from openff.toolkit.topology import Molecule
 
-    oemol = molecule.to_openeye(molecule=molecule)
+    oemol = molecule.to_openeye()
 
     # arguments for this function can be found here
     # <https://docs.eyesopen.com/toolkits/python/omegatk/OEConfGenFunctions/OEFlipper.html?highlight=stereoisomers>
 
     molecules = []
-    for isomer in oeomega.OEFlipper(oemol, 200, True, True, False):
+    # OEFlipper(mol, maxcenters, forceFlip, enumNitrogen, warts)
+    for isomer in oeomega.OEFlipper(oemol, 200, False, True, False):
         if rationalize:
             # try and determine if the molecule is reasonable by generating a conformer with
             # strict stereo, like embedding in rdkit
@@ -37,11 +38,11 @@ def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "O
             mol = oechem.OEMol(isomer)
             status = omega(mol)
             if status:
-                isomol = Molecule.from_openeye(mol, _cls=molecule.__class__)
+                isomol = Molecule.from_openeye(mol)
                 molecules.append(isomol)
 
         else:
-            isomol = Molecule.from_openeye(isomer, _cls=molecule.__class__)
+            isomol = Molecule.from_openeye(isomer)
             molecules.append(isomol)
 
     return molecules
@@ -57,7 +58,7 @@ def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "O
     )
 
     # create the molecule
-    rdmol = molecule.to_rdkit(molecule=molecule)
+    rdmol = molecule.to_rdkit()
 
     # in case any bonds/centers are missing stereo chem flag it here
     Chem.AssignStereochemistry(
@@ -79,7 +80,7 @@ def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "O
         # isomer has CIS/TRANS tags so convert back to E/Z
         Chem.SetDoubleBondNeighborDirections(isomer)
         Chem.AssignStereochemistry(isomer, force=True, cleanIt=True)
-        mol = Molecule.from_rdkit(isomer, _cls=molecule.__class__)
+        mol = Molecule.from_rdkit(isomer)
         molecules.append(mol)
 
     return molecules
