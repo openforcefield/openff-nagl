@@ -33,9 +33,11 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 max_isomers=1,
             )
             if len(stereo) > 0:
+                # We would ideally raise an exception here if the number of stereoisomers
+                # is zero, however due to the way that the OFF toolkit perceives pyramidal
+                # nitrogen stereocenters these would show up as undefined stereochemistry
+                # but have no enumerated stereoisomers.
                 molecule = stereo[0]
-            else:
-                raise
     
     return molecule
 
