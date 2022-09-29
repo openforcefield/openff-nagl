@@ -134,11 +134,18 @@ class ResonanceEnumerator:
     def remove_uncharged_sp3_carbons(rdmol: Chem.Mol):
         query = Chem.MolFromSmarts("[#6+0X4]")
         indices = [ix[0] for ix in rdmol.GetSubstructMatches(query)]
+        indices_set = set(indices)
 
         editable = Chem.RWMol(rdmol)
+        # for atom in editable.GetAtoms():
+        #     neighbors = {x.GetIdx() for x in atom.GetNeighbors()}
+        #     overlap = neighbors & indices_set
+        #     if overlap:
+        #         atom.SetNumExplicitHs(len(overlap))
         for ix in sorted(indices, reverse=True):
             editable.RemoveAtom(ix)
 
+        # editable.UpdatePropertyCache()
         return Chem.Mol(editable)
 
     def _clean_molecule(self):
@@ -546,9 +553,9 @@ class FragmentEnumerator:
 
     def transfer_electrons(self, path: List[int]) -> Chem.Mol:
         transferred = Chem.RWMol(self.rdkit_molecule)
-        _remove_radicals(transferred)
+        # _remove_radicals(transferred)
         print(Chem.MolToSmiles(transferred))
-        Chem.Kekulize(transferred)
+        # Chem.Kekulize(transferred)
 
         donor_index, acceptor_index = path[0], path[-1]
         for index in [donor_index, acceptor_index]:
