@@ -25,6 +25,7 @@ def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "O
     # <https://docs.eyesopen.com/toolkits/python/omegatk/OEConfGenFunctions/OEFlipper.html?highlight=stereoisomers>
 
     molecules = []
+    identical = []
     # OEFlipper(mol, maxcenters, forceFlip, enumNitrogen, warts)
     for isomer in oeomega.OEFlipper(oemol, 200, False, True, False):
         if rationalize:
@@ -39,12 +40,19 @@ def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "O
             status = omega(mol)
             if status:
                 isomol = Molecule.from_openeye(mol)
-                molecules.append(isomol)
+                if isomol == molecule:
+                    identical.append(isomol)
+                else:
+                    molecules.append(isomol)
 
         else:
             isomol = Molecule.from_openeye(isomer)
-            molecules.append(isomol)
+            if isomol == molecule:
+                identical.append(isomol)
+            else:
+                molecules.append(isomol)
 
+    molecules += identical
     return molecules
 
 
@@ -76,13 +84,18 @@ def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "O
     isomers = tuple(EnumerateStereoisomers(rdmol, options=stereo_opts))
 
     molecules = []
+    identical = []
     for isomer in isomers:
         # isomer has CIS/TRANS tags so convert back to E/Z
         Chem.SetDoubleBondNeighborDirections(isomer)
         Chem.AssignStereochemistry(isomer, force=True, cleanIt=True)
         mol = Molecule.from_rdkit(isomer)
-        molecules.append(mol)
+        if mol == molecule:
+            identical.append(mol)
+        else:
+            molecules.append(mol)
 
+    molecules += identical
     return molecules
 
 
@@ -110,6 +123,10 @@ def enumerate_stereoisomers(
 
 
 def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: bool = False) -> "OFFMolecule":
+    # we need to fully enumerate stereoisomers
+    # at least for OpenEye
+    # otherwise conformer generation hangs forever
+
     from openff.toolkit.topology.molecule import Molecule
     from openff.toolkit.utils import UndefinedStereochemistryError
 

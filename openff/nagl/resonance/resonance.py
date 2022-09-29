@@ -164,10 +164,14 @@ class ResonanceEnumerator:
         List[FragmentEnumerator]
         """
         rdmol = self._clean_molecule()
+        print("clean mol")
+        print(Chem.MolToSmiles(rdmol))
+        print("original mol")
+        print(Chem.MolToSmiles(self.rdkit_molecule))
 
         fragments = [
             FragmentEnumerator(rdfragment, max_path_length=max_path_length)
-            for rdfragment in Chem.GetMolFrags(rdmol, asMols=True)
+            for rdfragment in Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=False)
         ]
 
         acceptor_donor_fragments = []
@@ -256,7 +260,14 @@ class ResonanceEnumerator:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
+        return self.build_resonance_molecules(fragments, moleculetype=moleculetype)
 
+    def build_resonance_molecules(
+        self,
+        fragments,
+        moleculetype: Union[Type[Chem.rdchem.Mol],
+                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+    ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         rdkit_molecules = []
         for combination in itertools.product(*fragments):
             molecule = self.as_fragment()
@@ -277,11 +288,12 @@ class ResonanceEnumerator:
         raise NotImplementedError(f"Molecule type {moleculetype} not supported")
 
     def get_resonance_atoms(self) -> Generator[List[Chem.rdchem.Atom], None, None]:
-        for original_index in range(self.rdkit_molecule.n_atoms):
+        molecules = self.build_resonance_molecules(self.resonance_fragments)
+
+        for original_index in range(self.rdkit_molecule.GetNumAtoms()):
             rdatoms: List[Chem.rdchem.Atom] = [
-                fragment.get_atom_with_original_idx(original_index)
-                for fragment in self.resonance_fragments
-                if original_index in fragment.original_resonance_types
+                rdmol.GetAtomWithIdx(original_index)
+                for rdmol in molecules
             ]
             yield rdatoms
 
@@ -534,6 +546,9 @@ class FragmentEnumerator:
 
     def transfer_electrons(self, path: List[int]) -> Chem.Mol:
         transferred = Chem.RWMol(self.rdkit_molecule)
+        _remove_radicals(transferred)
+        print(Chem.MolToSmiles(transferred))
+        Chem.Kekulize(transferred)
 
         donor_index, acceptor_index = path[0], path[-1]
         for index in [donor_index, acceptor_index]:
@@ -583,6 +598,7 @@ class FragmentEnumerator:
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
         bonds = [int(bond.GetBondTypeAsDouble()) for bond in atom.GetBonds()]
+        atom.UpdatePropertyCache()
         n_imp_h = atom.GetNumImplicitHs()
         bonds += [1] * n_imp_h
 
