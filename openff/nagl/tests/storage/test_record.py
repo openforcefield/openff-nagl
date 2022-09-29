@@ -17,14 +17,14 @@ from openff.nagl.storage.record import (
 class TestPartialChargeRecord:
     def test_type_coercion(self):
         record = PartialChargeRecord(method="am1", values=[0.1])
-        assert record.method is ChargeMethod.AM1
+        assert record.method == "am1"
         assert isinstance(record.values, np.ndarray)
 
 
 class TestWibergBondOrderRecord:
     def test_type_coercion(self):
         record = WibergBondOrderRecord(method="am1", values=[(0, 1, 0.1)])
-        assert record.method is WibergBondOrderMethod.AM1
+        assert record.method == "am1"
         assert isinstance(record.values, list)
 
         value = record.values[0]
@@ -50,13 +50,13 @@ class TestConformerRecord:
         charges = {k: tuple(v.values)
                    for k, v in record.partial_charges.items()}
         assert charges == {
-            ChargeMethod.AM1: (0.1, 0.2, 0.3, 0.4),
-            ChargeMethod.AM1BCC: (1.0, 2.0, 3.0, 4.0),
+            "am1": (0.1, 0.2, 0.3, 0.4),
+            "am1bcc": (1.0, 2.0, 3.0, 4.0),
         }
 
         bonds = {k: v.values for k, v in record.bond_orders.items()}
         assert bonds == {
-            WibergBondOrderMethod.AM1: [
+            "am1": [
                 (0, 1, 0.1),
             ],
         }
@@ -85,6 +85,7 @@ class TestMoleculeRecord:
         offmol = OFFMolecule.from_smiles("C")
         record = MoleculeRecord.from_openff(
             offmol,
+            generate_conformers=True,
             partial_charge_methods=["am1bcc"],
             bond_order_methods=["am1"],
         )
@@ -93,9 +94,9 @@ class TestMoleculeRecord:
 
         conformer = record.conformers[0]
         assert len(conformer.partial_charges) == 1
-        assert ChargeMethod.AM1BCC in conformer.partial_charges
+        assert "am1bcc" in conformer.partial_charges
         assert len(conformer.bond_orders) == 1
-        assert WibergBondOrderMethod.AM1 in conformer.bond_orders
+        assert "am1" in conformer.bond_orders
 
         assert offmol.conformers is None
 
@@ -156,10 +157,10 @@ class TestMoleculeRecord:
         )
 
         assert np.allclose(
-            reordered_conformer.partial_charges[ChargeMethod.AM1].values, [
+            reordered_conformer.partial_charges["am1"].values, [
                 1.5, 0.5]
         )
         assert np.allclose(
-            reordered_conformer.bond_orders[WibergBondOrderMethod.AM1].values,
+            reordered_conformer.bond_orders["am1"].values,
             [(1, 0, 0.2)],
         )

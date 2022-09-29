@@ -4,9 +4,10 @@ from typing import ClassVar, Dict, Type, Union
 import torch
 
 from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.base.metaregistry import create_registry_metaclass
 
 
-class PostprocessLayerMeta(abc.ABCMeta):
+class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
@@ -14,19 +15,19 @@ class PostprocessLayerMeta(abc.ABCMeta):
         if hasattr(cls, "name") and cls.name:
             cls.registry[cls.name.lower()] = cls
 
-    @classmethod
-    def get_layer_class(cls, class_name: str):
-        if isinstance(class_name, cls):
-            return class_name
-        if isinstance(type(class_name), cls):
-            return type(class_name)
-        try:
-            return cls.registry[class_name.lower()]
-        except KeyError:
-            raise ValueError(
-                f"Unknown PostprocessLayer type: {class_name}. "
-                f"Supported types: {list(cls.registry.keys())}"
-            )
+    # @classmethod
+    # def get_layer_class(cls, class_name: str):
+    #     if isinstance(class_name, cls):
+    #         return class_name
+    #     if isinstance(type(class_name), cls):
+    #         return type(class_name)
+    #     try:
+    #         return cls.registry[class_name.lower()]
+    #     except KeyError:
+    #         raise ValueError(
+    #             f"Unknown PostprocessLayer type: {class_name}. "
+    #             f"Supported types: {list(cls.registry.keys())}"
+    #         )
 
 
 class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta):

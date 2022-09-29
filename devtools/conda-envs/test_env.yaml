@@ -30,6 +30,9 @@ dependencies:
   - pytorch
   - pytorch-lightning
 
+  # parallelism
+  - dask-jobqueue
+
   # Testing
   - pytest
   - pytest-cov

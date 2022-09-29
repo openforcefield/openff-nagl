@@ -2,8 +2,8 @@
 
 import copy
 import enum
-from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple
+from collections import defaultdict, UserString
+from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple, ClassVar
 
 import numpy as np
 from openff.units import unit as openff_unit
@@ -22,25 +22,19 @@ class Record(ImmutableModel):
         orm_mode = True
 
 
-class ChargeMethod(enum.Enum):
-    """The method used to calculate the partial charges"""
-
-    AM1 = "am1"
-    AM1BCC = "am1bcc"
+class ChargeMethod(str):
+    _openff_conversion = {"am1": "am1-mulliken", "am1bcc": "am1bcc"}
 
     def to_openff_method(self) -> str:
-        options = {"am1": "am1-mulliken", "am1bcc": "am1bcc"}
-        return options[self.value]
+        key = self.lower()
+        return self._openff_conversion.get(key, key)
 
-
-class WibergBondOrderMethod(enum.Enum):
-    """The method used to calculate the Wiberg bond orders"""
-
-    AM1 = "am1"
+class WibergBondOrderMethod(str):
+    _openff_conversion = {"am1": "am1-wiberg"}
 
     def to_openff_method(self) -> str:
-        options = {"am1": "am1-wiberg"}
-        return options[self.value]
+        key = self.lower()
+        return self._openff_conversion.get(key, key)
 
 
 class PartialChargeRecord(Record):
@@ -95,7 +89,7 @@ class WibergBondOrder(NamedTuple):
 class WibergBondOrderRecord(Record):
     """A record of the Wiberg bond orders calculated for a conformer using a specific method"""
 
-    method: WibergBondOrderMethod = WibergBondOrderMethod.AM1
+    method: WibergBondOrderMethod = "am1"
     values: List[WibergBondOrder]
 
     def map_to(self, mapping: Dict[int, int]):
@@ -140,12 +134,20 @@ class ConformerRecord(Record):
         return v
 
     @validator("partial_charges", "bond_orders", pre=True)
-    def _validate_unique_methods(cls, v):
+    def _validate_unique_methods(cls, v, field):
         if not isinstance(v, dict):
             new_v = {}
             for v_ in v:
                 new_v[v_.method] = v_
-            return new_v
+            v = new_v
+
+        value_classes = tuple([x.type_ for x in field.sub_fields])
+        new_v = {}
+        for k_, v_ in v.items():
+            if not isinstance(v_, (dict, *value_classes)):
+                v_ = {"method": k_, "values": v_}
+            new_v[k_] = v_
+        v = new_v
         return v
 
     def map_to(self, mapping: Dict[int, int]) -> "ConformerRecord":
@@ -183,9 +185,55 @@ class MoleculeRecord(Record):
         ),
     )
 
+    _partial_charge_method_name: ClassVar[str] = "partial_charge_method"
+    _bond_order_method_name: ClassVar[str] = "bond_order_method"
+
     @property
     def smiles(self):
         return self.mapped_smiles
+
+    @classmethod
+    def from_precomputed_openff(
+        cls,
+        molecule: "openff.toolkit.topology.Molecule",
+        partial_charge_method: str = None,
+        bond_order_method: str = None,
+    ):
+        from openff.nagl.nn.label import LabelPrecomputedMolecule
+        from openff.nagl.utils.openff import get_coordinates_in_angstrom
+
+        if not len(molecule.conformers) == 1:
+            raise ValueError(
+                "The molecule must have exactly one conformer to be "
+                "converted to a MoleculeRecord "
+                "using Molecule.from_precomputed_openff. "
+                "Try using Molecule.from_openff and generating conformers "
+                "instead"
+            )
+
+        labeller = LabelPrecomputedMolecule(
+            partial_charge_method=partial_charge_method,
+            bond_order_method=bond_order_method,
+        )
+        labels = labeller(molecule)
+
+        charges = {}
+        if labeller.partial_charge_label in labels:
+            charges[partial_charge_method] = labels[labeller.partial_charge_label].numpy()
+        bonds = {}
+        if labeller.bond_order_label in labels:
+            bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
+
+        conformer_record = ConformerRecord(
+            coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
+            partial_charges=charges,
+            bond_orders=bonds,
+        )
+        record = cls(
+            mapped_smiles=molecule.to_smiles(mapped=True, isomeric=True),
+            conformers=[conformer_record],
+        )
+        return record
 
     @classmethod
     def from_openff(
@@ -193,6 +241,7 @@ class MoleculeRecord(Record):
         openff_molecule: "openff.toolkit.topology.Molecule",
         partial_charge_methods: Tuple[ChargeMethod] = tuple(),
         bond_order_methods: Tuple[WibergBondOrderMethod] = tuple(),
+        generate_conformers: bool = False,
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
         rms_cutoff: float = 0.05,
@@ -207,6 +256,8 @@ class MoleculeRecord(Record):
             The methods used to compute partial charges
         bond_order_methods
             The methods used to compute Wiberg bond orders
+        generate_conformers
+            Whether to generate new conformers to overwrite existing ones
         n_conformer_pool
             The number of conformers to generate as a first step.
             ELF conformers will be selected from these.
@@ -237,11 +288,19 @@ class MoleculeRecord(Record):
 
         molecule = copy.deepcopy(openff_molecule)
 
-        molecule.generate_conformers(
-            n_conformers=n_conformer_pool,
-            rms_cutoff=rms_cutoff * off_unit.angstrom,
-        )
-        molecule.apply_elf_conformer_selection(limit=n_conformers)
+        if generate_conformers:
+            molecule.generate_conformers(
+                n_conformers=n_conformer_pool,
+                rms_cutoff=rms_cutoff * off_unit.angstrom,
+            )
+            molecule.apply_elf_conformer_selection(limit=n_conformers)
+        
+        elif not molecule.conformers:
+            raise ValueError(
+                "Molecule must have conformers to create a record. "
+                "Either pass in a molecule with conformers "
+                "or set generate_conformers=True"
+            )
 
         conformer_records = []
         for conformer in molecule.conformers:
@@ -296,6 +355,10 @@ class MoleculeRecord(Record):
         offmol = Molecule.from_mapped_smiles(
             self.mapped_smiles, allow_undefined_stereo=True
         )
+        offmol._conformers = [
+            conformer.coordinates * off_unit.angstrom
+            for conformer in self.conformers
+        ]
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
             offmol.partial_charges = np.array(
@@ -306,6 +369,9 @@ class MoleculeRecord(Record):
             for bond in offmol.bonds:
                 key = tuple(sorted([bond.atom1_index, bond.atom2_index]))
                 bond.fractional_bond_order = bond_orders[key]
+
+        offmol.properties[self._partial_charge_method_name] = partial_charge_method
+        offmol.properties[self._bond_order_method_name] = bond_order_method
 
         return offmol
 

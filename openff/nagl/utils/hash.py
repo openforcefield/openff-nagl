@@ -1,9 +1,20 @@
 import hashlib
+import enum
 import json
 import pathlib
 from typing import Any, Dict
 
 from .types import Pathlike
+
+class CustomJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pathlib.Path):
+            return str(obj)
+        elif isinstance(obj, tuple):
+            return list(obj)
+        elif isinstance(obj, enum.Enum):
+            return obj.name
+        return json.JSONEncoder.default(self, obj)
 
 
 def hash_file(path: Pathlike) -> str:
@@ -22,5 +33,5 @@ def hash_file(path: Pathlike) -> str:
 
 
 def hash_dict(obj: Dict[str, Any]) -> str:
-    string = json.dumps(obj, sort_keys=True).encode()
+    string = json.dumps(obj, sort_keys=True, cls=CustomJsonEncoder).encode()
     return hashlib.sha256(string).hexdigest()

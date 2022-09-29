@@ -25,7 +25,7 @@ class ConvolutionModule(torch.nn.Module):
     ):
         super().__init__()
 
-        gcn_cls = GCNStackMeta.get_gcn_class(architecture)
+        gcn_cls = GCNStackMeta._get_class(architecture)
         self.gcn_layers = gcn_cls.with_layers(
             n_input_features=n_input_features,
             hidden_feature_sizes=hidden_feature_sizes,

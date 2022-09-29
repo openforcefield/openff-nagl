@@ -12,6 +12,7 @@ class ActivationFunction(enum.Enum):
     ReLU = torch.nn.ReLU
     LeakyReLU = torch.nn.LeakyReLU
     ELU = torch.nn.ELU
+    Sigmoid = torch.nn.Sigmoid
 
     @classmethod
     def _lowercase(cls):
@@ -34,3 +35,6 @@ class ActivationFunction(enum.Enum):
             return cls.get(name).value()
         except ValueError:
             return name
+
+    _get_object = get_value
+    _get_class = get

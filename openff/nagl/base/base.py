@@ -1,5 +1,7 @@
 import hashlib
 import inspect
+import pathlib
+import enum
 from typing import Any, ClassVar, Dict, List, Optional, Type, no_type_check
 
 import numpy as np
@@ -25,6 +27,8 @@ class MutableModel(BaseModel):
             np.ndarray: lambda x: x.tolist(),
             tuple: list,
             unit.Quantity: lambda x: x.to_tuple(),
+            enum.Enum: lambda x: x.name,
+            pathlib.Path: str
         }
 
     _hash_fields: ClassVar[Optional[List[str]]] = None
