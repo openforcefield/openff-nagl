@@ -200,8 +200,8 @@ class TestDGLMoleculeLightningDataModule:
 
         assert isinstance(mock_data_module.bond_features[0], BondOrder)
 
-        assert mock_data_module.partial_charge_method is ChargeMethod.AM1BCC
-        assert mock_data_module.bond_order_method is WibergBondOrderMethod.AM1
+        assert mock_data_module.partial_charge_method == "am1bcc"
+        assert mock_data_module.bond_order_method == "am1"
 
         assert mock_data_module.training_set_paths == [
             pathlib.Path("train.sqlite")]

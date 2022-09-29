@@ -4,12 +4,14 @@ from numpy.testing import assert_allclose, assert_equal
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from openff.toolkit.topology.molecule import unit as offunit
 
+from openff.nagl.utils.types import HybridizationType
 from openff.nagl.features.atoms import (
     AtomAverageFormalCharge,
     AtomConnectivity,
     AtomFormalCharge,
     AtomicElement,
     AtomInRingOfSize,
+    AtomHybridization,
     AtomIsAromatic,
     AtomIsInRing,
 )
@@ -40,6 +42,25 @@ def test_atom_connectivity(smiles, connectivity):
 
     offmol = OFFMolecule.from_smiles(smiles)
     assert_equal(feature(offmol).numpy(), connectivity)
+
+
+@pytest.mark.parametrize(
+    "smiles, hybridization",
+    [
+        # sp
+        ("C#C", [[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]),
+        # sp2
+        ("B", [[0, 0, 1, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]),
+        # sp3
+        ("C", [[0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]),
+    ],
+)
+def test_atom_hybridization(smiles, hybridization):
+    feature = AtomHybridization(categories=["other", "sp", "sp2", "sp3"])
+    assert len(feature) == 4
+
+    offmol = OFFMolecule.from_smiles(smiles)
+    assert_equal(feature(offmol).numpy(), hybridization)
 
 
 @pytest.mark.parametrize(

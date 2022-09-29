@@ -6,7 +6,7 @@ from .base import ActivationFunction, BaseGCNStack
 class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):
     """A wrapper around a stack of SAGEConv graph convolutional layers"""
 
-    layer_type = "SAGEConv"
+    name = "SAGEConv"
     available_aggregator_types = ["mean", "gcn", "pool", "lstm"]
     default_aggregator_type = "mean"
     default_dropout = 0.0

@@ -110,13 +110,11 @@ class TestMoleculeStore:
         }
 
     def test_charge_methods_property(self, tmp_molecule_store):
-        stored_methods = set(
-            [x.value for x in tmp_molecule_store.get_charge_methods()])
+        stored_methods = set(tmp_molecule_store.get_charge_methods())
         assert stored_methods == {"am1", "am1bcc"}
 
     def test_wbo_methods_property(self, tmp_molecule_store):
-        assert set(tmp_molecule_store.get_wbo_methods()) == {
-            WibergBondOrderMethod.AM1}
+        assert set(tmp_molecule_store.get_wbo_methods()) == {"am1"}
 
     def test_db_invalid_version(self, tmp_path):
         """Tests that the correct exception is raised when loading a store
@@ -153,12 +151,12 @@ class TestMoleculeStore:
             )
         )
         assert len(store) == 1
-        assert store.get_charge_methods() == [ChargeMethod.AM1]
+        assert store.get_charge_methods() == ["am1"]
 
         store.store(hcl_am1bcc)
 
         assert len(store) == 1
-        expected_charge_methods = {ChargeMethod.AM1, ChargeMethod.AM1BCC}
+        expected_charge_methods = {"am1", "am1bcc"}
         assert {*store.get_charge_methods()} == expected_charge_methods
 
         record = store.retrieve()[0]
@@ -221,7 +219,7 @@ class TestMoleculeStore:
         store.store(different_coordinates)
 
         assert len(store) == 1
-        assert {*store.get_wbo_methods()} == {WibergBondOrderMethod.AM1}
+        assert {*store.get_wbo_methods()} == {"am1"}
         record = store.retrieve()[0]
         assert len(record.conformers) == 2
 
@@ -249,12 +247,12 @@ class TestMoleculeStore:
             for conformer in record.conformers:
 
                 assert partial_charge_method is None or all(
-                    partial_charges.value == partial_charge_method
+                    partial_charges == partial_charge_method
                     for partial_charges in conformer.partial_charges
                 )
 
                 assert bond_order_method is None or all(
-                    bond_orders.value == bond_order_method
+                    bond_orders == bond_order_method
                     for bond_orders in conformer.bond_orders
                 )
 

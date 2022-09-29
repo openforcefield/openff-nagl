@@ -34,6 +34,9 @@ doc = [
     "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
 ]
 
+[project.scripts]
+openff-nagl = "openff.nagl.cli:cli"
+
 # [project.urls]
 # source = "https://github.com/lilyminium/openff-nagl"
 # documentation = "https://openff-nagl.readthedocs.io"
