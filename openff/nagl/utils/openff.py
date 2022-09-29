@@ -14,6 +14,100 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 
+@requires_package("openeye.oechem")
+def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "OFFMolecule":
+    from openeye import oechem, oeomega
+    from openff.toolkit.topology import Molecule
+
+    oemol = molecule.to_openeye(molecule=molecule)
+
+    # arguments for this function can be found here
+    # <https://docs.eyesopen.com/toolkits/python/omegatk/OEConfGenFunctions/OEFlipper.html?highlight=stereoisomers>
+
+    molecules = []
+    for isomer in oeomega.OEFlipper(oemol, 200, True, True, False):
+        if rationalize:
+            # try and determine if the molecule is reasonable by generating a conformer with
+            # strict stereo, like embedding in rdkit
+            omega = oeomega.OEOmega()
+            omega.SetMaxConfs(1)
+            omega.SetCanonOrder(False)
+            # Don't generate random stereoisomer if not specified
+            omega.SetStrictStereo(True)
+            mol = oechem.OEMol(isomer)
+            status = omega(mol)
+            if status:
+                isomol = Molecule.from_openeye(mol, _cls=molecule.__class__)
+                molecules.append(isomol)
+
+        else:
+            isomol = Molecule.from_openeye(isomer, _cls=molecule.__class__)
+            molecules.append(isomol)
+
+    return molecules
+
+
+@requires_package("rdkit")
+def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "OFFMolecule":
+    from openff.toolkit.topology import Molecule
+    from rdkit import Chem
+    from rdkit.Chem.EnumerateStereoisomers import (  # type: ignore[import]
+        EnumerateStereoisomers,
+        StereoEnumerationOptions,
+    )
+
+    # create the molecule
+    rdmol = molecule.to_rdkit(molecule=molecule)
+
+    # in case any bonds/centers are missing stereo chem flag it here
+    Chem.AssignStereochemistry(
+        rdmol, cleanIt=True, force=True, flagPossibleStereoCenters=True
+    )
+    Chem.FindPotentialStereoBonds(rdmol)
+
+    # set up the options
+    stereo_opts = StereoEnumerationOptions(
+        tryEmbedding=rationalize,
+        onlyUnassigned=True,
+        maxIsomers=200,
+    )
+
+    isomers = tuple(EnumerateStereoisomers(rdmol, options=stereo_opts))
+
+    molecules = []
+    for isomer in isomers:
+        # isomer has CIS/TRANS tags so convert back to E/Z
+        Chem.SetDoubleBondNeighborDirections(isomer)
+        Chem.AssignStereochemistry(isomer, force=True, cleanIt=True)
+        mol = Molecule.from_rdkit(isomer, _cls=molecule.__class__)
+        molecules.append(mol)
+
+    return molecules
+
+
+def enumerate_stereoisomers(
+    molecule: "OFFMolecule", rationalize: bool = True
+) -> List["OFFMolecule"]:
+    """Enumerate stereoisomers for a molecule.
+
+    Parameters
+    ----------
+    molecule : openff.toolkit.topology.Molecule
+        The molecule to enumerate stereoisomers for.
+    rationalize : bool, optional
+        Whether to rationalize the stereoisomers, by default True
+
+    Returns
+    -------
+    List[openff.toolkit.topology.Molecule]
+        The enumerated stereoisomers.
+    """
+    try:
+        return _enumerate_stereoisomers_oe(molecule, rationalize=rationalize)
+    except MissingOptionalDependency:
+        return _enumerate_stereoisomers_rd(molecule, rationalize=rationalize)
+
+
 def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: bool = False) -> "OFFMolecule":
     from openff.toolkit.topology.molecule import Molecule
     from openff.toolkit.utils import UndefinedStereochemistryError
@@ -28,16 +122,20 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 raise
 
             molecule = func(smiles, allow_undefined_stereo=True)
-            stereo = molecule.enumerate_stereoisomers(
-                undefined_only=True,
-                max_isomers=1,
+            stereo = enumerate_stereoisomers(
+                molecule,
+                rationalize=True,
             )
-            if len(stereo) > 0:
-                # We would ideally raise an exception here if the number of stereoisomers
-                # is zero, however due to the way that the OFF toolkit perceives pyramidal
-                # nitrogen stereocenters these would show up as undefined stereochemistry
-                # but have no enumerated stereoisomers.
-                molecule = stereo[0]
+            if not len(stereo):
+                raise
+
+            molecule = stereo[0]
+            # if len(stereo) > 0:
+            #     # We would ideally raise an exception here if the number of stereoisomers
+            #     # is zero, however due to the way that the OFF toolkit perceives pyramidal
+            #     # nitrogen stereocenters these would show up as undefined stereochemistry
+            #     # but have no enumerated stereoisomers.
+            #     molecule = stereo[0]
     
     return molecule
 
