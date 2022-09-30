@@ -152,7 +152,7 @@ class ResonanceEnumerator:
     def _clean_molecule(self):
         rdmol = self.remove_hydrogens(self.rdkit_molecule)
         rdmol = self.remove_uncharged_sp3_carbons(rdmol)
-        _remove_radicals(rdmol)
+        # _remove_radicals(rdmol)
         return rdmol
 
     def select_acceptor_donor_fragments(
