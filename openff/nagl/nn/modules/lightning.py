@@ -1,4 +1,5 @@
 import errno
+import functools
 import os
 import pathlib
 import pickle
@@ -267,10 +268,10 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
     def _default_dataloader(self, data_name, batch_size):
         from openff.nagl.nn.data import DGLMoleculeDataLoader
 
-        def dataloader():
+        def dataloader(batch_size):
             data = getattr(self, data_name)
             if batch_size is None:
                 batch_size = len(data)
             return DGLMoleculeDataLoader(data, batch_size=batch_size)
 
-        return dataloader
+        return functools.partial(dataloader, batch_size)

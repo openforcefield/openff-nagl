@@ -171,12 +171,6 @@ class ResonanceEnumerator:
         List[FragmentEnumerator]
         """
         rdmol = self._clean_molecule()
-        print("clean mol")
-        print(Chem.MolToSmiles(rdmol))
-        print("original mol")
-        print(Chem.MolToSmiles(self.rdkit_molecule))
-        print([bd.GetBondTypeAsDouble() for bd in self.rdkit_molecule.GetBonds()])
-        print([bd.GetBondTypeAsDouble() for bd in rdmol.GetBonds()])
 
         fragments = [
             FragmentEnumerator(rdfragment, max_path_length=max_path_length)
@@ -359,11 +353,6 @@ class FragmentEnumerator:
         if clean_molecule:
             _remove_radicals(self.rdkit_molecule)
             Chem.Kekulize(self.rdkit_molecule)
-        
-        print("fragment")
-        print(Chem.MolToSmiles(self.rdkit_molecule))
-        print("bonds")
-        print([bd.GetBondTypeAsDouble() for bd in self.rdkit_molecule.GetBonds()])
 
         self.current_to_original_atom_indices = {
             atom.GetIdx(): ResonanceEnumerator._get_original_index(atom)
@@ -561,7 +550,6 @@ class FragmentEnumerator:
     def transfer_electrons(self, path: List[int]) -> Chem.Mol:
         transferred = Chem.RWMol(self.rdkit_molecule)
         # _remove_radicals(transferred)
-        print(Chem.MolToSmiles(transferred))
         # Chem.Kekulize(transferred)
 
         donor_index, acceptor_index = path[0], path[-1]
