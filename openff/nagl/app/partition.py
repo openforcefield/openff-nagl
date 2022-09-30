@@ -1,8 +1,5 @@
 from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator
 
-import click
-from click_option_group import optgroup
-
 from openff.utilities import requires_package
 
 
@@ -17,7 +14,7 @@ class DatasetPartitioner:
         self.molecule_atom_fps = molecule_atom_fps
         self.all_environments = [
             fp
-            for _, fps in self.environments_by_element
+            for fps in self.environments_by_element.values()
             for fp in fps
         ]
         self.all_environment_indices = {
@@ -63,11 +60,11 @@ class DatasetPartitioner:
 
         environments = defaultdict(lambda: defaultdict(set))
         molecule_fingerprints = {}
-        for smiles in all_smiles:
+        for smiles in sorted(all_smiles, key=len, reverse=True):
             envs = cls.get_atom_fingerprints(smiles)
             for symbol, fp in envs:
                 environments[symbol][fp].add(smiles)
-            molecule_fingerprints[smiles] = envs
+            molecule_fingerprints[smiles] = {x for _, x in envs}
 
         environments = {k: dict(v) for k, v in environments.items()}
         return cls(environments, molecule_fingerprints)
@@ -88,7 +85,7 @@ class DatasetPartitioner:
         
         I, J = tuple(zip(*indices))
         data = np.ones_like(I)
-        matrix = scipy.sparse.coo_matrix((data, I, J))
+        matrix = scipy.sparse.coo_matrix((data, (I, J)))
         self.unrepresented_molecule_fp_matrix = matrix.tolil()
         
                 
@@ -121,12 +118,16 @@ class DatasetPartitioner:
         return selected_smiles
     
     def count_atom_environments(self, all_smiles: Iterable[str]) -> Dict[str, int]:
-        from collections import defaultdict
+        from collections import Counter
         
-        counts = defaultdict(0)
-        for smiles in all_smiles:
-            for fp in self.molecule_atom_fps[smiles]:
-                counts[fp] += 1
+        counts = Counter([
+            fp
+            for smiles in all_smiles
+            for fp in self.molecule_atom_fps[smiles]
+        ])
+        # for smiles in all_smiles:
+        #     for fp in self.molecule_atom_fps[smiles]:
+        #         counts[fp] += 1
         return counts
     
     def select_molecules(
@@ -140,11 +141,14 @@ class DatasetPartitioner:
         self.setup_molecule_fp_matrix()
         
         # select all molecules with rare atom environments
-        for envs in self.environments_by_element.values():
+        for el, envs in self.environments_by_element.items():
             for fp, all_smiles in envs.items():
                 if len(all_smiles) <= n_environment_molecules:
+                    print(el, fp, len(all_smiles))
                     selected_smiles |= all_smiles
                     selected_fingerprints.add(fp)
+
+        print(selected_smiles)
         
         # update fingerprint matrix
         self.remove_atom_fps_from_matrix(selected_fingerprints)
@@ -162,7 +166,7 @@ class DatasetPartitioner:
         # for each of the specified atom environments (by element),
         # greedily select the molecules with the most unrepresented environments (all elements)
         for element in element_order:
-            envs = environments[element]
+            envs = environments.get(element, {})
             for fp, all_smiles in envs.items():
                 selected = self.select_from_smiles(
                     all_smiles,
