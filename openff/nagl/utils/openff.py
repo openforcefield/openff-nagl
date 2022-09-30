@@ -445,8 +445,26 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
     )
     return atom_map
 
+@requires_package("openeye.oechem")
+def _normalize_molecule_oe(
+    molecule: "Molecule", reaction_smarts: List[str]
+) -> "Molecule":  # pragma: no cover
 
-def _rd_normalize_molecule(
+    from openeye import oechem
+    from openff.toolkit.topology import Molecule
+
+    oe_molecule: oechem.OEMol = molecule.to_openeye()
+
+    for pattern in reaction_smarts:
+
+        reaction = oechem.OEUniMolecularRxn(pattern)
+        reaction(oe_molecule)
+
+    return Molecule.from_openeye(oe_molecule, allow_undefined_stereo=True)
+
+
+@requires_package("rdkit")
+def _normalize_molecule_rd(
     molecule: "OFFMolecule",
     reaction_smarts: List[str] = tuple(),
     max_iterations: int = 10000,
@@ -513,7 +531,13 @@ def normalize_molecule(
     with open(MOLECULE_NORMALIZATION_REACTIONS, "r") as f:
         reaction_smarts = [entry["smarts"] for entry in json.load(f)]
 
-    normalized = _rd_normalize_molecule(
+    # try:
+    #     normalized = _normalize_molecule_oe(
+    #         molecule,
+    #         reaction_smarts=reaction_smarts,
+    #     )
+    # except MissingOptionalDependency:
+    normalized = _normalize_molecule_rd(
         molecule,
         reaction_smarts=reaction_smarts,
         max_iterations=max_iterations,

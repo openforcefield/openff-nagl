@@ -129,7 +129,7 @@ class ResonanceEnumerator:
 
     @staticmethod
     def remove_hydrogens(rdmol: Chem.Mol):
-        return Chem.RemoveAllHs(rdmol)
+        return Chem.RemoveAllHs(rdmol, sanitize=False)
 
     @staticmethod
     def remove_uncharged_sp3_carbons(rdmol: Chem.Mol):
@@ -145,9 +145,8 @@ class ResonanceEnumerator:
                 atom.SetNumExplicitHs(len(overlap))
         for ix in sorted(indices, reverse=True):
             editable.RemoveAtom(ix)
-
-        editable.UpdatePropertyCache()
-        return Chem.Mol(editable)
+        return editable
+        # return Chem.Mol(editable)
 
     def _clean_molecule(self):
         rdmol = self.remove_hydrogens(self.rdkit_molecule)
@@ -176,6 +175,8 @@ class ResonanceEnumerator:
         print(Chem.MolToSmiles(rdmol))
         print("original mol")
         print(Chem.MolToSmiles(self.rdkit_molecule))
+        print([bd.GetBondTypeAsDouble() for bd in self.rdkit_molecule.GetBonds()])
+        print([bd.GetBondTypeAsDouble() for bd in rdmol.GetBonds()])
 
         fragments = [
             FragmentEnumerator(rdfragment, max_path_length=max_path_length)
@@ -358,6 +359,11 @@ class FragmentEnumerator:
         if clean_molecule:
             _remove_radicals(self.rdkit_molecule)
             Chem.Kekulize(self.rdkit_molecule)
+        
+        print("fragment")
+        print(Chem.MolToSmiles(self.rdkit_molecule))
+        print("bonds")
+        print([bd.GetBondTypeAsDouble() for bd in self.rdkit_molecule.GetBonds()])
 
         self.current_to_original_atom_indices = {
             atom.GetIdx(): ResonanceEnumerator._get_original_index(atom)
