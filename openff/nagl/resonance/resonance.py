@@ -146,7 +146,7 @@ class ResonanceEnumerator:
         for ix in sorted(indices, reverse=True):
             editable.RemoveAtom(ix)
 
-        # editable.UpdatePropertyCache()
+        editable.UpdatePropertyCache()
         return Chem.Mol(editable)
 
     def _clean_molecule(self):
