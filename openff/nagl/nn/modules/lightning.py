@@ -85,6 +85,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             all_losses.append(self.loss_function(pred_values, label_values))
 
         loss = torch.Tensor(all_losses).sum(axis=0)
+        loss = torch.Tensor(loss, requires_grad=True)
 
         self.log(f"{step_type}_loss", loss)
         return loss
