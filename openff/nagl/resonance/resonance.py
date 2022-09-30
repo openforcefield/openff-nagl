@@ -117,6 +117,7 @@ class ResonanceEnumerator:
     def __init__(self, openff_molecule: "OFFMolecule"):
         self.openff_molecule = openff_molecule
         self.rdkit_molecule = openff_molecule.to_rdkit()
+        Chem.Kekulize(self.rdkit_molecule)
         self.acceptor_donor_fragments = []
         self.resonance_fragments = {}
 
@@ -137,11 +138,11 @@ class ResonanceEnumerator:
         indices_set = set(indices)
 
         editable = Chem.RWMol(rdmol)
-        # for atom in editable.GetAtoms():
-        #     neighbors = {x.GetIdx() for x in atom.GetNeighbors()}
-        #     overlap = neighbors & indices_set
-        #     if overlap:
-        #         atom.SetNumExplicitHs(len(overlap))
+        for atom in editable.GetAtoms():
+            neighbors = {x.GetIdx() for x in atom.GetNeighbors()}
+            overlap = neighbors & indices_set
+            if overlap:
+                atom.SetNumExplicitHs(len(overlap))
         for ix in sorted(indices, reverse=True):
             editable.RemoveAtom(ix)
 
