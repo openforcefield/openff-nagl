@@ -56,11 +56,13 @@ class DatasetPartitioner:
 
     @classmethod
     def from_smiles(cls, all_smiles: List[str]):
+        import tqdm
         from collections import defaultdict
 
         environments = defaultdict(lambda: defaultdict(set))
         molecule_fingerprints = {}
-        for smiles in sorted(all_smiles, key=len, reverse=True):
+        all_smiles = sorted(all_smiles, key=len, reverse=True)
+        for smiles in tqdm.tqdm(all_smiles, desc="Computing atom fingerprints in molecules"):
             envs = cls.get_atom_fingerprints(smiles)
             for symbol, fp in envs:
                 environments[symbol][fp].add(smiles)
@@ -144,11 +146,8 @@ class DatasetPartitioner:
         for el, envs in self.environments_by_element.items():
             for fp, all_smiles in envs.items():
                 if len(all_smiles) <= n_environment_molecules:
-                    print(el, fp, len(all_smiles))
                     selected_smiles |= all_smiles
                     selected_fingerprints.add(fp)
-
-        print(selected_smiles)
         
         # update fingerprint matrix
         self.remove_atom_fps_from_matrix(selected_fingerprints)

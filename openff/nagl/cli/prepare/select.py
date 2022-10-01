@@ -5,7 +5,7 @@ import click
 from click_option_group import optgroup
 
 @click.command(
-    "select",
+    "select-molecules",
     short_help="Select broad set of chemistries from dataset.",
     help=(
         "Selects a set of molecules based on the criteria specified by:\n\n"
@@ -41,7 +41,7 @@ from click_option_group import optgroup
     default=["S", "F", "Cl", "Br", "I", "P", "O", "N"],
     show_default=True,
 )
-def partition_dataset_cli(
+def select_molecules_cli(
     input_file: str,
     output_file: str,
     n_environment_molecules: int = 4,
@@ -70,9 +70,9 @@ def partition_dataset_cli(
     destination = MoleculeStore(output_file)
     destination.store(selected_records)
 
-    print(f"Selected {len(selected_records)} molecules and wrote to {output_file}")
+    print(f"Selected {len(selected_records)} molecules from {len(records)} original and wrote to {output_file}")
 
 
 
 if __name__ == "__main__":
-    partition_dataset_cli()
+    select_molecules_cli()

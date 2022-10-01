@@ -18,6 +18,7 @@ def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
                 file,
                 file_format=file_format,
                 as_smiles=True,
+                explicit_hydrogens=False,
             ),
             desc="loading molecules",
             ncols=80,

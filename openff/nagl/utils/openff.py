@@ -303,14 +303,15 @@ def stream_molecules_from_file(
     file: str,
     file_format: Optional[str] = None,
     as_smiles: bool = False,
-    mapped: bool = False
+    mapped: bool = False,
+    explicit_hydrogens: bool = True,
 ):
     file = str(file)
 
     if not as_smiles:
         returner = lambda x: x
     else:
-        returner = lambda x: x.to_smiles(mapped=mapped)
+        returner = lambda x: x.to_smiles(mapped=mapped, explicit_hydrogens=explicit_hydrogens)
 
     file_format = get_file_format(file)
     if file_format == "smi":
