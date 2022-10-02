@@ -279,6 +279,16 @@ def _stream_molecules_from_file_oe(file: str):
         yield _stream_conformer_from_oe(confmol)
 
 @requires_package("openeye.oechem")
+def _stream_molecules_from_file_unsafe_oe(file: str):
+    from openeye import oechem
+    from openff.toolkit.topology import Molecule
+
+    stream = oechem.oemolistream()
+    stream.open(file)
+    for oemol in stream.GetOEMols():
+        yield Molecule.from_openeye(oemol, allow_undefined_stereo=True)
+
+@requires_package("openeye.oechem")
 def _stream_smiles_from_file_oe(file: str):
     from openeye import oechem
 
@@ -299,9 +309,13 @@ def _stream_conformer_from_oe(oemol):
     return offmol
 
 
-def _stream_molecules_from_file(file: str):
+def _stream_molecules_from_file(file: str, unsafe: bool = False):
+    if unsafe:
+        oefunc = _stream_molecules_from_file_unsafe_oe
+    else:
+        oefunc = _stream_molecules_from_file_oe
     try:
-        for offmol in _stream_molecules_from_file_oe(file):
+        for offmol in oefunc(file):
             yield offmol
     except MissingOptionalDependency:
         for offmol in _stream_molecules_from_file_rd(file):
