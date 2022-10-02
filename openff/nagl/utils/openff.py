@@ -1,6 +1,7 @@
 """Utilities for working with OpenFF Toolkit molecules."""
 
 import contextlib
+import functools
 import json
 from typing import TYPE_CHECKING, Dict, List, Tuple, Union, Optional
 
@@ -12,6 +13,16 @@ from .types import HybridizationType
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
+
+
+def generate_conformers(molecule, **kwargs):
+    # RDKit can hang for a very, very very long time
+    from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
+
+    try:
+        molecule.generate_conformers(**kwargs, toolkit_registry=OpenEyeToolkitWrapper())
+    except MissingOptionalDependency:
+        molecule.generate_conformers(**kwargs, toolkit_registry=RDKitToolkitWrapper())
 
 
 @requires_package("openeye.oechem")
@@ -140,20 +151,19 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 raise
 
             molecule = func(smiles, allow_undefined_stereo=True)
-            stereo = enumerate_stereoisomers(
+            stereo = molecule.enumerate_stereoisomers(
                 molecule,
-                rationalize=True,
             )
-            if not len(stereo):
-                raise
+            # if not len(stereo):
+            #     raise
 
-            molecule = stereo[0]
-            # if len(stereo) > 0:
-            #     # We would ideally raise an exception here if the number of stereoisomers
-            #     # is zero, however due to the way that the OFF toolkit perceives pyramidal
-            #     # nitrogen stereocenters these would show up as undefined stereochemistry
-            #     # but have no enumerated stereoisomers.
-            #     molecule = stereo[0]
+            # molecule = stereo[0]
+            if len(stereo) > 0:
+                # We would ideally raise an exception here if the number of stereoisomers
+                # is zero, however due to the way that the OFF toolkit perceives pyramidal
+                # nitrogen stereocenters these would show up as undefined stereochemistry
+                # but have no enumerated stereoisomers.
+                molecule = stereo[0]
     
     return molecule
 
@@ -229,6 +239,22 @@ def _stream_molecules_from_file_rd(file: str):
         if rdmol is not None:
             yield Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
 
+
+@requires_package("rdkit")
+def _stream_smiles_from_file_rd(file: str, explicit_hydrogens: bool = False):
+    from openff.toolkit.topology import Molecule
+    from rdkit import Chem
+
+    if file.endswith(".gz"):
+        file = file[:-3]
+
+    for rdmol in Chem.SupplierFromFilename(
+        file, removeHs=False, sanitize=True, strictParsing=True
+    ):
+        if rdmol is not None:
+            yield Chem.MolToSmiles(rdmol, allHsExplicit=explicit_hydrogens)
+
+
 @requires_package("openeye.oechem")
 def _copy_sddata_oe(source, target):
     from openeye import oechem
@@ -241,8 +267,9 @@ def _stream_molecules_from_file_oe(file: str):
 
     stream = oechem.oemolistream()
     stream.open(file)
+    is_sdf = stream.GetFormat() == oechem.OEFormat_SDF
     for oemol in stream.GetOEMols():
-        if (stream.GetFormat() == oechem.OEFormat_SDF) and hasattr(oemol, "GetConfIter"):
+        if is_sdf and hasattr(oemol, "GetConfIter"):
             for conf in oemol.GetConfIter():
                 confmol = conf.GetMCMol()
                 _copy_sddata_oe(oemol, confmol)
@@ -250,6 +277,15 @@ def _stream_molecules_from_file_oe(file: str):
         else:
             confmol = oemol
         yield _stream_conformer_from_oe(confmol)
+
+@requires_package("openeye.oechem")
+def _stream_smiles_from_file_oe(file: str):
+    from openeye import oechem
+
+    stream = oechem.oemolistream()
+    stream.open(file)
+    for oemol in stream.GetOEMols():
+        yield oechem.OEMolToSmiles(oemol)
 
 @requires_package("openeye.oechem")
 def _stream_conformer_from_oe(oemol):
@@ -272,19 +308,31 @@ def _stream_molecules_from_file(file: str):
             yield offmol
 
 
+def _stream_smiles_from_file(file: str):
+    try:
+        for offmol in _stream_smiles_from_file_oe(file):
+            yield offmol
+    except MissingOptionalDependency:
+        for offmol in _stream_smiles_from_file_rd(file):
+            yield offmol
 
-def _stream_molecules_from_smiles(file: str):
+
+
+def _stream_molecules_from_smiles(file: str, as_smiles: bool = False):
     from openff.toolkit.topology import Molecule
     
     with open(file, "r") as f:
         contents = f.readlines()
     for line in contents:
+
         for field in line.split():
             if field:
                 try:
                     offmol = Molecule.from_mapped_smiles(field)
                 except ValueError:
                     offmol = Molecule.from_smiles(field)
+                if as_smiles:
+                    offmol = offmol.to_smiles()
                 yield offmol
 
 def get_file_format(file: str, file_format: str = None):
@@ -302,26 +350,22 @@ def get_file_format(file: str, file_format: str = None):
 def stream_molecules_from_file(
     file: str,
     file_format: Optional[str] = None,
-    as_smiles: bool = False,
-    mapped: bool = False,
-    explicit_hydrogens: bool = True,
+    as_smiles: bool = False
 ):
     file = str(file)
 
-    if not as_smiles:
-        returner = lambda x: x
-    else:
-        returner = lambda x: x.to_smiles(mapped=mapped, explicit_hydrogens=explicit_hydrogens)
-
     file_format = get_file_format(file)
     if file_format == "smi":
-        reader = _stream_molecules_from_smiles
+        reader = functools.partial(_stream_molecules_from_smiles, as_smiles=as_smiles)
     else:
-        reader = _stream_molecules_from_file
+        if as_smiles:
+            reader = _stream_smiles_from_file
+        else:
+            reader = _stream_molecules_from_file
     
     with capture_toolkit_warnings():
         for offmol in reader(file):
-            yield returner(offmol)
+            yield offmol
 
 @requires_package("openeye.oechem")
 def openff_to_openeye(molecule):

@@ -68,7 +68,7 @@ def aggregate_records(
         else:
             seen_smiles[record.mapped_smiles] = record
 
-    results = [(x, None) for x in seen_smiles.values()]
+    results = [[(x, None) for x in seen_smiles.values()]]
     results.extend(unsuccessful)
     return results
 
