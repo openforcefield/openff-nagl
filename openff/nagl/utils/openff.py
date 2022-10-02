@@ -364,13 +364,15 @@ def get_file_format(file: str, file_format: str = None):
 def stream_molecules_from_file(
     file: str,
     file_format: Optional[str] = None,
-    as_smiles: bool = False
+    as_smiles: bool = False,
+    unsafe: bool = False,
+
 ):
     file = str(file)
 
     file_format = get_file_format(file)
     if file_format == "smi":
-        reader = functools.partial(_stream_molecules_from_smiles, as_smiles=as_smiles)
+        reader = functools.partial(_stream_molecules_from_smiles, as_smiles=as_smiles, unsafe=unsafe)
     else:
         if as_smiles:
             reader = _stream_smiles_from_file
