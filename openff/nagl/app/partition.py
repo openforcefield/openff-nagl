@@ -85,17 +85,18 @@ class DatasetPartitioner(MutableModel):
     @staticmethod
     @requires_package("rdkit")
     def get_atom_fingerprints(mapped_smiles: str) -> Set[Tuple[str, str]]:
+        from rdkit import Chem
         from rdkit.Chem import AllChem
         from openff.toolkit.topology import Molecule
         from openff.nagl.utils.openff import capture_toolkit_warnings
 
         with capture_toolkit_warnings():
             environments = set()
-            offmol = Molecule.from_smiles(
-                mapped_smiles,
-                allow_undefined_stereo=True
-            )
-            rdmol = offmol.to_rdkit()
+            rdmol = Chem.AddHs(Chem.MolFromSmiles(mapped_smiles))
+            # offmol = Molecule.from_smiles(
+            #     mapped_smiles,
+            #     allow_undefined_stereo=True
+            # )
             for rdatom in rdmol.GetAtoms():
                 fp = AllChem.GetHashedAtomPairFingerprintAsBitVect(
                     rdmol,
