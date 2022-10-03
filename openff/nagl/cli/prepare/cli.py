@@ -2,6 +2,7 @@ import click
 
 from openff.nagl.cli.prepare.generate_conformers import generate_conformers_cli
 from openff.nagl.cli.prepare.select import select_molecules_cli
+from openff.nagl.cli.prepare.partition import partition_molecules_cli
 
 @click.group(
     "prepare",
@@ -16,3 +17,4 @@ def prepare_cli():
 
 prepare_cli.add_command(generate_conformers_cli)
 prepare_cli.add_command(select_molecules_cli)
+prepare_cli.add_command(partition_molecules_cli)

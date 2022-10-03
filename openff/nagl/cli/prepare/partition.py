@@ -39,6 +39,7 @@ import click
     "--output-training-file",
     help="The path (.sqlite) to save the training set to.",
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
+
     required=True,
 )
 @click.option(
@@ -83,13 +84,12 @@ def partition_molecules_cli(
         raise ValueError("At least one input source must be given")
     
     all_records = []
-
     for file in tqdm.tqdm(input_file, desc="loading from stores"):
         store = MoleculeStore(file)
         records = store.retrieve()
         all_records.extend(records)
 
-    partitioner = DatasetPartitioner.from_molecule_records(records)
+    partitioner = DatasetPartitioner.from_molecule_records(all_records)
 
     all_sets = partitioner.partition(
         training_fraction=training_fraction,
@@ -97,14 +97,14 @@ def partition_molecules_cli(
         test_fraction=test_fraction,
         element_order=element_order,
     )
-    print(f"Partitioned {len(records)} records into:")
+    print(f"Partitioned {len(all_records)} records into:")
 
     filenames = [output_training_file, output_validation_file, output_test_file]
     names = ["Training", "Validation", "Test"]
 
     for filename, dataset, name in zip(filenames, all_sets, names):
         store_ = MoleculeStore(filename)
-        records_ = [x for x in records if x.mapped_smiles in dataset]
+        records_ = [x for x in all_records if x.mapped_smiles in dataset]
         print(f"    {name}: {len(records_)}")
 
         store_.store(records_)

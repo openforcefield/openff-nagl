@@ -19,6 +19,7 @@ from click_option_group import optgroup
     help="The path to the input molecules (.sqlite)",
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     required=True,
+    multiple=True,
 )
 @click.option(
     "--output-file",
@@ -47,30 +48,38 @@ def select_molecules_cli(
     n_environment_molecules: int = 4,
     element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N"]
 ):
+    import tqdm
     from openff.nagl.storage.store import MoleculeStore
     from openff.nagl.app.partition import DatasetPartitioner
+
+    if not len(input_file) >= 1:
+        raise ValueError("At least one input source must be given")
 
     if isinstance(element_order, str):
         element_order = [x for x in element_order.split() if x]
 
-    source = MoleculeStore(input_file)
-    records = source.retrieve()
+    all_records = []
+    for file in tqdm.tqdm(input_file, desc="loading from stores"):
+        store = MoleculeStore(file)
+        records = store.retrieve()
+        all_records.extend(records)
 
-    partitioner = DatasetPartitioner.from_molecule_records(records)
+    partitioner = DatasetPartitioner.from_molecule_records(all_records)
+
     selected_smiles = partitioner.select_molecules(
         n_environment_molecules=n_environment_molecules,
         element_order=element_order
     )
     selected_records = [
         record
-        for record in records
+        for record in all_records
         if record.mapped_smiles in selected_smiles
     ]
 
     destination = MoleculeStore(output_file)
     destination.store(selected_records)
 
-    print(f"Selected {len(selected_records)} molecules from {len(records)} original and wrote to {output_file}")
+    print(f"Selected {len(selected_records)} molecules from {len(all_records)} original and wrote to {output_file}")
 
 
 
