@@ -9,7 +9,7 @@ class TestDatasetPartitioner:
         [
             ([], []),
             (["CCCC"], []),
-            (["CCCC", "CCCCCCCCN", "CCCCCCCCCN", "CCCCCCCCCCCN"], ["CCCCCCCCCN", "CCCCCCCCCCCN"])
+            (["CCCC", "CCCCCCCCN", "CCCCCCCCCN", "CCCCCCCCCCCN"], ["CCCCCCCCN", "CCCCCCCCCCCN"])
         ]
     )
     def test_from_smiles(self, additional_input, additional_output):
@@ -31,3 +31,26 @@ class TestDatasetPartitioner:
             n_environment_molecules=2,
         )
         assert set(selected_smiles) == expected_smiles
+
+
+    def test_iadd(self):
+        partitioner = DatasetPartitioner.from_smiles(["C"])
+        assert len(partitioner.environments_by_element) == 2
+        assert len(partitioner.environments_by_element["C"]) == 1
+        assert len(partitioner.environments_by_element["H"]) == 1
+        assert len(partitioner.molecule_atom_fps) == 1
+
+        assert partitioner._all_environments is None
+        assert len(partitioner.all_environments) == 2
+        assert partitioner.all_environments is partitioner._all_environments
+
+
+        partitioner += DatasetPartitioner.from_smiles(["S"])
+        assert len(partitioner.environments_by_element) == 3
+        assert len(partitioner.environments_by_element["C"]) == 1
+        assert len(partitioner.environments_by_element["H"]) == 2
+        assert len(partitioner.environments_by_element["S"]) == 1
+        assert len(partitioner.molecule_atom_fps) == 2
+
+        assert partitioner._all_environments is None
+        assert len(partitioner.all_environments) == 4

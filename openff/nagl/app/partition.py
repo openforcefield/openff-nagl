@@ -1,3 +1,4 @@
+import copy
 from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator
 
 from openff.utilities import requires_package
@@ -12,16 +13,55 @@ class DatasetPartitioner:
     def __init__(self, environments_by_element, molecule_atom_fps):
         self.environments_by_element = environments_by_element
         self.molecule_atom_fps = molecule_atom_fps
-        self.all_environments = [
-            fp
-            for fps in self.environments_by_element.values()
-            for fp in fps
-        ]
-        self.all_environment_indices = {
-            x: i
-            for i, x in enumerate(self.all_environments)
-        }
-        self.setup_molecule_fp_matrix()
+        self._prepare_empty_vars()
+
+
+    def _prepare_empty_vars(self):
+        self._all_environments = None
+        self._all_environment_indices = None
+        self._all_molecule_smiles = None
+        self._unrepresented_molecule_fp_matrix = None
+
+    @property
+    def all_environments(self):
+        if self._all_environments is None:
+            self._setup_molecule_fp_matrix()
+        return self._all_environments
+    
+    @property
+    def all_environment_indices(self):
+        if self._all_environment_indices is None:
+            self._setup_molecule_fp_matrix()
+        return self._all_environment_indices
+
+    @property
+    def all_molecule_smiles(self):
+        if self._all_molecule_smiles is None:
+            self._setup_molecule_fp_matrix()
+        return self._all_molecule_smiles
+
+    @property
+    def unrepresented_molecule_fp_matrix(self):
+        if self._unrepresented_molecule_fp_matrix is None:
+            self._setup_molecule_fp_matrix()
+        return self._unrepresented_molecule_fp_matrix
+
+    def __iadd__(self, other):
+        if not isinstance(other, type(self)):
+            raise ValueError("Can only add two DatasetPartitioners together.")
+        for element, env_dicts in other.environments_by_element.items():
+            if element not in self.environments_by_element:
+                self.environments_by_element[element] = copy.deepcopy(env_dicts)
+            else:
+                for env, smiles in env_dicts.items():
+                    if env not in self.environments_by_element[element]:
+                        self.environments_by_element[element][env] = set()
+                    self.environments_by_element[element][env] |= smiles
+        self.molecule_atom_fps.update(other.molecule_atom_fps)
+
+        self._prepare_empty_vars()
+        return self
+
     
     @staticmethod
     @requires_package("rdkit")
@@ -72,13 +112,24 @@ class DatasetPartitioner:
         return cls(environments, molecule_fingerprints)
 
         
-    def setup_molecule_fp_matrix(self):
+    def _setup_molecule_fp_matrix(self):
         import numpy as np
         import scipy.sparse
+
+        self._all_environments = [
+            fp
+            for fps in self.environments_by_element.values()
+            for fp in fps
+        ]
+
+        self._all_environment_indices = {
+            x: i
+            for i, x in enumerate(self.all_environments)
+        }
         
         indices = []
         
-        self.all_molecule_smiles = {}
+        self._all_molecule_smiles = {}
         for i, (smiles, atom_fps) in enumerate(self.molecule_atom_fps.items()):
             self.all_molecule_smiles[smiles] = i
             for fp in atom_fps:
@@ -88,7 +139,7 @@ class DatasetPartitioner:
         I, J = tuple(zip(*indices))
         data = np.ones_like(I)
         matrix = scipy.sparse.coo_matrix((data, (I, J)))
-        self.unrepresented_molecule_fp_matrix = matrix.tolil()
+        self._unrepresented_molecule_fp_matrix = matrix.tolil()
         
                 
     def select_most_unrepresented_index(self, all_smiles: Iterable[str]) -> int:
@@ -139,9 +190,7 @@ class DatasetPartitioner:
     ) -> Set[str]:
         selected_smiles = set()
         selected_fingerprints = set()
-        
-        self.setup_molecule_fp_matrix()
-        
+                
         # select all molecules with rare atom environments
         for el, envs in self.environments_by_element.items():
             for fp, all_smiles in envs.items():
