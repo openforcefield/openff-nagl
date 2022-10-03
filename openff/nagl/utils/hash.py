@@ -12,6 +12,8 @@ class CustomJsonEncoder(json.JSONEncoder):
             return str(obj)
         elif isinstance(obj, tuple):
             return list(obj)
+        elif isinstance(obj, set):
+            return list(obj)
         elif isinstance(obj, enum.Enum):
             return obj.name
         return json.JSONEncoder.default(self, obj)

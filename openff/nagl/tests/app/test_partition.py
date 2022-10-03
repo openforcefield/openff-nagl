@@ -5,14 +5,14 @@ from openff.nagl.app.partition import DatasetPartitioner
 class TestDatasetPartitioner:
 
     @pytest.mark.parametrize(
-        "additional_input, additional_output",
+        "additional_input, n_additional_output",
         [
-            ([], []),
-            (["CCCC"], []),
-            (["CCCC", "CCCCCCCCN", "CCCCCCCCCN", "CCCCCCCCCCCN"], ["CCCCCCCCN", "CCCCCCCCCCCN"])
+            ([], 0),
+            (["CCCC"], 0),
+            (["CCCC", "CCCCCCCCN", "CCCCCCCCCN", "CCCCCCCCCCCN"], 2)
         ]
     )
-    def test_from_smiles(self, additional_input, additional_output):
+    def test_from_smiles(self, additional_input, n_additional_output):
         base_input = [
             'C=C', 'C=CC', 'C=CCC', 'C=CCCC',
             'C#C', 'C#CC', 'C#CCC',
@@ -24,13 +24,15 @@ class TestDatasetPartitioner:
             'CCCCOCCCCC', 'CCCCCCCCCCOCCCC',
         ]
         all_smiles = base_input + additional_input
-        expected_smiles = set(base_input + additional_output)
+        expected_smiles = set(base_input)
 
         partitioner = DatasetPartitioner.from_smiles(all_smiles)
         selected_smiles = partitioner.select_molecules(
             n_environment_molecules=2,
         )
-        assert set(selected_smiles) == expected_smiles
+        assert expected_smiles.issubset(selected_smiles)
+        n_difference = len(set(selected_smiles) - expected_smiles)
+        assert n_difference == n_additional_output
 
 
     def test_iadd(self):

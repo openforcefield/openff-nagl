@@ -1,7 +1,10 @@
 import copy
-from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator
+from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator, Optional
+
+import scipy.sparse
 
 from openff.utilities import requires_package
+from openff.nagl.base.base import MutableModel 
 
 
 if TYPE_CHECKING:
@@ -9,18 +12,20 @@ if TYPE_CHECKING:
 
 
 
-class DatasetPartitioner:
-    def __init__(self, environments_by_element, molecule_atom_fps):
-        self.environments_by_element = environments_by_element
-        self.molecule_atom_fps = molecule_atom_fps
-        self._prepare_empty_vars()
-
+class DatasetPartitioner(MutableModel):
+    environments_by_element: Dict[str, Dict[str, Set[str]]]
+    molecule_atom_fps: Dict[str, List[str]]
+    _all_environments: Optional[List[str]] = None
+    _all_environment_indices: Optional[Dict[str, int]] = None
+    _all_molecule_smiles: Optional[Dict[str, int]] = None
+    _unrepresented_molecule_fp_matrix: Optional[scipy.sparse.lil_matrix] = None
 
     def _prepare_empty_vars(self):
         self._all_environments = None
         self._all_environment_indices = None
         self._all_molecule_smiles = None
         self._unrepresented_molecule_fp_matrix = None
+
 
     @property
     def all_environments(self):
@@ -109,7 +114,10 @@ class DatasetPartitioner:
             molecule_fingerprints[smiles] = {x for _, x in envs}
 
         environments = {k: dict(v) for k, v in environments.items()}
-        return cls(environments, molecule_fingerprints)
+        return cls(
+            environments_by_element=environments,
+            molecule_atom_fps=molecule_fingerprints
+        )
 
         
     def _setup_molecule_fp_matrix(self):
