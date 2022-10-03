@@ -1,7 +1,9 @@
 import copy
+import random
 from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator, Optional
 
 import scipy.sparse
+import numpy as np
 
 from openff.utilities import requires_package
 from openff.nagl.base.base import MutableModel 
@@ -19,12 +21,24 @@ class DatasetPartitioner(MutableModel):
     _all_environment_indices: Optional[Dict[str, int]] = None
     _all_molecule_smiles: Optional[Dict[str, int]] = None
     _unrepresented_molecule_fp_matrix: Optional[scipy.sparse.lil_matrix] = None
+    _atom_fp_count: Optional[Dict[str, int]] = None
 
     def _prepare_empty_vars(self):
         self._all_environments = None
         self._all_environment_indices = None
         self._all_molecule_smiles = None
         self._unrepresented_molecule_fp_matrix = None
+        self._atom_fp_count = None
+
+    @property
+    def atom_fp_count(self):
+        if self._atom_fp_count == None:
+            self._atom_fp_count = {
+                k: len(v)
+                for env_dicts in self.environments_by_element.values()
+                for k, v in env_dicts.items()
+            }
+        return self._atom_fp_count
 
 
     @property
@@ -248,6 +262,110 @@ class DatasetPartitioner(MutableModel):
                 selected_smiles |= set(selected)
                 
         return selected_smiles
+
+    @staticmethod
+    def _get_counts_from_fractions(
+        n: int,
+        training_fraction: float,
+        validation_fraction: float,
+        test_fraction: float,
+    ):
+        n_test = int(np.round(n * test_fraction))
+        n_validation = int(np.round(n * validation_fraction))
+        n_training = int(np.round(n * training_fraction))
+
+        while sum([n_validation, n_test, n_training]) > n:
+            if n_test:
+                n_test -= 1
+            elif n_validation:
+                n_validation -= 1
+            else:
+                n_training -= 1
+
+        while sum([n_validation, n_test, n_training]) < n:
+            if not n_training:
+                n_training += 1
+            elif not n_validation:
+                n_validation += 1
+            elif not n_test:
+                n_test += 1
+            else:
+                n_training += 1
+        return n_training, n_validation, n_test
+
+    def _get_flattened_smiles_environments(
+        self,
+        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N"],
+    ):
+
+        def sort_smiles(smiles_dict):
+            return [set().union(*map(set, smiles_dict.values()))]
+            # return sorted(
+            #     map(set, smiles_dict.values()),
+            #     key=lambda x: sum(self._score_molecule_environment_richness(y) for y in x),
+            #     reverse=True,
+            # )
+
+        flat_environments = []
+
+        for el in element_order:
+            if self.environments_by_element.get(el):
+                smiles_sets = sort_smiles(self.environments_by_element[el])
+            flat_environments.extend(smiles_sets)
+
+        for el, env_dicts in self.environments_by_element.items():
+            if el in element_order:
+                continue
+            smiles_sets = sort_smiles(env_dicts)
+            flat_environments.extend(smiles_sets)
+        
+        return flat_environments
+
+    def partition(
+        self,
+        training_fraction: float = 0.8,
+        validation_fraction: float = 0.1,
+        test_fraction: float = 0.1,
+        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N"],
+    ) -> Tuple[Set[str], Set[str], Set[str]]:
+        import tqdm
+
+        # normalize fractions
+        total = training_fraction + validation_fraction + test_fraction
+        training_fraction /= total
+        validation_fraction /= total
+        test_fraction /= total
+
+        training = set()
+        validation = set()
+        test = set()
+        all_datasets = [training, validation, test]
+
+        seen_smiles = set()
+        flat_environments = self._get_flattened_smiles_environments(element_order=element_order)
+
+        for smiles in tqdm.tqdm(flat_environments, desc="partitioning"):
+            # remove smiles from future sets
+            smiles -= seen_smiles
+            seen_smiles |= smiles
+
+            # partition
+            n = len(smiles)
+            if not n:
+                continue
+            smiles_list = sorted(smiles, key=self._score_molecule_environment_richness, reverse=True)
+            counts = self._get_counts_from_fractions(n, training_fraction, validation_fraction, test_fraction)
+            for dataset, n in zip(all_datasets, counts):
+                selected = set(self.select_from_smiles(smiles_list, n))
+                dataset |= selected
+                smiles_list = [s for s in smiles_list if s not in selected]
+        
+        return training, validation, test
+
+    def _score_molecule_environment_richness(self, smiles):
+        fps = self.molecule_atom_fps[smiles]
+        return sum(1/self.atom_fp_count[fp] for fp in fps)
+
 
 
 def stream_smiles_from_file(path: str) -> Generator[str, None, None]:
