@@ -116,7 +116,8 @@ class AtomInRingOfSize(AtomFeature):
     ring_size: int
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        rdmol = molecule.to_rdkit()
+        from openff.nagl.utils.openff import openff_to_rdkit
+        rdmol = openff_to_rdkit(molecule)
 
         in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
         return torch.tensor(in_ring_size, dtype=int)

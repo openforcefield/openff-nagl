@@ -49,7 +49,9 @@ class BondInRingOfSize(BondFeature):
     ring_size: int
 
     def _encode(self, molecule) -> torch.Tensor:
-        rdmol = molecule.to_rdkit()
+        from openff.nagl.utils.openff import openff_to_rdkit
+        rdmol = openff_to_rdkit(molecule)
+
         is_in_ring = []
         for bond in molecule.bonds:
             rdbond = rdmol.GetBondBetweenAtoms(

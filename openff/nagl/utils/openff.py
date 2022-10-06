@@ -77,7 +77,7 @@ def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "O
     )
 
     # create the molecule
-    rdmol = molecule.to_rdkit()
+    rdmol = openff_to_rdkit(molecule)
 
     # in case any bonds/centers are missing stereo chem flag it here
     Chem.AssignStereochemistry(
@@ -209,7 +209,7 @@ def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[Hybridizati
     }
 
     hybridizations = []
-    rdmol = molecule.to_rdkit()
+    rdmol = openff_to_rdkit(molecule)
     for atom in rdmol.GetAtoms():
         hybridization = atom.GetHybridization()
         try:
@@ -397,6 +397,38 @@ def openff_to_openeye(molecule):
     return oemol
 
 
+@requires_package("rdkit")
+def openff_to_rdkit(molecule):
+    import copy
+    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
+    from openff.toolkit.topology import Molecule
+
+    try:
+        return molecule.to_rdkit()
+    except AssertionError:
+        # OpenEye just accepts all stereochemistry
+        # unlike RDKit which e.g. does not allow stereogenic bonds in a ring < 8
+        # try patching via smiles
+
+        with capture_toolkit_warnings():
+            mapped_smiles = molecule.to_smiles(mapped=True)
+            mol2 = Molecule.from_mapped_smiles(
+                mapped_smiles,
+                allow_undefined_stereo=True,
+                toolkit_registry=RDKitToolkitWrapper(),
+            )
+            mol2_bonds = {
+                (bd.atom1_index, bd.atom2_index): bd.stereochemistry
+                for bd in mol2.bonds
+            }
+
+            molecule = copy.deepcopy(molecule)
+            for bond in molecule.bonds:
+                bond._stereochemistry = mol2_bonds[bond.atom1_index, bond.atom2_index]
+        
+        return molecule.to_rdkit()
+
+
 
 @requires_package("openeye.oechem")
 @contextlib.contextmanager
@@ -422,7 +454,7 @@ def _stream_molecules_to_file_rd(file: str):
     stream = Chem.SDWriter(file)
 
     def writer(molecule):
-        rdmol = molecule.to_rdkit()
+        rdmol = openff_to_rdkit(molecule)
         n_conf = rdmol.GetNumConformers()
         if not n_conf:
             stream.write(rdmol)
@@ -496,8 +528,10 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
     """
     from openff.toolkit.topology import Molecule as OFFMolecule
 
-    reference_molecule = OFFMolecule.from_mapped_smiles(reference_smiles)
-    target_molecule = OFFMolecule.from_mapped_smiles(target_smiles)
+    with capture_toolkit_warnings():
+
+        reference_molecule = OFFMolecule.from_mapped_smiles(reference_smiles, allow_undefined_stereo=True)
+        target_molecule = OFFMolecule.from_mapped_smiles(target_smiles, allow_undefined_stereo=True)
 
     _, atom_map = OFFMolecule.are_isomorphic(
         reference_molecule,
@@ -535,7 +569,7 @@ def _normalize_molecule_rd(
     from rdkit import Chem
     from rdkit.Chem import rdChemReactions
 
-    rdmol = molecule.to_rdkit()
+    rdmol = openff_to_rdkit(molecule)
     for i, atom in enumerate(rdmol.GetAtoms(), 1):
         atom.SetAtomMapNum(i)
 
@@ -640,7 +674,7 @@ def get_best_rmsd(
             rdconf.SetAtomPosition(i, Point3D(*coord))
         rdconfs.append(rdconf)
 
-    rdmol1 = molecule.to_rdkit()
+    rdmol1 = openff_to_rdkit(molecule)
     rdmol1.RemoveAllConformers()
     rdmol2 = Chem.Mol(rdmol1)
     rdmol1.AddConformer(rdconfs[0])

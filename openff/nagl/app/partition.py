@@ -4,6 +4,7 @@ from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator, O
 
 import scipy.sparse
 import numpy as np
+import tqdm
 
 from openff.utilities import requires_package
 from openff.nagl.base.base import MutableModel 
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 
 class DatasetPartitioner(MutableModel):
     environments_by_element: Dict[str, Dict[str, Set[str]]]
-    molecule_atom_fps: Dict[str, List[str]]
+    molecule_atom_fps: Dict[str, Set[str]]
     _all_environments: Optional[List[str]] = None
     _all_environment_indices: Optional[Dict[str, int]] = None
     _all_molecule_smiles: Optional[Dict[str, int]] = None
@@ -153,16 +154,33 @@ class DatasetPartitioner(MutableModel):
         indices = []
         
         self._all_molecule_smiles = {}
-        for i, (smiles, atom_fps) in enumerate(self.molecule_atom_fps.items()):
+        # for i, (smiles, atom_fps) in tqdm.tqdm(
+        #     enumerate(self.molecule_atom_fps.items()),
+        #     desc="collecting matrix indices"
+        # ):
+        #     self.all_molecule_smiles[smiles] = i
+        #     for fp in atom_fps:
+        #         j = self.all_environment_indices[fp]
+        #         indices.append((i, j))
+        
+        # I, J = tuple(zip(*indices))
+        # data = np.ones_like(I)
+        # matrix = scipy.sparse.coo_matrix((data, (I, J)), dtype=bool)
+        n_molecules = len(self.molecule_atom_fps)
+        n_fps = len(self.all_environments)
+        matrix = scipy.sparse.coo_matrix(
+            (n_molecules, n_fps),
+            dtype=bool
+        ).tolil()
+        for i, (smiles, atom_fps) in tqdm.tqdm(
+            enumerate(self.molecule_atom_fps.items()),
+            desc="collecting matrix indices"
+        ):
             self.all_molecule_smiles[smiles] = i
             for fp in atom_fps:
                 j = self.all_environment_indices[fp]
-                indices.append((i, j))
-        
-        I, J = tuple(zip(*indices))
-        data = np.ones_like(I)
-        matrix = scipy.sparse.coo_matrix((data, (I, J)))
-        self._unrepresented_molecule_fp_matrix = matrix.tolil()
+                matrix[i, j] = 1
+        self._unrepresented_molecule_fp_matrix = matrix #.tolil()
         
                 
     def select_most_unrepresented_index(self, all_smiles: Iterable[str]) -> int:
@@ -183,7 +201,15 @@ class DatasetPartitioner(MutableModel):
         n_environment_molecules: int = 4,
     ) -> List[str]:
         all_smiles = list(all_smiles)
-        selected_smiles = []
+        
+        if len(all_smiles) <= n_environment_molecules:
+            fps = set()
+            for smiles in all_smiles:
+                fps |= self.molecule_atom_fps[smiles]
+            self.remove_atom_fps_from_matrix(fps)
+            return all_smiles
+
+        selected_smiles = []        
         for _ in range(n_environment_molecules):
             i = self.select_most_unrepresented_index(all_smiles)
             smiles = all_smiles[i]
@@ -211,11 +237,13 @@ class DatasetPartitioner(MutableModel):
         n_environment_molecules: int = 4,
         element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N"]
     ) -> Set[str]:
+        import tqdm
+
         selected_smiles = set()
         selected_fingerprints = set()
                 
         # select all molecules with rare atom environments
-        for el, envs in self.environments_by_element.items():
+        for el, envs in tqdm.tqdm(self.environments_by_element.items(), desc="processing rare environments"):
             for fp, all_smiles in envs.items():
                 if len(all_smiles) <= n_environment_molecules:
                     selected_smiles |= all_smiles
@@ -236,9 +264,9 @@ class DatasetPartitioner(MutableModel):
 
         # for each of the specified atom environments (by element),
         # greedily select the molecules with the most unrepresented environments (all elements)
-        for element in element_order:
+        for element in tqdm.tqdm(element_order, desc="processing ordered elements"):
             envs = environments.get(element, {})
-            for fp, all_smiles in envs.items():
+            for fp, all_smiles in tqdm.tqdm(envs.items(), desc=f"processing {element} environments"):
                 selected = self.select_from_smiles(
                     all_smiles,
                     n_environment_molecules=n_environment_molecules
@@ -249,11 +277,11 @@ class DatasetPartitioner(MutableModel):
         # for each of the remaining atom environments (by element)
         # if atom environment is not already adequately represented
         # greedily select molecules
-        for element, envs in environments.items():
+        for element, envs in tqdm.tqdm(environments.items(), desc="processing remaining environments"):
             if element in element_order:
                 continue
             seen_fps = self.count_atom_environments(selected_smiles)
-            for fp, all_smiles in envs.items():
+            for fp, all_smiles in tqdm.tqdm(envs.items(), desc=f"processing {element} environments"):
                 if seen_fps[fp] >= n_environment_molecules:
                     continue
                 selected = self.select_from_smiles(
@@ -312,7 +340,7 @@ class DatasetPartitioner(MutableModel):
         for el in element_order:
             if self.environments_by_element.get(el):
                 smiles_sets = sort_smiles(self.environments_by_element[el])
-            flat_environments.extend(smiles_sets)
+                flat_environments.extend(smiles_sets)
 
         for el, env_dicts in self.environments_by_element.items():
             if el in element_order:

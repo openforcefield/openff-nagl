@@ -115,8 +115,10 @@ class ResonanceEnumerator:
         return cls(offmol)
 
     def __init__(self, openff_molecule: "OFFMolecule"):
+        from openff.nagl.utils.openff import openff_to_rdkit
+
         self.openff_molecule = openff_molecule
-        self.rdkit_molecule = openff_molecule.to_rdkit()
+        self.rdkit_molecule = openff_to_rdkit(openff_molecule)
         Chem.Kekulize(self.rdkit_molecule)
         self.acceptor_donor_fragments = []
         self.resonance_fragments = {}
