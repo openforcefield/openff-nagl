@@ -78,27 +78,50 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         molecule, labels = batch
 
         y_pred = self.forward(molecule)
-        all_losses = []
+        loss = torch.zeros(1).type_as(next(iter(y_pred.values())))
 
         for label_name, label_values in labels.items():
             pred_values = y_pred[label_name]
-            all_losses.append(self.loss_function(pred_values, label_values))
+            label_loss = self.loss_function(pred_values, label_values)
+            loss += label_loss
 
-        loss = torch.Tensor(all_losses).sum(axis=0)
-        loss.requires_grad = True
+        # loss.requires_grad = True
 
         self.log(f"{step_type}_loss", loss)
         return loss
 
+    # def _default_step(
+    #     self,
+    #     batch: Tuple[DGLMolecule, Dict[str, torch.Tensor]],
+    #     step_type: str,
+    # ) -> torch.Tensor:
+
+    #     molecule, labels = batch
+
+    #     y_pred = self.forward(molecule)
+    #     all_losses = []
+
+    #     for label_name, label_values in labels.items():
+    #         pred_values = y_pred[label_name]
+    #         all_losses.append(self.loss_function(pred_values, label_values))
+
+    #     loss = torch.Tensor(all_losses).sum(axis=0)
+    #     loss.requires_grad = True
+
+    #     self.log(f"{step_type}_loss", loss)
+    #     return loss
+
     def training_step(self, train_batch, batch_idx):
-        return self._default_step(train_batch, "train")
+        loss = self._default_step(train_batch, "train")
+        return {"loss": loss}
 
     def validation_step(self, val_batch, batch_idx):
         loss = self._default_step(val_batch, "val")
         return {"val_loss": loss}
 
     def test_step(self, test_batch, batch_idx):
-        return self._default_step(test_batch, "test")
+        loss = self._default_step(test_batch, "test")
+        return {"test_loss": loss}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)

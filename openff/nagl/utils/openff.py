@@ -611,6 +611,17 @@ def _normalize_molecule_rd(
     return offmol
 
 
+@functools.lru_cache(maxsize=1000)
+def _load_reaction_smarts():
+    import json
+    from openff.nagl.data.files import MOLECULE_NORMALIZATION_REACTIONS
+
+    with open(MOLECULE_NORMALIZATION_REACTIONS, "r") as f:
+        reaction_smarts = [entry["smarts"] for entry in json.load(f)]
+    return reaction_smarts
+
+
+
 def normalize_molecule(
     molecule: "OFFMolecule",
     check_output: bool = True,
@@ -621,11 +632,8 @@ def normalize_molecule(
     """
     from openff.toolkit.topology import Molecule as OFFMolecule
 
-    from openff.nagl.data.files import MOLECULE_NORMALIZATION_REACTIONS
-
-    with open(MOLECULE_NORMALIZATION_REACTIONS, "r") as f:
-        reaction_smarts = [entry["smarts"] for entry in json.load(f)]
-
+    
+    reaction_smarts = _load_reaction_smarts()
     # try:
     #     normalized = _normalize_molecule_oe(
     #         molecule,

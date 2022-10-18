@@ -21,7 +21,7 @@ class DGLBase(ImmutableModel):
 
     _graph_feature_name: ClassVar[str] = "h"
     _graph_forward_edge_type: ClassVar[str] = "forward"
-    _graph_backward_edge_type: ClassVar[str] = "backward"
+    _graph_backward_edge_type: ClassVar[str] = "reverse"
 
     @property
     def atom_features(self) -> torch.Tensor:

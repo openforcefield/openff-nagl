@@ -14,33 +14,18 @@ def label_precomputed_molecule(
     partial_charge_method: str = None,
     bond_order_method: str = None,
 ):
-    from openff.nagl.nn.label import LabelPrecomputedMolecule
-    from openff.nagl.storage.record import ConformerRecord, MoleculeRecord
-    from openff.nagl.utils.openff import get_coordinates_in_angstrom
+    import numpy as np
+    from openff.toolkit.topology.molecule import unit
+    from openff.nagl.storage.record import MoleculeRecord
 
-    labeller = LabelPrecomputedMolecule(
+    if molecule.conformers is None:
+        conf = np.zeros((molecule.n_atoms, 3), dtype=float) * unit.angstrom
+        molecule.add_conformer(conf)
+    return MoleculeRecord.from_precomputed_openff(
+        molecule,
         partial_charge_method=partial_charge_method,
         bond_order_method=bond_order_method,
     )
-    labels = labeller(molecule)
-
-    charges = {}
-    if labeller.partial_charge_label in labels:
-        charges[partial_charge_method] = labels[labeller.partial_charge_label].numpy()
-    bonds = {}
-    if labeller.bond_order_label in labels:
-        bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
-
-    conformer_record = ConformerRecord(
-        coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
-        partial_charges=charges,
-        bond_orders=bonds,
-    )
-    record = MoleculeRecord(
-        mapped_smiles=molecule.to_smiles(mapped=True, isomeric=True),
-        conformers=[conformer_record],
-    )
-    return record
 
 
 def aggregate_records(
@@ -74,12 +59,15 @@ def aggregate_records(
     return results
 
 
+
+
 def store_molecules(
     input_file: str,
     output_file: str,
     manager: Optional["Manager"] = None,
     partial_charge_method: str = None,
     bond_order_method: str = None,
+    allow_empty_molecules: bool = False,
 ):
     from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.cli.utils import (
@@ -97,8 +85,13 @@ def store_molecules(
 
     manager.set_entries(molecules)
 
+    if allow_empty_molecules:
+        base_func = label_precomputed_molecule
+    else:
+        base_func = MoleculeRecord.from_precomputed_openff 
+
     single_func = functools.partial(
-        MoleculeRecord.from_precomputed_openff,
+        base_func,
         partial_charge_method=partial_charge_method,
         bond_order_method=bond_order_method,
     )
@@ -151,9 +144,16 @@ def store_molecules(
     default=None,
     show_default=True,
 )
+@optgroup.option(
+    "--allow-empty-molecules",
+    help="Whether to allow molecules with no conformers to be stored with zero coordinates",
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 def store_molecules_cli(
-    ctx, input_file, output_file, partial_charge_method, bond_order_method
+    ctx, input_file, output_file, partial_charge_method, bond_order_method,
+    allow_empty_molecules
 ):
     from openff.nagl.cli.utils import get_default_manager
 
@@ -163,6 +163,7 @@ def store_molecules_cli(
         manager=get_default_manager(ctx),
         partial_charge_method=partial_charge_method,
         bond_order_method=bond_order_method,
+        allow_empty_molecules=allow_empty_molecules,
     )
 
 

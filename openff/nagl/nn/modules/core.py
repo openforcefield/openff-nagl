@@ -12,8 +12,6 @@ from .postprocess import PostprocessLayer
 
 class ConvolutionModule(torch.nn.Module):
 
-    _feature_name = "h"
-
     def __init__(
         self,
         n_input_features: int,
@@ -42,7 +40,7 @@ class ConvolutionModule(torch.nn.Module):
 
         homograph = molecule.to_homogenous()
         feature_tensor = self.gcn_layers(homograph, molecule.atom_features)
-        molecule.graph.ndata[self._feature_name] = feature_tensor
+        molecule.graph.ndata[molecule._graph_feature_name] = feature_tensor
 
 
 class ReadoutModule(torch.nn.Module):

@@ -8,6 +8,8 @@ from .types import Pathlike
 
 class CustomJsonEncoder(json.JSONEncoder):
     def default(self, obj):
+        import numpy as np
+
         if isinstance(obj, pathlib.Path):
             return str(obj)
         elif isinstance(obj, tuple):
@@ -16,6 +18,8 @@ class CustomJsonEncoder(json.JSONEncoder):
             return list(obj)
         elif isinstance(obj, enum.Enum):
             return obj.name
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
 

@@ -141,7 +141,7 @@ class AtomAverageFormalCharge(AtomFeature):
         from openff.nagl.resonance.resonance import ResonanceEnumerator
         from openff.nagl.utils.openff import normalize_molecule
 
-        molecule = normalize_molecule(molecule)
+        molecule = normalize_molecule(molecule, check_output=False)
         enumerator = ResonanceEnumerator(molecule)
         enumerator.enumerate_resonance_fragments(
             lowest_energy_only=True,
