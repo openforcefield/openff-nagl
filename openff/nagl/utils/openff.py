@@ -17,12 +17,14 @@ if TYPE_CHECKING:
 
 def generate_conformers(molecule, **kwargs):
     # RDKit can hang for a very, very very long time
-    from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
+    # from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
 
-    try:
-        molecule.generate_conformers(**kwargs, toolkit_registry=OpenEyeToolkitWrapper())
-    except MissingOptionalDependency:
-        molecule.generate_conformers(**kwargs, toolkit_registry=RDKitToolkitWrapper())
+    # try:
+    #     molecule.generate_conformers(**kwargs, toolkit_registry=OpenEyeToolkitWrapper())
+    # except MissingOptionalDependency:
+    #     molecule.generate_conformers(**kwargs, toolkit_registry=RDKitToolkitWrapper())
+
+    molecule.generaet_conformers(**kwargs)
 
 
 @requires_package("openeye.oechem")
@@ -151,9 +153,7 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 raise
 
             molecule = func(smiles, allow_undefined_stereo=True)
-            stereo = molecule.enumerate_stereoisomers(
-                molecule,
-            )
+            stereo = molecule.enumerate_stereoisomers(molecule)
             # if not len(stereo):
             #     raise
 
@@ -163,7 +163,8 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 # is zero, however due to the way that the OFF toolkit perceives pyramidal
                 # nitrogen stereocenters these would show up as undefined stereochemistry
                 # but have no enumerated stereoisomers.
-                molecule = stereo[0]
+                mapped_smiles = stereo[0].to_smiles(mapped=True)
+                molecule = Molecule.from_mapped_smiles(mapped_smiles)
     
     return molecule
 
@@ -510,16 +511,16 @@ def get_openff_molecule_formal_charges(molecule: "OFFMolecule") -> List[float]:
     ]
 
 
-def get_openff_molecule_information(
-    molecule: "OFFMolecule",
-) -> Dict[str, "torch.Tensor"]:
-    charges = get_openff_molecule_formal_charges(molecule)
-    atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
-    return {
-        "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
-        "formal_charge": torch.tensor(charges, dtype=torch.int8),
-        "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
-    }
+# def get_openff_molecule_information(
+#     molecule: "OFFMolecule",
+# ) -> Dict[str, "torch.Tensor"]:
+#     charges = get_openff_molecule_formal_charges(molecule)
+#     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
+#     return {
+#         "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
+#         "formal_charge": torch.tensor(charges, dtype=torch.int8),
+#         "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
+#     }
 
 
 def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, int]:

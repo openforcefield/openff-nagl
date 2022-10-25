@@ -33,6 +33,7 @@ def aggregate_records(
 ) -> List[Tuple["MoleculeRecord", Optional[str]]]:
     unsuccessful = []
     seen_smiles = {}
+    import numpy as np
 
     for record, error in record_futures:
         if error is not None:
@@ -41,14 +42,7 @@ def aggregate_records(
 
         if record.mapped_smiles in seen_smiles:
             existing = seen_smiles[record.mapped_smiles]
-            for conf1 in record.conformers:
-                for conf2 in existing.conformers:
-                    if (conf1.coordinates - conf2.coordinates).sum() < 0.01:
-                        conf2.partial_charges.update(conf1.partial_charges)
-                        conf2.bond_orders.update(conf1.bond_orders)
-                        break
-                else:
-                    existing.conformers.append(conf1)
+            existing.conformers.extend(record.conformers)
 
         else:
             seen_smiles[record.mapped_smiles] = record
@@ -81,7 +75,10 @@ def store_molecules(
         manager, input_file, output_file
     )
 
+    print(f"Reading from {input_file}")
+
     molecules = list(stream_molecules_from_file(input_file))
+    print(f"Found {len(molecules)} molecules")
 
     manager.set_entries(molecules)
 
@@ -106,7 +103,7 @@ def store_molecules(
         manager.store_futures_and_log(
             futures,
             store_function=store.store,
-            aggregate_function=aggregate_records,
+            # aggregate_function=aggregate_records,
             log_file=log_file,
             n_batches=manager.n_batches,
             desc="storing records",
@@ -114,6 +111,11 @@ def store_molecules(
 
     print(f"Stored molecules in {output_file}")
 
+    retrieved = store.retrieve()
+    print(f"{output_file} has {len(retrieved)} records")
+
+
+    
 
 @click.command("store-molecules", help="Convert pre-computed molecules to database")
 @click.option(

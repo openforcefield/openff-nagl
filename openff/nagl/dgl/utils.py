@@ -40,6 +40,29 @@ def openff_molecule_to_base_dgl_graph(
     return molecule_graph
 
 
+def get_openff_molecule_information(
+    molecule: OFFMolecule,
+) -> Dict[str, torch.Tensor]:
+    from openff.nagl.utils.openff import (
+        get_openff_molecule_formal_charges,
+        get_coordinates_in_angstrom
+    )
+
+    charges = get_openff_molecule_formal_charges(molecule)
+    atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
+    if not molecule.conformers:
+        coordinates = torch.empty((0, len(atomic_numbers), 3))
+    else:
+        coordinates = torch.tensor(
+            [get_coordinates_in_angstrom(x) for x in molecule.conformers]
+        )
+    return {
+        "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
+        "formal_charge": torch.tensor(charges, dtype=torch.int8),
+        "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
+        "coordinates": coordinates,
+    }
+
 def openff_molecule_to_dgl_graph(
     molecule: OFFMolecule,
     atom_features: List[AtomFeature] = tuple(),

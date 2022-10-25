@@ -107,8 +107,8 @@ class AtomIsInRing(AtomFeature):
         ring_atoms = [
             index for index, in molecule.chemical_environment_matches("[*r:1]")
         ]
-        tensor = torch.zeros(molecule.n_atoms)
-        tensor[ring_atoms] = 1
+        tensor = torch.zeros(molecule.n_atoms, dtype=bool)
+        tensor[ring_atoms] = True
         return tensor
 
 

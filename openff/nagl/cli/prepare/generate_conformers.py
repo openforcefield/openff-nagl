@@ -74,7 +74,7 @@ def generate_single_molecule_conformers(
     return molecule
 
 
-def generate_conformers(
+def generate_all_conformers(
     input_file: str,
     output_file: str,
     manager: Optional["Manager"] = None,
@@ -164,7 +164,7 @@ def generate_conformers_cli(
 ):
     from openff.nagl.cli.utils import get_default_manager
 
-    generate_conformers(
+    generate_all_conformers(
         input_file=input_file,
         output_file=output_file,
         manager=get_default_manager(ctx),

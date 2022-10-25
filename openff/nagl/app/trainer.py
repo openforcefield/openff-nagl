@@ -47,10 +47,11 @@ class Trainer(ImmutableModel):
     validation_set_paths: Tuple[pathlib.Path, ...] = tuple()
     test_set_paths: Tuple[pathlib.Path, ...] = tuple()
     output_directory: pathlib.Path = "."
-    output_data_path: pathlib.Path = "nagl-data-module.pkl"
+    # output_data_path: pathlib.Path = "nagl-data-module.pkl"
     training_batch_size: Optional[int] = None
     validation_batch_size: Optional[int] = None
     test_batch_size: Optional[int] = None
+    data_cache_directory: pathlib.Path = "data"
     use_cached_data: bool = False
     n_gpus: int = 0
     n_epochs: int = 100
@@ -172,7 +173,8 @@ class Trainer(ImmutableModel):
             test_set_paths=self.test_set_paths,
             test_batch_size=self.test_batch_size,
             use_cached_data=self.use_cached_data,
-            output_path=self.output_data_path,
+            # output_path=self.output_data_path,
+            data_cache_directory=self.data_cache_directory,
         )
 
     def _set_up_model(self):
