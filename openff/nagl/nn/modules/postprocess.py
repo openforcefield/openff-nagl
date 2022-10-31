@@ -34,6 +34,7 @@ class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta)
     """A layer to apply to the final readout of a neural network."""
 
     name: ClassVar[str] = ""
+    n_features: ClassVar[int] = 0
 
     @abc.abstractmethod
     def forward(
@@ -54,6 +55,7 @@ class ComputePartialCharges(PostprocessLayer):
     """
 
     name: ClassVar[str] = "compute_partial_charges"
+    n_features: ClassVar[int] = 2
 
     @staticmethod
     def _calculate_partial_charges(
@@ -90,6 +92,7 @@ class ComputePartialCharges(PostprocessLayer):
             molecule.n_atoms_per_molecule,
             molecule.n_representations_per_molecule,
         ):
+            n_atoms = int(n_atoms)
             representation_charges = []
             for i in range(n_representations):
                 atom_slice = slice(

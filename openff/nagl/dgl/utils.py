@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import dgl.function
 import torch
@@ -8,8 +8,8 @@ from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
 from ..features.featurizers import AtomFeaturizer, BondFeaturizer
 from ..utils.openff import (
-    get_openff_molecule_bond_indices,
-    get_openff_molecule_information,
+    get_openff_molecule_bond_indices
+    # get_openff_molecule_information,
 )
 
 FORWARD = "forward"
@@ -50,17 +50,18 @@ def get_openff_molecule_information(
 
     charges = get_openff_molecule_formal_charges(molecule)
     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
-    if not molecule.conformers:
-        coordinates = torch.empty((0, len(atomic_numbers), 3))
-    else:
-        coordinates = torch.tensor(
-            [get_coordinates_in_angstrom(x) for x in molecule.conformers]
-        )
+    # if not molecule.conformers:
+    #     coordinates = torch.empty((len(atomic_numbers), 0, 3))
+    # else:
+    #     coordinates = torch.tensor(
+    #         [get_coordinates_in_angstrom(x) for x in molecule.conformers]
+    #     )
+    #     coordinates = torch.transpose(coordinates, 0, 1)
     return {
         "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
         "formal_charge": torch.tensor(charges, dtype=torch.int8),
         "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
-        "coordinates": coordinates,
+        # "coordinates": coordinates,
     }
 
 def openff_molecule_to_dgl_graph(

@@ -1,6 +1,7 @@
 import errno
 import functools
 import os
+import inspect
 import pathlib
 import pickle
 from typing import Callable, Dict, List, Optional, Tuple, Union, Literal
@@ -17,6 +18,7 @@ from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 from openff.nagl.utils.types import Pathlike
 from openff.nagl.utils.utils import as_iterable
+# from openff.nagl.nn.loss import BaseLossFunction
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 
@@ -43,6 +45,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         in the form of a ``torch.Tensor``.
     """
 
+
     def __init__(
         self,
         convolution_module: ConvolutionModule,
@@ -54,6 +57,8 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
         self.learning_rate = learning_rate
+
+        # loss_args = inspect.getargspec(loss_function)
         self.loss_function = loss_function
 
     def forward(
@@ -75,7 +80,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
     ) -> torch.Tensor:
 
         molecule, labels = batch
-
         y_pred = self.forward(molecule)
         loss = torch.zeros(1).type_as(next(iter(y_pred.values())))
 
@@ -84,31 +88,8 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             label_loss = self.loss_function(pred_values, label_values)
             loss += label_loss
         
-        # loss.requires_grad = True
-
         self.log(f"{step_type}_loss", loss)
         return loss
-
-    # def _default_step(
-    #     self,
-    #     batch: Tuple[DGLMolecule, Dict[str, torch.Tensor]],
-    #     step_type: str,
-    # ) -> torch.Tensor:
-
-    #     molecule, labels = batch
-
-    #     y_pred = self.forward(molecule)
-    #     all_losses = []
-
-    #     for label_name, label_values in labels.items():
-    #         pred_values = y_pred[label_name]
-    #         all_losses.append(self.loss_function(pred_values, label_values))
-
-    #     loss = torch.Tensor(all_losses).sum(axis=0)
-    #     loss.requires_grad = True
-
-    #     self.log(f"{step_type}_loss", loss)
-    #     return loss
 
     def training_step(self, train_batch, batch_idx):
         loss = self._default_step(train_batch, "train")
@@ -238,7 +219,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
                 "_test_data", self.test_batch_size
             )
 
-        self.save_hyperparameters()
 
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
@@ -281,6 +261,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             pickle.dump(data, f)
 
     def _get_data_cache_path(self, data_group: Literal["training", "validation", "test"]) -> pathlib.Path:
+
         from openff.nagl.utils.hash import hash_dict
 
         input_hash = hash_dict(getattr(self, f"{data_group}_set_paths"))
@@ -292,6 +273,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             f"_paths-{input_hash}"
             ".pkl"
         )
+        print(f"cached path: ", cache_file)
         cache_path = self.data_cache_directory / cache_file
         return cache_path
 
