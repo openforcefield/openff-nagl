@@ -29,7 +29,7 @@ class BondFeature(Feature, metaclass=BondFeatureMeta):
 
 class BondIsAromatic(BondFeature):
     def _encode(self, molecule) -> torch.Tensor:
-        return torch.tensor([int(bond.is_aromatic) for bond in molecule.bonds])
+        return torch.tensor([bool(bond.is_aromatic) for bond in molecule.bonds])
 
 
 class BondIsInRing(BondFeature):
@@ -40,7 +40,7 @@ class BondIsInRing(BondFeature):
         }
         molecule_bonds = get_openff_molecule_bond_indices(molecule)
 
-        tensor = torch.tensor([int(bond in ring_bonds)
+        tensor = torch.tensor([bool(bond in ring_bonds)
                               for bond in molecule_bonds])
         return tensor
 
@@ -49,7 +49,9 @@ class BondInRingOfSize(BondFeature):
     ring_size: int
 
     def _encode(self, molecule) -> torch.Tensor:
-        rdmol = molecule.to_rdkit()
+        from openff.nagl.utils.openff import openff_to_rdkit
+        rdmol = openff_to_rdkit(molecule)
+
         is_in_ring = []
         for bond in molecule.bonds:
             rdbond = rdmol.GetBondBetweenAtoms(

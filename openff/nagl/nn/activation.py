@@ -36,5 +36,20 @@ class ActivationFunction(enum.Enum):
         except ValueError:
             return name
 
+    @classmethod
+    def get_function(cls, name: str) -> Callable[[torch.tensor], torch.Tensor]:
+        import torch.nn.functional as F
+        x = cls.get(name)
+
+        FUNCTIONS = {
+            "Identity": lambda x: x,
+            "Tanh": F.tanh,
+            "ReLU": F.relu,
+            "LeakyReLU": F.leaky_relu,
+            "ELU": F.elu,
+            "Sigmoid": F.sigmoid,
+        }
+        return FUNCTIONS[x.name]
+
     _get_object = get_value
     _get_class = get

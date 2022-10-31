@@ -18,6 +18,7 @@ def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
                 file,
                 file_format=file_format,
                 as_smiles=True,
+                # explicit_hydrogens=False,
             ),
             desc="loading molecules",
             ncols=80,
@@ -39,8 +40,7 @@ def generate_single_molecule_conformers(
 ):
     from openff.toolkit.topology.molecule import unit as off_unit
     from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
-    from openff.nagl.utils.openff import smiles_to_molecule
-    import time
+    from openff.nagl.utils.openff import smiles_to_molecule, generate_conformers
 
     molecule = smiles_to_molecule(smiles, guess_stereochemistry=guess_stereochemistry)
 
@@ -48,7 +48,8 @@ def generate_single_molecule_conformers(
     molecule.properties["smiles"] = molecule.to_smiles()
     molecule.properties[QC_KWARG] = molecule.to_smiles(mapped=True, isomeric=True)
 
-    molecule.generate_conformers(
+    generate_conformers(
+        molecule,
         n_conformers=n_conformer_pool,
         rms_cutoff=rms_cutoff * off_unit.angstrom,
         make_carboxylic_acids_cis=True,
@@ -73,7 +74,7 @@ def generate_single_molecule_conformers(
     return molecule
 
 
-def generate_conformers(
+def generate_all_conformers(
     input_file: str,
     output_file: str,
     manager: Optional["Manager"] = None,
@@ -163,7 +164,7 @@ def generate_conformers_cli(
 ):
     from openff.nagl.cli.utils import get_default_manager
 
-    generate_conformers(
+    generate_all_conformers(
         input_file=input_file,
         output_file=output_file,
         manager=get_default_manager(ctx),
