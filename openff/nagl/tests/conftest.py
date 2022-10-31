@@ -30,9 +30,11 @@ def openff_methane_uncharged():
 
     return molecule
 
+
 @pytest.fixture()
 def openff_methane_charges():
     return np.arange(5, dtype=float) / 10
+
 
 @pytest.fixture()
 def openff_methane_charged(openff_methane_uncharged, openff_methane_charges):

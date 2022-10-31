@@ -1,0 +1,30 @@
+# base
+convolution_architecture: SAGEConv
+postprocess_layer: compute_partial_charges
+
+# hyperparameters
+# can be replaced with best hyperparameters
+# found in search-hyperparameters
+activation_function: ReLU
+learning_rate: 0.001
+n_convolution_hidden_features: 128
+n_convolution_layers: 3
+n_readout_hidden_features: 128
+n_readout_layers: 4
+
+# features
+atom_features:
+  - AtomicElement:
+      categories: ["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
+  - AtomConnectivity
+  - AtomAverageFormalCharge
+  - AtomHybridization
+  - AtomInRingOfSize: 3
+  - AtomInRingOfSize: 4
+  - AtomInRingOfSize: 5
+  - AtomInRingOfSize: 6
+bond_features:
+  - BondInRingOfSize: 3
+  - BondInRingOfSize: 4
+  - BondInRingOfSize: 5
+  - BondInRingOfSize: 6

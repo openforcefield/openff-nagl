@@ -9,7 +9,6 @@ from openff.nagl.utils.openff import (
     get_coordinates_in_angstrom,
     get_openff_molecule_bond_indices,
     get_openff_molecule_formal_charges,
-    get_openff_molecule_information,
     get_unitless_charge,
     is_conformer_identical,
     map_indexed_smiles,
@@ -39,17 +38,6 @@ def test_get_openff_molecule_bond_indices(openff_methane_charged):
 def test_get_openff_molecule_formal_charges(openff_methane_charged):
     formal_charges = get_openff_molecule_formal_charges(openff_methane_charged)
     assert formal_charges == [0, 0, 0, 0, 0]
-
-
-def test_get_openff_molecule_information(openff_methane_charged):
-    # from openff.nagl.tests.testing.torch import assert_equal
-    from numpy.testing import assert_equal
-
-    info = get_openff_molecule_information(openff_methane_charged)
-    assert sorted(info.keys()) == ["atomic_number", "formal_charge", "idx"]
-    assert_equal(info["idx"].numpy(), [0, 1, 2, 3, 4])
-    assert_equal(info["formal_charge"].numpy(), [0, 0, 0, 0, 0])
-    assert_equal(info["atomic_number"].numpy(), [6, 1, 1, 1, 1])
 
 
 @pytest.mark.parametrize(

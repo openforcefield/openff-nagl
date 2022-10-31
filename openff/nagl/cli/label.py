@@ -17,6 +17,8 @@ def label_molecules(
     bond_order_methods: Tuple[str] = ("am1",),
 ):
 
+    import tqdm
+
     from openff.nagl.app.distributed import Manager
     from openff.nagl.cli.database.store import aggregate_records
     from openff.nagl.cli.utils import (
@@ -31,7 +33,13 @@ def label_molecules(
         manager, input_file, output_file
     )
 
-    molecules = list(stream_molecules_from_file(input_file))
+    molecules = [
+        x
+        for x in tqdm.tqdm(
+            stream_molecules_from_file(input_file, unsafe=True),
+            desc="loading molecules",
+        )
+    ]
     manager.set_entries(molecules)
 
     single_func = functools.partial(

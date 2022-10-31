@@ -59,7 +59,7 @@ class TestDGLMolecule:
         assert_allclose(node_features, connectivity)
 
         forward_features = dgl_graph.edges["forward"].data["feat"].numpy()
-        reverse_features = dgl_graph.edges["backward"].data["feat"].numpy()
+        reverse_features = dgl_graph.edges["reverse"].data["feat"].numpy()
 
         assert forward_features.shape == reverse_features.shape
         assert forward_features.shape == (3, 1)

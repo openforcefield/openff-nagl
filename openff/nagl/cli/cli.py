@@ -4,8 +4,10 @@ import click
 from click_option_group import optgroup
 
 from openff.nagl.cli.database import database_cli
-from openff.nagl.cli.prepare import prepare_cli
 from openff.nagl.cli.label import label_molecules_cli
+from openff.nagl.cli.plot import plot_cli
+from openff.nagl.cli.prepare import prepare_cli
+
 
 @click.group()
 @optgroup.group("Parallelization configuration")
@@ -74,6 +76,7 @@ def cli(
     """
 
     from openff.nagl.app.distributed import Manager
+
     ctx.ensure_object(dict)
 
     ctx.obj["manager"] = Manager(
@@ -86,9 +89,11 @@ def cli(
         n_workers=n_workers,
     )
 
+
 cli.add_command(prepare_cli)
 cli.add_command(database_cli)
 cli.add_command(label_molecules_cli)
+cli.add_command(plot_cli)
 
 if __name__ == "__main__":
     cli(obj={})

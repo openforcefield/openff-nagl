@@ -1,8 +1,9 @@
 import functools
 import os
 import traceback
-import tqdm
 from typing import Any, Callable, List, Tuple
+
+import tqdm
 
 
 def as_batch_function_with_captured_errors(
@@ -60,12 +61,16 @@ def write_error_to_file_object(file_object, error: str, separator: bool = True):
     file_object.flush()
 
 
-def preprocess_args(manager, input_file, output_file):
+def preprocess_args(manager=None, input_file=None, output_file=None):
     from openff.nagl.app.distributed import Manager
 
-    input_file = os.path.abspath(str(input_file))
-    output_file = os.path.abspath(str(output_file))
-    log_file = get_log_file_from_output(output_file)
+    if input_file is not None:
+        input_file = os.path.abspath(str(input_file))
+    if output_file is not None:
+        output_file = os.path.abspath(str(output_file))
+        log_file = get_log_file_from_output(output_file)
+    else:
+        log_file = None
 
     if manager is None:
         manager = Manager()

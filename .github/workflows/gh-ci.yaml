@@ -19,7 +19,6 @@ defaults:
 
 jobs:
   main_tests:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -78,7 +77,6 @@ jobs:
 
 
   pylint_check:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -103,7 +101,6 @@ jobs:
 
 
   pypi_check:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -136,7 +133,6 @@ jobs:
         twine check $DISTRIBUTION
   
   install_from_source_conda:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false

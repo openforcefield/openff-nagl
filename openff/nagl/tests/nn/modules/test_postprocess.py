@@ -98,8 +98,8 @@ def test_compute_charges_forward_batched(openff_carboxylate):
             [-0.1826],
             [-0.3543],
             [-0.3543],
-            [0.0323],
-            [-0.0323],
+            [0.0435],
+            [-0.0435],
         ]
     )
 

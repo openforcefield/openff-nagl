@@ -1,9 +1,8 @@
 import logging
 from typing import TYPE_CHECKING, Dict, List
 
-from sqlalchemy import (
+from sqlalchemy import (  # Enum,
     Column,
-    # Enum,
     ForeignKey,
     Integer,
     PickleType,
@@ -30,8 +29,7 @@ class DBPartialChargeSet(DBBase):
     __tablename__ = "partial_charge_sets"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "conformers.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("conformers.id"), nullable=False, index=True)
 
     method = Column(String(20), nullable=False)
     values = Column(PickleType, nullable=False)
@@ -46,8 +44,7 @@ class DBWibergBondOrderSet(DBBase):
     __tablename__ = "wiberg_bond_order_sets"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "conformers.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("conformers.id"), nullable=False, index=True)
 
     method = Column(String(20), nullable=False)
     values = Column(PickleType, nullable=False)
@@ -62,15 +59,12 @@ class DBConformerRecord(DBBase):
     __tablename__ = "conformers"
 
     id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey(
-        "molecules.id"), nullable=False, index=True)
+    parent_id = Column(Integer, ForeignKey("molecules.id"), nullable=False, index=True)
 
     coordinates = Column(PickleType, nullable=False)
 
-    partial_charges = relationship(
-        "DBPartialChargeSet", cascade="all, delete-orphan")
-    bond_orders = relationship(
-        "DBWibergBondOrderSet", cascade="all, delete-orphan")
+    partial_charges = relationship("DBPartialChargeSet", cascade="all, delete-orphan")
+    bond_orders = relationship("DBWibergBondOrderSet", cascade="all, delete-orphan")
 
     def _store_new_data(
         self,

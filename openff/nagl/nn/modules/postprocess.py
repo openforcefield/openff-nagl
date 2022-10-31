@@ -3,8 +3,8 @@ from typing import ClassVar, Dict, Type, Union
 
 import torch
 
-from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.base.metaregistry import create_registry_metaclass
+from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 
 
 class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
@@ -34,6 +34,7 @@ class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta)
     """A layer to apply to the final readout of a neural network."""
 
     name: ClassVar[str] = ""
+    n_features: ClassVar[int] = 0
 
     @abc.abstractmethod
     def forward(
@@ -54,6 +55,7 @@ class ComputePartialCharges(PostprocessLayer):
     """
 
     name: ClassVar[str] = "compute_partial_charges"
+    n_features: ClassVar[int] = 2
 
     @staticmethod
     def _calculate_partial_charges(
@@ -85,19 +87,17 @@ class ComputePartialCharges(PostprocessLayer):
         formal_charges = molecule.graph.ndata["formal_charge"]
 
         all_charges = []
+        counter = 0
         for n_atoms, n_representations in zip(
             molecule.n_atoms_per_molecule,
             molecule.n_representations_per_molecule,
         ):
+            n_atoms = int(n_atoms)
             representation_charges = []
             for i in range(n_representations):
-                atom_slice = slice(
-                    int(i * n_atoms),
-                    int((i + 1) * n_atoms),
-                )
+                atom_slice = slice(counter, counter + n_atoms)
+                counter += n_atoms
 
-                # for i in range(n_representations, counter):
-                #     atom_slice = slice(i, i + n_atoms)
                 charges = self._calculate_partial_charges(
                     electronegativity[atom_slice],
                     hardness[atom_slice],

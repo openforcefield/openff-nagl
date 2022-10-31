@@ -1,5 +1,4 @@
-import os
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
 from click_option_group import optgroup
@@ -15,7 +14,6 @@ def retrieve_molecules(
     partial_charge_method: Optional[str] = None,
     bond_order_method: Optional[str] = None,
 ):
-    from openff.nagl.app.distributed import Manager
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,

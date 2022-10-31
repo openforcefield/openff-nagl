@@ -54,28 +54,43 @@ class PoolBondFeatures(PoolingLayer):
         h_v = edges.dst[feature_name]
         return {feature_name: torch.cat([h_u, h_v], 1)}
 
-    def _directionwise_forward(
-        self,
-        molecule: Union[DGLMolecule, DGLMoleculeBatch],
-        edge_type: str = "forward",
-    ):
-        graph = molecule.graph
-        apply_edges = functools.partial(
-            self._apply_edges,
-            feature_name=molecule._graph_feature_name,
-        )
-        with graph.local_scope():
-            graph.apply_edges(apply_edges, etype=edge_type)
-            edges = graph.edges[edge_type].data[molecule._graph_feature_name]
-        return self.layers(edges)
+    # def _directionwise_forward(
+    #     self,
+    #     molecule: Union[DGLMolecule, DGLMoleculeBatch],
+    #     edge_type: str = "forward",
+    # ):
+    #     graph = molecule.graph
+    #     apply_edges = functools.partial(
+    #         self._apply_edges,
+    #         feature_name=molecule._graph_feature_name,
+    #     )
+    #     with graph.local_scope():
+    #         graph.apply_edges(apply_edges, etype=edge_type)
+    #         edges = graph.edges[edge_type].data[molecule._graph_feature_name]
+    #     return self.layers(edges)
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
-        h_forward = self._directionwise_forward(
-            molecule,
-            molecule._graph_forward_edge_type,
+        graph = molecule.graph
+        node = molecule._graph_feature_name
+        apply_edges = functools.partial(
+            self._apply_edges,
+            feature_name=node,
         )
-        h_reverse = self._directionwise_forward(
-            molecule,
-            molecule._graph_backward_edge_type,
-        )
-        return h_forward + h_reverse
+
+        with graph.local_scope():
+            graph.apply_edges(apply_edges, etype=molecule._graph_forward_edge_type)
+            h_forward = graph.edges[molecule._graph_forward_edge_type].data[node]
+
+        with graph.local_scope():
+            graph.apply_edges(apply_edges, etype=molecule._graph_backward_edge_type)
+            h_reverse = graph.edges[molecule._graph_backward_edge_type].data[node]
+
+        # h_forward = self._directionwise_forward(
+        #     molecule,
+        #     molecule._graph_forward_edge_type,
+        # )
+        # h_reverse = self._directionwise_forward(
+        #     molecule,
+        #     molecule._graph_backward_edge_type,
+        # )
+        return self.layers(h_forward) + self.layers(h_reverse)

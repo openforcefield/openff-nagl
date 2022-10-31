@@ -1,13 +1,12 @@
-import functools
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
 import torch
-
 from pydantic import validator
 
-from .base import CategoricalMixin, Feature, FeatureMeta
 from openff.nagl.utils.types import HybridizationType
+
+from .base import CategoricalMixin, Feature, FeatureMeta
 from .utils import one_hot_encode
 
 if TYPE_CHECKING:
@@ -25,8 +24,6 @@ __all__ = [
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
 ]
-
-
 
 
 class AtomFeatureMeta(FeatureMeta):
@@ -72,17 +69,13 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
 
         hybridizations = get_molecule_hybridizations(molecule)
         return torch.vstack(
-            [
-                one_hot_encode(hyb, self.categories)
-                for hyb in hybridizations
-            ]
+            [one_hot_encode(hyb, self.categories) for hyb in hybridizations]
         )
 
     def dict(self, *args, **kwargs):
         obj = super().dict()
         obj["categories"] = [hyb.name for hyb in self.categories]
         return obj
-    
 
 
 class AtomConnectivity(CategoricalMixin, AtomFeature):
@@ -107,8 +100,8 @@ class AtomIsInRing(AtomFeature):
         ring_atoms = [
             index for index, in molecule.chemical_environment_matches("[*r:1]")
         ]
-        tensor = torch.zeros(molecule.n_atoms)
-        tensor[ring_atoms] = 1
+        tensor = torch.zeros(molecule.n_atoms, dtype=bool)
+        tensor[ring_atoms] = True
         return tensor
 
 
@@ -116,7 +109,9 @@ class AtomInRingOfSize(AtomFeature):
     ring_size: int
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        rdmol = molecule.to_rdkit()
+        from openff.nagl.utils.openff import openff_to_rdkit
+
+        rdmol = openff_to_rdkit(molecule)
 
         in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
         return torch.tensor(in_ring_size, dtype=int)
@@ -140,7 +135,7 @@ class AtomAverageFormalCharge(AtomFeature):
         from openff.nagl.resonance.resonance import ResonanceEnumerator
         from openff.nagl.utils.openff import normalize_molecule
 
-        molecule = normalize_molecule(molecule)
+        molecule = normalize_molecule(molecule, check_output=False)
         enumerator = ResonanceEnumerator(molecule)
         enumerator.enumerate_resonance_fragments(
             lowest_energy_only=True,

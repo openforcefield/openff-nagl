@@ -1,8 +1,10 @@
 import errno
+import functools
+import inspect
 import os
 import pathlib
 import pickle
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -16,6 +18,8 @@ from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 from openff.nagl.utils.types import Pathlike
 from openff.nagl.utils.utils import as_iterable
+
+# from openff.nagl.nn.loss import BaseLossFunction
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 
@@ -53,6 +57,8 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
         self.learning_rate = learning_rate
+
+        # loss_args = inspect.getargspec(loss_function)
         self.loss_function = loss_function
 
     def forward(
@@ -65,7 +71,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             readout_type: readout_module(molecule)
             for readout_type, readout_module in self.readout_modules.items()
         }
-
         return readouts
 
     def _default_step(
@@ -75,27 +80,28 @@ class DGLMoleculeLightningModel(pl.LightningModule):
     ) -> torch.Tensor:
 
         molecule, labels = batch
-
         y_pred = self.forward(molecule)
-        all_losses = []
+        loss = torch.zeros(1).type_as(next(iter(y_pred.values())))
 
         for label_name, label_values in labels.items():
             pred_values = y_pred[label_name]
-            all_losses.append(self.loss_function(pred_values, label_values))
-
-        loss = torch.Tensor(all_losses).sum(axis=0)
+            label_loss = self.loss_function(pred_values, label_values)
+            loss += label_loss
 
         self.log(f"{step_type}_loss", loss)
         return loss
 
     def training_step(self, train_batch, batch_idx):
-        return self._default_step(train_batch, "train")
+        loss = self._default_step(train_batch, "train")
+        return {"loss": loss}
 
     def validation_step(self, val_batch, batch_idx):
-        return self._default_step(val_batch, "val")
+        loss = self._default_step(val_batch, "val")
+        return {"val_loss": loss}
 
     def test_step(self, test_batch, batch_idx):
-        return self._default_step(test_batch, "test")
+        loss = self._default_step(test_batch, "test")
+        return {"test_loss": loss}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
@@ -172,10 +178,11 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         training_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
         validation_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
         test_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
-        output_path: Pathlike = "nagl-data-module.pkl",
+        # output_path: Pathlike = "nagl-data-module.pkl",
         training_batch_size: Optional[int] = None,
         validation_batch_size: Optional[int] = None,
         test_batch_size: Optional[int] = None,
+        data_cache_directory: Pathlike = "data",
         use_cached_data: bool = False,
     ):
         super().__init__()
@@ -192,11 +199,12 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         self.training_set_paths = self._as_path_lists(training_set_paths)
         self.validation_set_paths = self._as_path_lists(validation_set_paths)
         self.test_set_paths = self._as_path_lists(test_set_paths)
-        self.output_path = pathlib.Path(output_path)
+        # self.output_path = pathlib.Path(output_path)
         self.training_batch_size = training_batch_size
         self.validation_batch_size = validation_batch_size
         self.test_batch_size = test_batch_size
         self.use_cached_data = use_cached_data
+        self.data_cache_directory = pathlib.Path(data_cache_directory)
 
         if self.training_set_paths:
             self.train_dataloader = self._default_dataloader(
@@ -211,11 +219,18 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
                 "_test_data", self.test_batch_size
             )
 
+        self._training_cache_path = self._get_data_cache_path("training")
+        self._validation_cache_path = self._get_data_cache_path("validation")
+        self._test_cache_path = self._get_data_cache_path("test")
+
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
         return [pathlib.Path(path) for path in as_iterable(obj)]
 
-    def _prepare_data_from_paths(self, paths: List[Pathlike]) -> ConcatDataset:
+    def _prepare_data_from_paths(
+        self,
+        paths: List[Pathlike],
+    ) -> ConcatDataset:
         from openff.nagl.nn.data import DGLMoleculeDataset
         from openff.nagl.storage.store import MoleculeStore
 
@@ -234,6 +249,64 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         ]
         return ConcatDataset(datasets)
 
+    def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
+        input_paths = getattr(self, f"{data_group}_set_paths")
+
+        self.data_cache_directory.mkdir(exist_ok=True, parents=True)
+        cache_path = self._get_data_cache_path(data_group)
+        if cache_path and cache_path.is_file():
+            if self.use_cached_data:
+                return
+            else:
+                raise FileExistsError(
+                    errno.EEXIST,
+                    os.strerror(errno.EEXIST),
+                    cache_path.resolve(),
+                )
+
+        data = self._prepare_data_from_paths(input_paths)
+        with cache_path.open("wb") as f:
+            pickle.dump(data, f)
+
+    def _get_data_cache_path(
+        self, data_group: Literal["training", "validation", "test"]
+    ) -> pathlib.Path:
+
+        from openff.nagl.utils.hash import hash_dict
+
+        input_hash = hash_dict(getattr(self, f"{data_group}_set_paths"))
+        cache_file = (
+            f"charge-{self.partial_charge_method}"
+            f"_bond-{self.bond_order_method}"
+            f"_feat-{self.get_feature_hash()}"
+            # f"_{data_group}-data"
+            f"_paths-{input_hash}"
+            ".pkl"
+        )
+        cache_path = self.data_cache_directory / cache_file
+        return cache_path
+
+    def _load_data_cache(self, data_group: Literal["training", "validation", "test"]):
+        path = getattr(self, f"_{data_group}_cache_path")
+        with path.open("rb") as f:
+            data = pickle.load(f)
+        return data
+
+    def get_feature_hash(self):
+        from openff.nagl.utils.hash import hash_dict
+
+        atom_features, bond_features = [], []
+        for feature in self.atom_features:
+            obj = feature.dict()
+            obj["FEATURE_NAME"] = feature.feature_name
+            atom_features.append(obj)
+
+        for feature in self.bond_features:
+            obj = feature.dict()
+            obj["FEATURE_NAME"] = feature.feature_name
+            bond_features.append(obj)
+        return hash_dict([atom_features, bond_features])
+
     def prepare_data(self):
         """Prepare the data for training, validation, and testing.
 
@@ -241,36 +314,42 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         it in the ``output_path``, as it is not recommended not to assign
         state in this step.
         """
-        # die if we don't want to use cached data but found it anyway
-        if self.output_path.is_file():
-            if not self.use_cached_data:
-                raise FileExistsError(
-                    errno.EEXIST,
-                    os.strerror(errno.EEXIST),
-                    self.output_path.resolve(),
-                )
-            return
+        for stage in ["training", "validation", "test"]:
+            self._prepare_data(stage)
+        # # die if we don't want to use cached data but found it anyway
+        # if self.output_path.is_file():
+        #     if not self.use_cached_data:
+        #         raise FileExistsError(
+        #             errno.EEXIST,
+        #             os.strerror(errno.EEXIST),
+        #             self.output_path.resolve(),
+        #         )
+        #     return
 
-        train_data = self._prepare_data_from_paths(self.training_set_paths)
-        val_data = self._prepare_data_from_paths(self.validation_set_paths)
-        test_data = self._prepare_data_from_paths(self.test_set_paths)
+        # train_data = self._prepare_data_from_paths(self.training_set_paths)
+        # val_data = self._prepare_data_from_paths(self.validation_set_paths)
+        # test_data = self._prepare_data_from_paths(self.test_set_paths)
 
-        # not recommended to assign state here
-        # so we pickle and read it back later
-        with self.output_path.open("wb") as f:
-            pickle.dump((train_data, val_data, test_data), f)
+        # # not recommended to assign state here
+        # # so we pickle and read it back later
+        # with self.output_path.open("wb") as f:
+        #     pickle.dump((train_data, val_data, test_data), f)
 
     def setup(self, stage: Optional[str] = None):
-        with self.output_path.open("rb") as f:
-            self._train_data, self._val_data, self._test_data = pickle.load(f)
+
+        self._train_data = self._load_data_cache("training")
+        self._val_data = self._load_data_cache("validation")
+        self._test_data = self._load_data_cache("test")
+
+        # with self.output_path.open("rb") as f:
+        #     self._train_data, self._val_data, self._test_data = pickle.load(f)
 
     def _default_dataloader(self, data_name, batch_size):
         from openff.nagl.nn.data import DGLMoleculeDataLoader
 
-        def dataloader():
+        def dataloader(batch_size):
             data = getattr(self, data_name)
-            if batch_size is None:
-                batch_size = len(data)
-            return DGLMoleculeDataLoader(data, batch_size=batch_size)
+            size = batch_size if batch_size else len(data)
+            return DGLMoleculeDataLoader(data, batch_size=size)
 
-        return dataloader
+        return functools.partial(dataloader, batch_size)

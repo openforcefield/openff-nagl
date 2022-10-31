@@ -6,6 +6,9 @@ dependencies:
   - python
   - pip
 
+  - myst-nb
+  - myst-parser>=0.14
+  - docutils
   - sphinx
 
     # Pip-only installs
