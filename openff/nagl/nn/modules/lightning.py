@@ -273,7 +273,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             f"_paths-{input_hash}"
             ".pkl"
         )
-        print(f"cached path: ", cache_file)
         cache_path = self.data_cache_directory / cache_file
         return cache_path
 
