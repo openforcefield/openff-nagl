@@ -17,6 +17,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   main_tests:
     runs-on: ${{ matrix.os }}
@@ -28,10 +31,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - uses: ./.github/actions/include-openeye
-      with:
-        openeye-license-text: ${{ secrets.OE_LICENSE }}
 
     - name: Build information
       run: |
@@ -63,6 +62,11 @@ jobs:
         which python
         conda info
         conda list
+
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ${{ env.OE_LICENSE }}
 
     - name: Run tests
       run: |

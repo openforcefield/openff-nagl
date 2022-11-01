@@ -12,6 +12,7 @@ from openff.nagl.features import AtomConnectivity, BondIsInRing
 
 @pytest.fixture()
 def openff_methane_uncharged():
+    import openff.toolkit
     from openff.toolkit.topology.molecule import Molecule, unit
 
     molecule = Molecule.from_smiles("C")
