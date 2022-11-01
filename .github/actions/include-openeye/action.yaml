@@ -23,5 +23,6 @@ runs:
         export OE_LICENSE=${{ inputs.openeye-license-file }}
 
     - name: Test OpenEye
+      shell: ${{ inputs.shell }}
       run: |
         python -c "from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE; assert OPENEYE_AVAILABLE"
