@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 
 def _toolkit_wrapper(function_name, *args, **kwargs):
-    from openff.toolkit.utils.exceptions import MissingOptionalDependency
+    from openff.toolkit.utils.exceptions import MissingOptionalDependencyError
 
     from openff.nagl.utils.openff import openeye, rdkit
 
@@ -16,7 +16,7 @@ def _toolkit_wrapper(function_name, *args, **kwargs):
     rdfunc = getattr(rdkit, function_name)
     try:
         return oefunc(*args, **kwargs)
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         return rdfunc(*args, **kwargs)
 
 

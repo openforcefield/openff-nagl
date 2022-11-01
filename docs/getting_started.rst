@@ -1,4 +1,4 @@
 Getting Started
 ===============
 
-This page details how to get started with GNN Charge Models. 
+This page details how to get started with OpenFF NAGL. 

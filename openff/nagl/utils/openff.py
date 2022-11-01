@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 import numpy as np
 import torch
 from openff.utilities import requires_package
-from openff.utilities.exceptions import MissingOptionalDependency
+from openff.utilities.exceptions import MissingOptionalDependencyError
 
 from .types import HybridizationType
 
@@ -22,7 +22,7 @@ def generate_conformers(molecule, **kwargs):
 
     # try:
     #     molecule.generate_conformers(**kwargs, toolkit_registry=OpenEyeToolkitWrapper())
-    # except MissingOptionalDependency:
+    # except MissingOptionalDependencyError:
     #     molecule.generate_conformers(**kwargs, toolkit_registry=RDKitToolkitWrapper())
 
     molecule.generate_conformers(**kwargs)
@@ -136,7 +136,7 @@ def enumerate_stereoisomers(
     """
     try:
         return _enumerate_stereoisomers_oe(molecule, rationalize=rationalize)
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         return _enumerate_stereoisomers_rd(molecule, rationalize=rationalize)
 
 
@@ -231,7 +231,7 @@ def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[Hybridizati
 def get_molecule_hybridizations(molecule: "OFFMolecule") -> List[HybridizationType]:
     try:
         return _get_molecule_hybridizations_oe(molecule)
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         return _get_molecule_hybridizations_rd(molecule)
 
 
@@ -334,7 +334,7 @@ def _stream_molecules_from_file(file: str, unsafe: bool = False):
     try:
         for offmol in oefunc(file):
             yield offmol
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         for offmol in _stream_molecules_from_file_rd(file):
             yield offmol
 
@@ -343,7 +343,7 @@ def _stream_smiles_from_file(file: str):
     try:
         for offmol in _stream_smiles_from_file_oe(file):
             yield offmol
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         for offmol in _stream_smiles_from_file_rd(file):
             yield offmol
 
@@ -491,7 +491,7 @@ def stream_molecules_to_file(file: str):
     try:
         with _stream_molecules_to_file_oe(file) as writer:
             yield writer
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         with _stream_molecules_to_file_rd(file) as writer:
             yield writer
 
@@ -660,7 +660,7 @@ def normalize_molecule(
     #         molecule,
     #         reaction_smarts=reaction_smarts,
     #     )
-    # except MissingOptionalDependency:
+    # except MissingOptionalDependencyError:
     normalized = _normalize_molecule_rd(
         molecule,
         reaction_smarts=reaction_smarts,
@@ -766,7 +766,7 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
     try:
         with capture_oechem_warnings():
             yield
-    except MissingOptionalDependency:
+    except MissingOptionalDependencyError:
         yield
 
     toolkit_logger.setLevel(openff_logger_level)

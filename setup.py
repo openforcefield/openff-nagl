@@ -1,5 +1,5 @@
 """
-GNN Charge Models
+OpenFF NAGL
 A short description of the project.
 """
 import sys
