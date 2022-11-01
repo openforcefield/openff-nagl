@@ -15,9 +15,6 @@ def openff_methane_uncharged():
     import openff.toolkit
     from openff.toolkit.topology.molecule import Molecule, unit
 
-    print(openff.toolkit.__version__)
-    print(openff.toolkit.__path__)
-
     molecule = Molecule.from_smiles("C")
     molecule.add_conformer(
         np.array(
