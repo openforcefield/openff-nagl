@@ -593,9 +593,18 @@ class FragmentEnumerator:
         return atom_types
 
     def get_atom_resonance_type(self, index: int) -> ResonanceTypeValue:
+        from rdkit import Chem
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
-        bonds = [int(bond.GetBondTypeAsDouble()) for bond in atom.GetBonds()]
+        # bonds = [int(bond.GetBondTypeAsDouble()) for bond in atom.GetBonds()]
+
+        bondtype_to_int = {
+            Chem.rdchem.BondType.SINGLE: 1,
+            Chem.rdchem.BondType.DOUBLE: 2,
+            Chem.rdchem.BondType.TRIPLE: 3,
+        }
+        bonds = [bondtype_to_int[bond.GetBondType()] for bond in atom.GetBonds()]
+
         atom.UpdatePropertyCache()
         n_imp_h = atom.GetNumImplicitHs()
         bonds += [1] * n_imp_h

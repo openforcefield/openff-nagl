@@ -20,11 +20,18 @@ class TestEnumerateResonanceForms:
 
     @pytest.fixture
     def fragment_enumerator(self):
-        offmol = OFFMolecule.from_mapped_smiles(
-            "[O-:1][N+:2](=[O:3])[N:4][c:5]1[c:6][c:7][c:8][c:9][n+:10]1[O-:11]",
-            allow_undefined_stereo=True,
-        )
-        rdmol = offmol.to_rdkit()
+        from rdkit import Chem
+        # offmol = OFFMolecule.from_mapped_smiles(
+        #     "[O-:1][N+:2](=[O:3])[N:4][c:5]1[c:6][c:7][c:8][c:9][n+:10]1[O-:11]",
+        #     allow_undefined_stereo=True,
+        # )
+        # rdmol = offmol.to_rdkit()
+        smarts = "[O-:1][N+:2](=[O:3])[N:4][c:5]1[c:6][c:7][c:8][c:9][n+:10]1[O-:11]"
+        rdmol = Chem.MolFromSmiles(smarts)
+        symbols = [atom.GetSymbol() for atom in rdmol.GetAtoms()]
+        formal_charges = [atom.GetFormalCharge() for atom in rdmol.GetAtoms()]
+        assert symbols == list("ONONCCCCCNO")
+        assert formal_charges == [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1]
         return FragmentEnumerator(rdmol, clean_molecule=True)
 
     def test_get_resonance_types(self, fragment_enumerator):
@@ -37,7 +44,7 @@ class TestEnumerateResonanceForms:
             (0, 1, tuple()),
             (0, 2, ((0, 1, 2),)),
             (0, 9, ((0, 1, 3, 4, 5, 6, 7, 8, 9), (0, 1, 3, 4, 9))),
-            (10, 1, ((10, 9, 4, 3, 1), (10, 9, 8, 7, 6, 5, 4, 3, 1))),
+            (10, 1, ((10, 9, 8, 7, 6, 5, 4, 3, 1), (10, 9, 4, 3, 1))),
             (10, 2, tuple()),
             (10, 9, tuple()),
         ],
@@ -102,19 +109,7 @@ class TestEnumerateResonanceForms:
         expected = {
             "acceptor_indices": [1, 2, 9],
             "donor_indices": [0, 3, 10],
-            "bond_orders": {
-                0: 1,
-                1: 2,
-                2: 1,
-                3: 1,
-                4: 2,
-                5: 1,
-                6: 1,
-                7: 2,
-                8: 1,
-                9: 2,
-                10: 1,
-            },
+            "bond_orders": {0: 1, 1: 2, 2: 1, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1, 8: 2, 9: 1, 10: 1},
             "formal_charges": [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1],
         }
         given = fragment_enumerator.to_resonance_dict(include_formal_charges=True)
@@ -126,55 +121,49 @@ class TestEnumerateResonanceForms:
         assert fragments[0].to_resonance_dict(include_formal_charges=True) == {
             "acceptor_indices": [0, 1, 9],
             "donor_indices": [2, 3, 10],
-            "bond_orders": {
-                0: 2,
-                1: 1,
-                2: 1,
-                3: 1,
-                4: 2,
-                5: 1,
-                6: 1,
-                7: 2,
-                8: 1,
-                9: 2,
-                10: 1,
-            },
+            "bond_orders": {0: 2,
+                            1: 1,
+                            2: 1,
+                            3: 1,
+                            4: 2,
+                            5: 1,
+                            6: 2,
+                            7: 1,
+                            8: 2,
+                            9: 1,
+                            10: 1},
             "formal_charges": [0, 1, -1, 0, 0, 0, 0, 0, 0, 1, -1],
         }
         assert fragments[1].to_resonance_dict(include_formal_charges=True) == {
             "acceptor_indices": [1, 3, 9],
             "donor_indices": [0, 2, 10],
-            "bond_orders": {
-                0: 1,
-                1: 1,
-                2: 2,
-                3: 1,
-                4: 2,
-                5: 1,
-                6: 1,
-                7: 2,
-                8: 1,
-                9: 2,
-                10: 1,
-            },
+            "bond_orders": {0: 1,
+                            1: 1,
+                            2: 2,
+                            3: 1,
+                            4: 2,
+                            5: 1,
+                            6: 2,
+                            7: 1,
+                            8: 2,
+                            9: 1,
+                            10: 1},
             "formal_charges": [-1, 1, -1, 1, 0, 0, 0, 0, 0, 1, -1],
         }
         assert fragments[2].to_resonance_dict(include_formal_charges=True) == {
             "acceptor_indices": [1, 2, 3],
             "donor_indices": [0, 9, 10],
-            "bond_orders": {
-                0: 1,
-                1: 2,
-                2: 1,
-                3: 2,
-                4: 1,
-                5: 1,
-                6: 2,
-                7: 1,
-                8: 2,
-                9: 1,
-                10: 1,
-            },
+            "bond_orders": {0: 1,
+                            1: 2,
+                            2: 1,
+                            3: 2,
+                            4: 1,
+                            5: 2,
+                            6: 1,
+                            7: 2,
+                            8: 1,
+                            9: 1,
+                            10: 1},
             "formal_charges": [-1, 1, 0, 1, 0, 0, 0, 0, 0, 0, -1],
         }
 
@@ -201,12 +190,12 @@ class TestEnumerateResonanceForms:
     @pytest.mark.parametrize(
         "path, expected_bonds",
         [
-            ([0, 1, 2], [2, 1, 1, 1, 2, 1, 1, 2, 1, 2, 1]),
+            ([0, 1, 2], [2, 1, 1, 1, 2, 1, 2, 1, 2, 1, 1]),
         ],
     )
     def test_as_transferred(self, fragment_enumerator, path, expected_bonds):
         original = list(fragment_enumerator.get_bond_orders().values())
-        assert original == [1, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1]
+        assert original == [1, 2, 1, 1, 2, 1, 2, 1, 2, 1, 1]
         as_transferred = fragment_enumerator.as_transferred(path)
         new_bond_orders = list(as_transferred.get_bond_orders().values())
         assert new_bond_orders == expected_bonds

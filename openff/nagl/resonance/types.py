@@ -69,4 +69,6 @@ def get_resonance_type(
     bond_orders: Tuple[int, ...],
 ) -> ResonanceTypeValue:
     """Get the resonance type for a given element, formal charge, and bond orders."""
+    bond_orders = tuple(map(int, sorted(bond_orders)))
+    print(element, formal_charge, bond_orders)
     return RESONANCE_TYPES[ResonanceTypeKey(element, formal_charge, bond_orders)]
