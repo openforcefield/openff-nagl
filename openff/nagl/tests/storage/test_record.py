@@ -4,12 +4,10 @@ from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from pydantic import ValidationError
 
 from openff.nagl.storage.record import (
-    ChargeMethod,
     ConformerRecord,
     MoleculeRecord,
     PartialChargeRecord,
     WibergBondOrder,
-    WibergBondOrderMethod,
     WibergBondOrderRecord,
 )
 
@@ -153,12 +151,13 @@ class TestMoleculeRecord:
         reordered_conformer = reordered_record.conformers[0]
 
         assert np.allclose(
-            reordered_conformer.coordinates, np.flipud(original_coordinates)
+            reordered_conformer.coordinates,
+            np.flipud(original_coordinates)
         )
 
         assert np.allclose(
-            reordered_conformer.partial_charges["am1"].values, [
-                1.5, 0.5]
+            reordered_conformer.partial_charges["am1"].values,
+            [1.5, 0.5]
         )
         assert np.allclose(
             reordered_conformer.bond_orders["am1"].values,

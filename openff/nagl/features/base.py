@@ -40,29 +40,6 @@ class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
         setattr(cls, cls._key_attribute, key)
         
 
-
-    # def __init__(self, name, bases, namespace, **kwargs):
-    #     super().__init__(name, bases, namespace, **kwargs)
-    #     _key = self.feature_name if hasattr(self, "feature_name") else None
-    #     if _key == "":
-    #         _key = name
-
-    #     self.registry[_key] = self
-    #     self.feature_name = _key
-
-    # def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
-    #     if isinstance(feature_name_or_class, self):
-    #         return feature_name_or_class
-
-    #     try:
-    #         return self.registry[feature_name_or_class]
-    #     except KeyError:
-    #         raise KeyError(
-    #             f"Unknown feature type: {feature_name_or_class}. "
-    #             f"Supported types: {list(self.registry.keys())}"
-    #         )
-
-
 class Feature(ImmutableModel, abc.ABC):
     feature_name: ClassVar[Optional[str]] = ""
     _feature_length: ClassVar[int] = 1

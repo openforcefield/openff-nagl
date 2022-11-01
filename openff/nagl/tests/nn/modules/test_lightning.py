@@ -27,11 +27,9 @@ from openff.nagl.nn.modules.pooling import (
 from openff.nagl.nn.modules.postprocess import ComputePartialCharges
 from openff.nagl.nn.sequential import SequentialLayers
 from openff.nagl.storage.record import (
-    ChargeMethod,
     ConformerRecord,
     MoleculeRecord,
     PartialChargeRecord,
-    WibergBondOrderMethod,
     WibergBondOrderRecord,
 )
 from openff.nagl.storage.store import MoleculeStore
@@ -126,7 +124,7 @@ class TestDGLMoleculeLightningModel:
 
         loss_function = getattr(mock_atom_model, method_name)
         fake_comparison = {"atom": torch.tensor([[2.0, 3.0, 4.0, 5.0, 6.0]])}
-        loss = loss_function((dgl_methane, fake_comparison), 0)
+        loss = list(loss_function((dgl_methane, fake_comparison), 0).values())[0]
         assert torch.isclose(loss, torch.tensor([1.0]))
 
     def test_configure_optimizers(self, mock_atom_model):
@@ -154,7 +152,7 @@ class TestDGLMoleculeLightningDataModule:
             validation_batch_size=2,
             test_set_paths="test.sqlite",
             test_batch_size=3,
-            output_path="tmp.pkl",
+            data_cache_directory="tmp",
             use_cached_data=True,
         )
 
@@ -179,8 +177,15 @@ class TestDGLMoleculeLightningDataModule:
 
         return store_path
 
-    @pytest.fixture()
-    def mock_data_module_with_store(self, tmpdir, mock_data_store):
+    def create_mock_data_module(
+        self,
+        tmpdir,
+        mock_data_store,
+        use_cached_data: bool = True,
+        test_set_paths = None
+    ):
+        if test_set_paths is None:
+            test_set_paths = mock_data_store
         data_module = DGLMoleculeLightningDataModule(
             atom_features=[AtomicElement(categories=["Cl", "H"])],
             bond_features=[BondOrder()],
@@ -189,10 +194,15 @@ class TestDGLMoleculeLightningDataModule:
             training_set_paths=mock_data_store,
             training_batch_size=None,
             validation_set_paths=mock_data_store,
-            test_set_paths=mock_data_store,
-            output_path=os.path.join(tmpdir, "tmp.pkl"),
+            test_set_paths=test_set_paths,
+            data_cache_directory=os.path.join(tmpdir, "tmp"),
+            use_cached_data=use_cached_data,
         )
         return data_module
+
+    @pytest.fixture(scope="function")
+    def mock_data_module_with_store(self, tmpdir, mock_data_store):
+        return self.create_mock_data_module(tmpdir, mock_data_store)
 
     def test_init(self, mock_data_module):
         assert isinstance(mock_data_module.atom_features[0], AtomicElement)
@@ -214,7 +224,7 @@ class TestDGLMoleculeLightningDataModule:
         assert mock_data_module.test_set_paths == [pathlib.Path("test.sqlite")]
         assert mock_data_module.test_batch_size == 3
 
-        assert mock_data_module.output_path == pathlib.Path("tmp.pkl")
+        assert mock_data_module.data_cache_directory == pathlib.Path("tmp")
         assert mock_data_module.use_cached_data is True
 
     def test__prepare_data_from_paths(self, mock_data_module, mock_data_store):
@@ -247,31 +257,42 @@ class TestDGLMoleculeLightningDataModule:
     def test_prepare(self, mock_data_module_with_store):
         mock_data_module_with_store.prepare_data()
 
-        assert os.path.isfile(mock_data_module_with_store.output_path)
-        with open(mock_data_module_with_store.output_path, "rb") as file:
-            datasets = pickle.load(file)
+        assert os.path.isfile(mock_data_module_with_store._training_cache_path)
+        with open(mock_data_module_with_store._training_cache_path, "rb") as file:
+            dataset = pickle.load(file)
 
-        assert all(isinstance(dataset, ConcatDataset) for dataset in datasets)
-        assert all(dataset.datasets[0].n_features == 2 for dataset in datasets)
+        assert isinstance(dataset, ConcatDataset)
+        assert isinstance(dataset.datasets[0], DGLMoleculeDataset)
+        assert dataset.datasets[0].n_features == 2
 
-    def test_prepare_cache(self, mock_data_module_with_store, monkeypatch):
-        with open(mock_data_module_with_store.output_path, "wb") as file:
-            pickle.dump((None, None, None), file)
-        monkeypatch.setattr(mock_data_module_with_store,
-                            "use_cached_data", True)
+    def test_prepare_cache(self, tmpdir, mock_data_store):
+        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=True)
+        mock_data_module_with_store.data_cache_directory.mkdir(exist_ok=True, parents=True)
+        with open(mock_data_module_with_store._training_cache_path, "wb") as file:
+            pickle.dump("test", file)
+
+        assert mock_data_module_with_store._training_cache_path == mock_data_module_with_store._validation_cache_path
+        assert mock_data_module_with_store._training_cache_path == mock_data_module_with_store._test_cache_path
+
         mock_data_module_with_store.prepare_data()
+        mock_data_module_with_store.setup()
 
-    def test_error_on_cache(self, mock_data_module_with_store, monkeypatch):
-        with open(mock_data_module_with_store.output_path, "wb") as file:
-            pickle.dump((None, None, None), file)
-        monkeypatch.setattr(mock_data_module_with_store,
-                            "use_cached_data", False)
+        # all paths will be the same file, since datasets are the same
+        assert mock_data_module_with_store._train_data == "test"
+        assert mock_data_module_with_store._val_data == "test"
+        assert mock_data_module_with_store._test_data == "test"
+
+    def test_error_on_cache(self, tmpdir, mock_data_store):
+        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=False)
+        mock_data_module_with_store.data_cache_directory.mkdir(exist_ok=True, parents=True)
+        with open(mock_data_module_with_store._training_cache_path, "wb") as file:
+            pickle.dump("test", file)
 
         with pytest.raises(FileExistsError):
             mock_data_module_with_store.prepare_data()
 
-    def test_setup(self, mock_data_module_with_store, monkeypatch):
-        monkeypatch.setattr(mock_data_module_with_store, "test_set_paths", [])
+    def test_setup(self, tmpdir, mock_data_store):
+        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=True, test_set_paths=[])
         mock_data_module_with_store.prepare_data()
         mock_data_module_with_store.setup()
 

@@ -3,7 +3,7 @@
 import contextlib
 import functools
 import json
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union, Optional
+from typing import TYPE_CHECKING, Dict, List, Tuple, Optional
 
 import numpy as np
 import torch
@@ -24,7 +24,7 @@ def generate_conformers(molecule, **kwargs):
     # except MissingOptionalDependency:
     #     molecule.generate_conformers(**kwargs, toolkit_registry=RDKitToolkitWrapper())
 
-    molecule.generaet_conformers(**kwargs)
+    molecule.generate_conformers(**kwargs)
 
 
 @requires_package("openeye.oechem")

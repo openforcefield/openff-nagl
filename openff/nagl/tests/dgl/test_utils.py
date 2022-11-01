@@ -45,17 +45,18 @@ def test_openff_molecule_to_dgl_graph(
     if len(atom_features):
         atom_tensor = graph.ndata["feat"]
         assert atom_tensor.shape == ((5, 4))
+        expected = torch.Tensor(
+            [[0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]],
+        )
         assert_close(
-            atom_tensor,
-            torch.Tensor(
-                [[0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]
-            ),
+            atom_tensor.type(torch.float32),
+            expected
         )
 
     for direction in ("forward", "reverse"):
         if len(bond_features):
             bond_tensor = graph.edges[direction].data["feat"]
-            assert_close(bond_tensor, torch.zeros((4, 1), dtype=int))
+            assert_close(bond_tensor, torch.zeros((4, 1), dtype=bool))
 
         bond_orders = graph.edges[direction].data["bond_order"]
         assert_close(bond_orders, torch.ones((4,), dtype=torch.uint8))
@@ -80,7 +81,7 @@ def test_get_openff_molecule_information(openff_methane_charged):
     from numpy.testing import assert_equal
 
     info = get_openff_molecule_information(openff_methane_charged)
-    assert sorted(info.keys()) == ["atomic_number", "coordinates", "formal_charge", "idx"]
+    assert sorted(info.keys()) == ["atomic_number", "formal_charge", "idx"]
     assert_equal(info["idx"].numpy(), [0, 1, 2, 3, 4])
     assert_equal(info["formal_charge"].numpy(), [0, 0, 0, 0, 0])
     assert_equal(info["atomic_number"].numpy(), [6, 1, 1, 1, 1])

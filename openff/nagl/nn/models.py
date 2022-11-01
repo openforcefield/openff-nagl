@@ -1,10 +1,10 @@
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Tuple
 
 from openff.nagl.nn.modules.lightning import DGLMoleculeLightningModel
 
 if TYPE_CHECKING:
     import torch
-    from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
+    from openff.nagl.features import AtomFeature, BondFeature
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 
@@ -43,7 +43,7 @@ class GNNModel(DGLMoleculeLightningModel):
         atom_features: Tuple["AtomFeature", ...],
         bond_features: Tuple["BondFeature", ...],
     ):
-        from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
+        from openff.nagl.features import AtomFeature, BondFeature
         from openff.nagl.nn.gcn import GCNStackMeta
         from openff.nagl.nn.activation import ActivationFunction
         from openff.nagl.nn.modules.pooling import PoolAtomFeatures
@@ -101,8 +101,6 @@ class GNNModel(DGLMoleculeLightningModel):
     
     @staticmethod
     def _validate_features(features, feature_class):
-        from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
-
         if isinstance(features, dict):
             features = list(features.items())
         all_v = []

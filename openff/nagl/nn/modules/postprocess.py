@@ -101,8 +101,6 @@ class ComputePartialCharges(PostprocessLayer):
                 )
                 counter += n_atoms
 
-                # for i in range(n_representations, counter):
-                #     atom_slice = slice(i, i + n_atoms)
                 charges = self._calculate_partial_charges(
                     electronegativity[atom_slice],
                     hardness[atom_slice],

@@ -1,4 +1,3 @@
-import functools
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np

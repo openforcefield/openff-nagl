@@ -219,6 +219,10 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
                 "_test_data", self.test_batch_size
             )
 
+        self._training_cache_path = self._get_data_cache_path("training")
+        self._validation_cache_path = self._get_data_cache_path("validation")
+        self._test_cache_path = self._get_data_cache_path("test")
+
 
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
@@ -247,14 +251,20 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         return ConcatDataset(datasets)
 
     def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
-        from openff.nagl.utils.hash import hash_dict
-
         input_paths = getattr(self, f"{data_group}_set_paths")
         
         self.data_cache_directory.mkdir(exist_ok=True, parents=True)
         cache_path = self._get_data_cache_path(data_group)
-        if cache_path and cache_path.is_file() and self.use_cached_data:
-            return
+        if cache_path and cache_path.is_file():
+            if self.use_cached_data:
+                return
+            else:
+                raise FileExistsError(
+                    errno.EEXIST,
+                    os.strerror(errno.EEXIST),
+                    cache_path.resolve(),
+                )
+
         
         data = self._prepare_data_from_paths(input_paths)
         with cache_path.open("wb") as f:
@@ -277,7 +287,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         return cache_path
 
     def _load_data_cache(self, data_group: Literal["training", "validation", "test"]):
-        path = self._get_data_cache_path(data_group)
+        path = getattr(self, f"_{data_group}_cache_path")
         with path.open("rb") as f:
             data = pickle.load(f)
         return data

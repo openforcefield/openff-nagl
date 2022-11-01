@@ -1,8 +1,7 @@
 """This module defines the data models used to store the data in the database."""
 
 import copy
-import enum
-from collections import defaultdict, UserString
+from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple, ClassVar
 
 import numpy as np

@@ -1,7 +1,6 @@
-from typing import ClassVar, Dict, List, Tuple, Type
+from typing import ClassVar, Dict, Type
 
 import torch
-from pydantic.main import ModelMetaclass
 
 from openff.nagl.utils.openff import get_openff_molecule_bond_indices
 
