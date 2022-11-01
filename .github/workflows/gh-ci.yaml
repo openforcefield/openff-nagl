@@ -17,6 +17,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   main_tests:
     runs-on: ${{ matrix.os }}
