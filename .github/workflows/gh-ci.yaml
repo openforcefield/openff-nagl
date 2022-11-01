@@ -32,11 +32,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - uses: ./.github/actions/include-openeye
-      with:
-        openeye-license-text: ${{ secrets.OE_LICENSE }}
-        openeye-license-file: ~/oe_license.txt
-
     - name: Build information
       run: |
         uname -a
@@ -67,6 +62,11 @@ jobs:
         which python
         conda info
         conda list
+
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ~/oe_license.txt
 
     - name: Run tests
       run: |

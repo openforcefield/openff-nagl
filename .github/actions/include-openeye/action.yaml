@@ -21,3 +21,7 @@ runs:
       run: |
         echo "${{ inputs.openeye-license-text }}" > ${{ inputs.openeye-license-file }}
         export OE_LICENSE=${{ inputs.openeye-license-file }}
+
+    - name: Test OpenEye
+      run: |
+        python -c "from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE; assert OPENEYE_AVAILABLE"
