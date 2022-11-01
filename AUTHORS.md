@@ -1,10 +1,10 @@
 # Authors
 
-GNN Charge Models was created by Lily Wang in 2022.
+OpenFF NAGL was created by Simon Boothroyd in 2021.
 
 
 All contributing authors are listed in this file below.
-The repository history at https://github.com/lilyminium/openff-nagl
+The repository history at https://github.com/openforcefield/openff-nagl
 and the CHANGELOG show individual code contributions.
 
 ## Chronological list of authors
@@ -18,6 +18,10 @@ The rules for this file:
   * Please start a new section for each new year
   * Don't ever delete anything
 -->
+**2021**
+- Simon Boothroyd \<@SimonBoothroyd\>
 
 **2022**
+- Matthew Thompson \<@mattwthompson\>
+- Josh Horton \<@jthorton\>
 - Lily Wang \<@lilyminium\>
