@@ -34,20 +34,6 @@ def get_similarity(
     return {"smiles_1": ref_smiles, "smiles_2": target_smiles, "similarity": similarity}
 
 
-def get_pairwise_smiles(input_files, clean_filenames: bool = True):
-    all_smiles = {}
-    for file in tqdm.tqdm(input_files, desc="Loading from stores"):
-        smiles = MoleculeStore(file).get_smiles()
-        if clean_filenames:
-            file = str(pathlib.Path(file).stem)
-        file_smiles = dict.fromkeys(smiles, file)
-        all_smiles.update(file_smiles)
-    pairwise_smiles = itertools.combinations(all_smiles, 2)
-
-    n_smiles = len(all_smiles)
-    n_pairs = math.factorial(len())
-    return pairwise_smiles
-
 
 def calculate_all_similarity(
     input_files,
