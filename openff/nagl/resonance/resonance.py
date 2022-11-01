@@ -115,8 +115,11 @@ class ResonanceEnumerator:
         return cls(offmol)
 
     def __init__(self, openff_molecule: "OFFMolecule"):
+        from openff.nagl.utils.openff import openff_to_rdkit
+
         self.openff_molecule = openff_molecule
-        self.rdkit_molecule = openff_molecule.to_rdkit()
+        self.rdkit_molecule = openff_to_rdkit(openff_molecule)
+        Chem.Kekulize(self.rdkit_molecule)
         self.acceptor_donor_fragments = []
         self.resonance_fragments = {}
 
@@ -128,23 +131,29 @@ class ResonanceEnumerator:
 
     @staticmethod
     def remove_hydrogens(rdmol: Chem.Mol):
-        return Chem.RemoveAllHs(rdmol)
+        return Chem.RemoveAllHs(rdmol, sanitize=False)
 
     @staticmethod
     def remove_uncharged_sp3_carbons(rdmol: Chem.Mol):
         query = Chem.MolFromSmarts("[#6+0X4]")
         indices = [ix[0] for ix in rdmol.GetSubstructMatches(query)]
+        indices_set = set(indices)
 
         editable = Chem.RWMol(rdmol)
+        for atom in editable.GetAtoms():
+            neighbors = {x.GetIdx() for x in atom.GetNeighbors()}
+            overlap = neighbors & indices_set
+            if overlap:
+                atom.SetNumExplicitHs(len(overlap))
         for ix in sorted(indices, reverse=True):
             editable.RemoveAtom(ix)
-
-        return Chem.Mol(editable)
+        return editable
+        # return Chem.Mol(editable)
 
     def _clean_molecule(self):
         rdmol = self.remove_hydrogens(self.rdkit_molecule)
         rdmol = self.remove_uncharged_sp3_carbons(rdmol)
-        _remove_radicals(rdmol)
+        # _remove_radicals(rdmol)
         return rdmol
 
     def select_acceptor_donor_fragments(
@@ -167,7 +176,7 @@ class ResonanceEnumerator:
 
         fragments = [
             FragmentEnumerator(rdfragment, max_path_length=max_path_length)
-            for rdfragment in Chem.GetMolFrags(rdmol, asMols=True)
+            for rdfragment in Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=False)
         ]
 
         acceptor_donor_fragments = []
@@ -256,7 +265,14 @@ class ResonanceEnumerator:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
+        return self.build_resonance_molecules(fragments, moleculetype=moleculetype)
 
+    def build_resonance_molecules(
+        self,
+        fragments,
+        moleculetype: Union[Type[Chem.rdchem.Mol],
+                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+    ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         rdkit_molecules = []
         for combination in itertools.product(*fragments):
             molecule = self.as_fragment()
@@ -277,11 +293,12 @@ class ResonanceEnumerator:
         raise NotImplementedError(f"Molecule type {moleculetype} not supported")
 
     def get_resonance_atoms(self) -> Generator[List[Chem.rdchem.Atom], None, None]:
-        for original_index in range(self.rdkit_molecule.n_atoms):
+        molecules = self.build_resonance_molecules(self.resonance_fragments)
+
+        for original_index in range(self.rdkit_molecule.GetNumAtoms()):
             rdatoms: List[Chem.rdchem.Atom] = [
-                fragment.get_atom_with_original_idx(original_index)
-                for fragment in self.resonance_fragments
-                if original_index in fragment.original_resonance_types
+                rdmol.GetAtomWithIdx(original_index)
+                for rdmol in molecules
             ]
             yield rdatoms
 
@@ -534,6 +551,8 @@ class FragmentEnumerator:
 
     def transfer_electrons(self, path: List[int]) -> Chem.Mol:
         transferred = Chem.RWMol(self.rdkit_molecule)
+        # _remove_radicals(transferred)
+        # Chem.Kekulize(transferred)
 
         donor_index, acceptor_index = path[0], path[-1]
         for index in [donor_index, acceptor_index]:
@@ -583,6 +602,7 @@ class FragmentEnumerator:
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
         bonds = [int(bond.GetBondTypeAsDouble()) for bond in atom.GetBonds()]
+        atom.UpdatePropertyCache()
         n_imp_h = atom.GetNumImplicitHs()
         bonds += [1] * n_imp_h
 

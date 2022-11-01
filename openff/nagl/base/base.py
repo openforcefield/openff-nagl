@@ -26,6 +26,7 @@ class MutableModel(BaseModel):
         json_encoders = {
             np.ndarray: lambda x: x.tolist(),
             tuple: list,
+            set: list,
             unit.Quantity: lambda x: x.to_tuple(),
             enum.Enum: lambda x: x.name,
             pathlib.Path: str

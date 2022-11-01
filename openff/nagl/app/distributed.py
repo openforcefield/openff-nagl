@@ -24,16 +24,17 @@ class Manager:
 
     def __post_init__(self):
         self.entries = []
+        self.n_entries = 0
         self.cluster = None
         self.client = None
 
-    def set_entries(self, entries: List[Any]):
+    def set_entries(self, entries: List[Any], n_entries=None):
         self.entries = entries
+        if n_entries is None:
+            n_entries = len(entries)
+        self.n_entries = n_entries
         self.reconcile_batch_workers()
         
-    @property
-    def n_entries(self):
-        return len(self.entries)
 
     def reconcile_batch_workers(self):
         if self.batch_size < 0:
@@ -55,9 +56,16 @@ class Manager:
         self.n_workers = n_workers
 
     def batch_entries(self):
-        for i in range(0, self.n_entries, self.batch_size):
-            j = min(i + self.batch_size, self.n_entries)
-            yield self.entries[i:j]
+        import itertools
+        # contort around generators
+        size = self.batch_size - 1
+        entries = iter(self.entries)
+        for x in entries:
+            yield list(itertools.chain([x], itertools.islice(entries,size )))
+
+        # for i in range(0, self.n_entries, self.batch_size):
+        #     j = min(i + self.batch_size, self.n_entries)
+        #     yield self.entries[i:j]
 
     def setup_lsf_cluster(self):
         import dask
