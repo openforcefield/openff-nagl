@@ -38,15 +38,12 @@ class TestConformerRecord:
             coordinates=np.ones((4, 3)),
             partial_charges=[
                 PartialChargeRecord(method="am1", values=[0.1, 0.2, 0.3, 0.4]),
-                PartialChargeRecord(method="am1bcc", values=[
-                                    1.0, 2.0, 3.0, 4.0]),
+                PartialChargeRecord(method="am1bcc", values=[1.0, 2.0, 3.0, 4.0]),
             ],
-            bond_orders=[WibergBondOrderRecord(
-                method="am1", values=[(0, 1, 0.1)])],
+            bond_orders=[WibergBondOrderRecord(method="am1", values=[(0, 1, 0.1)])],
         )
 
-        charges = {k: tuple(v.values)
-                   for k, v in record.partial_charges.items()}
+        charges = {k: tuple(v.values) for k, v in record.partial_charges.items()}
         assert charges == {
             "am1": (0.1, 0.2, 0.3, 0.4),
             "am1bcc": (1.0, 2.0, 3.0, 4.0),
@@ -106,15 +103,13 @@ class TestMoleculeRecord:
                 ConformerRecord(
                     coordinates=np.ones((4, 3)),
                     partial_charges=[
-                        PartialChargeRecord(method="am1", values=[
-                                            0.1, 0.2, 0.3, 0.4]),
+                        PartialChargeRecord(method="am1", values=[0.1, 0.2, 0.3, 0.4]),
                     ],
                 ),
                 ConformerRecord(
                     coordinates=np.zeros((4, 3)),
                     partial_charges=[
-                        PartialChargeRecord(method="am1", values=[
-                                            0.3, 0.4, 0.5, 0.6]),
+                        PartialChargeRecord(method="am1", values=[0.3, 0.4, 0.5, 0.6]),
                     ],
                 ),
             ],
@@ -138,8 +133,7 @@ class TestMoleculeRecord:
                         PartialChargeRecord(method="am1", values=[0.5, 1.5])
                     ],
                     bond_orders=[
-                        WibergBondOrderRecord(
-                            method="am1", values=[(0, 1, 0.2)])
+                        WibergBondOrderRecord(method="am1", values=[(0, 1, 0.2)])
                     ],
                 )
             ],
@@ -151,13 +145,11 @@ class TestMoleculeRecord:
         reordered_conformer = reordered_record.conformers[0]
 
         assert np.allclose(
-            reordered_conformer.coordinates,
-            np.flipud(original_coordinates)
+            reordered_conformer.coordinates, np.flipud(original_coordinates)
         )
 
         assert np.allclose(
-            reordered_conformer.partial_charges["am1"].values,
-            [1.5, 0.5]
+            reordered_conformer.partial_charges["am1"].values, [1.5, 0.5]
         )
         assert np.allclose(
             reordered_conformer.bond_orders["am1"].values,

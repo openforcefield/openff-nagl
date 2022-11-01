@@ -1,14 +1,18 @@
 from typing import Optional
 
-class Streamer:
 
-    def __init__(self, filename: str, file_format: Optional[str] = None, zipped: Optional[bool] = None):
+class Streamer:
+    def __init__(
+        self,
+        filename: str,
+        file_format: Optional[str] = None,
+        zipped: Optional[bool] = None,
+    ):
         if file_format is None:
             file_format = self.get_file_format(filename)
 
         self.filename = filename
         self.file_format = file_format
-
 
     @staticmethod
     def get_file_format(file: str):
@@ -19,11 +23,9 @@ class Streamer:
         else:
             raise NotImplementedError(f"Do not recognize format of {file}")
         return file_format
-        
 
     def to_file():
         ...
 
     def from_file(as_smiles: bool = True, unsafe: bool = False):
         ...
-

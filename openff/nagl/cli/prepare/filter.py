@@ -86,8 +86,8 @@ def filter_cli(
 
     from openff.nagl.app.filter import filter_molecules
     from openff.nagl.utils.openff import (
+        stream_molecules_from_file,
         stream_molecules_to_file,
-        stream_molecules_from_file
     )
 
     with stream_molecules_to_file(output_file) as writer:
@@ -104,7 +104,7 @@ def filter_cli(
             desc="Writing molecules",
         ):
             writer(molecule)
-            
+
 
 if __name__ == "__main__":
     filter_cli()

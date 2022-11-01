@@ -1,17 +1,28 @@
-from collections import defaultdict
 import copy
 import functools
 import random
-from typing import Set, Tuple, TYPE_CHECKING, List, Iterable, Dict, Generator, Optional, Union, Any, NamedTuple
 import warnings
+from collections import defaultdict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
-import scipy.sparse
 import numpy as np
+import scipy.sparse
 import tqdm
-
 from openff.utilities import requires_package
-from openff.nagl.base.base import MutableModel 
 
+from openff.nagl.base.base import MutableModel
 
 if TYPE_CHECKING:
     from openff.nagl.storage.record import MoleculeRecord
@@ -21,18 +32,19 @@ class MoleculeSmiles(NamedTuple):
     smiles: str
     label: Any = None
 
+
 class Fingerprint(NamedTuple):
     element: str
     fingerprint: str
 
-class MoleculeAtomFingerprints:
 
+class MoleculeAtomFingerprints:
     def to_tuple(self):
         return (self.smiles, self.atom_pair_fingerprints)
 
     def __hash__(self):
         return hash(self.to_tuple())
-    
+
     def __eq__(self, other):
         return self.to_tuple() == other.to_tuple()
 
@@ -47,7 +59,8 @@ class MoleculeAtomFingerprints:
 
     def get_n_fingerprints(self, exclude_elements=tuple()):
         counts = [
-            v for k, v in self.element_n_fingerprints.items()
+            v
+            for k, v in self.element_n_fingerprints.items()
             if k not in exclude_elements
         ]
         return sum(counts)
@@ -72,7 +85,7 @@ class MoleculeAtomFingerprints:
                 maxLength=2,
                 nBits=2048,
                 nBitsPerEntry=4,
-                fromAtoms=[rdatom.GetIdx()]
+                fromAtoms=[rdatom.GetIdx()],
             )
             fingerprints.add(Fingerprint(z, fp.ToBase64()))
 
@@ -80,7 +93,6 @@ class MoleculeAtomFingerprints:
 
 
 class FingerprintCollection:
-
     @classmethod
     def from_smiles(cls, smiles: List[str]):
         fingerprints = []
@@ -98,16 +110,11 @@ class FingerprintCollection:
         self.fingerprints = fingerprints
 
     @staticmethod
-    def create_matrix(
-        molecule_fingerprints,
-        smiles_to_indices,
-        fp_indices
-    ):
+    def create_matrix(molecule_fingerprints, smiles_to_indices, fp_indices):
         n_molecules = len(smiles_to_indices)
         n_fingerprints = len(fp_indices)
         matrix = scipy.sparse.coo_matrix(
-            (n_molecules, n_fingerprints),
-            dtype=bool
+            (n_molecules, n_fingerprints), dtype=bool
         ).tolil()
 
         for fp in tqdm.tqdm(molecule_fingerprints, desc="creating matrix"):
@@ -115,14 +122,9 @@ class FingerprintCollection:
                 i_mol = smiles_to_indices[fp.smiles]
             except KeyError:
                 continue
-            i_fp = [
-                fp_indices[x]
-                for x in fp.atom_pair_fingerprints
-                if x in fp_indices
-            ]
+            i_fp = [fp_indices[x] for x in fp.atom_pair_fingerprints if x in fp_indices]
             matrix[i_mol, i_fp] = True
         return matrix
-
 
     def _select_atom_environments(
         self,
@@ -130,7 +132,7 @@ class FingerprintCollection:
         atom_fingerprints,
         description: str,
         n_min_molecules: int,
-        exclude_elements: Tuple[str, ...] = tuple()
+        exclude_elements: Tuple[str, ...] = tuple(),
     ):
         smiles_to_index = {}
         index_to_smiles = {}
@@ -144,9 +146,7 @@ class FingerprintCollection:
 
         fp_indices = {x: i for i, x in enumerate(sorted(atom_fingerprints))}
         pool_matrix = self.create_matrix(
-            molecule_fingerprints,
-            smiles_to_index,
-            fp_indices
+            molecule_fingerprints, smiles_to_index, fp_indices
         )
 
         selected_mol_indices = []
@@ -166,11 +166,10 @@ class FingerprintCollection:
 
         return [index_to_smiles[i] for i in selected_mol_indices]
 
-
     def select_atom_environments(
         self,
         n_min_molecules: int = 4,
-        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"]
+        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"],
     ) -> List[str]:
 
         # all_smiles = set()
@@ -178,7 +177,6 @@ class FingerprintCollection:
         all_fingerprints = {}
         fingerprint_smiles = defaultdict(set)
         element_fingerprints = defaultdict(set)
-        
 
         for molfp in self.fingerprints:
             # all_smiles.add(molfp.smiles)
@@ -186,7 +184,7 @@ class FingerprintCollection:
             for atfp in molfp.atom_pair_fingerprints:
                 fingerprint_smiles[atfp].add(molfp.smiles)
                 element_fingerprints[atfp.element].add(atfp)
-        
+
         # first collect rare environments to minimize matrix sizes
         seen_fp = set()
         for fp, molsmiles in fingerprint_smiles.items():
@@ -199,8 +197,7 @@ class FingerprintCollection:
         print(f"Found {len(seen_fp)} min fingerprints")
 
         fingerprint_smiles = {
-            k: list(v) for k, v in fingerprint_smiles.items()
-            if k not in seen_fp
+            k: list(v) for k, v in fingerprint_smiles.items() if k not in seen_fp
         }
 
         excluded_elements = []
@@ -210,13 +207,10 @@ class FingerprintCollection:
 
             atom_fingerprints = element_fingerprints[el]
             molecule_smi: Set[str] = {
-                smi
-                for atfp in atom_fingerprints
-                for smi in fingerprint_smiles[atfp]
+                smi for atfp in atom_fingerprints for smi in fingerprint_smiles[atfp]
             }
             molecule_fingerprints = [
-                all_fingerprints[smi]
-                for smi in sorted(molecule_smi - selected_smiles)
+                all_fingerprints[smi] for smi in sorted(molecule_smi - selected_smiles)
             ]
 
             el_smiles = self._select_atom_environments(
@@ -224,26 +218,18 @@ class FingerprintCollection:
                 atom_fingerprints,
                 description=f"Searching element {el}",
                 n_min_molecules=n_min_molecules,
-                exclude_elements=excluded_elements
+                exclude_elements=excluded_elements,
             )
             selected_smiles |= set(el_smiles)
             excluded_elements.append(el)
 
-            
         return sorted(selected_smiles)
-        
-
 
 
 class DatasetPartitioner:
-
-    def __init__(
-        self,
-        smiles: Union[Iterable[str], Dict[str, Any]]
-    ):
+    def __init__(self, smiles: Union[Iterable[str], Dict[str, Any]]):
         self.labelled_smiles: Dict[str, Any] = (
-            smiles if isinstance(smiles, dict)
-            else dict.fromkeys(smiles, None)
+            smiles if isinstance(smiles, dict) else dict.fromkeys(smiles, None)
         )
 
         n_smiles = len(smiles)
@@ -262,8 +248,10 @@ class DatasetPartitioner:
 
     def __sub__(self, other):
         if not isinstance(other, DatasetPartitioner):
-            raise ValueError("Maths is only supported between DatasetPartitioner objects")
-        
+            raise ValueError(
+                "Maths is only supported between DatasetPartitioner objects"
+            )
+
         labelled = {
             k: v
             for k, v in self.labelled_smiles.items()
@@ -273,38 +261,31 @@ class DatasetPartitioner:
 
     def __add__(self, other):
         if not isinstance(other, DatasetPartitioner):
-            raise ValueError("Maths is only supported between DatasetPartitioner objects")
-        
+            raise ValueError(
+                "Maths is only supported between DatasetPartitioner objects"
+            )
+
         labelled = dict(self.labelled_smiles)
         labelled.update(other.labelled_smiles)
         return type(self)(labelled)
 
-
     def select_atom_environments(
         self,
         n_min_molecules: int = 4,
-        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"]
+        element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"],
     ) -> "DatasetPartitioner":
         fp_collection = FingerprintCollection.from_smiles(self.labelled_smiles)
         selected = fp_collection.select_atom_environments(
-            n_min_molecules=n_min_molecules,
-            element_order=element_order
+            n_min_molecules=n_min_molecules, element_order=element_order
         )
         return self.smiles_with_labels(selected)
 
-
     def smiles_with_labels(self, smiles: Iterable[str]) -> "DatasetPartitioner":
-        labelled = {
-            x: self.labelled_smiles.get(x)
-            for x in smiles
-        }
+        labelled = {x: self.labelled_smiles.get(x) for x in smiles}
         return type(self)(labelled)
 
-
     def select_diverse(
-        self,
-        n_molecules: int = 20000,
-        seed: int = 42
+        self, n_molecules: int = 20000, seed: int = 42
     ) -> "DatasetPartitioner":
         from rdkit import Chem
         from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
@@ -325,18 +306,14 @@ class DatasetPartitioner:
 
         def dice_distance(i, j):
             return 1.0 - DiceSimilarity(fingerprints[i], fingerprints[j])
-        
+
         picker = MaxMinPicker()
         selected_indices = picker.LazyPick(
-            dice_distance,
-            len(fingerprints),
-            n_molecules,
-            seed=int(seed)
+            dice_distance, len(fingerprints), n_molecules, seed=int(seed)
         )
         selected_smiles = [smiles[i] for i in selected_indices]
         return self.smiles_with_labels(selected_smiles)
 
-        
     def partition(
         self,
         training_fraction: float = 0.7,
@@ -344,7 +321,7 @@ class DatasetPartitioner:
         test_fraction: float = 0.1,
         seed: int = 42,
     ) -> Tuple["DatasetPartitioner", "DatasetPartitioner", "DatasetPartitioner"]:
-        
+
         # normalize fractions
         total = training_fraction + validation_fraction + test_fraction
         training_fraction /= total
@@ -363,10 +340,3 @@ class DatasetPartitioner:
         training_set = pool - validation_set
 
         return training_set, validation_set, test_set
-
-
-
-
-
-
-

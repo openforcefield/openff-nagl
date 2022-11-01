@@ -1,10 +1,10 @@
-import pathlib
 import os
+import pathlib
 from typing import Optional, Tuple
-from pydantic import validator
 
 import pytorch_lightning as pl
 import rich
+from pydantic import validator
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from rich import pretty
@@ -12,10 +12,9 @@ from rich.console import NewLine
 
 from openff.nagl.base import ImmutableModel
 from openff.nagl.features import AtomFeature, BondFeature
+from openff.nagl.nn.models import GNNModel
 from openff.nagl.nn.modules.lightning import DGLMoleculeLightningDataModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
-
-from openff.nagl.nn.models import GNNModel
 
 
 class Trainer(ImmutableModel):
@@ -54,12 +53,11 @@ class Trainer(ImmutableModel):
     @validator("training_set_paths", "validation_set_paths", "test_set_paths", pre=True)
     def _validate_paths(cls, v):
         from openff.nagl.utils.utils import as_iterable
+
         v = as_iterable(v)
         v = [pathlib.Path(x).resolve() for x in v]
         return v
 
-
-    
     @validator("atom_features", "bond_features", pre=True)
     def _validate_atom_features(cls, v, field):
         if isinstance(v, dict):
@@ -88,15 +86,19 @@ class Trainer(ImmutableModel):
 
     def to_simple_dict(self):
         dct = self.dict()
-        dct["atom_features"] = tuple([
-            {f.feature_name: f.dict(exclude={"feature_name"})}
-            for f in self.atom_features
-        ])
+        dct["atom_features"] = tuple(
+            [
+                {f.feature_name: f.dict(exclude={"feature_name"})}
+                for f in self.atom_features
+            ]
+        )
 
-        dct["bond_features"] = tuple([
-            {f.feature_name: f.dict(exclude={"feature_name"})}
-            for f in self.bond_features
-        ])
+        dct["bond_features"] = tuple(
+            [
+                {f.feature_name: f.dict(exclude={"feature_name"})}
+                for f in self.bond_features
+            ]
+        )
         new_dict = dict(dct)
         for k, v in dct.items():
             if isinstance(v, pathlib.Path):
@@ -104,9 +106,9 @@ class Trainer(ImmutableModel):
             new_dict[k] = v
         return new_dict
 
-
     def to_yaml_file(self, path):
         import yaml
+
         with open(path, "w") as f:
             yaml.dump(self.to_simple_dict(), f)
 
@@ -128,12 +130,9 @@ class Trainer(ImmutableModel):
         yaml_kwargs.update(kwargs)
         return cls(**yaml_kwargs)
 
-
     @property
     def n_atom_features(self):
-        return sum(
-            len(feature) for feature in self.atom_features
-        )
+        return sum(len(feature) for feature in self.atom_features)
 
     def _set_up_data_module(self):
         return DGLMoleculeLightningDataModule(
@@ -174,7 +173,7 @@ class Trainer(ImmutableModel):
     @property
     def trainer(self):
         return self._trainer
-    
+
     @property
     def logger(self):
         return self._logger
@@ -182,13 +181,17 @@ class Trainer(ImmutableModel):
     @property
     def model(self):
         return self._model
-    
+
     @property
     def data_module(self):
         return self._data_module
 
-
-    def train(self, callbacks=(ModelCheckpoint(save_top_k=1, monitor="val_loss"),), logger_name: str = "default", checkpoint_file: Optional[str] = None):
+    def train(
+        self,
+        callbacks=(ModelCheckpoint(save_top_k=1, monitor="val_loss"),),
+        logger_name: str = "default",
+        checkpoint_file: Optional[str] = None,
+    ):
 
         if self._model is None:
             self.prepare()
@@ -230,9 +233,7 @@ class Trainer(ImmutableModel):
             pl.seed_everything(self.seed)
 
         self.trainer.fit(
-            self.model,
-            datamodule=self.data_module,
-            ckpt_path=checkpoint_file
+            self.model, datamodule=self.data_module, ckpt_path=checkpoint_file
         )
 
         if self.test_set_paths:

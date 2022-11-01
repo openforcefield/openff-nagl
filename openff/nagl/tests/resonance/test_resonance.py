@@ -117,13 +117,11 @@ class TestEnumerateResonanceForms:
             },
             "formal_charges": [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1],
         }
-        given = fragment_enumerator.to_resonance_dict(
-            include_formal_charges=True)
+        given = fragment_enumerator.to_resonance_dict(include_formal_charges=True)
         assert given == expected
 
     def test_enumerate_donor_acceptor_resonance_forms(self, fragment_enumerator):
-        fragments = list(
-            fragment_enumerator.enumerate_donor_acceptor_resonance_forms())
+        fragments = list(fragment_enumerator.enumerate_donor_acceptor_resonance_forms())
         assert len(fragments) == 3
         assert fragments[0].to_resonance_dict(include_formal_charges=True) == {
             "acceptor_indices": [0, 1, 9],

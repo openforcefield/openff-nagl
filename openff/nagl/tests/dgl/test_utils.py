@@ -5,9 +5,9 @@ from torch.testing import assert_close
 
 from openff.nagl.dgl.utils import (
     dgl_heterograph_to_homograph,
+    get_openff_molecule_information,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
-    get_openff_molecule_information,
 )
 from openff.nagl.features import AtomConnectivity, BondIsInRing
 
@@ -48,10 +48,7 @@ def test_openff_molecule_to_dgl_graph(
         expected = torch.Tensor(
             [[0, 0, 0, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]],
         )
-        assert_close(
-            atom_tensor.type(torch.float32),
-            expected
-        )
+        assert_close(atom_tensor.type(torch.float32), expected)
 
     for direction in ("forward", "reverse"):
         if len(bond_features):
@@ -85,4 +82,3 @@ def test_get_openff_molecule_information(openff_methane_charged):
     assert_equal(info["idx"].numpy(), [0, 1, 2, 3, 4])
     assert_equal(info["formal_charge"].numpy(), [0, 0, 0, 0, 0])
     assert_equal(info["atomic_number"].numpy(), [6, 1, 1, 1, 1])
-

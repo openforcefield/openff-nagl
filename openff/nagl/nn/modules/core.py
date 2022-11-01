@@ -11,7 +11,6 @@ from .postprocess import PostprocessLayer
 
 
 class ConvolutionModule(torch.nn.Module):
-
     def __init__(
         self,
         n_input_features: int,

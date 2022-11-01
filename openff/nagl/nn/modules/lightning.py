@@ -1,10 +1,10 @@
 import errno
 import functools
-import os
 import inspect
+import os
 import pathlib
 import pickle
-from typing import Callable, Dict, List, Optional, Tuple, Union, Literal
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -18,6 +18,7 @@ from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 from openff.nagl.utils.types import Pathlike
 from openff.nagl.utils.utils import as_iterable
+
 # from openff.nagl.nn.loss import BaseLossFunction
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
@@ -44,7 +45,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         that takes a predicted and target tensor and returns a scalar loss
         in the form of a ``torch.Tensor``.
     """
-
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             pred_values = y_pred[label_name]
             label_loss = self.loss_function(pred_values, label_values)
             loss += label_loss
-        
+
         self.log(f"{step_type}_loss", loss)
         return loss
 
@@ -223,7 +223,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         self._validation_cache_path = self._get_data_cache_path("validation")
         self._test_cache_path = self._get_data_cache_path("test")
 
-
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
         return [pathlib.Path(path) for path in as_iterable(obj)]
@@ -252,7 +251,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
     def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
         input_paths = getattr(self, f"{data_group}_set_paths")
-        
+
         self.data_cache_directory.mkdir(exist_ok=True, parents=True)
         cache_path = self._get_data_cache_path(data_group)
         if cache_path and cache_path.is_file():
@@ -265,12 +264,13 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
                     cache_path.resolve(),
                 )
 
-        
         data = self._prepare_data_from_paths(input_paths)
         with cache_path.open("wb") as f:
             pickle.dump(data, f)
 
-    def _get_data_cache_path(self, data_group: Literal["training", "validation", "test"]) -> pathlib.Path:
+    def _get_data_cache_path(
+        self, data_group: Literal["training", "validation", "test"]
+    ) -> pathlib.Path:
 
         from openff.nagl.utils.hash import hash_dict
 
@@ -294,6 +294,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
     def get_feature_hash(self):
         from openff.nagl.utils.hash import hash_dict
+
         atom_features, bond_features = [], []
         for feature in self.atom_features:
             obj = feature.dict()
@@ -305,7 +306,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             obj["FEATURE_NAME"] = feature.feature_name
             bond_features.append(obj)
         return hash_dict([atom_features, bond_features])
-
 
     def prepare_data(self):
         """Prepare the data for training, validation, and testing.
@@ -337,11 +337,9 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
 
-
         self._train_data = self._load_data_cache("training")
         self._val_data = self._load_data_cache("validation")
         self._test_data = self._load_data_cache("test")
-
 
         # with self.output_path.open("rb") as f:
         #     self._train_data, self._val_data, self._test_data = pickle.load(f)

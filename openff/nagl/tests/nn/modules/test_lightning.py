@@ -7,11 +7,7 @@ import pytest
 import torch
 from torch.utils.data import ConcatDataset
 
-from openff.nagl.features import (
-    AtomFormalCharge,
-    AtomicElement,
-    BondOrder,
-)
+from openff.nagl.features import AtomFormalCharge, AtomicElement, BondOrder
 from openff.nagl.nn.data import DGLMoleculeDataset
 from openff.nagl.nn.gcn.sage import SAGEConvStack
 from openff.nagl.nn.modules.lightning import (
@@ -20,10 +16,7 @@ from openff.nagl.nn.modules.lightning import (
     DGLMoleculeLightningModel,
     ReadoutModule,
 )
-from openff.nagl.nn.modules.pooling import (
-    PoolAtomFeatures,
-    PoolBondFeatures,
-)
+from openff.nagl.nn.modules.pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.modules.postprocess import ComputePartialCharges
 from openff.nagl.nn.sequential import SequentialLayers
 from openff.nagl.storage.record import (
@@ -130,8 +123,7 @@ class TestDGLMoleculeLightningModel:
     def test_configure_optimizers(self, mock_atom_model):
         optimizer = mock_atom_model.configure_optimizers()
         assert isinstance(optimizer, torch.optim.Adam)
-        assert torch.isclose(torch.tensor(
-            optimizer.defaults["lr"]), torch.tensor(0.01))
+        assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.01))
 
 
 class TestDGLMoleculeLightningDataModule:
@@ -161,10 +153,8 @@ class TestDGLMoleculeLightningDataModule:
         store_path = os.path.join(tmpdir, "store.sqlite")
         conformer = ConformerRecord(
             coordinates=np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
-            partial_charges=[PartialChargeRecord(
-                method="am1bcc", values=[1.0, -1.0])],
-            bond_orders=[WibergBondOrderRecord(
-                method="am1", values=[(0, 1, 1.0)])],
+            partial_charges=[PartialChargeRecord(method="am1bcc", values=[1.0, -1.0])],
+            bond_orders=[WibergBondOrderRecord(method="am1", values=[(0, 1, 1.0)])],
         )
 
         store = MoleculeStore(store_path)
@@ -178,11 +168,7 @@ class TestDGLMoleculeLightningDataModule:
         return store_path
 
     def create_mock_data_module(
-        self,
-        tmpdir,
-        mock_data_store,
-        use_cached_data: bool = True,
-        test_set_paths = None
+        self, tmpdir, mock_data_store, use_cached_data: bool = True, test_set_paths=None
     ):
         if test_set_paths is None:
             test_set_paths = mock_data_store
@@ -213,12 +199,10 @@ class TestDGLMoleculeLightningDataModule:
         assert mock_data_module.partial_charge_method == "am1bcc"
         assert mock_data_module.bond_order_method == "am1"
 
-        assert mock_data_module.training_set_paths == [
-            pathlib.Path("train.sqlite")]
+        assert mock_data_module.training_set_paths == [pathlib.Path("train.sqlite")]
         assert mock_data_module.training_batch_size == 1
 
-        assert mock_data_module.validation_set_paths == [
-            pathlib.Path("val.sqlite")]
+        assert mock_data_module.validation_set_paths == [pathlib.Path("val.sqlite")]
         assert mock_data_module.validation_batch_size == 2
 
         assert mock_data_module.test_set_paths == [pathlib.Path("test.sqlite")]
@@ -244,8 +228,7 @@ class TestDGLMoleculeLightningDataModule:
         assert {*labels} == {"am1bcc-charges", "am1-wbo"}
 
     def test_prepare_data_from_multiple_paths(self, mock_data_module, mock_data_store):
-        dataset = mock_data_module._prepare_data_from_paths(
-            [mock_data_store] * 2)
+        dataset = mock_data_module._prepare_data_from_paths([mock_data_store] * 2)
         assert isinstance(dataset, ConcatDataset)
         assert len(dataset.datasets) == 2
         assert len(dataset) == 2
@@ -266,13 +249,23 @@ class TestDGLMoleculeLightningDataModule:
         assert dataset.datasets[0].n_features == 2
 
     def test_prepare_cache(self, tmpdir, mock_data_store):
-        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=True)
-        mock_data_module_with_store.data_cache_directory.mkdir(exist_ok=True, parents=True)
+        mock_data_module_with_store = self.create_mock_data_module(
+            tmpdir, mock_data_store, use_cached_data=True
+        )
+        mock_data_module_with_store.data_cache_directory.mkdir(
+            exist_ok=True, parents=True
+        )
         with open(mock_data_module_with_store._training_cache_path, "wb") as file:
             pickle.dump("test", file)
 
-        assert mock_data_module_with_store._training_cache_path == mock_data_module_with_store._validation_cache_path
-        assert mock_data_module_with_store._training_cache_path == mock_data_module_with_store._test_cache_path
+        assert (
+            mock_data_module_with_store._training_cache_path
+            == mock_data_module_with_store._validation_cache_path
+        )
+        assert (
+            mock_data_module_with_store._training_cache_path
+            == mock_data_module_with_store._test_cache_path
+        )
 
         mock_data_module_with_store.prepare_data()
         mock_data_module_with_store.setup()
@@ -283,8 +276,12 @@ class TestDGLMoleculeLightningDataModule:
         assert mock_data_module_with_store._test_data == "test"
 
     def test_error_on_cache(self, tmpdir, mock_data_store):
-        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=False)
-        mock_data_module_with_store.data_cache_directory.mkdir(exist_ok=True, parents=True)
+        mock_data_module_with_store = self.create_mock_data_module(
+            tmpdir, mock_data_store, use_cached_data=False
+        )
+        mock_data_module_with_store.data_cache_directory.mkdir(
+            exist_ok=True, parents=True
+        )
         with open(mock_data_module_with_store._training_cache_path, "wb") as file:
             pickle.dump("test", file)
 
@@ -292,7 +289,9 @@ class TestDGLMoleculeLightningDataModule:
             mock_data_module_with_store.prepare_data()
 
     def test_setup(self, tmpdir, mock_data_store):
-        mock_data_module_with_store = self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=True, test_set_paths=[])
+        mock_data_module_with_store = self.create_mock_data_module(
+            tmpdir, mock_data_store, use_cached_data=True, test_set_paths=[]
+        )
         mock_data_module_with_store.prepare_data()
         mock_data_module_with_store.setup()
 

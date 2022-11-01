@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from openff.nagl.app.distributed import Manager
     from openff.nagl.storage.record import MoleculeRecord
 
+
 def label_molecules(
     input_file: str,
     output_file: str,
@@ -15,6 +16,8 @@ def label_molecules(
     partial_charge_methods: Tuple[str] = ("am1", "am1bcc"),
     bond_order_methods: Tuple[str] = ("am1",),
 ):
+
+    import tqdm
 
     from openff.nagl.app.distributed import Manager
     from openff.nagl.cli.database.store import aggregate_records
@@ -26,13 +29,17 @@ def label_molecules(
     from openff.nagl.storage.store import MoleculeStore
     from openff.nagl.utils.openff import stream_molecules_from_file
 
-    import tqdm
-
     manager, input_file, output_file, log_file = preprocess_args(
         manager, input_file, output_file
     )
 
-    molecules = [x for x in tqdm.tqdm(stream_molecules_from_file(input_file, unsafe=True), desc="loading molecules")]
+    molecules = [
+        x
+        for x in tqdm.tqdm(
+            stream_molecules_from_file(input_file, unsafe=True),
+            desc="loading molecules",
+        )
+    ]
     manager.set_entries(molecules)
 
     single_func = functools.partial(

@@ -1,10 +1,9 @@
 import functools
 import logging
 import multiprocessing
-from typing import TYPE_CHECKING, List, Tuple, Iterable, Union
+from typing import TYPE_CHECKING, Iterable, List, Tuple, Union
 
 from openff.units.elements import MASSES, SYMBOLS
-
 
 if TYPE_CHECKING:
     from openff.toolkit.topology.molecule import Molecule, unit
@@ -12,6 +11,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 INV_SYMBOLS = {v: k for k, v in SYMBOLS.items()}
+
 
 def get_atomic_number(el: Union[int, str]) -> int:
     if isinstance(el, int):
@@ -35,6 +35,7 @@ def apply_filter(
         and mass < max_mass
         and len(molecule.find_rotatable_bonds()) <= n_rotatable_bonds
     )
+
 
 def split_and_apply_filter(
     molecule: "Molecule",
@@ -63,11 +64,21 @@ def split_and_apply_filter(
         logger.warning(f"Failed to process molecule {molecule}, {e}")
 
 
-
 def filter_molecules(
     molecules: Iterable["Molecule"],
     only_retain_largest: bool = True,
-    allowed_elements: Tuple[Union[str, int], ...] = ("H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I"),
+    allowed_elements: Tuple[Union[str, int], ...] = (
+        "H",
+        "C",
+        "N",
+        "O",
+        "F",
+        "P",
+        "S",
+        "Cl",
+        "Br",
+        "I",
+    ),
     min_mass: "unit.Quantity" = 250,
     max_mass: "unit.Quantity" = 350,
     n_rotatable_bonds: int = 7,
@@ -75,8 +86,9 @@ def filter_molecules(
 ) -> Iterable["Molecule"]:
 
     import tqdm
-    from openff.nagl.utils.openff import capture_toolkit_warnings
     from openff.toolkit.topology.molecule import unit
+
+    from openff.nagl.utils.openff import capture_toolkit_warnings
 
     allowed_elements = [get_atomic_number(x) for x in allowed_elements]
 
@@ -96,7 +108,6 @@ def filter_molecules(
         )
         with multiprocessing.Pool(processes=n_processes) as pool:
             for molecule in tqdm.tqdm(
-                pool.imap(filterer, molecules),
-                desc="filtering molecules"
+                pool.imap(filterer, molecules), desc="filtering molecules"
             ):
                 yield molecule

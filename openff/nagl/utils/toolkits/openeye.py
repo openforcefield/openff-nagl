@@ -1,5 +1,7 @@
 import contextlib
+
 from openff.utilities import requires_package
+
 
 @contextlib.contextmanager
 @requires_package("openeye.oechem")

@@ -13,8 +13,9 @@ from typing import (
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from ..base.base import ImmutableModel
 from openff.nagl.base.metaregistry import create_registry_metaclass
+
+from ..base.base import ImmutableModel
 
 if TYPE_CHECKING:
     import torch
@@ -38,7 +39,7 @@ class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
             key = cls._key_transform(key)
             cls.registry[key] = cls
         setattr(cls, cls._key_attribute, key)
-        
+
 
 class Feature(ImmutableModel, abc.ABC):
     feature_name: ClassVar[Optional[str]] = ""
@@ -58,8 +59,6 @@ class Feature(ImmutableModel, abc.ABC):
 
         kwargs = dict(zip(cls.__fields__, args))
         return cls(**kwargs)
-
-
 
     def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """

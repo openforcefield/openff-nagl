@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, Type, Any
+from typing import Any, ClassVar, Dict, Type
 
 
 class MetaRegistryMixin(type):
@@ -17,7 +17,6 @@ class MetaRegistryMixin(type):
                 f"Unknown {cls.__name__} type: {key}. "
                 f"Supported types: {list(cls.registry.keys())}"
             )
-    
 
     @classmethod
     def _get_class(cls, obj: Any):
@@ -26,7 +25,6 @@ class MetaRegistryMixin(type):
         if isinstance(type(obj), cls):
             return type(obj)
         return cls._get_by_key(obj)
-
 
     @classmethod
     def _get_object(cls, obj: Any):
@@ -57,4 +55,3 @@ def create_registry_metaclass(name_attribute: str = "name", ignore_case: bool = 
                     cls.registry[cls._key_transform(attr_val)] = cls
 
     return RegistryMeta
-

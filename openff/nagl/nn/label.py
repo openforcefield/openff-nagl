@@ -7,10 +7,7 @@ import torch
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
-    from openff.nagl.storage.record import (
-        ChargeMethod,
-        WibergBondOrderMethod,
-    )
+    from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 
 
 class LabelFunction(abc.ABC):
@@ -43,14 +40,12 @@ class LabelPrecomputedMolecule(LabelFunction):
         self.partial_charge_method = None
         self.bond_order_method = None
 
-
         if partial_charge_method is not None:
             self.partial_charge_method = ChargeMethod(partial_charge_method)
             self.partial_charge_label = f"{self.partial_charge_method}-charges"
         if bond_order_method is not None:
             self.bond_order_method = WibergBondOrderMethod(bond_order_method)
             self.bond_order_label = f"{self.bond_order_method}-wbo"
-
 
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
         from openff.nagl.utils.openff import get_unitless_charge
@@ -123,8 +118,7 @@ class ComputeAndLabelMolecule(LabelFunction):
                 )
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[get_unitless_charge(x)
-                            for x in molecule.partial_charges],
+                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
                 )
 
             bond_order_sets = {}

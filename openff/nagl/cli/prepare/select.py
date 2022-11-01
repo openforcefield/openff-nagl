@@ -2,9 +2,9 @@ import json
 import pathlib
 from typing import List
 
-
 import click
 from click_option_group import optgroup
+
 
 @click.command(
     "select",
@@ -67,8 +67,9 @@ def select_molecules_cli(
     clean_filenames: bool = True,
 ):
     import tqdm
-    from openff.nagl.storage.store import MoleculeStore
+
     from openff.nagl.app.partitioner import DatasetPartitioner
+    from openff.nagl.storage.store import MoleculeStore
 
     if not len(input_file) >= 1:
         raise ValueError("At least one input source must be given")
@@ -90,22 +91,19 @@ def select_molecules_cli(
     partitioner = DatasetPartitioner(smiles_to_db)
 
     selected_data = partitioner.select_atom_environments(
-        n_min_molecules=n_min_molecules,
-        element_order=element_order
+        n_min_molecules=n_min_molecules, element_order=element_order
     )
-    selected_records = [
-        smiles_to_records[x]
-        for x in selected_data.labelled_smiles
-    ]
+    selected_records = [smiles_to_records[x] for x in selected_data.labelled_smiles]
 
     destination = MoleculeStore(output_file)
     destination.store(selected_records)
 
-    print(f"Selected {len(selected_records)} molecules from {len(smiles_to_records)} original and wrote to {output_file}")
+    print(
+        f"Selected {len(selected_records)} molecules from {len(smiles_to_records)} original and wrote to {output_file}"
+    )
 
     with open(output_source_file, "w") as f:
         json.dump(selected_data.labelled_smiles, f)
-
 
 
 if __name__ == "__main__":

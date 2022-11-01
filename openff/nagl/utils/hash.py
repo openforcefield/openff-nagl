@@ -1,10 +1,11 @@
-import hashlib
 import enum
+import hashlib
 import json
 import pathlib
 from typing import Any, Dict
 
 from .types import Pathlike
+
 
 class CustomJsonEncoder(json.JSONEncoder):
     def default(self, obj):

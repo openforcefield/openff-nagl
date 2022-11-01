@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import dgl.function
 import torch
@@ -50,6 +50,7 @@ def get_openff_molecule_information(
         "formal_charge": torch.tensor(charges, dtype=torch.int8),
         "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
     }
+
 
 def openff_molecule_to_dgl_graph(
     molecule: OFFMolecule,

@@ -39,6 +39,7 @@ class ActivationFunction(enum.Enum):
     @classmethod
     def get_function(cls, name: str) -> Callable[[torch.tensor], torch.Tensor]:
         import torch.nn.functional as F
+
         x = cls.get(name)
 
         FUNCTIONS = {

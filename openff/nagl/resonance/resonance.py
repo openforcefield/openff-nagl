@@ -235,8 +235,7 @@ class ResonanceEnumerator:
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        moleculetype: Union[Type[Chem.rdchem.Mol],
-                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+        moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
     ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         """Combinatorially enumerate all resonance forms of the molecule.
 
@@ -270,8 +269,7 @@ class ResonanceEnumerator:
     def build_resonance_molecules(
         self,
         fragments,
-        moleculetype: Union[Type[Chem.rdchem.Mol],
-                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+        moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
     ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         rdkit_molecules = []
         for combination in itertools.product(*fragments):
@@ -297,8 +295,7 @@ class ResonanceEnumerator:
 
         for original_index in range(self.rdkit_molecule.GetNumAtoms()):
             rdatoms: List[Chem.rdchem.Atom] = [
-                rdmol.GetAtomWithIdx(original_index)
-                for rdmol in molecules
+                rdmol.GetAtomWithIdx(original_index) for rdmol in molecules
             ]
             yield rdatoms
 
@@ -400,8 +397,7 @@ class FragmentEnumerator:
 
         for fragment_index, current_index in fragment_to_self.items():
             rdatom = self.rdkit_molecule.GetAtomWithIdx(current_index)
-            fragment_atom = fragment.rdkit_molecule.GetAtomWithIdx(
-                fragment_index)
+            fragment_atom = fragment.rdkit_molecule.GetAtomWithIdx(fragment_index)
             self._substitute_atom(rdatom, fragment_atom)
 
         for fragment_bond in fragment.rdkit_molecule.GetBonds():
@@ -410,8 +406,7 @@ class FragmentEnumerator:
             current_i = fragment_to_self[fragment_i]
             current_j = fragment_to_self[fragment_j]
 
-            self_bond = self.rdkit_molecule.GetBondBetweenAtoms(
-                current_i, current_j)
+            self_bond = self.rdkit_molecule.GetBondBetweenAtoms(current_i, current_j)
             self._substitute_bond(self_bond, fragment_bond)
 
     @staticmethod
@@ -581,8 +576,7 @@ class FragmentEnumerator:
 
     def is_transfer_path(self, path: List[Tuple[int, int]]) -> bool:
         edges = zip(path[:-1], path[1:])
-        bond_orders = np.array(
-            [self.get_integer_bond_order(i, j) for i, j in edges])
+        bond_orders = np.array([self.get_integer_bond_order(i, j) for i, j in edges])
 
         deltas = bond_orders[1:] - bond_orders[:-1]
         return np.all(deltas[::2] == 1) and np.all(deltas[1::2] == -1)

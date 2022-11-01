@@ -10,10 +10,7 @@ from openff.nagl.features import (
     BondIsInRing,
     BondOrder,
 )
-from openff.nagl.features.featurizers import (
-    AtomFeaturizer,
-    BondFeaturizer,
-)
+from openff.nagl.features.featurizers import AtomFeaturizer, BondFeaturizer
 
 
 def test_atomfeaturizer(openff_methane_uncharged):

@@ -14,13 +14,9 @@ import click
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
     required=True,
 )
-def plot_similarity_cli(
-    input_file,
-    output_file,
-    linecolor="white"
-):
-    import pandas as pd
+def plot_similarity_cli(input_file, output_file, linecolor="white"):
     import numpy as np
+    import pandas as pd
     import seaborn as sns
     from matplotlib import pyplot as plt
 
@@ -31,8 +27,6 @@ def plot_similarity_cli(
     iu = np.triu_indices(n_smiles)
     data[iu] = df.similarity.values
     data += data.T
-    
-
 
     # wide = df.pivot(
     #     index="smiles_1",
@@ -45,10 +39,7 @@ def plot_similarity_cli(
     for row in df.itertuples():
         smiles_to_source[row.smiles_1] = row.source_1
 
-    original_ticklabels = [
-        smiles_to_source[smi]
-        for smi in smiles
-    ]
+    original_ticklabels = [smiles_to_source[smi] for smi in smiles]
     df_labels = pd.DataFrame({"source": original_ticklabels})
     tick_bounds = {}
     i = 0
@@ -58,7 +49,7 @@ def plot_similarity_cli(
         i = j
     ticklabels = [""] * len(original_ticklabels)
     for label, (i, j) in tick_bounds.items():
-        midpoint = int((i + j)/2)
+        midpoint = int((i + j) / 2)
         ticklabels[midpoint] = label
 
     ax = sns.heatmap(
@@ -72,7 +63,7 @@ def plot_similarity_cli(
         cbar=True,
         cbar_kws={"label": "Similarity"},
         xticklabels=ticklabels,
-        yticklabels=ticklabels
+        yticklabels=ticklabels,
     )
 
     for i, j in tick_bounds.values():
@@ -80,10 +71,10 @@ def plot_similarity_cli(
         plt.axhline(y=j, c=linecolor)
         plt.axvline(x=i, c=linecolor)
         plt.axvline(x=j, c=linecolor)
-        
 
     plt.savefig(output_file, dpi=300)
     print(f"Saved to {output_file}")
+
 
 if __name__ == "__main__":
     plot_similarity_cli()

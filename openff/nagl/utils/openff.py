@@ -3,12 +3,13 @@
 import contextlib
 import functools
 import json
-from typing import TYPE_CHECKING, Dict, List, Tuple, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependency
+
 from .types import HybridizationType
 
 if TYPE_CHECKING:
@@ -28,7 +29,9 @@ def generate_conformers(molecule, **kwargs):
 
 
 @requires_package("openeye.oechem")
-def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "OFFMolecule":
+def _enumerate_stereoisomers_oe(
+    molecule: "OFFMolecule", rationalize=True
+) -> "OFFMolecule":
     from openeye import oechem, oeomega
     from openff.toolkit.topology import Molecule
 
@@ -70,7 +73,9 @@ def _enumerate_stereoisomers_oe(molecule: "OFFMolecule", rationalize=True) -> "O
 
 
 @requires_package("rdkit")
-def _enumerate_stereoisomers_rd(molecule: "OFFMolecule", rationalize=True) -> "OFFMolecule":
+def _enumerate_stereoisomers_rd(
+    molecule: "OFFMolecule", rationalize=True
+) -> "OFFMolecule":
     from openff.toolkit.topology import Molecule
     from rdkit import Chem
     from rdkit.Chem.EnumerateStereoisomers import (  # type: ignore[import]
@@ -135,7 +140,9 @@ def enumerate_stereoisomers(
         return _enumerate_stereoisomers_rd(molecule, rationalize=rationalize)
 
 
-def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: bool = False) -> "OFFMolecule":
+def smiles_to_molecule(
+    smiles: str, guess_stereochemistry: bool = True, mapped: bool = False
+) -> "OFFMolecule":
     # we need to fully enumerate stereoisomers
     # at least for OpenEye
     # otherwise conformer generation hangs forever
@@ -165,7 +172,7 @@ def smiles_to_molecule(smiles: str, guess_stereochemistry: bool = True, mapped: 
                 # but have no enumerated stereoisomers.
                 mapped_smiles = stereo[0].to_smiles(mapped=True)
                 molecule = Molecule.from_mapped_smiles(mapped_smiles)
-    
+
     return molecule
 
 
@@ -194,6 +201,7 @@ def _get_molecule_hybridizations_oe(molecule: "OFFMolecule") -> List[Hybridizati
             raise ValueError(f"Unknown hybridization {hybridization}")
     return hybridizations
 
+
 @requires_package("rdkit")
 def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[HybridizationType]:
     from rdkit.Chem import rdchem
@@ -218,6 +226,7 @@ def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[Hybridizati
         except KeyError:
             raise ValueError(f"Unknown hybridization {hybridization}")
     return hybridizations
+
 
 def get_molecule_hybridizations(molecule: "OFFMolecule") -> List[HybridizationType]:
     try:
@@ -259,8 +268,10 @@ def _stream_smiles_from_file_rd(file: str, explicit_hydrogens: bool = False):
 @requires_package("openeye.oechem")
 def _copy_sddata_oe(source, target):
     from openeye import oechem
+
     for dp in oechem.OEGetSDDataPairs(source):
         oechem.OESetSDData(target, dp.GetTag(), dp.GetValue())
+
 
 @requires_package("openeye.oechem")
 def _stream_molecules_from_file_oe(file: str):
@@ -279,6 +290,7 @@ def _stream_molecules_from_file_oe(file: str):
             confmol = oemol
         yield _stream_conformer_from_oe(confmol)
 
+
 @requires_package("openeye.oechem")
 def _stream_molecules_from_file_unsafe_oe(file: str):
     from openeye import oechem
@@ -289,6 +301,7 @@ def _stream_molecules_from_file_unsafe_oe(file: str):
     for oemol in stream.GetOEMols():
         yield Molecule.from_openeye(oemol, allow_undefined_stereo=True)
 
+
 @requires_package("openeye.oechem")
 def _stream_smiles_from_file_oe(file: str):
     from openeye import oechem
@@ -298,12 +311,15 @@ def _stream_smiles_from_file_oe(file: str):
     for oemol in stream.GetOEMols():
         yield oechem.OEMolToSmiles(oemol)
 
+
 @requires_package("openeye.oechem")
 def _stream_conformer_from_oe(oemol):
-    from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
     from openff.toolkit.topology import Molecule
+    from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
 
-    has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
+    has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(
+        oemol
+    )
     offmol = Molecule.from_openeye(oemol, allow_undefined_stereo=True)
     if not has_charges:
         offmol.partial_charges = None
@@ -332,10 +348,9 @@ def _stream_smiles_from_file(file: str):
             yield offmol
 
 
-
 def _stream_molecules_from_smiles(file: str, as_smiles: bool = False):
     from openff.toolkit.topology import Molecule
-    
+
     with open(file, "r") as f:
         contents = f.readlines()
     for line in contents:
@@ -350,6 +365,7 @@ def _stream_molecules_from_smiles(file: str, as_smiles: bool = False):
                     offmol = offmol.to_smiles()
                 yield offmol
 
+
 def get_file_format(file: str, file_format: str = None):
     if file_format is None:
         if file.endswith("sdf"):
@@ -361,28 +377,29 @@ def get_file_format(file: str, file_format: str = None):
     return file_format
 
 
-
 def stream_molecules_from_file(
     file: str,
     file_format: Optional[str] = None,
     as_smiles: bool = False,
     unsafe: bool = False,
-
 ):
     file = str(file)
 
     file_format = get_file_format(file)
     if file_format == "smi":
-        reader = functools.partial(_stream_molecules_from_smiles, as_smiles=as_smiles, unsafe=unsafe)
+        reader = functools.partial(
+            _stream_molecules_from_smiles, as_smiles=as_smiles, unsafe=unsafe
+        )
     else:
         if as_smiles:
             reader = _stream_smiles_from_file
         else:
             reader = _stream_molecules_from_file
-    
+
     with capture_toolkit_warnings():
         for offmol in reader(file):
             yield offmol
+
 
 @requires_package("openeye.oechem")
 def openff_to_openeye(molecule):
@@ -401,8 +418,9 @@ def openff_to_openeye(molecule):
 @requires_package("rdkit")
 def openff_to_rdkit(molecule):
     import copy
-    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
+
     from openff.toolkit.topology import Molecule
+    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
 
     try:
         return molecule.to_rdkit()
@@ -426,9 +444,8 @@ def openff_to_rdkit(molecule):
             molecule = copy.deepcopy(molecule)
             for bond in molecule.bonds:
                 bond._stereochemistry = mol2_bonds[bond.atom1_index, bond.atom2_index]
-        
-        return molecule.to_rdkit()
 
+        return molecule.to_rdkit()
 
 
 @requires_package("openeye.oechem")
@@ -467,6 +484,7 @@ def _stream_molecules_to_file_rd(file: str):
     yield writer
 
     stream.close()
+
 
 @contextlib.contextmanager
 def stream_molecules_to_file(file: str):
@@ -531,8 +549,12 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
 
     with capture_toolkit_warnings():
 
-        reference_molecule = OFFMolecule.from_mapped_smiles(reference_smiles, allow_undefined_stereo=True)
-        target_molecule = OFFMolecule.from_mapped_smiles(target_smiles, allow_undefined_stereo=True)
+        reference_molecule = OFFMolecule.from_mapped_smiles(
+            reference_smiles, allow_undefined_stereo=True
+        )
+        target_molecule = OFFMolecule.from_mapped_smiles(
+            target_smiles, allow_undefined_stereo=True
+        )
 
     _, atom_map = OFFMolecule.are_isomorphic(
         reference_molecule,
@@ -540,6 +562,7 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
         return_atom_map=True,
     )
     return atom_map
+
 
 @requires_package("openeye.oechem")
 def _normalize_molecule_oe(
@@ -592,8 +615,7 @@ def _normalize_molecule_rd(
             try:
                 ((rdmol,),) = products
             except ValueError:
-                raise ValueError(
-                    f"Reaction produced multiple products: {smarts}")
+                raise ValueError(f"Reaction produced multiple products: {smarts}")
 
             for atom in rdmol.GetAtoms():
                 atom.SetAtomMapNum(atom.GetIntProp("react_atom_idx") + 1)
@@ -607,20 +629,19 @@ def _normalize_molecule_rd(
                 f"{smarts}"
             )
 
-    offmol = OFFMolecule.from_mapped_smiles(
-        new_smiles, allow_undefined_stereo=True)
+    offmol = OFFMolecule.from_mapped_smiles(new_smiles, allow_undefined_stereo=True)
     return offmol
 
 
 @functools.lru_cache(maxsize=1000)
 def _load_reaction_smarts():
     import json
+
     from openff.nagl.data.files import MOLECULE_NORMALIZATION_REACTIONS
 
     with open(MOLECULE_NORMALIZATION_REACTIONS, "r") as f:
         reaction_smarts = [entry["smarts"] for entry in json.load(f)]
     return reaction_smarts
-
 
 
 def normalize_molecule(
@@ -633,7 +654,6 @@ def normalize_molecule(
     """
     from openff.toolkit.topology import Molecule as OFFMolecule
 
-    
     reaction_smarts = _load_reaction_smarts()
     # try:
     #     normalized = _normalize_molecule_oe(
