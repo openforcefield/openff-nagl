@@ -1,8 +1,9 @@
 import functools
 import os
 import traceback
-import tqdm
 from typing import Any, Callable, List, Tuple
+
+import tqdm
 
 
 def as_batch_function_with_captured_errors(

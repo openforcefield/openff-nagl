@@ -1,0 +1,11 @@
+# data
+training-set-paths:
+  - ../labelled-data/labelled-enamine-10240-short.sqlite
+validation-set-paths:
+  - ../labelled-data/labelled-enamine-10240-short.sqlite
+test-set-paths:
+  - ../labelled-data/labelled-enamine-10240-short.sqlite
+training_batch_size: 1000
+validation_batch_size: 1000
+test_batch_size: 1000
+use_cached_data: True

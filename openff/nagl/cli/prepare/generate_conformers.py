@@ -1,5 +1,5 @@
 import functools
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 import click
 import tqdm
@@ -40,7 +40,8 @@ def generate_single_molecule_conformers(
 ):
     from openff.toolkit.topology.molecule import unit as off_unit
     from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
-    from openff.nagl.utils.openff import smiles_to_molecule, generate_conformers
+
+    from openff.nagl.utils.openff import generate_conformers, smiles_to_molecule
 
     molecule = smiles_to_molecule(smiles, guess_stereochemistry=guess_stereochemistry)
 

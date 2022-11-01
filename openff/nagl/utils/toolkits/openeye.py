@@ -1,6 +1,13 @@
 import contextlib
+<<<<<<< HEAD
 from openff.utilities import requires_package
 
+=======
+
+from openff.utilities import requires_package
+
+
+>>>>>>> d93826c465776019fd89c065d4afbe974c014215
 @contextlib.contextmanager
 @requires_package("openeye.oechem")
 def capture_oechem_warnings():  # pragma: no cover

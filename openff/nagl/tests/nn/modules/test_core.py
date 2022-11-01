@@ -33,8 +33,7 @@ class TestReadoutModule:
             n_input_features=1,
             hidden_feature_sizes=[1],
         )
-        module = ReadoutModule(
-            PoolAtomFeatures(), sequential, ComputePartialCharges())
+        module = ReadoutModule(PoolAtomFeatures(), sequential, ComputePartialCharges())
         assert isinstance(module.pooling_layer, PoolAtomFeatures)
         assert isinstance(module.readout_layers, SequentialLayers)
         assert isinstance(module.postprocess_layer, ComputePartialCharges)

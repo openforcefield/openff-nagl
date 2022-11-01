@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import dgl.function
 import torch
@@ -7,10 +7,6 @@ from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
 from ..features.featurizers import AtomFeaturizer, BondFeaturizer
-from ..utils.openff import (
-    get_openff_molecule_bond_indices
-    # get_openff_molecule_information,
-)
 
 FORWARD = "forward"
 REVERSE = "reverse"
@@ -25,6 +21,8 @@ def openff_molecule_to_base_dgl_graph(
     """
     Convert an OpenFF Molecule to a DGL graph.
     """
+
+    from openff.nagl.utils.openff import get_openff_molecule_bond_indices
 
     bonds = get_openff_molecule_bond_indices(molecule)
     indices_a, indices_b = map(list, zip(*bonds))
@@ -43,26 +41,16 @@ def openff_molecule_to_base_dgl_graph(
 def get_openff_molecule_information(
     molecule: OFFMolecule,
 ) -> Dict[str, torch.Tensor]:
-    from openff.nagl.utils.openff import (
-        get_openff_molecule_formal_charges,
-        get_coordinates_in_angstrom
-    )
+    from openff.nagl.utils.openff import get_openff_molecule_formal_charges
 
     charges = get_openff_molecule_formal_charges(molecule)
     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
-    # if not molecule.conformers:
-    #     coordinates = torch.empty((len(atomic_numbers), 0, 3))
-    # else:
-    #     coordinates = torch.tensor(
-    #         [get_coordinates_in_angstrom(x) for x in molecule.conformers]
-    #     )
-    #     coordinates = torch.transpose(coordinates, 0, 1)
     return {
         "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
         "formal_charge": torch.tensor(charges, dtype=torch.int8),
         "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
-        # "coordinates": coordinates,
     }
+
 
 def openff_molecule_to_dgl_graph(
     molecule: OFFMolecule,

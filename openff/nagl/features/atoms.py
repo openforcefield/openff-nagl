@@ -1,13 +1,12 @@
-import functools
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
 import torch
-
 from pydantic import validator
 
-from .base import CategoricalMixin, Feature, FeatureMeta
 from openff.nagl.utils.types import HybridizationType
+
+from .base import CategoricalMixin, Feature, FeatureMeta
 from .utils import one_hot_encode
 
 if TYPE_CHECKING:
@@ -25,8 +24,6 @@ __all__ = [
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
 ]
-
-
 
 
 class AtomFeatureMeta(FeatureMeta):
@@ -72,17 +69,13 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
 
         hybridizations = get_molecule_hybridizations(molecule)
         return torch.vstack(
-            [
-                one_hot_encode(hyb, self.categories)
-                for hyb in hybridizations
-            ]
+            [one_hot_encode(hyb, self.categories) for hyb in hybridizations]
         )
 
     def dict(self, *args, **kwargs):
         obj = super().dict()
         obj["categories"] = [hyb.name for hyb in self.categories]
         return obj
-    
 
 
 class AtomConnectivity(CategoricalMixin, AtomFeature):

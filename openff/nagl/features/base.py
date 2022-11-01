@@ -13,8 +13,9 @@ from typing import (
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from ..base.base import ImmutableModel
 from openff.nagl.base.metaregistry import create_registry_metaclass
+
+from ..base.base import ImmutableModel
 
 if TYPE_CHECKING:
     import torch
@@ -38,29 +39,6 @@ class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
             key = cls._key_transform(key)
             cls.registry[key] = cls
         setattr(cls, cls._key_attribute, key)
-        
-
-
-    # def __init__(self, name, bases, namespace, **kwargs):
-    #     super().__init__(name, bases, namespace, **kwargs)
-    #     _key = self.feature_name if hasattr(self, "feature_name") else None
-    #     if _key == "":
-    #         _key = name
-
-    #     self.registry[_key] = self
-    #     self.feature_name = _key
-
-    # def get_feature_class(self, feature_name_or_class: Union[str, "FeatureMeta"]):
-    #     if isinstance(feature_name_or_class, self):
-    #         return feature_name_or_class
-
-    #     try:
-    #         return self.registry[feature_name_or_class]
-    #     except KeyError:
-    #         raise KeyError(
-    #             f"Unknown feature type: {feature_name_or_class}. "
-    #             f"Supported types: {list(self.registry.keys())}"
-    #         )
 
 
 class Feature(ImmutableModel, abc.ABC):
@@ -81,8 +59,6 @@ class Feature(ImmutableModel, abc.ABC):
 
         kwargs = dict(zip(cls.__fields__, args))
         return cls(**kwargs)
-
-
 
     def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """

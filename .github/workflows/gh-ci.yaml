@@ -17,9 +17,11 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   main_tests:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -29,10 +31,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - uses: ./.github/actions/include-openeye
-      with:
-        openeye-license-text: ${{ secrets.OE_LICENSE }}
 
     - name: Build information
       run: |
@@ -65,6 +63,11 @@ jobs:
         conda info
         conda list
 
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ${{ env.OE_LICENSE }}
+
     - name: Run tests
       run: |
         pytest -n 4 -v --cov=openff-nagl --cov-report=xml --color=yes openff/nagl/tests/
@@ -78,7 +81,6 @@ jobs:
 
 
   pylint_check:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -103,7 +105,6 @@ jobs:
 
 
   pypi_check:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
 
     steps:
@@ -136,7 +137,6 @@ jobs:
         twine check $DISTRIBUTION
   
   install_from_source_conda:
-    if: "github.repository == 'lilyminium/openff-nagl'"
     runs-on: ubuntu-latest
     strategy:
         fail-fast: false

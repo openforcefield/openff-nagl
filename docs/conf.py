@@ -13,7 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # In case the project was not installed
-import openff-nagl
+import openff.nagl
 import os
 import sys
 
@@ -22,15 +22,14 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'GNN Charge Models'
-copyright = ("2022, Lily Wang. Project structure based on the "
-             "MDAnalysis Cookiecutter version 0.1")
-author = 'Lily Wang'
+project = 'OpenFF NAGL'
+copyright = "2021+ Open Force Field Initiative"
+author = "Open Force Field Initiative"
 
 # The short X.Y version
-version = ''
+version = openff.nagl.__version__
 # The full version, including alpha/beta/rc tags
-release = ''
+release = openff.nagl.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -43,14 +42,16 @@ release = ''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autosummary',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.extlinks',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.todo",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
     "openff_sphinx_theme",
+    "myst_nb",
 ]
 
 # Autodoc settings
@@ -74,15 +75,54 @@ napoleon_custom_sections = [("attributes", "params_style")]
 napoleon_use_rtype = False
 napoleon_use_param = True
 
+_python_doc_base = "https://docs.python.org/3.7"
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3.7", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
+    "scikit.learn": ("https://scikit-learn.org/stable", None),
+    "openmm": ("http://docs.openmm.org/latest/api-python/", None),
+    "rdkit": ("https://www.rdkit.org/docs", None),
+    "openeye": ("https://docs.eyesopen.com/toolkits/python/", None),
+    "mdtraj": ("https://www.mdtraj.org/1.9.5/", None),
+    "openff.interchange": (
+        "https://docs.openforcefield.org/projects/interchange/en/stable/",
+        None,
+    ),
+    "openff.fragmenter": (
+        "https://docs.openforcefield.org/projects/fragmenter/en/stable/",
+        None,
+    ),
+}
+myst_url_schemes = [
+    "http",
+    "https",
+]
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
+# Extensions for the myst parser
+myst_enable_extensions = [
+    "dollarmath",
+    "colon_fence",
+    "smartquotes",
+    "replacements",
+    "deflist",
+]
+myst_heading_anchors = 3
+
+# Myst NB settings
+# Execute all notebooks on build
+nb_execution_mode = "force"
+# List of notebooks NOT to execute (use output stored in notebook instead)
+nb_execution_excludepatterns = []
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = [".rst", ".md", ".ipynb"]
 
 # The master toctree document.
 master_doc = 'index'
@@ -117,7 +157,7 @@ html_theme = "openff_sphinx_theme"
 html_theme_options = {
     # Repository integration
     # Set the repo url for the link to appear
-    "repo_url": "https://github.com/lilyminium/openff-nagl",
+    "repo_url": "https://github.com/openforcefield/openff-nagl",
     # The name of the repo. If must be set if repo_url is set
     "repo_name": "openff-nagl",
     # Must be one of github, gitlab or bitbucket
@@ -145,10 +185,11 @@ html_static_path = ['_static']
 #
 # The default sidebars (for documents that don't match any pattern) are
 # defined by theme itself.  Builtin themes are using these templates by
-# default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
-# 'searchbox.html']``.
-#
-# html_sidebars = {}
+# default:
+html_sidebars = {
+    "**": ["globaltoc.html", "searchbox.html", "localtoc.html"],
+}
+
 
 
 # -- Options for HTMLHelp output ---------------------------------------------
@@ -181,7 +222,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'openff-nagl.tex', 'GNN Charge Models Documentation',
+    (master_doc, 'openff-nagl.tex', 'OpenFF NAGL Documentation',
      'openff-nagl', 'manual'),
 ]
 
@@ -191,7 +232,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'openff-nagl', 'GNN Charge Models Documentation',
+    (master_doc, 'openff-nagl', 'OpenFF NAGL Documentation',
      [author], 1)
 ]
 
@@ -202,14 +243,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'openff-nagl', 'GNN Charge Models Documentation',
+    (master_doc, 'openff-nagl', 'OpenFF NAGL Documentation',
      author, 'openff-nagl', 'A short description of the project.',
      'Miscellaneous'),
 ]
 
 
-# -- Extension configuration -------------------------------------------------
-intersphinx_mapping = {
-    'https://docs.python.org/3/': None,
-    'https://docs.openforcefield.org/projects/toolkit/en/stable/': None,
-}

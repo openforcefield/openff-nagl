@@ -108,17 +108,38 @@ class ResonanceEnumerator:
         mapped: bool = False,
         allow_undefined_stereo: bool = True,
     ):
+        import numpy as np
+        from openff.toolkit.utils.exceptions import OpenFFToolkitException
+
         func = OFFMolecule.from_smiles
         if mapped:
             func = OFFMolecule.from_mapped_smiles
-        offmol = func(smiles, allow_undefined_stereo=allow_undefined_stereo)
-        return cls(offmol)
+        
+        # terrible hack to get around radical issues for now
+        # TODO: ... not do this
+        try:
+            offmol = func(smiles, allow_undefined_stereo=allow_undefined_stereo)
+        except OpenFFToolkitException:
+            rdmol = Chem.MolFromSmiles(smiles)
+            if mapped:
+                map_nums = [atom.GetAtomMapNum() for atom in rdmol.GetAtoms()]
+                order = list(map(int, np.argsort(map_nums)))
+                rdmol = Chem.RenumberAtoms(rdmol, order)
+        else:
+            return cls(offmol)
+        obj = cls(OFFMolecule())
+        obj.rdkit_molecule = rdmol
+        obj.__post_init__()
+        return obj
 
     def __init__(self, openff_molecule: "OFFMolecule"):
         from openff.nagl.utils.openff import openff_to_rdkit
 
         self.openff_molecule = openff_molecule
         self.rdkit_molecule = openff_to_rdkit(openff_molecule)
+        self.__post_init__()
+
+    def __post_init__(self):
         Chem.Kekulize(self.rdkit_molecule)
         self.acceptor_donor_fragments = []
         self.resonance_fragments = {}
@@ -235,8 +256,7 @@ class ResonanceEnumerator:
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        moleculetype: Union[Type[Chem.rdchem.Mol],
-                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+        moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
     ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         """Combinatorially enumerate all resonance forms of the molecule.
 
@@ -270,8 +290,7 @@ class ResonanceEnumerator:
     def build_resonance_molecules(
         self,
         fragments,
-        moleculetype: Union[Type[Chem.rdchem.Mol],
-                            Type[OFFMolecule]] = Chem.rdchem.Mol,
+        moleculetype: Union[Type[Chem.rdchem.Mol], Type[OFFMolecule]] = Chem.rdchem.Mol,
     ) -> Union[List[Chem.rdchem.Mol], List[OFFMolecule]]:
         rdkit_molecules = []
         for combination in itertools.product(*fragments):
@@ -297,8 +316,7 @@ class ResonanceEnumerator:
 
         for original_index in range(self.rdkit_molecule.GetNumAtoms()):
             rdatoms: List[Chem.rdchem.Atom] = [
-                rdmol.GetAtomWithIdx(original_index)
-                for rdmol in molecules
+                rdmol.GetAtomWithIdx(original_index) for rdmol in molecules
             ]
             yield rdatoms
 
@@ -400,8 +418,7 @@ class FragmentEnumerator:
 
         for fragment_index, current_index in fragment_to_self.items():
             rdatom = self.rdkit_molecule.GetAtomWithIdx(current_index)
-            fragment_atom = fragment.rdkit_molecule.GetAtomWithIdx(
-                fragment_index)
+            fragment_atom = fragment.rdkit_molecule.GetAtomWithIdx(fragment_index)
             self._substitute_atom(rdatom, fragment_atom)
 
         for fragment_bond in fragment.rdkit_molecule.GetBonds():
@@ -410,8 +427,7 @@ class FragmentEnumerator:
             current_i = fragment_to_self[fragment_i]
             current_j = fragment_to_self[fragment_j]
 
-            self_bond = self.rdkit_molecule.GetBondBetweenAtoms(
-                current_i, current_j)
+            self_bond = self.rdkit_molecule.GetBondBetweenAtoms(current_i, current_j)
             self._substitute_bond(self_bond, fragment_bond)
 
     @staticmethod
@@ -581,8 +597,7 @@ class FragmentEnumerator:
 
     def is_transfer_path(self, path: List[Tuple[int, int]]) -> bool:
         edges = zip(path[:-1], path[1:])
-        bond_orders = np.array(
-            [self.get_integer_bond_order(i, j) for i, j in edges])
+        bond_orders = np.array([self.get_integer_bond_order(i, j) for i, j in edges])
 
         deltas = bond_orders[1:] - bond_orders[:-1]
         return np.all(deltas[::2] == 1) and np.all(deltas[1::2] == -1)
@@ -599,18 +614,24 @@ class FragmentEnumerator:
         return atom_types
 
     def get_atom_resonance_type(self, index: int) -> ResonanceTypeValue:
+        from rdkit import Chem
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
-        bonds = [int(bond.GetBondTypeAsDouble()) for bond in atom.GetBonds()]
+        bondtype_to_int = {
+            Chem.rdchem.BondType.SINGLE: 1,
+            Chem.rdchem.BondType.DOUBLE: 2,
+            Chem.rdchem.BondType.TRIPLE: 3,
+        }
+        bonds = [bondtype_to_int[bond.GetBondType()] for bond in atom.GetBonds()]
+
         atom.UpdatePropertyCache()
         n_imp_h = atom.GetNumImplicitHs()
         bonds += [1] * n_imp_h
 
-        orders = tuple(sorted(bonds))
         atom_type = get_resonance_type(
             element=atom.GetSymbol(),
             formal_charge=atom.GetFormalCharge(),
-            bond_orders=orders,
+            bond_orders=bonds,
         )
 
         return atom_type

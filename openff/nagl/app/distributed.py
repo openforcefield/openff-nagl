@@ -1,10 +1,10 @@
 import contextlib
 import dataclasses
-import math
 import functools
 import logging
+import math
 import traceback
-from typing import Any, List, Callable, Literal
+from typing import Any, Callable, List, Literal
 
 import tqdm
 
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 @dataclasses.dataclass
 class Manager:
     """Helper class to manage batched work on a cluster"""
+
     batch_size: int = -1
     n_workers: int = -1
     worker_type: Literal["lsf", "local"] = "local"
@@ -34,7 +35,6 @@ class Manager:
             n_entries = len(entries)
         self.n_entries = n_entries
         self.reconcile_batch_workers()
-        
 
     def reconcile_batch_workers(self):
         if self.batch_size < 0:
@@ -61,7 +61,7 @@ class Manager:
         size = self.batch_size - 1
         entries = iter(self.entries)
         for x in entries:
-            yield list(itertools.chain([x], itertools.islice(entries,size )))
+            yield list(itertools.chain([x], itertools.islice(entries, size)))
 
         # for i in range(0, self.n_entries, self.batch_size):
         #     j = min(i + self.batch_size, self.n_entries)
@@ -101,6 +101,7 @@ class Manager:
 
     def set_up_cluster(self):
         from dask import distributed
+
         if self.cluster is None:
             self.cluster = self._set_up_cluster()
             self.client = distributed.Client(self.cluster)
@@ -108,8 +109,7 @@ class Manager:
     def submit_to_client(self, submit_function):
         self.set_up_cluster()
         futures = [
-            self.client.submit(submit_function, batch)
-            for batch in self.batch_entries()
+            self.client.submit(submit_function, batch) for batch in self.batch_entries()
         ]
         return futures
 
@@ -119,13 +119,12 @@ class Manager:
 
     def __exit__(self, *args):
         self.conclude()
-    
+
     def conclude(self):
         if self.worker_type == "lsf":
             self.cluster.scale(n=0)
         # self.client.shutdown()
         # self.cluster = self.client = None
-
 
     @staticmethod
     def store_futures_and_log(
@@ -137,7 +136,11 @@ class Manager:
         desc: str = None,
     ):
         from dask import distributed
-        from openff.nagl.cli.utils import try_and_return_error, write_error_to_file_object
+
+        from openff.nagl.cli.utils import (
+            try_and_return_error,
+            write_error_to_file_object,
+        )
 
         log_file = str(log_file)
         with open(log_file, "w") as f:
@@ -147,6 +150,7 @@ class Manager:
                 desc=desc,
                 ncols=80,
             ):
+
                 def aggregator():
                     return aggregate_function(future.result())
 
@@ -154,7 +158,6 @@ class Manager:
                 if error is not None:
                     write_error_to_file_object(f, error)
                     continue
-                
 
                 for result, error in tqdm.tqdm(
                     results,
@@ -170,8 +173,7 @@ class Manager:
 
                     if error is not None:
                         write_error_to_file_object(f, error)
-                
+
                 future.release()
 
         logger.info(f"Logged errors to {log_file}")
-

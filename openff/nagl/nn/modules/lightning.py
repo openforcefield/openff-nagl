@@ -1,10 +1,11 @@
 import errno
 import functools
+import inspect
 import os
 import inspect
 import pathlib
 import pickle
-from typing import Callable, Dict, List, Optional, Tuple, Union, Literal
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import pytorch_lightning as pl
 import torch
@@ -18,6 +19,8 @@ from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 from openff.nagl.utils.types import Pathlike
 from openff.nagl.utils.utils import as_iterable
+# from openff.nagl.nn.loss import BaseLossFunction
+
 # from openff.nagl.nn.loss import BaseLossFunction
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
@@ -87,7 +90,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             pred_values = y_pred[label_name]
             label_loss = self.loss_function(pred_values, label_values)
             loss += label_loss
-        
         self.log(f"{step_type}_loss", loss)
         return loss
 
@@ -219,6 +221,9 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
                 "_test_data", self.test_batch_size
             )
 
+        self._training_cache_path = self._get_data_cache_path("training")
+        self._validation_cache_path = self._get_data_cache_path("validation")
+        self._test_cache_path = self._get_data_cache_path("test")
 
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
@@ -247,20 +252,27 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         return ConcatDataset(datasets)
 
     def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
-        from openff.nagl.utils.hash import hash_dict
-
         input_paths = getattr(self, f"{data_group}_set_paths")
-        
+
         self.data_cache_directory.mkdir(exist_ok=True, parents=True)
         cache_path = self._get_data_cache_path(data_group)
-        if cache_path and cache_path.is_file() and self.use_cached_data:
-            return
-        
+        if cache_path and cache_path.is_file():
+            if self.use_cached_data:
+                return
+            else:
+                raise FileExistsError(
+                    errno.EEXIST,
+                    os.strerror(errno.EEXIST),
+                    cache_path.resolve(),
+                )
+
         data = self._prepare_data_from_paths(input_paths)
         with cache_path.open("wb") as f:
             pickle.dump(data, f)
 
-    def _get_data_cache_path(self, data_group: Literal["training", "validation", "test"]) -> pathlib.Path:
+    def _get_data_cache_path(
+        self, data_group: Literal["training", "validation", "test"]
+    ) -> pathlib.Path:
 
         from openff.nagl.utils.hash import hash_dict
 
@@ -273,12 +285,11 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             f"_paths-{input_hash}"
             ".pkl"
         )
-        print(f"cached path: ", cache_file)
         cache_path = self.data_cache_directory / cache_file
         return cache_path
 
     def _load_data_cache(self, data_group: Literal["training", "validation", "test"]):
-        path = self._get_data_cache_path(data_group)
+        path = getattr(self, f"_{data_group}_cache_path")
         with path.open("rb") as f:
             data = pickle.load(f)
         return data
@@ -296,7 +307,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             obj["FEATURE_NAME"] = feature.feature_name
             bond_features.append(obj)
         return hash_dict([atom_features, bond_features])
-
 
     def prepare_data(self):
         """Prepare the data for training, validation, and testing.
@@ -328,11 +338,9 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
 
-
         self._train_data = self._load_data_cache("training")
         self._val_data = self._load_data_cache("validation")
         self._test_data = self._load_data_cache("test")
-
 
         # with self.output_path.open("rb") as f:
         #     self._train_data, self._val_data, self._test_data = pickle.load(f)

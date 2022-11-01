@@ -1,11 +1,12 @@
+import functools
+import itertools
+import math
+import pathlib
+from typing import Dict, Tuple, Union
 
 import click
 import tqdm
-import pathlib
-import functools
-import math
-import itertools
-from typing import Tuple, Dict, Union
+
 
 def calculate_similarity(
     smiles_pair: Tuple[str, str],
@@ -30,29 +31,7 @@ def get_similarity(
 ) -> Dict[str, Union[str, float]]:
     ref_smiles, target_smiles = smiles_pair
     similarity = calculate_similarity(smiles_pair, radius)
-    return {
-        "smiles_1": ref_smiles,
-        "smiles_2": target_smiles,
-        "similarity": similarity
-    }
-
-
-def get_pairwise_smiles(
-    input_files,
-    clean_filenames: bool = True
-):
-    all_smiles = {}
-    for file in tqdm.tqdm(input_files, desc="Loading from stores"):
-        smiles = MoleculeStore(file).get_smiles()
-        if clean_filenames:
-            file = str(pathlib.Path(file).stem)
-        file_smiles = dict.fromkeys(smiles, file)
-        all_smiles.update(file_smiles)
-    pairwise_smiles = itertools.combinations(all_smiles, 2)
-
-    n_smiles = len(all_smiles)
-    n_pairs = math.factorial(len())
-    return pairwise_smiles
+    return {"smiles_1": ref_smiles, "smiles_2": target_smiles, "similarity": similarity}
 
 
 
@@ -64,20 +43,18 @@ def calculate_all_similarity(
     fingerprint_radius: int = 3,
     skip: int = 10,
 ):
-    import pandas as pd
     import numpy as np
-    from openff.nagl.storage.store import MoleculeStore
+    import pandas as pd
+
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
+    from openff.nagl.storage.store import MoleculeStore
 
     # file_order = {}
     all_smiles = {}
-    for i, file in tqdm.tqdm(
-        enumerate(input_files),
-        desc="Loading from stores"
-    ):
+    for i, file in tqdm.tqdm(enumerate(input_files), desc="Loading from stores"):
         # file_order[file] = i
         smiles = sorted(MoleculeStore(file).get_smiles())[::skip]
 
@@ -96,15 +73,11 @@ def calculate_all_similarity(
     manager, *_ = preprocess_args(manager=manager)
     manager.set_entries(pairwise_smiles, n_entries=n_pairs)
 
-    single_func = functools.partial(
-        get_similarity,
-        radius=fingerprint_radius
-    )
+    single_func = functools.partial(get_similarity, radius=fingerprint_radius)
     batch_func = as_batch_function_with_captured_errors(
-        single_func,
-        desc="calculating similarity"
+        single_func, desc="calculating similarity"
     )
-    
+
     with manager:
         futures = manager.submit_to_client(batch_func)
         i = 0
@@ -119,7 +92,6 @@ def calculate_all_similarity(
     df["smiles_1"] = smiles_1
     df["smiles_2"] = smiles_2
 
-    
     # results = [x[0] for x in results]
     # df = pd.DataFrame.from_records(results)
     df["source_1"] = [all_smiles[x] for x in df.smiles_1]
@@ -164,26 +136,15 @@ def calculate_all_similarity(
 )
 @click.pass_context
 def calculate_similarity_cli(
-    ctx,
-    input_file,
-    output_file,
-    clean_filenames,
-    fingerprint_radius,
-    skip
+    ctx, input_file, output_file, clean_filenames, fingerprint_radius, skip
 ):
     from openff.nagl.cli.utils import get_default_manager
 
     manager = get_default_manager(ctx)
     calculate_all_similarity(
-        input_file,
-        output_file,
-        manager,
-        clean_filenames,
-        fingerprint_radius,
-        skip
+        input_file, output_file, manager, clean_filenames, fingerprint_radius, skip
     )
 
-    
 
 if __name__ == "__main__":
     calculate_similarity_cli()

@@ -1,5 +1,4 @@
 import enum
-
 import pathlib
 from typing import Union
 

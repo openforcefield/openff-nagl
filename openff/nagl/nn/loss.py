@@ -14,24 +14,21 @@ class LossFunctionMeta(abc.ABCMeta, create_registry_metaclass("name")):
     pass
 
 
-
 class BaseLossFunction(abc.ABC, metaclass=LossFunctionMeta):
-
     def __call__(
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         return self.compute(predicted_values, expected_values, molecule)
-
 
     @abc.abstractmethod
     def compute(
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         raise NotImplementedError
 
@@ -43,7 +40,7 @@ class LossMSE(BaseLossFunction):
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         import torch
 
@@ -58,7 +55,7 @@ class LossRMSE(BaseLossFunction):
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         import torch
 
@@ -73,9 +70,10 @@ class LossDipoleMSE(BaseLossFunction):
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         import torch
+
         from openff.nagl.metrics.properties import calculate_dipole_in_angstrom
 
         conformers = torch.transpose(molecule.graph.ndata["coordinates"], 0, 1)
@@ -96,9 +94,10 @@ class LossDipoleRMSE(BaseLossFunction):
         self,
         predicted_values: "torch.Tensor",
         expected_values: "torch.Tensor",
-        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None
+        molecule: Optional[Union[DGLMolecule, DGLMoleculeBatch]] = None,
     ) -> "torch.Tensor":
         import torch
+
         from openff.nagl.metrics.properties import calculate_dipole_in_angstrom
 
         conformers = torch.transpose(molecule.graph.ndata["coordinates"], 0, 1)
@@ -110,5 +109,3 @@ class LossDipoleRMSE(BaseLossFunction):
             loss += torch.sqrt(mse)
         loss /= len(conformers)
         return loss
-
-

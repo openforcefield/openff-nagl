@@ -6,9 +6,9 @@ import dgl.nn.pytorch
 import torch.nn
 import torch.nn.functional
 
+from openff.nagl.base.metaregistry import create_registry_metaclass
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.base import ContainsLayersMixin
-from openff.nagl.base.metaregistry import create_registry_metaclass
 
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
@@ -43,6 +43,7 @@ GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 class GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
     pass
+
 
 class BaseGCNStack(
     torch.nn.ModuleList,
@@ -201,8 +202,8 @@ class BaseGCNStack(
             dropout = cls.default_dropout
         if activation_function is None:
             activation_function = cls.default_activation_function
-        # activation = ActivationFunction.get_value(activation_function)
-        activation = ActivationFunction.get_function(activation_function)
+        activation = ActivationFunction.get_value(activation_function)
+        # activation = ActivationFunction.get_function(activation_function)
         return cls._create_gcn_layer(
             n_input_features=n_input_features,
             n_output_features=n_output_features,

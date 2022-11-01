@@ -1,9 +1,16 @@
 """This module defines the data models used to store the data in the database."""
 
 import copy
-import enum
-from collections import defaultdict, UserString
-from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Tuple, ClassVar
+from collections import defaultdict
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+)
 
 import numpy as np
 from openff.units import unit as openff_unit
@@ -28,6 +35,7 @@ class ChargeMethod(str):
     def to_openff_method(self) -> str:
         key = self.lower()
         return self._openff_conversion.get(key, key)
+
 
 class WibergBondOrderMethod(str):
     _openff_conversion = {"am1": "am1-wiberg"}
@@ -128,8 +136,7 @@ class ConformerRecord(Record):
         try:
             v = v.reshape((-1, 3))
         except ValueError:
-            raise ValueError(
-                "coordinates must be re-shapable to `(n_atoms, 3)`")
+            raise ValueError("coordinates must be re-shapable to `(n_atoms, 3)`")
         v.flags.writeable = False
         return v
 
@@ -219,7 +226,9 @@ class MoleculeRecord(Record):
 
         charges = {}
         if labeller.partial_charge_label in labels:
-            charges[partial_charge_method] = labels[labeller.partial_charge_label].numpy()
+            charges[partial_charge_method] = labels[
+                labeller.partial_charge_label
+            ].numpy()
         bonds = {}
         if labeller.bond_order_label in labels:
             bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
@@ -294,7 +303,7 @@ class MoleculeRecord(Record):
                 rms_cutoff=rms_cutoff * off_unit.angstrom,
             )
             molecule.apply_elf_conformer_selection(limit=n_conformers)
-        
+
         elif not molecule.conformers:
             raise ValueError(
                 "Molecule must have conformers to create a record. "
@@ -312,8 +321,7 @@ class MoleculeRecord(Record):
                 )
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[get_unitless_charge(x)
-                            for x in molecule.partial_charges],
+                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
                 )
 
             bond_order_sets = {}
@@ -356,13 +364,11 @@ class MoleculeRecord(Record):
             self.mapped_smiles, allow_undefined_stereo=True
         )
         offmol._conformers = [
-            conformer.coordinates * off_unit.angstrom
-            for conformer in self.conformers
+            conformer.coordinates * off_unit.angstrom for conformer in self.conformers
         ]
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
-            offmol.partial_charges = np.array(
-                charges) * off_unit.elementary_charge
+            offmol.partial_charges = np.array(charges) * off_unit.elementary_charge
 
         if bond_order_method:
             bond_orders = self.average_bond_orders(bond_order_method)

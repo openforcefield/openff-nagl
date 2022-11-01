@@ -1,7 +1,6 @@
-from typing import ClassVar, Dict, List, Tuple, Type
+from typing import ClassVar, Dict, Type
 
 import torch
-from pydantic.main import ModelMetaclass
 
 from openff.nagl.utils.openff import get_openff_molecule_bond_indices
 
@@ -40,8 +39,7 @@ class BondIsInRing(BondFeature):
         }
         molecule_bonds = get_openff_molecule_bond_indices(molecule)
 
-        tensor = torch.tensor([bool(bond in ring_bonds)
-                              for bond in molecule_bonds])
+        tensor = torch.tensor([bool(bond in ring_bonds) for bond in molecule_bonds])
         return tensor
 
 
@@ -54,8 +52,7 @@ class BondInRingOfSize(BondFeature):
 
         is_in_ring = []
         for bond in molecule.bonds:
-            rdbond = rdmol.GetBondBetweenAtoms(
-                bond.atom1_index, bond.atom2_index)
+            rdbond = rdmol.GetBondBetweenAtoms(bond.atom1_index, bond.atom2_index)
             is_in_ring.append(rdbond.IsInRingSize(self.ring_size))
         return torch.tensor(is_in_ring, dtype=int)
 

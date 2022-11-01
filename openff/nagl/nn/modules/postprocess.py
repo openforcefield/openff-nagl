@@ -3,8 +3,8 @@ from typing import ClassVar, Dict, Type, Union
 
 import torch
 
-from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.base.metaregistry import create_registry_metaclass
+from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 
 
 class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
@@ -95,14 +95,9 @@ class ComputePartialCharges(PostprocessLayer):
             n_atoms = int(n_atoms)
             representation_charges = []
             for i in range(n_representations):
-                atom_slice = slice(
-                    counter,
-                    counter + n_atoms
-                )
+                atom_slice = slice(counter, counter + n_atoms)
                 counter += n_atoms
 
-                # for i in range(n_representations, counter):
-                #     atom_slice = slice(i, i + n_atoms)
                 charges = self._calculate_partial_charges(
                     electronegativity[atom_slice],
                     hardness[atom_slice],

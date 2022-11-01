@@ -1,9 +1,9 @@
 import json
-from typing import List
 import pathlib
-
+from typing import List
 
 import click
+
 
 @click.command(
     "partition",
@@ -48,7 +48,6 @@ import click
     "--output-training-file",
     help="The path (.sqlite) to save the training set to.",
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
-
     required=True,
 )
 @click.option(
@@ -95,12 +94,13 @@ def partition_molecules_cli(
     output_validation_file: str = "validation-data.sqlite",
     output_source_file: str = "partitioned-data-sources.csv",
     clean_filenames: bool = True,
-    seed: int = -1
+    seed: int = -1,
 ):
     import pandas as pd
     import tqdm
-    from openff.nagl.storage.store import MoleculeStore
+
     from openff.nagl.app.partitioner import DatasetPartitioner
+    from openff.nagl.storage.store import MoleculeStore
 
     if not len(input_file) >= 1:
         raise ValueError("At least one input source must be given")
@@ -109,7 +109,6 @@ def partition_molecules_cli(
     if input_source_file is not None:
         with open(input_source_file, "r") as f:
             input_source = json.load(f)
-    
     smiles_to_records = {}
     smiles_to_db = {}
     for file in tqdm.tqdm(input_file, desc="loading from stores"):
@@ -124,17 +123,14 @@ def partition_molecules_cli(
             else:
                 smiles_to_db[rec.mapped_smiles] = file
 
-    smiles_to_db = {
-        k: v if v is not None else ""
-        for k, v in smiles_to_db.items()
-    }
+    smiles_to_db = {k: v if v is not None else "" for k, v in smiles_to_db.items()}
 
     partitioner = DatasetPartitioner(smiles_to_db)
     all_sets = partitioner.partition(
         training_fraction=training_fraction,
         validation_fraction=validation_fraction,
         test_fraction=test_fraction,
-        seed=seed
+        seed=seed,
     )
 
     print(f"Partitioned {len(smiles_to_records)} records into:")
@@ -148,19 +144,14 @@ def partition_molecules_cli(
         records_ = [smiles_to_records[x] for x in dataset.labelled_smiles]
         if len(records_):
             smiles, sources = zip(*(dataset.labelled_smiles.items()))
-            df_ = pd.DataFrame({
-                "SMILES": smiles,
-                "Source": sources
-            })
+            df_ = pd.DataFrame({"SMILES": smiles, "Source": sources})
             df_["Dataset"] = name
             dfs.append(df_)
         print(f"    {name}: {len(records_)}")
 
         store_.store(records_)
-    
     df = pd.concat(dfs).reset_index()
     df.to_csv(output_source_file)
-
 
 
 if __name__ == "__main__":

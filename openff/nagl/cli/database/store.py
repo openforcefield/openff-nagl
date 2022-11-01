@@ -16,6 +16,7 @@ def label_precomputed_molecule(
 ):
     import numpy as np
     from openff.toolkit.topology.molecule import unit
+
     from openff.nagl.storage.record import MoleculeRecord
 
     if molecule.conformers is None:
@@ -63,11 +64,11 @@ def store_molecules(
     bond_order_method: str = None,
     allow_empty_molecules: bool = False,
 ):
-    from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
+    from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.storage.store import MoleculeStore
     from openff.nagl.utils.openff import stream_molecules_from_file
 
@@ -85,7 +86,7 @@ def store_molecules(
     if allow_empty_molecules:
         base_func = label_precomputed_molecule
     else:
-        base_func = MoleculeRecord.from_precomputed_openff 
+        base_func = MoleculeRecord.from_precomputed_openff
 
     single_func = functools.partial(
         base_func,
@@ -114,8 +115,6 @@ def store_molecules(
     retrieved = store.retrieve()
     print(f"{output_file} has {len(retrieved)} records")
 
-
-    
 
 @click.command("store-molecules", help="Convert pre-computed molecules to database")
 @click.option(
@@ -154,8 +153,12 @@ def store_molecules(
 )
 @click.pass_context
 def store_molecules_cli(
-    ctx, input_file, output_file, partial_charge_method, bond_order_method,
-    allow_empty_molecules
+    ctx,
+    input_file,
+    output_file,
+    partial_charge_method,
+    bond_order_method,
+    allow_empty_molecules,
 ):
     from openff.nagl.cli.utils import get_default_manager
 

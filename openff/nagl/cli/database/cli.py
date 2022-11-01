@@ -15,4 +15,3 @@ def database_cli():
 
 database_cli.add_command(store_molecules_cli)
 database_cli.add_command(retrieve_molecules_cli)
-

@@ -97,8 +97,7 @@ def test_data_set_from_molecule_stores(tmpdir):
 def test_data_set_loader():
     data_loader = DGLMoleculeDataLoader(
         dataset=DGLMoleculeDataset.from_openff(
-            molecules=[OFFMolecule.from_smiles(
-                "C"), OFFMolecule.from_smiles("C[O-]")],
+            molecules=[OFFMolecule.from_smiles("C"), OFFMolecule.from_smiles("C[O-]")],
             label_function=label_formal_charge,
             atom_features=[AtomConnectivity()],
         ),

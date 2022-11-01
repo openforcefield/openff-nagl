@@ -1,15 +1,15 @@
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING, Tuple
 
 from openff.nagl.nn.modules.lightning import DGLMoleculeLightningModel
 
 if TYPE_CHECKING:
     import torch
-    from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
     from openff.toolkit.topology import Molecule as OFFMolecule
+
+    from openff.nagl.features import AtomFeature, BondFeature
 
 
 class GNNModel(DGLMoleculeLightningModel):
-
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
         import yaml
@@ -25,9 +25,7 @@ class GNNModel(DGLMoleculeLightningModel):
 
     @property
     def n_atom_features(self):
-        return sum(
-            len(feature) for feature in self.atom_features
-        )
+        return sum(len(feature) for feature in self.atom_features)
 
     def __init__(
         self,
@@ -43,13 +41,13 @@ class GNNModel(DGLMoleculeLightningModel):
         atom_features: Tuple["AtomFeature", ...],
         bond_features: Tuple["BondFeature", ...],
     ):
-        from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
-        from openff.nagl.nn.gcn import GCNStackMeta
+        from openff.nagl.features import AtomFeature, BondFeature
         from openff.nagl.nn.activation import ActivationFunction
+        from openff.nagl.nn.gcn import GCNStackMeta
+        from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
         from openff.nagl.nn.modules.pooling import PoolAtomFeatures
         from openff.nagl.nn.modules.postprocess import PostprocessLayerMeta
         from openff.nagl.nn.sequential import SequentialLayers
-        from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 
         self.readout_name = readout_name
 
@@ -90,7 +88,6 @@ class GNNModel(DGLMoleculeLightningModel):
 
     def compute_property(self, molecule: "OFFMolecule") -> "torch.Tensor":
         from openff.nagl.dgl.molecule import DGLMolecule
-        
         dglmol = DGLMolecule.from_openff(
             molecule,
             atom_features=self.atom_features,
@@ -98,11 +95,8 @@ class GNNModel(DGLMoleculeLightningModel):
         )
         return self.forward(dglmol)[self.readout_name]
 
-    
     @staticmethod
     def _validate_features(features, feature_class):
-        from openff.nagl.features import FeatureArgs, AtomFeature, BondFeature
-
         if isinstance(features, dict):
             features = list(features.items())
         all_v = []
