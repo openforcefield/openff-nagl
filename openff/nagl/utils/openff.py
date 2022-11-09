@@ -366,7 +366,7 @@ def _stream_smiles_from_file(file: str):
             yield offmol
 
 
-def _stream_molecules_from_smiles(file: str, as_smiles: bool = False):
+def _stream_molecules_from_smiles(file: str, as_smiles: bool = False, **kwargs):
     from openff.toolkit.topology import Molecule
 
     with open(file, "r") as f:

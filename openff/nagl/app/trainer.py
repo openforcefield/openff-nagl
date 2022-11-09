@@ -61,6 +61,7 @@ class Trainer(ImmutableModel):
 
     @validator("atom_features", "bond_features", pre=True)
     def _validate_atom_features(cls, v, field):
+        print(v)
         if isinstance(v, dict):
             v = list(v.items())
         all_v = []

@@ -34,13 +34,13 @@ def label_molecules(
         manager, input_file, output_file
     )
 
-    molecules = [
+    molecules = sorted([
         x
         for x in tqdm.tqdm(
             stream_molecules_from_file(input_file, unsafe=True),
             desc="loading molecules",
         )
-    ]
+    ], key=lambda x: x.n_atoms, reverse=True)
     manager.set_entries(molecules)
 
     single_func = functools.partial(

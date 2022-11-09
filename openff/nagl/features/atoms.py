@@ -5,9 +5,11 @@ import torch
 from pydantic import validator
 
 from openff.nagl.utils.types import HybridizationType
+from openff.utilities import requires_package
 
 from .base import CategoricalMixin, Feature, FeatureMeta
 from .utils import one_hot_encode
+
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
@@ -148,3 +150,29 @@ class AtomAverageFormalCharge(AtomFeature):
             formal_charges.append(charge)
 
         return torch.tensor(formal_charges)
+
+
+class AtomMorganFingerprint(AtomFeature):
+
+    radius: int = 2
+    n_bits: int = 1024
+
+    @requires_package("rdkit")
+    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+        from rdkit.Chem import rdMolDescriptors
+
+        rdmol = molecule.to_rdkit()
+        fingerprints = []
+        for atom in rdmol.GetAtoms():
+            fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
+                rdmol,
+                radius=self.radius,
+                nBits=self.n_bits,
+                fromAtoms=[atom.GetIdx()]
+            )
+            fp.ToList()
+            fingerprints.append(fp)
+        
+        feature = torch.tensor(fingerprints)
+        print(feature.shape)
+        return torch.t(feature)

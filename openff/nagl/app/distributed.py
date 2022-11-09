@@ -106,10 +106,10 @@ class Manager:
             self.cluster = self._set_up_cluster()
             self.client = distributed.Client(self.cluster)
 
-    def submit_to_client(self, submit_function):
+    def submit_to_client(self, submit_function, *args, **kwargs):
         self.set_up_cluster()
         futures = [
-            self.client.submit(submit_function, batch) for batch in self.batch_entries()
+            self.client.submit(submit_function, batch, *args, **kwargs) for batch in self.batch_entries()
         ]
         return futures
 

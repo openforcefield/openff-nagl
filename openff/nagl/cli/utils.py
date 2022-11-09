@@ -10,12 +10,12 @@ def as_batch_function_with_captured_errors(
     func: Callable = lambda x: None,
     desc: str = None,
 ) -> List[Tuple[Any, str]]:
-    def wrapper(batch: List[Any]):
+    def wrapper(batch: List[Any], *args, **kwargs):
         results = []
         for entry in tqdm.tqdm(batch, ncols=80, desc=desc):
             results.append(
                 try_and_return_error(
-                    functools.partial(func, entry), error=f"Failed to process {entry}"
+                    functools.partial(func, entry, *args, **kwargs), error=f"Failed to process {entry}"
                 )
             )
         return results
