@@ -29,12 +29,21 @@ class GINConv(torch.nn.Module):
         )
 
     def reset_parameters(self):
-        self.gcn.reset_parameters()
+        pass
+        # self.gcn.reset_parameters()
 
     def forward(self, graph, inputs: torch.Tensor):
         dropped_inputs = self.feat_drop(inputs)
         output = self.gcn(graph, dropped_inputs)
         return output
+
+    @property
+    def activation(self):
+        return self.gcn.activation
+
+    @property
+    def fc_self(self):
+        return self.gcn.apply_func
 
 
 class GINConvStack(BaseGCNStack[GINConv]):
@@ -55,7 +64,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
         dropout: float,
         activation_function: ActivationFunction,
         init_eps: float = 0.0,
-        learn_eps: bool = False
+        learn_eps: bool = False,
         **kwargs,
     ) -> GINConv:
 
