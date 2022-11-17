@@ -152,6 +152,21 @@ class AtomAverageFormalCharge(AtomFeature):
         return torch.tensor(formal_charges)
 
 
+class AtomGasteigerCharge(AtomFeature):
+    def _encode(self, molecule) -> torch.Tensor:
+        from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
+
+        rdmol = molecule.to_rdkit()
+        ComputeGasteigerCharges(rdmol)
+
+        charges = [
+            rdatom.GetProp("_GasteigerCharge")
+            for rdatom in rdmol.GetAtoms()
+        ]
+
+        return torch.tensor(charges)
+
+
 class AtomMorganFingerprint(AtomFeature):
 
     radius: int = 2

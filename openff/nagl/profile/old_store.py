@@ -13,7 +13,6 @@ from openff.nagl.utils.types import Pathlike
 
 
 from sqlalchemy import (  # Enum,
-    Enum,
     Column,
     ForeignKey,
     Integer,
@@ -53,21 +52,10 @@ class vdWTypeRecord(Record):
     type_counts: Dict[str, int]
 
 
-class ElementRecord(Record):
-    element: str
-    count: int
-
-
-
-class ChemicalEnvironmentRecord(Record):
-    environment: ChemicalEnvironment
-    count: int
-
-
 class MoleculeInfoRecord(Record):
     smiles: str
-    chemical_environment_counts: Dict[ChemicalEnvironment, ChemicalEnvironmentRecord] = {}
-    element_counts: Dict[str, ElementRecord] = {}
+    chemical_environment_counts: Dict[ChemicalEnvironment, int] = {}
+    element_counts: Dict[int, int] = {}
     vdw_type_counts: Dict[str, vdWTypeRecord] = {}
 
     @classmethod
@@ -102,11 +90,8 @@ class MoleculeInfoRecord(Record):
         with capture_toolkit_warnings():
             offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
-        zs = Counter([atom.symbol for atom in offmol.atoms])
-        element_counts = {
-            k: ElementRecord(element=k, count=zs[k])
-            for k in sorted(zs)
-        }
+        zs = Counter([atom.atomic_number for atom in offmol.atoms])
+        element_counts = {k: zs[k] for k in sorted(zs)}
 
         vdw_type_counts = {}
         for ff_file in forcefield_files:
@@ -118,18 +103,11 @@ class MoleculeInfoRecord(Record):
             )
 
         chemical_environment_counts = analyze_functional_groups(offmol)
-        environment_records = {
-            k: ChemicalEnvironmentRecord(
-                environment=k,
-                count=v
-            )
-            for k, v in chemical_environment_counts.items()
-        }
         obj = cls(
             smiles=smiles,
             element_counts=element_counts,
             vdw_type_counts=vdw_type_counts,
-            chemical_environment_counts=environment_records
+            chemical_environment_counts=chemical_environment_counts
         )
         return obj
 
@@ -188,43 +166,14 @@ class DBvdWTypeRecord(DBBase):
     )
 
 
-class DBElementRecord(DBBase):
-    __tablename__ = "elements"
-    id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey("molecules.id"), nullable=False, index=True)
-
-    element = Column(String(3), nullable=False)
-    count = Column(Integer, nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint("parent_id", "element", name="_parent_element_uc"),
-    )
-
-class DBChemicalEnvironmentRecord(DBBase):
-    __tablename__ = "chemical_environments"
-    id = Column(Integer, primary_key=True, index=True)
-    parent_id = Column(Integer, ForeignKey("molecules.id"), nullable=False, index=True)
-
-    environment = Column(Enum(ChemicalEnvironment), nullable=False)
-    count = Column(Integer, nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint("parent_id", "environment", name="_parent_environment_uc"),
-    )
-
-
-
 class DBMoleculeInfoRecord(DBBase):
     __tablename__ = "molecules"
 
     id = Column(Integer, primary_key=True, index=True)
     smiles = Column(String, nullable=False)
 
-    # chemical_environment_counts = Column(PickleType, nullable=False)
-    # element_counts = Column(PickleType, nullable=False)
-    chemical_environment_counts = relationship("DBChemicalEnvironmentRecord", cascade="all, delete-orphan")
-    element_counts = relationship("DBElementRecord", cascade="all, delete-orphan")
-    
+    chemical_environment_counts = Column(PickleType, nullable=False)
+    element_counts = Column(PickleType, nullable=False)
     vdw_type_counts = relationship("DBvdWTypeRecord", cascade="all, delete-orphan")
 
     def store_vdw_type_record(
@@ -243,29 +192,6 @@ class DBMoleculeInfoRecord(DBBase):
             type_counts=vdw_type_record.type_counts
         )
         self.vdw_type_counts.append(vdw_data)
-
-    def store_count_data(self, record):
-        environment_records = [
-            DBChemicalEnvironmentRecord(
-                environment=rec.environment,
-                count=rec.count
-            )
-            for rec in record.chemical_environment_counts.values()
-        ]
-        # for rec in environment_records:
-        #     self.chemical_environment_counts.append(rec)
-        self.chemical_environment_counts.extend(environment_records)
-
-        element_records = [
-            DBElementRecord(
-                element=rec.element,
-                count=rec.count
-            )
-            for rec in record.element_counts.values()
-        ]
-        # for rec in element_records:
-        #     self.element_counts.append(rec)
-        self.element_counts.extend(element_records)
 
 class MoleculeInfoStore:
 
@@ -322,32 +248,12 @@ class MoleculeInfoStore:
                     .all()
                 )
                 if not len(existing):
-                    environment_counts = [
-                        DBChemicalEnvironmentRecord(
-                            environment=rec.environment,
-                            count=rec.count
-                        )
-                        for rec in record.chemical_environment_counts.values()
-                    ]
-                    element_counts = [
-                        DBElementRecord(
-                            element=rec.element,
-                            count=rec.count
-                        )
-                        for rec in record.element_counts.values()
-                    ]
                     existing_record = DBMoleculeInfoRecord(
                         smiles=smiles,
-                        chemical_environment_counts=environment_counts,
-                        element_counts=element_counts
-                        
-                        
-                        # record.chemical_environment_counts,
-                        # element_counts=record.element_counts,
+                        chemical_environment_counts=record.chemical_environment_counts,
+                        element_counts=record.element_counts,
                     )
                     db.add(existing_record)
-                    # existing_record.store_count_data(record)
-                    # db.add(existing_record)
                 else:
                     existing_record = existing[0]
                 
@@ -359,8 +265,6 @@ class MoleculeInfoStore:
         self,
         smiles: Optional[List[str]] = None,
         forcefields: Optional[List[str]] = None,
-        chemical_environments: Optional[List[ChemicalEnvironment]] = None,
-        elements: Optional[List[str]] = None,
     ):
         if smiles is not None and not smiles:
             return []
@@ -372,12 +276,8 @@ class MoleculeInfoStore:
                 db.query(
                     DBMoleculeInfoRecord.id,
                     DBMoleculeInfoRecord.smiles,
-                    DBChemicalEnvironmentRecord.environment,
-                    DBChemicalEnvironmentRecord.count,
-                    DBElementRecord.element,
-                    DBElementRecord.count,
-                    # DBMoleculeInfoRecord.chemical_environment_counts,
-                    # DBMoleculeInfoRecord.element_counts,
+                    DBMoleculeInfoRecord.chemical_environment_counts,
+                    DBMoleculeInfoRecord.element_counts,
                     DBvdWTypeRecord.id,
                     DBvdWTypeRecord.forcefield,
                     DBvdWTypeRecord.type_counts,
@@ -387,41 +287,23 @@ class MoleculeInfoStore:
                     DBvdWTypeRecord,
                     DBvdWTypeRecord.parent_id == DBMoleculeInfoRecord.id
                 )
-                .join(
-                    DBChemicalEnvironmentRecord,
-                    DBChemicalEnvironmentRecord.parent_id == DBMoleculeInfoRecord.id
-                )
-                .join(
-                    DBElementRecord,
-                    DBElementRecord.parent_id == DBMoleculeInfoRecord.id
-                )
             )
             if forcefields is not None:
                 results = results.filter(DBvdWTypeRecord.forcefield.in_(forcefields))
             if smiles is not None:
                 results = results.filter(DBMoleculeInfoRecord.smiles.in_(smiles))
-            if chemical_environments is not None:
-                results = results.filter(DBChemicalEnvironmentRecord.environment.in_(chemical_environments))
-            if elements is not None:
-                results = results.filter(DBElementRecord.element.in_(elements))
             
             records = defaultdict(lambda: {
                 "smiles": None,
-                "chemical_environment_counts": defaultdict(dict),
-                "element_counts": defaultdict(dict),
+                "chemical_environment_counts": {},
+                "element_counts": {},
                 "vdw_type_counts": {}
             })
-            for molid, molsmiles, env, envcount, el, elcount, vdwid, vdwff, vdwtypes in results:
+            for molid, molsmiles, molenv, molel, vdwid, vdwff, vdwtypes in results:
                 data = records[molid]
                 data["smiles"] = molsmiles
-                data["chemical_environment_counts"][env] = ChemicalEnvironmentRecord(
-                        environment=env,
-                        count=envcount
-                    )                
-                data["element_counts"][el] = ElementRecord(
-                    element=el,
-                    count=elcount
-                )
+                data["chemical_environment_counts"] = molenv
+                data["element_counts"] = molel
                 data["vdw_type_counts"][vdwff] = vdWTypeRecord(
                     forcefield=vdwff,
                     type_counts=vdwtypes
