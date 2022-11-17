@@ -32,7 +32,7 @@ class GINConv(torch.nn.Module):
         pass
         # self.gcn.reset_parameters()
 
-    def forward(self, graph, inputs: torch.Tensor):
+    def forward(self, graph: dgl.DGLGraph, inputs: torch.Tensor):
         dropped_inputs = self.feat_drop(inputs)
         output = self.gcn(graph, dropped_inputs)
         return output

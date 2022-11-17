@@ -17,7 +17,7 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
-from openff.nagl.utils.types import Pathlike
+from openff.nagl.utils.types import Pathlike, FromYamlMixin
 from openff.nagl.utils.utils import as_iterable
 # from openff.nagl.nn.loss import BaseLossFunction
 
@@ -115,7 +115,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         return optimizer.optimizer
 
 
-class DGLMoleculeLightningDataModule(pl.LightningDataModule):
+class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
     """A utility class that makes loading and featurizing train, validation and test
     sets more compact.
 

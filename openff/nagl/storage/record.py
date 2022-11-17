@@ -354,6 +354,7 @@ class MoleculeRecord(Record):
         self,
         partial_charge_method: Optional[ChargeMethod] = None,
         bond_order_method: Optional[WibergBondOrderMethod] = None,
+        normalize_partial_charges: bool = True
     ) -> "openff.toolkit.topology.Molecule":
         """Convert the record to an OpenFF molecule with averaged properties"""
 
@@ -369,6 +370,8 @@ class MoleculeRecord(Record):
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
             offmol.partial_charges = np.array(charges) * off_unit.elementary_charge
+            if normalize_partial_charges:
+                offmol._normalize_partial_charges()
 
         if bond_order_method:
             bond_orders = self.average_bond_orders(bond_order_method)

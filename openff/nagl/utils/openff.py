@@ -3,7 +3,7 @@
 import contextlib
 import functools
 import json
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Literal
 
 import numpy as np
 import torch
@@ -15,6 +15,26 @@ from .types import HybridizationType
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
+
+def _load_smiles_from_file(file, database_format: Literal["nagl", "recharge"] = "nagl") -> List[str]:
+    # from openff.nagl.utils.openff import stream_molecules_from_file
+    from openff.nagl.storage.store import MoleculeStore
+    from openff.recharge.esp.storage import MoleculeESPStore
+
+    if file.endswith("sqlite"):
+        if database_format == "nagl":
+            store = MoleculeStore(file)
+            smiles = store.get_smiles()
+            return smiles
+        elif database_format == "recharge":
+            store = MoleculeESPStore(file)
+            smiles = store.list()
+            return smiles
+        else:
+            raise TypeError(f"database format {database_format} not supported")
+    else:
+        smiles = list(stream_molecules_from_file(file, as_smiles=True))
+        return smiles
 
 def generate_conformers(molecule, **kwargs):
     # RDKit can hang for a very, very very long time

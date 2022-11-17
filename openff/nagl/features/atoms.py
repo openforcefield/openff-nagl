@@ -155,7 +155,9 @@ class AtomAverageFormalCharge(AtomFeature):
 class AtomMorganFingerprint(AtomFeature):
 
     radius: int = 2
-    n_bits: int = 1024
+    # n_bits: int = 1024
+
+    _feature_length: int = 1024
 
     @requires_package("rdkit")
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
@@ -167,12 +169,11 @@ class AtomMorganFingerprint(AtomFeature):
             fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
                 rdmol,
                 radius=self.radius,
-                nBits=self.n_bits,
+                nBits=self._feature_length,
                 fromAtoms=[atom.GetIdx()]
             )
             fp.ToList()
             fingerprints.append(fp)
         
         feature = torch.tensor(fingerprints)
-        print(feature.shape)
-        return torch.t(feature)
+        return feature

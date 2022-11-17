@@ -24,8 +24,10 @@ class GNNModel(DGLMoleculeLightningModel):
         return cls(**yaml_kwargs)
 
     @property
-    def n_atom_features(self):
-        return sum(len(feature) for feature in self.atom_features)
+    def n_atom_features(self) -> int:
+        lengths = [len(feature) for feature in self.atom_features]
+        n_features = sum(lengths)
+        return n_features
 
     def __init__(
         self,

@@ -1,6 +1,6 @@
 import os
 import pathlib
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Any
 
 import pytorch_lightning as pl
 import rich
@@ -15,10 +15,11 @@ from openff.nagl.features import AtomFeature, BondFeature
 from openff.nagl.nn.models import GNNModel
 from openff.nagl.nn.modules.lightning import DGLMoleculeLightningDataModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
+from openff.nagl.utils.types import FromYamlMixin
 
 from openff.nagl.nn.models import GNNModel
 
-class Trainer(ImmutableModel):
+class Trainer(ImmutableModel, FromYamlMixin):
     convolution_architecture: str
     n_convolution_hidden_features: int
     n_convolution_layers: int
@@ -44,6 +45,7 @@ class Trainer(ImmutableModel):
     n_gpus: int = 0
     n_epochs: int = 100
     seed: Optional[int] = None
+    # callbacks: List[Any] = tuple()
 
     _model = None
     _data_module = None
@@ -61,7 +63,6 @@ class Trainer(ImmutableModel):
 
     @validator("atom_features", "bond_features", pre=True)
     def _validate_atom_features(cls, v, field):
-        print(v)
         if isinstance(v, dict):
             v = list(v.items())
         all_v = []
@@ -140,18 +141,18 @@ class Trainer(ImmutableModel):
 
         return hash_dict(self.to_simple_dict())
 
-    @classmethod
-    def from_yaml_file(cls, *paths, **kwargs):
-        import yaml
+    # @classmethod
+    # def from_yaml_file(cls, *paths, **kwargs):
+    #     import yaml
 
-        yaml_kwargs = {}
-        for path in paths:
-            with open(str(path), "r") as f:
-                dct = yaml.load(f, Loader=yaml.Loader)
-                dct = {k.replace("-", "_"): v for k, v in dct.items()}
-                yaml_kwargs.update(dct)
-        yaml_kwargs.update(kwargs)
-        return cls(**yaml_kwargs)
+    #     yaml_kwargs = {}
+    #     for path in paths:
+    #         with open(str(path), "r") as f:
+    #             dct = yaml.load(f, Loader=yaml.Loader)
+    #             dct = {k.replace("-", "_"): v for k, v in dct.items()}
+    #             yaml_kwargs.update(dct)
+    #     yaml_kwargs.update(kwargs)
+    #     return cls(**yaml_kwargs)
 
     @property
     def n_atom_features(self):
@@ -243,13 +244,14 @@ class Trainer(ImmutableModel):
 
         callbacks_ = [TQDMProgressBar()]
         callbacks_.extend(callbacks)
+        # self.callbacks = callbacks_
 
         self._trainer = pl.Trainer(
             gpus=self.n_gpus,
             min_epochs=self.n_epochs,
             max_epochs=self.n_epochs,
             logger=self._logger,
-            callbacks=callbacks_,
+            callbacks=list(callbacks_),
         )
 
         if self.seed is not None:
