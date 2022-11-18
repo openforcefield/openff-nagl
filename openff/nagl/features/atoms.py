@@ -160,9 +160,10 @@ class AtomGasteigerCharge(AtomFeature):
         ComputeGasteigerCharges(rdmol)
 
         charges = [
-            rdatom.GetProp("_GasteigerCharge")
+            float(rdatom.GetProp("_GasteigerCharge"))
             for rdatom in rdmol.GetAtoms()
         ]
+        print(charges)
 
         return torch.tensor(charges)
 

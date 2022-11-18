@@ -387,7 +387,7 @@ def _stream_smiles_from_file(file: str):
 
 
 def _stream_molecules_from_smiles(file: str, as_smiles: bool = False, **kwargs):
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit.topology.molecule import Molecule, SmilesParsingError
 
     with open(file, "r") as f:
         contents = f.readlines()
@@ -396,9 +396,9 @@ def _stream_molecules_from_smiles(file: str, as_smiles: bool = False, **kwargs):
         for field in line.split():
             if field:
                 try:
-                    offmol = Molecule.from_mapped_smiles(field)
-                except ValueError:
-                    offmol = Molecule.from_smiles(field)
+                    offmol = Molecule.from_mapped_smiles(field, allow_undefined_stereo=True)
+                except (ValueError, SmilesParsingError):
+                    offmol = Molecule.from_smiles(field, allow_undefined_stereo=True)
                 if as_smiles:
                     offmol = offmol.to_smiles()
                 yield offmol
