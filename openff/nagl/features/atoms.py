@@ -25,6 +25,8 @@ __all__ = [
     "AtomInRingOfSize",
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
+    "AtomGasteigerCharge",
+    "AtomMorganFingerprint"
 ]
 
 
@@ -154,17 +156,16 @@ class AtomAverageFormalCharge(AtomFeature):
 
 class AtomGasteigerCharge(AtomFeature):
     def _encode(self, molecule) -> torch.Tensor:
+        from openff.nagl.utils.openff import openff_to_rdkit
         from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
 
-        rdmol = molecule.to_rdkit()
+        rdmol = openff_to_rdkit(molecule)
         ComputeGasteigerCharges(rdmol)
 
         charges = [
             float(rdatom.GetProp("_GasteigerCharge"))
             for rdatom in rdmol.GetAtoms()
         ]
-        print(charges)
-
         return torch.tensor(charges)
 
 
@@ -178,8 +179,9 @@ class AtomMorganFingerprint(AtomFeature):
     @requires_package("rdkit")
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from rdkit.Chem import rdMolDescriptors
+        from openff.nagl.utils.openff import openff_to_rdkit
 
-        rdmol = molecule.to_rdkit()
+        rdmol = openff_to_rdkit(molecule)
         fingerprints = []
         for atom in rdmol.GetAtoms():
             fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(

@@ -180,7 +180,10 @@ def smiles_to_molecule(
                 raise
 
             molecule = func(smiles, allow_undefined_stereo=True)
-            stereo = molecule.enumerate_stereoisomers(molecule)
+            try:
+                stereo = molecule.enumerate_stereoisomers(molecule)
+            except UndefinedStereochemistryError:
+                stereo = []
             # if not len(stereo):
             #     raise
 
