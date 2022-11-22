@@ -63,21 +63,22 @@ def generate_single_molecule_conformers(
     )
     if molecule.conformers is None or not len(molecule.conformers):
         raise ValueError(f"Could not generate conformers for {smiles}")
-    try:
-        molecule.apply_elf_conformer_selection(limit=n_conformers)
-    except RuntimeError as e:
-        oe_failure = (
-            "OpenEye failed to select conformers, "
-            "but did not return any output. "
-            "This most commonly occurs when "
-            "the Molecule does not have enough conformers to select from"
-        )
-        if oe_failure in str(e) and RDKIT_AVAILABLE:
-            molecule.apply_elf_conformer_selection(
-                limit=n_conformers, toolkit_registry=RDKitToolkitWrapper()
-            )
-        else:
-            raise e
+    molecule.apply_elf_conformer_selection(limit=n_conformers)
+    # try:
+    #     molecule.apply_elf_conformer_selection(limit=n_conformers)
+    # except RuntimeError as e:
+    #     oe_failure = (
+    #         "OpenEye failed to select conformers, "
+    #         "but did not return any output. "
+    #         "This most commonly occurs when "
+    #         "the Molecule does not have enough conformers to select from"
+    #     )
+    #     if oe_failure in str(e) and RDKIT_AVAILABLE:
+    #         molecule.apply_elf_conformer_selection(
+    #             limit=n_conformers, toolkit_registry=RDKitToolkitWrapper()
+    #         )
+    #     else:
+    #         raise e
     return molecule
 
 

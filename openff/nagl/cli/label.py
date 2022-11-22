@@ -17,12 +17,14 @@ def label_molecules(
 ):
 
     import tqdm
+    from dask import distributed
 
     from openff.nagl.app.distributed import Manager
     from openff.nagl.cli.database.store import aggregate_records
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
+        try_and_return_error
     )
     from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.storage.store import MoleculeStore
@@ -53,18 +55,39 @@ def label_molecules(
         single_func, desc="computing labels"
     )
 
+    all_records = []
+
     with manager as m:
         futures = m.submit_to_client(batch_func)
+        with open(log_file, "w") as f:
+            for future in tqdm.tqdm(
+                distributed.as_completed(futures, raise_errors=False),
+                total=n_batches,
+                desc=desc,
+                ncols=80,
+            ):
+                results, error = try_and_return_error(aggregator)
+                if error is not None:
+                    write_error_to_file_object(f, error)
+                    continue
+                for result, error in results:
+                    if error is not None:
+                        write_error_to_file_object(f, error)
+                        continue
+                    all_records.append(result)
+                
+                future.release()
 
-        store = MoleculeStore(output_file)
-        m.store_futures_and_log(
-            futures,
-            store_function=store.store,
-            aggregate_function=aggregate_records,
-            log_file=log_file,
-            n_batches=m.n_batches,
-            desc="storing records",
-        )
+    store = MoleculeStore(output_file)
+    store.store(all_records)
+    # m.store_futures_and_log(
+    #     futures,
+    #     store_function=store.store,
+    #     aggregate_function=aggregate_records,
+    #     log_file=log_file,
+    #     n_batches=m.n_batches,
+    #     desc="storing records",
+    # )
 
     print(f"Stored molecules in {output_file}")
 
