@@ -1,35 +1,33 @@
 import os
 import pathlib
+import math
 import pickle
-from typing import Optional, Dict, Any, Tuple
+from typing import Dict, Any, Tuple
 
 import click
-from click_option_group import optgroup
 
 def train_model(
     config: Dict[str, Any] = {},
     output_directory: str = ".",
-    checkpoint_directory: str = ".",
     checkpoint_dir: str = None,
     metrics: Dict[str, str] = {},
     model_config_files: Tuple[str, ...] = tuple(),
     runtime_kwargs: Dict[str, Any] = {},
 ):
     from openff.nagl.app.trainer import Trainer
+    from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
-    from ray.tune.integration.pytorch_lightning import (
-        TuneReportCallback,
-        TuneReportCheckpointCallback
-    )
+    tune_report = TuneReportCallback(metrics, on="validation_end")
+    callbacks = [tune_report]
 
     trainer = Trainer.from_yaml_file(
         *model_config_files,
         output_directory=output_directory,
         **config,
-        **runtime_kwargs
+        **runtime_kwargs,
     )
-    trainer_hash = trainer.to_simple_hash()
 
+    trainer_hash = trainer.to_simple_hash()
     print(f"Trainer hash: {trainer_hash}")
     
     log_config_file = os.path.join(
@@ -40,29 +38,14 @@ def train_model(
     trainer.to_yaml_file(log_config_file)
     print(f"Wrote configuration values to {log_config_file}")
 
-    checkpoint_directory_ = pathlib.Path(checkpoint_directory) / trainer_hash
-    checkpoint_directory_.mkdir(parents=True, exist_ok=True)
-    checkpoint_file = checkpoint = str(checkpoint_directory_ / "checkpoint")
-    if not os.path.exists(checkpoint):
-        checkpoint = None
-
-    tune_report = TuneReportCallback(metrics, on="validation_end")
-    callbacks = [tune_report]
-    if checkpoint_file:
-        checkpointer = TuneReportCheckpointCallback(
-            metrics=metrics,
-            filename=checkpoint_file,
-            on="validation_end",
-        )
-        callbacks.append(checkpointer)
-
-    trainer.train(callbacks=callbacks, logger_name=trainer_hash, checkpoint_file=checkpoint)
+    trainer.train(callbacks=callbacks, logger_name=trainer_hash)
 
 
 
 @click.command()
 @click.option(
     "--model-config-file",
+    "model_config_files",
     help="The path to a YAML configuration file for the model.",
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     default=tuple(),
@@ -116,23 +99,71 @@ def train_model(
     show_default=True,
 )
 @click.option(
-    "--suffix",
-    help="name suffix",
+    "--n-convolution-layers",
     type=str,
-    default="",
+    default="4 5 6",
+    show_default=True,
+)
+@click.option(
+    "--n-convolution-hidden-features",
+    type=str,
+    default="128 256 512",
+    show_default=True,
+)
+@click.option(
+    "--n-readout-layers",
+    type=str,
+    default="1 2",
+    show_default=True,
+)
+@click.option(
+    "--n-readout-hidden-features",
+    type=str,
+    default="64 128 256",
+    show_default=True,
+)
+@click.option(
+    "--learning-rate",
+    type=str,
+    default="5e-2 1e-3 5e-3",
+    show_default=True,
+)
+@click.option(
+    "--activation-function",
+    type=str,
+    default="ReLU Sigmoid",
+    show_default=True,
+)
+@click.option(
+    "--convolution-architecture",
+    type=str,
+    default="SAGEConv GINConv",
+    show_default=True,
+)
+@click.option(
+    "--postprocess-layer",
+    type=str,
+    default="compute_partial_charges",
     show_default=True,
 )
 def tune_model(
     data_cache_directory: str,
+    n_convolution_layers: str,
+    n_convolution_hidden_features: str,
+    n_readout_layers: str,
+    n_readout_hidden_features: str,
+    learning_rate: str,
+    activation_function: str,
+    convolution_architecture: str,
     n_epochs: int = 200,
     n_gpus: int = 1,
     n_total_trials: int = 300,
     output_directory: str = ".",
     output_config_file: str = "output.yaml",
     model_name: str = "graph",
-    model_config_file: Tuple[str, ...] = tuple(),
+    model_config_files: Tuple[str, ...] = tuple(),
     partial_charge_method: str = "am1",
-    suffix: str = "",
+    postprocess_layer: str = "compute_partial_charges"
 ):
     import yaml
 
@@ -146,14 +177,28 @@ def tune_model(
         "loss": "val_loss",
     }
 
-    config = {
-        "n_convolution_layers": tune.choice([3, 4, 5]),
-        "n_convolution_hidden_features": tune.choice([64, 128, 256]),
-        "n_readout_layers": tune.choice([0, 1, 2]),
-        "n_readout_hidden_features": tune.choice([64, 128, 256]),
-        "learning_rate": tune.choice([1e-3, 1e-4, 1e-5]),
-        "activation_function": tune.choice(["ReLU", "Sigmoid", "Tanh"]),
+    CONFIG_TYPES = {
+        "n_convolution_layers": (n_convolution_layers, int),
+        "n_convolution_hidden_features": (n_convolution_hidden_features, int),
+        "n_readout_layers": (n_readout_layers, int),
+        "n_readout_hidden_features": (n_readout_hidden_features, int),
+        "learning_rate": (learning_rate, float),
+        "activation_function": (activation_function, str),
+        "convolution_architecture": (convolution_architecture, str)
     }
+
+    config = {
+        k: tune.choice(list(map(type_, input_.split())))
+        for k, (input_, type_)
+        in CONFIG_TYPES.items()
+    }
+
+    print("--- Evaluating hyperparameters ---")
+    print(config)
+
+    n = math.prod([len(v[0].split()) for v in CONFIG_TYPES.values()])
+    print(f"Total potential combinations: {n_total_trials}/{n}" )
+
 
     ray.init(num_cpus=1)
 
@@ -168,20 +213,18 @@ def tune_model(
         metric_columns=list(metrics.keys()) + ["training_iteration"]
     )
 
-    training_output_directory = pathlib.Path(output_directory) / model_name
+    output_directory = pathlib.Path(output_directory)
+    training_output_directory = output_directory / model_name
     training_output_directory.mkdir(exist_ok=True, parents=True)
-    training_checkpoint_directory = training_output_directory / "checkpoints"
-    training_checkpoint_directory.mkdir(exist_ok=True, parents=True)
 
-    model_config_file = [
+    model_config_files = [
         str(pathlib.Path(x).resolve())
-        for x in model_config_file
+        for x in model_config_files
     ]
 
     training_function = tune.with_parameters(
         train_model,
         output_directory=str(training_output_directory.resolve()),
-        checkpoint_directory=str(training_checkpoint_directory.resolve()),
         metrics=metrics,
         runtime_kwargs=dict(
             n_epochs=n_epochs,
@@ -190,8 +233,9 @@ def tune_model(
             readout_name=f"{partial_charge_method}-charges",
             data_cache_directory=os.path.abspath(data_cache_directory),
             use_cached_data=True,
+            postprocess_layer=postprocess_layer,
         ),
-        model_config_files=model_config_file
+        model_config_files=model_config_files
     )
 
     tune_config = tune.TuneConfig(
@@ -217,7 +261,7 @@ def tune_model(
         param_space=config
     )
     results = tuner.fit()
-    results_file = f"{model_name}{suffix}-{partial_charge_method}_search-results.pkl"
+    results_file = str(training_output_directory / "search-results.pkl")
     with open(results_file, "wb") as f:
         pickle.dump(results, f)
     print(f"Saved results to {results_file}")

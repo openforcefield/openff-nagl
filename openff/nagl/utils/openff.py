@@ -193,8 +193,9 @@ def smiles_to_molecule(
                 # is zero, however due to the way that the OFF toolkit perceives pyramidal
                 # nitrogen stereocenters these would show up as undefined stereochemistry
                 # but have no enumerated stereoisomers.
-                mapped_smiles = stereo[0].to_smiles(mapped=True)
-                molecule = Molecule.from_mapped_smiles(mapped_smiles)
+                molecule = stereo[0]
+                # mapped_smiles = stereo[0].to_smiles(mapped=True)
+                # molecule = Molecule.from_mapped_smiles(mapped_smiles)
     return molecule
 
 
@@ -469,6 +470,7 @@ def openff_to_rdkit(molecule):
         # OpenEye just accepts all stereochemistry
         # unlike RDKit which e.g. does not allow stereogenic bonds in a ring < 8
         # try patching via smiles
+        # smiles = "C1CC/C=C/(CC1)Cl"
 
         with capture_toolkit_warnings():
             mapped_smiles = molecule.to_smiles(mapped=True)

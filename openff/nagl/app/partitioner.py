@@ -190,8 +190,8 @@ class FingerprintCollection:
                 seen_fp.add(fp)
                 element_fingerprints[fp.element] -= {fp}
 
-        print(f"Found {len(selected_smiles)} min smiles")
-        print(f"Found {len(seen_fp)} min fingerprints")
+        # print(f"Found {len(selected_smiles)} min smiles")
+        # print(f"Found {len(seen_fp)} min fingerprints")
 
         fingerprint_smiles = {
             k: list(v) for k, v in fingerprint_smiles.items() if k not in seen_fp

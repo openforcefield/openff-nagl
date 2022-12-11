@@ -45,7 +45,6 @@ class Trainer(ImmutableModel, FromYamlMixin):
     n_gpus: int = 0
     n_epochs: int = 100
     seed: Optional[int] = None
-    # callbacks: List[Any] = tuple()
 
     _model = None
     _data_module = None
@@ -109,26 +108,6 @@ class Trainer(ImmutableModel, FromYamlMixin):
             new_dict[k] = v
         return new_dict
 
-    # def to_simple_dict(self):
-    #     dct = self.dict()
-    #     dct["convolution_architecture"] = self.convolution_architecture.name
-    #     dct["postprocess_layer"] = self.postprocess_layer.name
-    #     dct["activation_function"] = self.activation_function.name
-    #     dct["atom_features"] = tuple([
-    #         {f.feature_name: f.dict(exclude={"feature_name"})}
-    #         for f in self.atom_features
-    #     ])
-
-    #     dct["bond_features"] = tuple([
-    #         {f.feature_name: f.dict(exclude={"feature_name"})}
-    #         for f in self.bond_features
-    #     ])
-    #     new_dict = dict(dct)
-    #     for k, v in dct.items():
-    #         if isinstance(v, pathlib.Path):
-    #             v = str(v.resolve())
-    #         new_dict[k] = v
-    #     return new_dict
 
     def to_yaml_file(self, path):
         import yaml
@@ -140,19 +119,6 @@ class Trainer(ImmutableModel, FromYamlMixin):
         from openff.nagl.utils.hash import hash_dict
 
         return hash_dict(self.to_simple_dict())
-
-    # @classmethod
-    # def from_yaml_file(cls, *paths, **kwargs):
-    #     import yaml
-
-    #     yaml_kwargs = {}
-    #     for path in paths:
-    #         with open(str(path), "r") as f:
-    #             dct = yaml.load(f, Loader=yaml.Loader)
-    #             dct = {k.replace("-", "_"): v for k, v in dct.items()}
-    #             yaml_kwargs.update(dct)
-    #     yaml_kwargs.update(kwargs)
-    #     return cls(**yaml_kwargs)
 
     @property
     def n_atom_features(self):

@@ -54,8 +54,8 @@ def generate_single_molecule_conformers(
         # RDKit can hang terribly
         conformer_registry = OpenEyeToolkitWrapper()
 
-    generate_conformers(
-        molecule,
+    molecule.generate_conformers(
+        # molecule,
         n_conformers=n_conformer_pool,
         rms_cutoff=rms_cutoff * off_unit.angstrom,
         make_carboxylic_acids_cis=True,
@@ -63,7 +63,7 @@ def generate_single_molecule_conformers(
     )
     if molecule.conformers is None or not len(molecule.conformers):
         raise ValueError(f"Could not generate conformers for {smiles}")
-    molecule.apply_elf_conformer_selection(limit=n_conformers)
+    molecule.apply_elf_conformer_selection(limit=n_conformers, toolkit_registry=conformer_registry)
     # try:
     #     molecule.apply_elf_conformer_selection(limit=n_conformers)
     # except RuntimeError as e:

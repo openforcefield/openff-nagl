@@ -12,19 +12,26 @@ def label_molecules(
     input_file: str,
     output_file: str,
     manager: Optional["Manager"] = None,
-    partial_charge_methods: Tuple[str] = ("am1", "am1bcc"),
-    bond_order_methods: Tuple[str] = ("am1",),
+    partial_charge_methods: Tuple[str] = tuple(),
+    bond_order_methods: Tuple[str] = tuple(),
+    openeye_only: bool = False,
 ):
 
     import tqdm
     from dask import distributed
+
+    from openff.toolkit.utils.toolkits import (
+        GLOBAL_TOOLKIT_REGISTRY,
+        OpenEyeToolkitWrapper,
+    )
 
     from openff.nagl.app.distributed import Manager
     from openff.nagl.cli.database.store import aggregate_records
     from openff.nagl.cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
-        try_and_return_error
+        try_and_return_error,
+        write_error_to_file_object
     )
     from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.storage.store import MoleculeStore
@@ -45,11 +52,17 @@ def label_molecules(
     ], key=lambda x: x.n_atoms, reverse=True)
     manager.set_entries(molecules)
 
+    if openeye_only:
+        registry = OpenEyeToolkitWrapper()
+    else:
+        registry = GLOBAL_TOOLKIT_REGISTRY
+
     single_func = functools.partial(
         MoleculeRecord.from_openff,
         partial_charge_methods=partial_charge_methods,
         bond_order_methods=bond_order_methods,
         generate_conformers=False,
+        toolkit_registry=registry,
     )
     batch_func = as_batch_function_with_captured_errors(
         single_func, desc="computing labels"
@@ -62,15 +75,11 @@ def label_molecules(
         with open(log_file, "w") as f:
             for future in tqdm.tqdm(
                 distributed.as_completed(futures, raise_errors=False),
-                total=n_batches,
-                desc=desc,
+                total=m.n_batches,
+                desc="gathering records",
                 ncols=80,
             ):
-                results, error = try_and_return_error(aggregator)
-                if error is not None:
-                    write_error_to_file_object(f, error)
-                    continue
-                for result, error in results:
+                for result, error in future.result():
                     if error is not None:
                         write_error_to_file_object(f, error)
                         continue
@@ -110,19 +119,32 @@ def label_molecules(
     "--partial-charge-method",
     help="The partial charge methods to compute",
     multiple=True,
-    default=("am1bcc", "am1"),
+    default=tuple(),
     show_default=True,
 )
 @optgroup.option(
     "--bond-order-method",
     help="The bond order methods to compute",
     multiple=True,
-    default=("am1",),
+    default=tuple(),
+    show_default=True,
+)
+@optgroup.option(
+    "--openeye-only",
+    help="Only use OpenEye",
+    is_flag=True,
+    type=bool,
+    default=False,
     show_default=True,
 )
 @click.pass_context
 def label_molecules_cli(
-    ctx, input_file, output_file, partial_charge_method, bond_order_method
+    ctx,
+    input_file,
+    output_file,
+    partial_charge_method,
+    bond_order_method,
+    openeye_only
 ):
     from openff.nagl.cli.utils import get_default_manager
 
@@ -132,6 +154,7 @@ def label_molecules_cli(
         manager=get_default_manager(ctx),
         partial_charge_methods=partial_charge_method,
         bond_order_methods=bond_order_method,
+        openeye_only=openeye_only,
     )
 
 
