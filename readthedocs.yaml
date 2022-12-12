@@ -13,4 +13,4 @@ python:
       path: .
 
 conda:
-  environment: docs/requirements.yaml
+  environment: devtools/conda-envs/docs_env.yaml
