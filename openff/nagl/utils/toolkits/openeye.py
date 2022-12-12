@@ -2,6 +2,10 @@ import contextlib
 
 from openff.utilities import requires_package
 
+__all__ = [
+    "capture_oechem_warnings",
+]
+
 
 @contextlib.contextmanager
 @requires_package("openeye.oechem")

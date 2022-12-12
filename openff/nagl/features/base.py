@@ -21,6 +21,12 @@ if TYPE_CHECKING:
     import torch
     from openff.toolkit.topology import Molecule as OFFMolecule
 
+__all__ = [
+    "FeatureMeta",
+    "Feature",
+    "CategoricalMixin",
+]
+
 
 class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
     registry: ClassVar[Dict[str, Type]] = {}

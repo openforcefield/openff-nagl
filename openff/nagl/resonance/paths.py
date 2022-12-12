@@ -2,6 +2,10 @@ from typing import Generator, List, Optional, Tuple
 
 from rdkit import Chem
 
+__all__ = [
+    "PathGenerator",
+]
+
 
 class PathGenerator:
     def __init__(self, rdkit_molecule: Chem.Mol):

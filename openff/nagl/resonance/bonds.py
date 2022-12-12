@@ -1,5 +1,14 @@
 from rdkit import Chem
 
+__all__ = [
+    "BONDTYPES",
+    "BONDTYPE_TO_INTEGERS",
+    "translate_bondtype",
+    "translate_bond",
+    "increment_bond",
+    "decrement_bond",
+]
+
 BONDTYPES = {
     0: Chem.BondType.ZERO,
     1: Chem.BondType.SINGLE,

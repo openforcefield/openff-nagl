@@ -3,6 +3,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from openff.units import unit
 
+__all__ = [
+    "calculate_esp_in_angstrom",
+    "calculate_esp_with_units",
+    "calculate_dipole_in_angstrom",
+    "calculate_dipole_with_units",
+]
+
 
 def _calculate_esp(
     grid_coordinates,

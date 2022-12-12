@@ -3,6 +3,10 @@ from typing import Callable
 
 import torch
 
+__all__ = [
+    "ActivationFunction",
+]
+
 
 class ActivationFunction(enum.Enum):
     """Activation function options"""

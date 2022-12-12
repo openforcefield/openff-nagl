@@ -26,6 +26,10 @@
 # from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 # from openff.nagl.utils.types import Pathlike
 
+# __all__ = [
+#     "Trainer",
+# ]
+
 
 # @dataclasses.dataclass
 # class Trainer:
@@ -67,8 +71,7 @@
 #         self.postprocess_layer = PostprocessLayerMeta.get_layer_class(
 #             self.postprocess_layer
 #         )
-#         self.activation_function = ActivationFunction.get(
-#             self.activation_function)
+#         self.activation_function = ActivationFunction.get(self.activation_function)
 #         self.atom_features = [
 #             FeatureArgs.from_input(feature, feature_type="atoms")
 #             for feature in self.atom_features

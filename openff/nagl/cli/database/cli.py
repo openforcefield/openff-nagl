@@ -3,6 +3,10 @@ import click
 from openff.nagl.cli.database.retrieve import retrieve_molecules_cli
 from openff.nagl.cli.database.store import store_molecules_cli
 
+__all__ = [
+    "database_cli",
+]
+
 
 @click.group(
     "database",

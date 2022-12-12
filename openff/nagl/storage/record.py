@@ -23,6 +23,17 @@ from openff.nagl.utils.openff import map_indexed_smiles
 if TYPE_CHECKING:
     import openff.toolkit
 
+__all__ = [
+    "Record",
+    "ChargeMethod",
+    "WibergBondOrderMethod",
+    "PartialChargeRecord",
+    "WibergBondOrder",
+    "WibergBondOrderRecord",
+    "ConformerRecord",
+    "MoleculeRecord",
+]
+
 
 class Record(ImmutableModel):
     class Config(ImmutableModel.Config):

@@ -5,6 +5,10 @@ from typing import List
 import click
 from click_option_group import optgroup
 
+__all__ = [
+    "select_molecules_cli",
+]
+
 
 @click.command(
     "select",

@@ -6,6 +6,12 @@ from typing import Any, Dict
 
 from .types import Pathlike
 
+__all__ = [
+    "CustomJsonEncoder",
+    "hash_file",
+    "hash_dict",
+]
+
 
 class CustomJsonEncoder(json.JSONEncoder):
     def default(self, obj):

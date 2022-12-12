@@ -5,6 +5,10 @@ import torch.nn
 from .activation import ActivationFunction
 from .base import ContainsLayersMixin
 
+__all__ = [
+    "SequentialLayers",
+]
+
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
 

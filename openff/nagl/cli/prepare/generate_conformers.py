@@ -8,6 +8,13 @@ from click_option_group import optgroup
 if TYPE_CHECKING:
     from openff.nagl.app.distributed import Manager
 
+__all__ = [
+    "get_unique_smiles",
+    "generate_single_molecule_conformers",
+    "generate_all_conformers",
+    "generate_conformers_cli",
+]
+
 
 def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
     from openff.nagl.utils.openff import stream_molecules_from_file

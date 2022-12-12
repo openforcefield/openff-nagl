@@ -1,5 +1,9 @@
 import time
 
+__all__ = [
+    "PerformanceTimer",
+]
+
 
 class PerformanceTimer:
     """A simple timer class for measuring the performance of a block of code."""

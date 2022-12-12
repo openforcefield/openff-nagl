@@ -7,6 +7,10 @@ from openff.nagl.cli.prepare.generate_conformers import generate_conformers_cli
 from openff.nagl.cli.prepare.partition import partition_molecules_cli
 from openff.nagl.cli.prepare.select import select_molecules_cli
 
+__all__ = [
+    "prepare_cli",
+]
+
 
 @click.group(
     "prepare",

@@ -3,6 +3,10 @@ from typing import Tuple
 import click
 from click_option_group import optgroup
 
+__all__ = [
+    "filter_cli",
+]
+
 
 @click.command(
     "filter",

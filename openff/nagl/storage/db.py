@@ -14,6 +14,19 @@ from sqlalchemy.orm import relationship
 
 from .record import ChargeMethod, WibergBondOrderMethod
 
+__all__ = [
+    "DBBase",
+    "DB_VERSION",
+    "DBPartialChargeSet",
+    "DBWibergBondOrderSet",
+    "DBConformerRecord",
+    "DBMoleculeRecord",
+    "DBGeneralProvenance",
+    "DBSoftwareProvenance",
+    "DBInformation",
+    "match_conformers",
+]
+
 DBBase = declarative_base()
 
 DB_VERSION = 1

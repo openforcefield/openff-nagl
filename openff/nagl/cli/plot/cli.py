@@ -2,6 +2,10 @@ import click
 
 from openff.nagl.cli.plot.plot_similarity import plot_similarity_cli
 
+__all__ = [
+    "plot_cli",
+]
+
 
 @click.group(
     "plot",

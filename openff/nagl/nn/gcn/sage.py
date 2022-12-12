@@ -2,6 +2,10 @@ import dgl
 
 from .base import ActivationFunction, BaseGCNStack
 
+__all__ = [
+    "SAGEConvStack",
+]
+
 
 class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):
     """A wrapper around a stack of SAGEConv graph convolutional layers"""

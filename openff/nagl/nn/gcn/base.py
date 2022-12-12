@@ -10,6 +10,12 @@ from openff.nagl.base.metaregistry import create_registry_metaclass
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.base import ContainsLayersMixin
 
+__all__ = [
+    "GCNStackMeta",
+    "BaseGCNStack",
+]
+
+
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 

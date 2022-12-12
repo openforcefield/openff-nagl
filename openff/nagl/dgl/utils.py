@@ -8,6 +8,16 @@ from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
 from ..features.featurizers import AtomFeaturizer, BondFeaturizer
 
+__all__ = [
+    "FORWARD",
+    "REVERSE",
+    "FEATURE",
+    "openff_molecule_to_base_dgl_graph",
+    "get_openff_molecule_information",
+    "openff_molecule_to_dgl_graph",
+    "dgl_heterograph_to_homograph",
+]
+
 FORWARD = "forward"
 REVERSE = "reverse"
 FEATURE = "feat"

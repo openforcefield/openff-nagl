@@ -1,5 +1,9 @@
 import click
 
+__all__ = [
+    "plot_similarity_cli",
+]
+
 
 @click.command("similarity")
 @click.option(
