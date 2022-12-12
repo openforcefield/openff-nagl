@@ -10,10 +10,10 @@ import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
-from .types import HybridizationType
+from openff.nagl.utils.types import HybridizationType
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.toolkit.topology import Molecule
 
 
 def _load_smiles_from_file(file, database_format: Literal["nagl", "recharge"] = "nagl") -> List[str]:
@@ -50,8 +50,8 @@ def generate_conformers(molecule, **kwargs):
 
 @requires_package("openeye.oechem")
 def _enumerate_stereoisomers_oe(
-    molecule: "OFFMolecule", rationalize=True
-) -> "OFFMolecule":
+    molecule: Molecule, rationalize=True
+) -> Molecule:
     from openeye import oechem, oeomega
     from openff.toolkit.topology import Molecule
 
@@ -94,8 +94,8 @@ def _enumerate_stereoisomers_oe(
 
 @requires_package("rdkit")
 def _enumerate_stereoisomers_rd(
-    molecule: "OFFMolecule", rationalize=True
-) -> "OFFMolecule":
+    molecule: Molecule, rationalize=True
+) -> Molecule:
     from openff.toolkit.topology import Molecule
     from rdkit import Chem
     from rdkit.Chem.EnumerateStereoisomers import (  # type: ignore[import]
@@ -138,8 +138,8 @@ def _enumerate_stereoisomers_rd(
 
 
 def enumerate_stereoisomers(
-    molecule: "OFFMolecule", rationalize: bool = True
-) -> List["OFFMolecule"]:
+    molecule: Molecule, rationalize: bool = True
+) -> List[Molecule]:
     """Enumerate stereoisomers for a molecule.
 
     Parameters
@@ -162,7 +162,7 @@ def enumerate_stereoisomers(
 
 def smiles_to_molecule(
     smiles: str, guess_stereochemistry: bool = True, mapped: bool = False
-) -> "OFFMolecule":
+) -> Molecule:
     # we need to fully enumerate stereoisomers
     # at least for OpenEye
     # otherwise conformer generation hangs forever
@@ -200,7 +200,7 @@ def smiles_to_molecule(
 
 
 @requires_package("openeye.oechem")
-def _get_molecule_hybridizations_oe(molecule: "OFFMolecule") -> List[HybridizationType]:
+def _get_molecule_hybridizations_oe(molecule: Molecule) -> List[HybridizationType]:
     from openeye import oechem
 
     conversions = {
@@ -226,7 +226,7 @@ def _get_molecule_hybridizations_oe(molecule: "OFFMolecule") -> List[Hybridizati
 
 
 @requires_package("rdkit")
-def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[HybridizationType]:
+def _get_molecule_hybridizations_rd(molecule: Molecule) -> List[HybridizationType]:
     from rdkit.Chem import rdchem
 
     conversions = {
@@ -251,7 +251,7 @@ def _get_molecule_hybridizations_rd(molecule: "OFFMolecule") -> List[Hybridizati
     return hybridizations
 
 
-def get_molecule_hybridizations(molecule: "OFFMolecule") -> List[HybridizationType]:
+def get_molecule_hybridizations(molecule: Molecule) -> List[HybridizationType]:
     try:
         return _get_molecule_hybridizations_oe(molecule)
     except MissingOptionalDependencyError:
@@ -555,13 +555,13 @@ def get_unitless_charge(charge, dtype=float):
     return dtype(charge / off_unit.elementary_charge)
 
 
-def get_openff_molecule_bond_indices(molecule: "OFFMolecule") -> List[Tuple[int, int]]:
+def get_openff_molecule_bond_indices(molecule: Molecule) -> List[Tuple[int, int]]:
     return [
         tuple(sorted((bond.atom1_index, bond.atom2_index))) for bond in molecule.bonds
     ]
 
 
-def get_openff_molecule_formal_charges(molecule: "OFFMolecule") -> List[float]:
+def get_openff_molecule_formal_charges(molecule: Molecule) -> List[float]:
     from openff.toolkit.topology.molecule import unit as off_unit
 
     # TODO: this division hack should work for both simtk units
@@ -573,7 +573,7 @@ def get_openff_molecule_formal_charges(molecule: "OFFMolecule") -> List[float]:
 
 
 # def get_openff_molecule_information(
-#     molecule: "OFFMolecule",
+#     molecule: Molecule,
 # ) -> Dict[str, "torch.Tensor"]:
 #     charges = get_openff_molecule_formal_charges(molecule)
 #     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
@@ -641,10 +641,10 @@ def _normalize_molecule_oe(
 
 @requires_package("rdkit")
 def _normalize_molecule_rd(
-    molecule: "OFFMolecule",
+    molecule: Molecule,
     reaction_smarts: List[str] = tuple(),
     max_iterations: int = 10000,
-) -> "OFFMolecule":
+) -> Molecule:
 
     from openff.toolkit.topology import Molecule as OFFMolecule
     from rdkit import Chem
@@ -701,10 +701,10 @@ def _load_reaction_smarts():
 
 
 def normalize_molecule(
-    molecule: "OFFMolecule",
+    molecule: Molecule,
     check_output: bool = True,
     max_iterations: int = 10000,
-) -> "OFFMolecule":
+) -> Molecule:
     """
     Normalize a molecule by applying a series of SMARTS reactions.
     """
@@ -743,7 +743,7 @@ def normalize_molecule(
 
 @requires_package("rdkit")
 def get_best_rmsd(
-    molecule: "OFFMolecule",
+    molecule: Molecule,
     conformer_a: np.ndarray,
     conformer_b: np.ndarray,
 ):
@@ -769,7 +769,7 @@ def get_best_rmsd(
 
 
 def is_conformer_identical(
-    molecule: "OFFMolecule",
+    molecule: Molecule,
     conformer_a: np.ndarray,
     conformer_b: np.ndarray,
     atol: float = 1.0e-3,
