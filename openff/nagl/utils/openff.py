@@ -11,9 +11,7 @@ from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
 from openff.nagl.utils.types import HybridizationType
-
-if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+from openff.toolkit.topology import Molecule
 
 
 def _load_smiles_from_file(file, database_format: Literal["nagl", "recharge"] = "nagl") -> List[str]:
