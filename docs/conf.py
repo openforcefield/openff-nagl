@@ -50,6 +50,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.autodoc_pydantic",
     "openff_sphinx_theme",
     "myst_nb",
 ]
@@ -70,9 +71,14 @@ autodoc_default_options = {
     "members": True,
     "inherited-members": True,
     "member-order": "bysource",
+    "show-inheritance": True,
 }
 autodoc_preserve_defaults = True
+autodoc_inherit_docstrings = False
 autodoc_typehints_format = "short"
+# Fold the __init__ or __new__ methods into class documentation
+autoclass_content = "both"
+autodoc_class_signature = "mixed"
 # Workaround for autodoc_typehints_format not working for attributes
 # see https://github.com/sphinx-doc/sphinx/issues/10290#issuecomment-1079740009
 python_use_unqualified_type_names = True
@@ -83,6 +89,23 @@ napoleon_attr_annotations = True
 napoleon_custom_sections = [("attributes", "params_style")]
 napoleon_use_rtype = False
 napoleon_use_param = True
+napoleon_use_ivar = True
+napoleon_preprocess_types = True
+
+autodoc_pydantic_model_member_order = "groupwise"
+autodoc_pydantic_model_signature_prefix = "model"
+autodoc_pydantic_model_show_validator_members = False
+autodoc_pydantic_model_show_validator_summary = False
+autodoc_pydantic_model_show_config_summary = False
+autodoc_pydantic_model_show_config_member = False
+autodoc_pydantic_model_show_json = False
+autodoc_pydantic_settings_signature_prefix = "settings"
+autodoc_pydantic_settings_show_validator_members = False
+autodoc_pydantic_settings_show_validator_summary = False
+autodoc_pydantic_settings_show_config_summary = False
+autodoc_pydantic_settings_show_config_member = False
+autodoc_pydantic_field_doc_policy = "both"
+autodoc_pydantic_field_list_validators = False
 
 _python_doc_base = "https://docs.python.org/3.7"
 intersphinx_mapping = {
