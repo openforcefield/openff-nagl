@@ -44,6 +44,8 @@ dependencies:
   - myst-parser>=0.14
   - docutils
   - sphinx<5
+  - sphinx-notfound-page
+  - autodoc-pydantic
 
   #  Pip-only installs
   - pip:
