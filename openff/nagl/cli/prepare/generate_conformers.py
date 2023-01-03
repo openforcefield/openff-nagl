@@ -24,7 +24,7 @@ def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
             ncols=80,
         )
     )
-    unique_smiles = sorted(set(all_smiles))
+    unique_smiles = sorted(set(all_smiles), key=len, reverse=True)
     n_ignored = len(all_smiles) - len(unique_smiles)
 
     print(f"{n_ignored} duplicate molecules ignored")
@@ -39,7 +39,7 @@ def generate_single_molecule_conformers(
     guess_stereochemistry: bool = True,
 ):
     from openff.toolkit.topology.molecule import unit as off_unit
-    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
+    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper, OpenEyeToolkitWrapper, OPENEYE_AVAILABLE, RDKIT_AVAILABLE, GLOBAL_TOOLKIT_REGISTRY
 
     from openff.nagl.utils.openff import generate_conformers, smiles_to_molecule
 
@@ -49,29 +49,36 @@ def generate_single_molecule_conformers(
     molecule.properties["smiles"] = molecule.to_smiles()
     molecule.properties[QC_KWARG] = molecule.to_smiles(mapped=True, isomeric=True)
 
-    generate_conformers(
-        molecule,
+    conformer_registry = GLOBAL_TOOLKIT_REGISTRY
+    if OPENEYE_AVAILABLE:
+        # RDKit can hang terribly
+        conformer_registry = OpenEyeToolkitWrapper()
+
+    molecule.generate_conformers(
+        # molecule,
         n_conformers=n_conformer_pool,
         rms_cutoff=rms_cutoff * off_unit.angstrom,
         make_carboxylic_acids_cis=True,
+        toolkit_registry=conformer_registry
     )
     if molecule.conformers is None or not len(molecule.conformers):
         raise ValueError(f"Could not generate conformers for {smiles}")
-    try:
-        molecule.apply_elf_conformer_selection(limit=n_conformers)
-    except RuntimeError as e:
-        oe_failure = (
-            "OpenEye failed to select conformers, "
-            "but did not return any output. "
-            "This most commonly occurs when "
-            "the Molecule does not have enough conformers to select from"
-        )
-        if oe_failure in str(e):
-            molecule.apply_elf_conformer_selection(
-                limit=n_conformers, toolkit_registry=RDKitToolkitWrapper()
-            )
-        else:
-            raise e
+    molecule.apply_elf_conformer_selection(limit=n_conformers, toolkit_registry=conformer_registry)
+    # try:
+    #     molecule.apply_elf_conformer_selection(limit=n_conformers)
+    # except RuntimeError as e:
+    #     oe_failure = (
+    #         "OpenEye failed to select conformers, "
+    #         "but did not return any output. "
+    #         "This most commonly occurs when "
+    #         "the Molecule does not have enough conformers to select from"
+    #     )
+    #     if oe_failure in str(e) and RDKIT_AVAILABLE:
+    #         molecule.apply_elf_conformer_selection(
+    #             limit=n_conformers, toolkit_registry=RDKitToolkitWrapper()
+    #         )
+    #     else:
+    #         raise e
     return molecule
 
 

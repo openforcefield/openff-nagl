@@ -58,7 +58,7 @@ class BaseGCNStack(
         This class is based on the ``dgllife.model.SAGEConv`` module.
     """
 
-    hidden_feature_sizes: List[GCNLayerType]
+    # hidden_feature_sizes: List[GCNLayerType]
 
     @property
     @classmethod
@@ -256,5 +256,5 @@ class BaseGCNStack(
             The output hidden features with shape=(n_nodes, hidden_feats[-1]).
         """
         for gnn in self:
-            inputs = gnn(graph, inputs)
+            inputs: torch.Tensor = gnn(graph, inputs)
         return inputs

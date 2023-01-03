@@ -109,7 +109,6 @@ def partition_molecules_cli(
     if input_source_file is not None:
         with open(input_source_file, "r") as f:
             input_source = json.load(f)
-
     smiles_to_records = {}
     smiles_to_db = {}
     for file in tqdm.tqdm(input_file, desc="loading from stores"):
@@ -151,7 +150,6 @@ def partition_molecules_cli(
         print(f"    {name}: {len(records_)}")
 
         store_.store(records_)
-
     df = pd.concat(dfs).reset_index()
     df.to_csv(output_source_file)
 

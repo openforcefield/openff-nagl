@@ -2,6 +2,7 @@ import errno
 import functools
 import inspect
 import os
+import inspect
 import pathlib
 import pickle
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
@@ -16,10 +17,8 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
-from openff.nagl.utils.types import Pathlike
+from openff.nagl.utils.types import Pathlike, FromYamlMixin
 from openff.nagl.utils.utils import as_iterable
-
-# from openff.nagl.nn.loss import BaseLossFunction
 
 LossFunction = Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
 
@@ -46,6 +45,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         in the form of a ``torch.Tensor``.
     """
 
+
     def __init__(
         self,
         convolution_module: ConvolutionModule,
@@ -57,8 +57,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
         self.learning_rate = learning_rate
-
-        # loss_args = inspect.getargspec(loss_function)
         self.loss_function = loss_function
 
     def forward(
@@ -87,7 +85,6 @@ class DGLMoleculeLightningModel(pl.LightningModule):
             pred_values = y_pred[label_name]
             label_loss = self.loss_function(pred_values, label_values)
             loss += label_loss
-
         self.log(f"{step_type}_loss", loss)
         return loss
 
@@ -113,7 +110,7 @@ class DGLMoleculeLightningModel(pl.LightningModule):
         return optimizer.optimizer
 
 
-class DGLMoleculeLightningDataModule(pl.LightningDataModule):
+class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
     """A utility class that makes loading and featurizing train, validation and test
     sets more compact.
 
@@ -178,7 +175,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         training_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
         validation_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
         test_set_paths: Union[Pathlike, Tuple[Pathlike]] = tuple(),
-        # output_path: Pathlike = "nagl-data-module.pkl",
         training_batch_size: Optional[int] = None,
         validation_batch_size: Optional[int] = None,
         test_batch_size: Optional[int] = None,
@@ -199,7 +195,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         self.training_set_paths = self._as_path_lists(training_set_paths)
         self.validation_set_paths = self._as_path_lists(validation_set_paths)
         self.test_set_paths = self._as_path_lists(test_set_paths)
-        # self.output_path = pathlib.Path(output_path)
         self.training_batch_size = training_batch_size
         self.validation_batch_size = validation_batch_size
         self.test_batch_size = test_batch_size
@@ -279,7 +274,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
             f"charge-{self.partial_charge_method}"
             f"_bond-{self.bond_order_method}"
             f"_feat-{self.get_feature_hash()}"
-            # f"_{data_group}-data"
             f"_paths-{input_hash}"
             ".pkl"
         )
@@ -294,7 +288,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
 
     def get_feature_hash(self):
         from openff.nagl.utils.hash import hash_dict
-
         atom_features, bond_features = [], []
         for feature in self.atom_features:
             obj = feature.dict()
@@ -316,33 +309,13 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule):
         """
         for stage in ["training", "validation", "test"]:
             self._prepare_data(stage)
-        # # die if we don't want to use cached data but found it anyway
-        # if self.output_path.is_file():
-        #     if not self.use_cached_data:
-        #         raise FileExistsError(
-        #             errno.EEXIST,
-        #             os.strerror(errno.EEXIST),
-        #             self.output_path.resolve(),
-        #         )
-        #     return
 
-        # train_data = self._prepare_data_from_paths(self.training_set_paths)
-        # val_data = self._prepare_data_from_paths(self.validation_set_paths)
-        # test_data = self._prepare_data_from_paths(self.test_set_paths)
-
-        # # not recommended to assign state here
-        # # so we pickle and read it back later
-        # with self.output_path.open("wb") as f:
-        #     pickle.dump((train_data, val_data, test_data), f)
 
     def setup(self, stage: Optional[str] = None):
-
         self._train_data = self._load_data_cache("training")
         self._val_data = self._load_data_cache("validation")
         self._test_data = self._load_data_cache("test")
 
-        # with self.output_path.open("rb") as f:
-        #     self._train_data, self._val_data, self._test_data = pickle.load(f)
 
     def _default_dataloader(self, data_name, batch_size):
         from openff.nagl.nn.data import DGLMoleculeDataLoader

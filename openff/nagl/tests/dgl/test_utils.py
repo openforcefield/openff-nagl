@@ -8,6 +8,7 @@ from openff.nagl.dgl.utils import (
     get_openff_molecule_information,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
+    get_openff_molecule_information,
 )
 from openff.nagl.features import AtomConnectivity, BondIsInRing
 

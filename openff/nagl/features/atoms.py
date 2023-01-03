@@ -5,9 +5,11 @@ import torch
 from pydantic import validator
 
 from openff.nagl.utils.types import HybridizationType
+from openff.utilities import requires_package
 
 from .base import CategoricalMixin, Feature, FeatureMeta
 from .utils import one_hot_encode
+
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
@@ -23,6 +25,8 @@ __all__ = [
     "AtomInRingOfSize",
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
+    "AtomGasteigerCharge",
+    "AtomMorganFingerprint"
 ]
 
 
@@ -110,7 +114,6 @@ class AtomInRingOfSize(AtomFeature):
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from openff.nagl.utils.openff import openff_to_rdkit
-
         rdmol = openff_to_rdkit(molecule)
 
         in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
@@ -149,3 +152,46 @@ class AtomAverageFormalCharge(AtomFeature):
             formal_charges.append(charge)
 
         return torch.tensor(formal_charges)
+
+
+class AtomGasteigerCharge(AtomFeature):
+    def _encode(self, molecule) -> torch.Tensor:
+        from openff.nagl.utils.openff import openff_to_rdkit
+        from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
+
+        rdmol = openff_to_rdkit(molecule)
+        ComputeGasteigerCharges(rdmol)
+
+        charges = [
+            float(rdatom.GetProp("_GasteigerCharge"))
+            for rdatom in rdmol.GetAtoms()
+        ]
+        return torch.tensor(charges)
+
+
+class AtomMorganFingerprint(AtomFeature):
+
+    radius: int = 2
+    # n_bits: int = 1024
+
+    _feature_length: int = 1024
+
+    @requires_package("rdkit")
+    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+        from rdkit.Chem import rdMolDescriptors
+        from openff.nagl.utils.openff import openff_to_rdkit
+
+        rdmol = openff_to_rdkit(molecule)
+        fingerprints = []
+        for atom in rdmol.GetAtoms():
+            fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
+                rdmol,
+                radius=self.radius,
+                nBits=self._feature_length,
+                fromAtoms=[atom.GetIdx()]
+            )
+            fp.ToList()
+            fingerprints.append(fp)
+        
+        feature = torch.tensor(fingerprints)
+        return feature

@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 
 import torch
+import dgl
 
 from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 
@@ -37,7 +38,7 @@ class ConvolutionModule(torch.nn.Module):
         # doesn't need this information and hence we produce a homogeneous graph for
         # it to operate on with only a single edge type.
 
-        homograph = molecule.to_homogenous()
+        homograph: dgl.DGLGraph = molecule.to_homogenous()
         feature_tensor = self.gcn_layers(homograph, molecule.atom_features)
         molecule.graph.ndata[molecule._graph_feature_name] = feature_tensor
 

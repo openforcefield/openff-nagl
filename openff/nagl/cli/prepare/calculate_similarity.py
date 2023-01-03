@@ -99,7 +99,6 @@ def calculate_all_similarity(
     df.to_csv(output_file)
     print(f"Saved dataframe to {output_file}")
 
-
 @click.command("calculate-similarity", help="Calculate similarity between datasets")
 @click.option(
     "--input-file",

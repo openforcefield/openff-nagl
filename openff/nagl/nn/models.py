@@ -24,8 +24,10 @@ class GNNModel(DGLMoleculeLightningModel):
         return cls(**yaml_kwargs)
 
     @property
-    def n_atom_features(self):
-        return sum(len(feature) for feature in self.atom_features)
+    def n_atom_features(self) -> int:
+        lengths = [len(feature) for feature in self.atom_features]
+        n_features = sum(lengths)
+        return n_features
 
     def __init__(
         self,
@@ -88,7 +90,6 @@ class GNNModel(DGLMoleculeLightningModel):
 
     def compute_property(self, molecule: "OFFMolecule") -> "torch.Tensor":
         from openff.nagl.dgl.molecule import DGLMolecule
-
         dglmol = DGLMolecule.from_openff(
             molecule,
             atom_features=self.atom_features,

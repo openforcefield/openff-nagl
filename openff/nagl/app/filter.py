@@ -44,13 +44,23 @@ def split_and_apply_filter(
     max_mass: "unit.Quantity",
     n_rotatable_bonds: int,
     only_retain_largest: bool = True,
+    as_smiles: bool = False,
+    mapped_smiles: bool = False
 ):
+    from openff.toolkit.topology import Molecule
+
+    if isinstance(molecule, str):
+        if only_retain_largest:
+            split = molecule.split(".")
+            molecule = max(split, key=len)
+        molecule = Molecule.from_smiles(molecule, allow_undefined_stereo=True)
     try:
         if only_retain_largest:
             split_smiles = molecule.to_smiles().split(".")
-            largest = max(split_smiles, key=len)
-            molecule = Molecule.from_smiles(largest, allow_undefined_stereo=True)
-            logger.debug(f"Keeping '{largest}' from '{split_smiles}'")
+            if len(split_smiles) > 1:
+                largest = max(split_smiles, key=len)
+                molecule = Molecule.from_smiles(largest, allow_undefined_stereo=True)
+                logger.debug(f"Keeping '{largest}' from '{split_smiles}'")
         valid = apply_filter(
             molecule,
             allowed_elements=allowed_elements,
@@ -59,9 +69,13 @@ def split_and_apply_filter(
             n_rotatable_bonds=n_rotatable_bonds,
         )
         if valid:
-            yield molecule
+            if as_smiles:
+                return molecule.to_smiles(mapped=mapped_smiles)
+            else:
+                return molecule
     except Exception as e:
         logger.warning(f"Failed to process molecule {molecule}, {e}")
+
 
 
 def filter_molecules(
@@ -83,6 +97,7 @@ def filter_molecules(
     max_mass: "unit.Quantity" = 350,
     n_rotatable_bonds: int = 7,
     n_processes: int = 1,
+    as_smiles: bool = False,
 ) -> Iterable["Molecule"]:
 
     import tqdm
@@ -93,9 +108,9 @@ def filter_molecules(
     allowed_elements = [get_atomic_number(x) for x in allowed_elements]
 
     if not isinstance(min_mass, unit.Quantity):
-        min_mass = min_mass * unit.Quantity
+        min_mass = min_mass * unit.amu
     if not isinstance(max_mass, unit.Quantity):
-        max_mass = max_mass * unit.Quantity
+        max_mass = max_mass * unit.amu
 
     with capture_toolkit_warnings():
         filterer = functools.partial(
@@ -105,9 +120,11 @@ def filter_molecules(
             n_rotatable_bonds=n_rotatable_bonds,
             min_mass=min_mass,
             max_mass=max_mass,
+            as_smiles=as_smiles,
         )
         with multiprocessing.Pool(processes=n_processes) as pool:
             for molecule in tqdm.tqdm(
                 pool.imap(filterer, molecules), desc="filtering molecules"
             ):
-                yield molecule
+                if molecule is not None:
+                    yield molecule

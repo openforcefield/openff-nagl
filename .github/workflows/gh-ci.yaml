@@ -75,6 +75,7 @@ jobs:
     - name: codecov
       uses: codecov/codecov-action@v2
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.xml
         name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
         verbose: True
