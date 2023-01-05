@@ -88,8 +88,8 @@ jobs:
       shell: bash -l -c "python -u {0}"
       run: |
         from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
-        assert OPENEYE_AVAILABLE == ${{ matrix.include-openeye }}
-        assert RDKIT_AVAILABLE == ${{ matrix.include-rdkit }}
+        assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
+        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
     - name: Run tests
       run: |
