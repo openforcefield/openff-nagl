@@ -33,7 +33,7 @@ jobs:
           include-openeye: [true, false]
           exclude:
             - include-rdkit: false
-            - include-openeye: false
+              include-openeye: false
 
     steps:
     - uses: actions/checkout@v3
