@@ -1,3 +1,4 @@
+import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
@@ -26,7 +27,7 @@ __all__ = [
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
     "AtomGasteigerCharge",
-    "AtomMorganFingerprint"
+    # "AtomMorganFingerprint"
 ]
 
 
@@ -113,10 +114,12 @@ class AtomInRingOfSize(AtomFeature):
     ring_size: int
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        from openff.nagl.utils.openff import openff_to_rdkit
-        rdmol = openff_to_rdkit(molecule)
+        
+        from openff.nagl.utils.openff import get_atoms_are_in_ring_size
+        in_ring_size = get_atoms_are_in_ring_size(molecule, self.ring_size)
+        # rdmol = openff_to_rdkit(molecule)
 
-        in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
+        # in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
         return torch.tensor(in_ring_size, dtype=int)
 
 
@@ -124,9 +127,15 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
     categories: List[int] = [-3, -2, -1, 0, 1, 2, 3]
 
     def _encode(self, molecule) -> torch.Tensor:
-        from ..utils.openff import get_openff_molecule_formal_charges
+        # from ..utils.openff import get_openff_molecule_formal_charges
 
-        charges = get_openff_molecule_formal_charges(molecule)
+        # charges = get_openff_molecule_formal_charges(molecule)
+
+        from openff.units import unit
+        charges = [
+            atom.formal_charge.m_as(unit.elementary_charge)
+            for atom in molecule.atoms
+        ]
 
         return torch.vstack(
             [one_hot_encode(charge, self.categories) for charge in charges]
@@ -156,42 +165,37 @@ class AtomAverageFormalCharge(AtomFeature):
 
 class AtomGasteigerCharge(AtomFeature):
     def _encode(self, molecule) -> torch.Tensor:
-        from openff.nagl.utils.openff import openff_to_rdkit
-        from rdkit.Chem.rdPartialCharges import ComputeGasteigerCharges
+        from openff.units import unit
 
-        rdmol = openff_to_rdkit(molecule)
-        ComputeGasteigerCharges(rdmol)
-
-        charges = [
-            float(rdatom.GetProp("_GasteigerCharge"))
-            for rdatom in rdmol.GetAtoms()
-        ]
+        molecule = copy.deepcopy(molecule)
+        molecule.assign_partial_charges("gasteiger")
+        charges = molecule.partial_charges.m_as(unit.elementary_charge)
         return torch.tensor(charges)
 
 
-class AtomMorganFingerprint(AtomFeature):
+# class AtomMorganFingerprint(AtomFeature):
 
-    radius: int = 2
-    # n_bits: int = 1024
+#     radius: int = 2
+#     # n_bits: int = 1024
 
-    _feature_length: int = 1024
+#     _feature_length: int = 1024
 
-    @requires_package("rdkit")
-    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        from rdkit.Chem import rdMolDescriptors
-        from openff.nagl.utils.openff import openff_to_rdkit
+#     @requires_package("rdkit")
+#     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+#         from rdkit.Chem import rdMolDescriptors
+#         from openff.nagl.utils.openff import openff_to_rdkit
 
-        rdmol = openff_to_rdkit(molecule)
-        fingerprints = []
-        for atom in rdmol.GetAtoms():
-            fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
-                rdmol,
-                radius=self.radius,
-                nBits=self._feature_length,
-                fromAtoms=[atom.GetIdx()]
-            )
-            fp.ToList()
-            fingerprints.append(fp)
+#         rdmol = openff_to_rdkit(molecule)
+#         fingerprints = []
+#         for atom in rdmol.GetAtoms():
+#             fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
+#                 rdmol,
+#                 radius=self.radius,
+#                 nBits=self._feature_length,
+#                 fromAtoms=[atom.GetIdx()]
+#             )
+#             fp.ToList()
+#             fingerprints.append(fp)
         
-        feature = torch.tensor(fingerprints)
-        return feature
+#         feature = torch.tensor(fingerprints)
+#         return feature

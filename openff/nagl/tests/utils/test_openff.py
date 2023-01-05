@@ -2,14 +2,14 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
-from openff.toolkit.topology.molecule import unit as offunit
+from openff.units import unit
 
 from openff.nagl.utils.openff import (
     get_best_rmsd,
-    get_coordinates_in_angstrom,
+    # get_coordinates_in_angstrom,
     get_openff_molecule_bond_indices,
-    get_openff_molecule_formal_charges,
-    get_unitless_charge,
+    # get_openff_molecule_formal_charges,
+    # get_unitless_charge,
     is_conformer_identical,
     map_indexed_smiles,
     normalize_molecule,
@@ -18,16 +18,16 @@ from openff.nagl.utils.openff import (
 from openff.nagl.utils.utils import transform_coordinates
 
 
-def test_get_unitless_charge(openff_methane_charged):
-    formal = openff_methane_charged.atoms[1].formal_charge
-    formal_charge = get_unitless_charge(formal, dtype=int)
-    assert formal_charge == 0
-    assert isinstance(formal_charge, int)
+# def test_get_unitless_charge(openff_methane_charged):
+#     formal = openff_methane_charged.atoms[1].formal_charge
+#     formal_charge = get_unitless_charge(formal, dtype=int)
+#     assert formal_charge == 0
+#     assert isinstance(formal_charge, int)
 
-    partial = openff_methane_charged.atoms[1].partial_charge
-    partial_charge = get_unitless_charge(partial)
-    assert partial_charge == 0.1
-    assert isinstance(partial_charge, float)
+#     partial = openff_methane_charged.atoms[1].partial_charge
+#     partial_charge = get_unitless_charge(partial)
+#     assert partial_charge == 0.1
+#     assert isinstance(partial_charge, float)
 
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
@@ -35,9 +35,9 @@ def test_get_openff_molecule_bond_indices(openff_methane_charged):
     assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
 
 
-def test_get_openff_molecule_formal_charges(openff_methane_charged):
-    formal_charges = get_openff_molecule_formal_charges(openff_methane_charged)
-    assert formal_charges == [0, 0, 0, 0, 0]
+# def test_get_openff_molecule_formal_charges(openff_methane_charged):
+#     formal_charges = get_openff_molecule_formal_charges(openff_methane_charged)
+#     assert formal_charges == [0, 0, 0, 0, 0]
 
 
 @pytest.mark.parametrize(
@@ -93,7 +93,8 @@ def test_map_indexed_smiles(smiles_a, smiles_b, expected):
 def test_is_conformer_identical_generated(smiles):
     offmol = OFFMolecule.from_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
-    ordered_conf = get_coordinates_in_angstrom(offmol.conformers[0])
+    ordered_conf = offmol.conformers[0].m_as(unit.angstrom)
+    # ordered_conf = get_coordinates_in_angstrom(offmol.conformers[0])
 
     # Create a permuted version of the conformer,
     # permuting only topology symmetric atoms.
@@ -144,7 +145,7 @@ def test_not_is_conformer_identical():
     offmol = OFFMolecule.from_mapped_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
 
-    conformer = get_coordinates_in_angstrom(offmol.conformers[0])
+    conformer = offmol.conformers[0].m_as(unit.angstrom)
 
     # Swap and perturb the hydrogen positions.
     hydrogen_coordinates = conformer[3, :]
@@ -161,8 +162,8 @@ def test_get_best_rmsd():
 
     offmol = OFFMolecule.from_smiles("CCC")
     offmol._conformers = [
-        np.random.random((11, 3)) * offunit.angstrom,
-        np.random.random((11, 3)) * offunit.angstrom,
+        np.random.random((11, 3)) * unit.angstrom,
+        np.random.random((11, 3)) * unit.angstrom,
     ]
 
     rdmol = offmol.to_rdkit()
@@ -171,7 +172,7 @@ def test_get_best_rmsd():
     reference_rmsd = rdMolAlign.GetBestRMS(rdmol, rdmol, 0, 1)
     rmsd = get_best_rmsd(
         offmol,
-        get_coordinates_in_angstrom(offmol.conformers[0]),
-        get_coordinates_in_angstrom(offmol.conformers[1]),
+        offmol.conformers[0].m_as(unit.angstrom),
+        offmol.conformers[1].m_as(unit.angstrom),
     )
     assert_allclose(rmsd, reference_rmsd)

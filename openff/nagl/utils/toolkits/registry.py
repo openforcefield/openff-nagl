@@ -5,9 +5,9 @@ from openff.toolkit.utils.toolkit_registry import (
     ToolkitUnavailableException
 )
 
-from openff.nagl.utils.toolkits.base import ToolkitWrapperMeta, ToolkitWrapperType
+from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase, ToolkitWrapperType
 
-class ToolkitRegistry(_ToolkitRegistry):
+class NAGLToolkitRegistry(_ToolkitRegistry):
 
     def __init__(
         self,
@@ -16,7 +16,7 @@ class ToolkitRegistry(_ToolkitRegistry):
     ):
         self._toolkits = []
 
-        toolkit_wrappers = [ToolkitWrapperMeta._get_object(wrapper) for wrapper in toolkit_wrappers]
+        toolkit_wrappers = [NAGLToolkitWrapperMeta._get_object(wrapper) for wrapper in toolkit_wrappers]
         for toolkit in toolkit_wrappers:
             self.register_toolkit(toolkit)
 
@@ -39,7 +39,7 @@ class ToolkitRegistry(_ToolkitRegistry):
         ToolkitUnavailableException
             If toolkit_wrapper is not found in the registry
         """
-        toolkit_wrapper = ToolkitWrapperMeta._get_class(toolkit_wrapper)
+        toolkit_wrapper = NAGLToolkitWrapperMeta._get_class(toolkit_wrapper)
         toolkits_to_remove = []
 
         for toolkit in self._toolkits:
@@ -73,5 +73,6 @@ class ToolkitRegistry(_ToolkitRegistry):
         InvalidToolkitError
             If toolkit_wrapper is not a ToolkitWrapper or subclass
         """
-        toolkit_wrapper = ToolkitWrapperMeta._get_class(toolkit_wrapper)
+        toolkit_wrapper = NAGLToolkitWrapperMeta._get_class(toolkit_wrapper)
         self._toolkits.append(toolkit_wrapper)
+

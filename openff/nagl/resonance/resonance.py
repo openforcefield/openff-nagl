@@ -133,10 +133,11 @@ class ResonanceEnumerator:
         return obj
 
     def __init__(self, openff_molecule: "OFFMolecule"):
-        from openff.nagl.utils.openff import openff_to_rdkit
+        # from openff.nagl.utils.openff import openff_to_rdkit
+        from openff.nagl.utils.toolkits import NAGLRDKitToolkitWrapper
 
         self.openff_molecule = openff_molecule
-        self.rdkit_molecule = openff_to_rdkit(openff_molecule)
+        self.rdkit_molecule = NAGLRDKitToolkitWrapper().to_rdkit(openff_molecule)
         self.__post_init__()
 
     def __post_init__(self):
