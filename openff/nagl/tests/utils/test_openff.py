@@ -6,10 +6,7 @@ from openff.units import unit
 
 from openff.nagl.utils.openff import (
     get_best_rmsd,
-    # get_coordinates_in_angstrom,
     get_openff_molecule_bond_indices,
-    # get_openff_molecule_formal_charges,
-    # get_unitless_charge,
     is_conformer_identical,
     map_indexed_smiles,
     normalize_molecule,
@@ -18,27 +15,9 @@ from openff.nagl.utils.openff import (
 from openff.nagl.utils.utils import transform_coordinates
 
 
-# def test_get_unitless_charge(openff_methane_charged):
-#     formal = openff_methane_charged.atoms[1].formal_charge
-#     formal_charge = get_unitless_charge(formal, dtype=int)
-#     assert formal_charge == 0
-#     assert isinstance(formal_charge, int)
-
-#     partial = openff_methane_charged.atoms[1].partial_charge
-#     partial_charge = get_unitless_charge(partial)
-#     assert partial_charge == 0.1
-#     assert isinstance(partial_charge, float)
-
-
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
     assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
-
-
-# def test_get_openff_molecule_formal_charges(openff_methane_charged):
-#     formal_charges = get_openff_molecule_formal_charges(openff_methane_charged)
-#     assert formal_charges == [0, 0, 0, 0, 0]
-
 
 @pytest.mark.parametrize(
     "smiles, expected",
