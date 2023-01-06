@@ -91,9 +91,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         return new_mol.remap(adjusted_mapping, current_to_new=True)
 
-    @classmethod
     def get_molecule_hybridizations(
-        cls,
+        self,
         molecule: "Molecule"
     ) -> List[HybridizationType]:
         """
@@ -125,7 +124,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         }
 
         hybridizations = []
-        rdmol = cls.to_rdkit(molecule)
+        rdmol = self.to_rdkit(molecule)
         for atom in rdmol.GetAtoms():
             hybridization = atom.GetHybridization()
             try:

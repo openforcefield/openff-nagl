@@ -652,3 +652,25 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
         return_atom_map=True,
     )
     return atom_map
+
+
+def molecule_from_networkx(graph):
+    molecule = Molecule()
+
+    for _, info in graph.nodes(data=True):
+        molecule.add_atom(
+            atomic_number=info["atomic_number"],
+            formal_charge=info["formal_charge"],
+            is_aromatic=info["is_aromatic"],
+            stereochemistry=info.get("stereochemistry", None),
+        )
+    
+    for u, v, info in graph.edges(data=True):
+        molecule.add_bond(
+            atom1_index=u,
+            atom2_index=v,
+            bond_order=info["bond_order"],
+            is_aromatic=info["is_aromatic"],
+            stereochemistry=info.get("stereochemistry", None),
+        )
+    return molecule
