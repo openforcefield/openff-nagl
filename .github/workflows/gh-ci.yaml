@@ -6,6 +6,7 @@ on:
   pull_request:
     branches:
       - main
+      - refactor-toolkits
 
 concurrency:
   # Specific group naming so CI is only cancelled
@@ -28,6 +29,11 @@ jobs:
         matrix:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.9", "3.10"]
+          include-rdkit: [true, false]
+          include-openeye: [true, false]
+          exclude:
+            - include-rdkit: false
+              include-openeye: false
 
     steps:
     - uses: actions/checkout@v3
@@ -64,9 +70,26 @@ jobs:
         conda list
 
     - uses: ./.github/actions/include-openeye
+      if: matrix.include-openeye == true
       with:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
+
+      
+    - name: Uninstall OpenEye
+      if: matrix.include-openeye == false
+      run: conda remove --force openeye --yes || echo "openeye not installed"
+
+    - name: Uninstall RDKit
+      if: matrix.include-rdkit == false
+      run: conda remove --force rdkit --yes || echo "rdkit not installed"
+
+    - name: Check toolkit installations
+      shell: bash -l -c "python -u {0}"
+      run: |
+        from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+        assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
+        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
     - name: Run tests
       run: |
