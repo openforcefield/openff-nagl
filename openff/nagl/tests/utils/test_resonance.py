@@ -7,6 +7,7 @@ from openff.nagl.utils.resonance import (
     ResonanceEnumerator,
     FragmentEnumerator
 )
+from openff.nagl.tests.testing.utils import assert_smiles_equal
 
 @pytest.fixture
 def resonance_enumerator():
@@ -321,7 +322,9 @@ class TestResonanceEnumerator:
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
         assert len(resonance_molecules) == 1
-        assert resonance_molecules[0].to_smiles() == "[H]C([H])([H])[H]"
+
+        output_smiles = resonance_molecules[0].to_smiles()
+        assert_smiles_equal(output_smiles, "C")
 
 
 
