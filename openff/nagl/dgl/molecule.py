@@ -82,7 +82,6 @@ class DGLMolecule(DGLBase):
         if enumerate_resonance_forms:
             enumerator = ResonanceEnumerator(molecule)
             offmols = enumerator.enumerate_resonance_forms(
-                molecule,
                 lowest_energy_only=lowest_energy_only,
                 max_path_length=max_path_length,
                 include_all_transfer_pathways=include_all_transfer_pathways,
