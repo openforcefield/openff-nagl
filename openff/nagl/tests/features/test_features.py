@@ -78,6 +78,16 @@ def test_atom_formal_charge(smiles, charge):
     assert_equal(feature(offmol).numpy(), charge)
 
 
+def test_atom_average_formal_charge():
+    smiles = "[C:1](=[O:4])([O-:5])[C:2]([H:8])([H:9])[C:3](=[O:6])([O-:7])"
+    offmol = OFFMolecule.from_mapped_smiles(smiles)
+    feature = AtomAverageFormalCharge()
+    charges = feature(offmol).numpy()
+
+    expected = np.array([[0, 0, 0, -0.5, -0.5, -0.5, -0.5, 0, 0]])
+    assert_allclose(charges.T, expected)
+
+
 @pytest.mark.parametrize(
     "feature_class", [AtomIsAromatic, AtomIsInRing, BondIsAromatic, BondIsInRing]
 )

@@ -6,6 +6,7 @@ import torch
 from pydantic import validator
 
 from openff.nagl.utils.types import HybridizationType
+from openff.units import unit
 from openff.utilities import requires_package
 
 from .base import CategoricalMixin, Feature, FeatureMeta
@@ -144,20 +145,30 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
 
 class AtomAverageFormalCharge(AtomFeature):
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        from openff.nagl.resonance.resonance import ResonanceEnumerator
+        from openff.nagl.utils.resonance import enumerate_resonance_forms
         from openff.nagl.utils.openff import normalize_molecule
 
-        molecule = normalize_molecule(molecule, check_output=False)
-        enumerator = ResonanceEnumerator(molecule)
-        enumerator.enumerate_resonance_fragments(
+        molecule = normalize_molecule(molecule)
+        resonance_forms = enumerate_resonance_forms(
+            molecule,
             lowest_energy_only=True,
             include_all_transfer_pathways=False,
+            as_dicts=True,
         )
-
         formal_charges: List[float] = []
-        for rdatoms in enumerator.get_resonance_atoms():
-            charges = [atom.GetFormalCharge() for atom in rdatoms]
-            charge = np.mean(charges) if charges else 0.0
+        for index in range(molecule.n_atoms):
+            charges = [
+                graph["atoms"][index]["formal_charge"]
+                for graph in resonance_forms
+            ]
+            if not charges:
+                molecule.atoms[index].formal_charge
+
+            charges = [
+                q.m_as(unit.elementary_charge)
+                for q in charges
+            ]
+            charge = np.mean(charges)
             formal_charges.append(charge)
 
         return torch.tensor(formal_charges)
@@ -172,30 +183,3 @@ class AtomGasteigerCharge(AtomFeature):
         charges = molecule.partial_charges.m_as(unit.elementary_charge)
         return torch.tensor(charges)
 
-
-# class AtomMorganFingerprint(AtomFeature):
-
-#     radius: int = 2
-#     # n_bits: int = 1024
-
-#     _feature_length: int = 1024
-
-#     @requires_package("rdkit")
-#     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-#         from rdkit.Chem import rdMolDescriptors
-#         from openff.nagl.utils.openff import openff_to_rdkit
-
-#         rdmol = openff_to_rdkit(molecule)
-#         fingerprints = []
-#         for atom in rdmol.GetAtoms():
-#             fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(
-#                 rdmol,
-#                 radius=self.radius,
-#                 nBits=self._feature_length,
-#                 fromAtoms=[atom.GetIdx()]
-#             )
-#             fp.ToList()
-#             fingerprints.append(fp)
-        
-#         feature = torch.tensor(fingerprints)
-#         return feature

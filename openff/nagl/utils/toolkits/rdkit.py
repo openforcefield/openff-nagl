@@ -10,9 +10,8 @@ from openff.units import unit
 from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils.types import HybridizationType
-
-if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+from openff.toolkit.topology import Molecule
+    
 
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     name = "rdkit"
@@ -91,9 +90,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         return new_mol.remap(adjusted_mapping, current_to_new=True)
 
-    @classmethod
     def get_molecule_hybridizations(
-        cls,
+        self,
         molecule: "Molecule"
     ) -> List[HybridizationType]:
         """
@@ -125,7 +123,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         }
 
         hybridizations = []
-        rdmol = cls.to_rdkit(molecule)
+        rdmol = self.to_rdkit(molecule)
         for atom in rdmol.GetAtoms():
             hybridization = atom.GetHybridization()
             try:

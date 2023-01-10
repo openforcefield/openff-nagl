@@ -34,6 +34,9 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
+              # broken OpenMM build for Mac on 3.10
+            - os: "macOS-latest"
+              python-version: "3.10"
 
     steps:
     - uses: actions/checkout@v3
