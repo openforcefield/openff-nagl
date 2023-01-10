@@ -226,6 +226,8 @@ def get_best_rmsd(
     target_conformer: np.ndarray or openff.units.unit.Quantity
         The target conformer to compare to the reference conformer.
         If a numpy array, it is assumed to be in units of angstrom.
+    toolkit_registry:
+        The toolkit registry to use
     
     Returns
     -------
@@ -240,6 +242,38 @@ def get_best_rmsd(
     >>> molecule.generate_conformers(n_conformers=2)
     >>> rmsd = get_best_rmsd(molecule, molecule.conformers[0], molecule.conformers[1])
     >>> print(f"RMSD in angstrom: {rmsd.m_as(unit.angstrom)}")
+
+    """
+
+@toolkit_registry_function
+def calculate_circular_fingerprint_similarity(
+    molecule: "Molecule",
+    reference_molecule: "Molecule",
+    radius: int = 3,
+    nbits: int = 2048,
+    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+) -> float:
+    """
+    Compute the similarity between two molecules using a fingerprinting method.
+    Uses a Morgan fingerprint with RDKit and a Circular fingerprint with OpenEye.
+
+    Parameters
+    ----------
+    molecule: openff.toolkit.topology.Molecule
+        The molecule to compute the fingerprint for.
+    reference_molecule: openff.toolkit.topology.Molecule
+        The molecule to compute the fingerprint for.
+    radius: int, default 3
+        The radius of the fingerprint to use.
+    nbits: int, default 2048
+        The length of the fingerprint to use. Not used in RDKit.
+    toolkit_registry:
+    The toolkit registry to use
+
+    Returns
+    -------
+    similarity: float
+        The Dice similarity between the two molecules.
 
     """
 
