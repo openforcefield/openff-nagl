@@ -7,7 +7,6 @@ from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from ..base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
-from ..resonance.resonance import ResonanceEnumerator
 from .utils import (
     FEATURE,
     FORWARD,
@@ -77,14 +76,17 @@ class DGLMolecule(DGLBase):
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
     ):
+        from openff.nagl.utils.resonance import ResonanceEnumerator
+
         offmols = [molecule]
         if enumerate_resonance_forms:
             enumerator = ResonanceEnumerator(molecule)
-            offmols = enumerator.enumerate_resonance_molecules(
+            offmols = enumerator.enumerate_resonance_forms(
+                molecule,
                 lowest_energy_only=lowest_energy_only,
                 max_path_length=max_path_length,
                 include_all_transfer_pathways=include_all_transfer_pathways,
-                moleculetype=OFFMolecule,
+                as_dicts=False,
             )
 
         subgraphs = [

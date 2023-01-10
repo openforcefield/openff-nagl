@@ -3,20 +3,118 @@
 import copy
 import itertools
 import json
-from typing import Dict, Optional, List, Generator, Tuple, Any
+from typing import Dict, Optional, List, Generator, Tuple, Any, Union
 
 import networkx as nx
 import numpy as np
 
+from openff.units import unit
 from openff.toolkit.topology import Molecule
 
 from openff.nagl.utils.types import ResonanceType, ResonanceAtomType
 
-__all__ = ["ResonanceEnumerator"]
+__all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
+
+def enumerate_resonance_forms(
+    molecule: Molecule,
+    lowest_energy_only: bool = True,
+    max_path_length: Optional[int] = None,
+    include_all_transfer_pathways: bool = False,
+    as_dicts: bool = False,
+) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
+    """
+    Recursively attempts to find all resonance structures of an input molecule
+    according to a modified version of the algorithm proposed by Gilson et al [1].
+
+    Enumeration proceeds by:
+
+    1. The molecule is turned into a ``networkx`` graph object.
+    2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
+    will not be involved in electron transfer.
+    3. Disjoint sub-graphs are detected and separated out.
+    4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
+    5. For each disjoint subgraph:
+        a) The original v-charge algorithm is applied to yield the resonance structures
+        of that subgraph.
+
+    This will lead to ``M_i`` resonance structures for each of the ``N`` sub-graphs.
+
+    If ``as_dicts=True`` then the resonance states in each sub-graph are returned. This
+    avoids the need to combinatorially combining resonance information from each
+    sub-graph. When ``as_dicts=False``, all ``M_0 x M_1 x ... x M_N`` forms are fully
+    enumerated and return as molecule objects matching the input molecule type.
+
+    .. note::
+
+        * This method will strip all stereochemistry and aromaticity information from
+        the input molecule.
+        * The method only attempts to enumerate resonance forms that occur when a
+        pair of electrons can be transferred along a conjugated path from a donor to
+        an acceptor. Other types of resonance, e.g. different Kekule structures, are
+        not enumerated.
+
+    Parameters
+    ----------
+    molecule: openff.toolkit.topology.Molecule
+        The molecule to enumerate resonance forms for.
+    lowest_energy_only: bool, optional
+        Whether to only return the resonance forms with the lowest
+        'energy' as defined in [1].
+    max_path_length: int, optional
+        The maximum number of bonds between a donor and acceptor to
+        consider. If None, all paths are considered.
+    as_dicts: bool, optional
+        Whether to return the resonance forms in a form that is more
+        compatible with producing feature vectors. If false, all combinatorial
+        resonance forms will be returned which may be significantly slow if the
+        molecule is very heavily conjugated and has many donor / acceptor pairs.
+    include_all_transfer_pathways: bool, optional
+        Whether to include resonance forms that have
+        the same formal charges but have different arrangements of bond orders. Such
+        cases occur when there exists multiple electron transfer pathways between
+        electron donor-acceptor pairs e.g. in cyclic systems.
+
+    References
+    ----------
+
+    [1] Gilson, Michael K., Hillary SR Gilson, and Michael J. Potter. "Fast
+    assignment of accurate partial atomic charges: an electronegativity
+    equalization method that accounts for alternate resonance forms." Journal of
+    chemical information and computer sciences 43.6 (2003): 1982-1997.
+
+    Returns
+    -------
+    resonance_forms: List[Molecule]
+        A list of all resonance forms including the original molecule.
+    
+    """
+    enumerator = ResonanceEnumerator(molecule)
+    return enumerator.enumerate_resonance_forms(
+        lowest_energy_only=lowest_energy_only,
+        max_path_length=max_path_length,
+        include_all_transfer_pathways=include_all_transfer_pathways,
+        as_dicts=as_dicts
+    )
 
 
 class ResonanceEnumerator:
+    """
+    A convenience class for enumerating resonance forms of a molecule
+    according to the algorithm proposed by Gilson et al [1].
 
+    Enumeration proceeds by:
+
+    1. The molecule is turned into a ``networkx`` graph object at :attr:`ResonanceEnumerator.graph`.
+    2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
+    will not be involved in electron transfer, yielding :attr:`ResonanceEnumerator.reduced_graph`.
+    3. Disjoint sub-graphs are detected and separated out.
+    4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
+    5. For each disjoint subgraph:
+        a) The ``networkx`` graph is converted to a :class:`FragmentEnumerator`
+        b) The original v-charge algorithm is applied to yield the resonance structures
+        of that subgraph, using :meth:`FragmentEnumerator.enumerate_resonance_forms`
+
+    """
 
     def __init__(
         self,
@@ -32,13 +130,71 @@ class ResonanceEnumerator:
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
         as_dicts: bool = False,
-    ):
-        fragments = self._enumerate_resonance_fragments(
+    ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
+        """
+        Recursively attempts to find all resonance structures of an input molecule
+        according to a modified version of the algorithm proposed by Gilson et al [1].
+
+        Enumeration proceeds by:
+
+        1. The molecule is turned into a ``networkx`` graph object.
+        2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
+        will not be involved in electron transfer.
+        3. Disjoint sub-graphs are detected and separated out.
+        4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
+        5. For each disjoint subgraph:
+            a) The original v-charge algorithm is applied to yield the resonance structures
+            of that subgraph.
+
+        Parameters
+        ----------
+        lowest_energy_only: bool, optional
+            Whether to only return the resonance forms with the lowest
+            'energy' as defined in [1].
+        max_path_length: int, optional
+            The maximum number of bonds between a donor and acceptor to
+            consider. If None, all paths are considered.
+        as_dicts: bool, optional
+            Whether to return the resonance forms as dictionaries.
+            If ``False``, all combinatorial
+            resonance forms will be returned as molecule objects.
+            This may be significantly slow if the
+            molecule is very heavily conjugated and has many donor / acceptor pairs.
+            If ``True`` then the resonance states in each sub-graph are returned. This
+            avoids the need to combinatorially combining resonance information from each
+            sub-graph.
+        include_all_transfer_pathways: bool, optional
+            Whether to include resonance forms that have
+            the same formal charges but have different arrangements of bond orders. Such
+            cases occur when there exists multiple electron transfer pathways between
+            electron donor-acceptor pairs e.g. in cyclic systems.
+
+        References
+        ----------
+
+        [1] Gilson, Michael K., Hillary SR Gilson, and Michael J. Potter. "Fast
+        assignment of accurate partial atomic charges: an electronegativity
+        equalization method that accounts for alternate resonance forms." Journal of
+        chemical information and computer sciences 43.6 (2003): 1982-1997.
+
+        Returns
+        -------
+        resonance_forms: List[Molecule]
+            A list of all resonance forms including the original molecule.
+        
+        """
+        from openff.nagl.utils.openff import molecule_from_networkx
+
+        all_fragments = self._enumerate_resonance_fragments(
             lowest_energy_only=lowest_energy_only,
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
-        combinations = itertools.product(*fragments)
+        graphs = [
+            [fragment.reduced_graph for fragment in fragments]
+            for fragments in all_fragments
+        ]
+        combinations = itertools.product(*graphs)
         resonance_forms = [
             self._substitute_resonance_fragments(combination)
             for combination in combinations
@@ -51,15 +207,35 @@ class ResonanceEnumerator:
             ]
         else:
             molecules = [
-                Molecule.from_networkx(resonance_form)
+                molecule_from_networkx(resonance_form)
                 for resonance_form in resonance_forms
             ]
         
         return molecules
 
+    def to_fragment(self) -> "FragmentEnumerator":
+        """Convert to a FragmentEnumerator"""
+        graph = copy.deepcopy(self.reduced_graph)
+        return FragmentEnumerator(graph)
 
     @staticmethod
     def _convert_graph_to_dict(graph: nx.Graph) -> Dict[str, Dict[str, Any]]:
+        """
+        Convert a molecule ``networkx`` graph to a dictionary
+
+        Parameters
+        ----------
+        graph: :class:`networkx.Graph`
+            Input molecule graph
+
+        Returns
+        -------
+        molecule_dict: Dict[str, Dict[str, Any]]
+            A dictionary representation of the molecule.
+            molecule_dict["atoms"][i] contains the atom information for atom i.
+            molecule_dict["bonds"][(i, j)] contains the bond information for bond (i, j).
+            All bonds are stored in the order (i, j) where i < j.
+        """
         atoms = dict(graph.nodes(data=True))
         bonds = {}
         for i, j, info in graph.edges(data=True):
@@ -73,10 +249,34 @@ class ResonanceEnumerator:
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-    ) -> List[List[nx.Graph]]:
-        acceptor_donor_fragments = self.get_acceptor_donor_fragments()
+    ) -> List[List["FragmentEnumerator"]]:
+        """
+        Recursively enumerate all resonance forms of disjoint subgraphs.
+        
+        Parameters
+        ----------
+        lowest_energy_only: bool, optional
+            Whether to only return the resonance forms with the lowest
+            'energy' as defined in [1].
+        max_path_length: int, optional
+            The maximum number of bonds between a donor and acceptor to
+            consider. If None, all paths are considered.
+        include_all_transfer_pathways: bool, optional
+            Whether to include resonance forms that have
+            the same formal charges but have different arrangements of bond orders. Such
+            cases occur when there exists multiple electron transfer pathways between
+            electron donor-acceptor pairs e.g. in cyclic systems.
+
+        Returns
+        -------
+        resonance_fragments: List[List[FragmentEnumerator]]
+            All enumerated disjoint subgraphs.
+            resonance_fragments[i][j] returns the j-th resonance form
+            of the i-th subgraph of the molecule.
+        """
+        acceptor_donor_fragments = self._get_acceptor_donor_fragments()
         fragment_resonance_forms = [
-            fragment._enumerate_resonance_forms(
+            fragment.enumerate_resonance_forms(
                 lowest_energy_only=lowest_energy_only,
                 max_path_length=max_path_length,
                 include_all_transfer_pathways=include_all_transfer_pathways,
@@ -85,23 +285,67 @@ class ResonanceEnumerator:
         ]
         return fragment_resonance_forms
     
-    def _substitute_resonance_fragments(self, resonance_forms: List[nx.Graph]):
+    def _substitute_resonance_fragments(
+        self,
+        resonance_forms: List[nx.Graph]
+    ) -> nx.Graph:
+        """
+        Substitute all resonance subgraphs to
+        generate a new molecule graph
+
+        Parameters
+        ----------
+        resonance_forms: List[nx.Graph]
+            All disjoint ``networkx`` graphs to substitute
+
+        Returns
+        -------
+        new_graph: nx.Graph
+            The new molecule graph with all resonance subgraphs 
+        """
         graph = copy.deepcopy(self.graph)
         for subgraph in resonance_forms:
-            self._substitute_graph_attributes(subgraph, graph)
+            self._update_graph_attributes(subgraph, graph)
         return graph
     
 
     @staticmethod
-    def _substitute_graph_attributes(source: nx.Graph, target: nx.Graph):
-        for node in target.nodes:
+    def _update_graph_attributes(source: nx.Graph, target: nx.Graph):
+        """
+        Update the attributes of the nodes and edges of
+        a target graph with those of a source graph.
+        All nodes and edges in the source graph should be present
+        in the target.
+        The target graph is updated in-place.
+
+        Parameters
+        ----------
+        source: :class:`networkx.Graph`
+            Source sub-graph
+        target: :class:`networkx.Graph`
+            Target graph
+
+        """
+        for node in source.nodes:
             target.nodes[node].update(source.nodes[node])
-        for i, j in target.edges:
-            target.edges[i][j].update(source.edges[i][j])
+        for i, j in source.edges:
+            target.edges[i, j].update(source.edges[i, j])
 
 
     @staticmethod
     def _convert_molecule_to_graph(molecule):
+        """
+        Convert a molecule to a ``networkx`` graph
+        where each node has ``bond_orders`` information
+
+        Parameters
+        ----------
+        molecule: :class:`openff.toolkit.topology.Molecule`
+
+        Returns
+        -------
+        graph: :class:`networkx.Graph`
+        """
         graph = molecule.to_networkx()
         for node, atom in zip(graph.nodes, molecule.atoms):
             bond_orders = tuple(sorted(bond.bond_order for bond in atom.bonds))
@@ -110,7 +354,22 @@ class ResonanceEnumerator:
         return graph
 
     @staticmethod
-    def _reduce_graph(graph, inplace: bool = True):
+    def _reduce_graph(graph: nx.Graph, inplace: bool = True) -> nx.Graph:
+        """
+        Reduce a ``networkx`` graph by removing all hydrogen
+        and CX4 atoms
+
+        Parameters
+        ----------
+        graph: :class:`networkx.Graph`
+            Input molecule graph with all atoms
+        inplace: bool
+            Whether to reduce the graph inplace
+        
+        Returns
+        -------
+        reduced_graph: :class:`networkx.Graph`
+        """
         if not inplace:
             graph = copy.deepcopy(graph)
 
@@ -138,12 +397,21 @@ class ResonanceEnumerator:
 
     @staticmethod
     def _fragment_networkx_graph(graph):
-        return [
-            graph.subgraph(fragment)
-            for fragment in nx.connected_components(graph)
-        ]
-    
-    def get_acceptor_donor_fragments(self):
+        """
+        Fragment a ``networkx`` graph into disjoint subgraphs
+        """
+        for fragment in nx.connected_components(graph):
+            yield graph.subgraph(fragment)
+
+    def _get_acceptor_donor_fragments(self) -> List["FragmentEnumerator"]:
+        """
+        Get all fragments of the molecule that contain both
+        electron donors and acceptors
+
+        Returns
+        -------
+        fragments: List["FragmentEnumerator"]
+        """
         acceptor_donor_fragments = []
         
         for nxfragment in self._fragment_networkx_graph(self.reduced_graph):
@@ -156,11 +424,19 @@ class ResonanceEnumerator:
 
 
     
-
-
 class FragmentEnumerator:
+
+    """
+    A convenience class to enumerate resonance forms of a fragment of a molecule.
+
+    Parameters
+    ----------
+    graph: nx.Graph
+        A ``networkx`` Graph representation of a molecule fragment.
+    """
+
     def __init__(self, graph):
-        self.graph = graph
+        self.reduced_graph = graph
         self._path_cache = {}
         self.resonance_types = self._get_resonance_types()
         self.acceptor_indices = []
@@ -204,13 +480,14 @@ class FragmentEnumerator:
         all_paths = map(
             tuple,
             nx.all_simple_paths(
-                self.graph,
+                self.reduced_graph,
                 node_a,
                 node_b,
                 cutoff=max_path_length,
             )
         )
-        odd_paths = tuple([path for path in all_paths if len(path) % 2 == 1])
+        odd_paths = [path for path in all_paths if len(path) % 2 == 1]
+        odd_paths = tuple(sorted(odd_paths, key=len, reverse=True))
         self._path_cache[key] = odd_paths
         self._path_cache[key[::-1]] = odd_paths
         return odd_paths
@@ -221,6 +498,27 @@ class FragmentEnumerator:
         acceptor_node: int,
         max_path_length: Optional[int] = None,
     ) -> Generator[Tuple[int, ...], None, None]:
+        """
+        Attempts to find all possible electron transfer paths, as defined by Gilson et
+        al [1], between a donor and an acceptor atom.
+
+        Parameters
+        ----------
+        donor_node: int
+            The node of the donor atom
+        acceptor_node: int
+            The node of the acceptor atom
+        max_path_length: Optional[int]
+            The maximum length of the paths to search.
+            If None, all paths will be returned.
+
+
+        Returns
+        -------
+        transfer_paths: Generator[Tuple[int, ...], None, None
+            A list of any 'electron transfer' paths that begin from the donor atom and end
+            at the acceptor atom.
+        """
         for path in self._get_all_odd_n_simple_paths(donor_node, acceptor_node, max_path_length):
             if self._is_transfer_path(path):
                 yield path
@@ -243,7 +541,10 @@ class FragmentEnumerator:
             Whether the path is a transfer path.
         """
         edges = zip(path[:-1], path[1:])
-        bond_orders = [self.graph.edges[i, j]["bond_order"] for i, j in edges]
+        bond_orders = np.array([
+            self.reduced_graph.edges[i, j]["bond_order"]
+            for i, j in edges
+        ])
         deltas = bond_orders[1:] - bond_orders[:-1]
         return np.all(deltas[::2] == 1) and np.all(deltas[1::2] == -1)
 
@@ -253,19 +554,39 @@ class FragmentEnumerator:
         include_bonds: bool = True,
         include_formal_charges: bool = False
     ) -> Dict[str, List[int]]:
+        """
+        A convenience method to convert a molecule fragment to a dictionary.
+        This is used to generate a hash of the fragment.
+
+        Parameters
+        ----------
+        include_bonds: bool
+            Whether to include bond orders
+        include_formal_charges: bool
+            Whether to include atom formal charges
+
+        Returns
+        -------
+        dictionary: Dict[str, List[int]]
+            A dictionary representation of the fragment.
+            The keys are "acceptor_indices" and "donor_indices".
+            Optionally, they can include "bond_orders" and "formal_charges".
+        """
         hash_dict = {
             "acceptor_indices": self.acceptor_indices,
             "donor_indices": self.donor_indices,
         }
         if include_bonds:
-            hash_dict["bond_orders"] = sorted(
-                self.graph.edges(data="bond_order")
-            )
-
+            bond_data = self.reduced_graph.edges(data="bond_order")
+            hash_dict["bond_orders"] = {
+                (i, j): x
+                for i, j, x in bond_data
+            }
         if include_formal_charges:
-            hash_dict["formal_charges"] = sorted(
-                self.graph.nodes(data="formal_charge")
-            )
+            hash_dict["formal_charges"] = [
+                q.m_as(unit.elementary_charge)
+                for _, q in self.reduced_graph.nodes(data="formal_charge")
+            ]
         return hash_dict
 
     def _to_resonance_json(
@@ -273,13 +594,32 @@ class FragmentEnumerator:
         include_bonds: bool = True,
         include_formal_charges: bool = False
     ) -> str:
-        return json.dumps(
-            self._to_resonance_dict(
-                include_bonds=include_bonds,
-                include_formal_charges=include_formal_charges,
-            ),
-            sort_keys=True,
+        """
+        A convenience method to convert a molecule fragment to a JSON string
+
+        Parameters
+        ----------
+        include_bonds: bool
+            Whether to include bond orders
+        include_formal_charges: bool
+            Whether to include atom formal charges
+
+        Returns
+        -------
+        string: str
+        """
+        resonance_dict = self._to_resonance_dict(
+            include_bonds=include_bonds,
+            include_formal_charges=include_formal_charges,
         )
+        if include_bonds:
+            resonance_dict["bond_orders"] = sorted(
+                map(
+                    tuple,
+                    resonance_dict["bond_orders"].items()
+                )
+            )
+        return json.dumps(resonance_dict, sort_keys=True)
 
 
     def _to_resonance_hash(
@@ -287,24 +627,57 @@ class FragmentEnumerator:
         include_bonds: bool = True,
         include_formal_charges: bool = False
     ) -> bytes:
+        """
+        A convenience method to convert a molecule fragment to a hash
+
+        Parameters
+        ----------
+        include_bonds: bool
+            Whether to include bond orders
+        include_formal_charges: bool
+            Whether to include atom formal charges
+
+        Returns
+        -------
+        hashed_string: bytes
+        """
         import hashlib
 
-        json_str = self.to_resonance_json(
+        json_str = self._to_resonance_json(
             include_bonds=include_bonds, 
-            nclude_formal_charges=include_formal_charges
+            include_formal_charges=include_formal_charges
         )
         return hashlib.sha1(json_str.encode(), usedforsecurity=False).digest()
 
 
     def _transfer_electrons(self, path: Tuple[int, ...]):
-        graph = copy.deepcopy(self.graph)
+        """
+        Carries out an electron transfer along the pre-determined transfer path starting
+        from a donor and ending in an acceptor.
+
+        Parameters
+        ----------
+        path: Tuple[int, ...]
+            The path along which to transfer electrons.
+            The first and last atoms are the donor and acceptor, respectively.
+        
+
+        Returns
+        -------
+        new_fragment: FragmentEnumerator
+            The new fragment after the electron transfer
+        """
+        graph = copy.deepcopy(self.reduced_graph)
+        if not len(path):
+            return type(self)(graph)
 
         donor_index, acceptor_index = path[0], path[-1]
         for index in [donor_index, acceptor_index]:
             resonance_type = self._get_atom_resonance_type(index)
             conjugate_key = resonance_type.get_conjugate_key()
+            charge = conjugate_key.formal_charge * unit.elementary_charge
+            graph.nodes[index]["formal_charge"] = charge
             graph.nodes[index]["atomic_number"] = conjugate_key.atomic_number
-            graph.nodes[index]["formal_charge"] = conjugate_key.formal_charge
             graph.nodes[index]["bond_orders"] = conjugate_key.bond_orders
         
         for bond_index, (i, j) in enumerate(zip(path[:-1], path[1:])):
@@ -314,15 +687,24 @@ class FragmentEnumerator:
         return type(self)(graph)
 
 
-
-    
-
     def _get_atom_resonance_type(self, index: int) -> ResonanceType.Value:
-        """Get the resonance type of an atom."""
-        node_info = self.graph[index]
+        """
+        Get the resonance type of an atom.
+        
+        Parameters
+        ----------
+        node: int
+            Node of the atom to get resonance type of
+        
+        Returns
+        -------
+        resonance_type: ResonanceType.Value
+        """
+        node_info = self.reduced_graph.nodes[index]
+        charge = node_info["formal_charge"].m_as(unit.elementary_charge)
         return ResonanceType.get_resonance_type(
             atomic_number=node_info["atomic_number"],
-            formal_charge=node_info["formal_charge"],
+            formal_charge=charge,
             bond_orders=node_info["bond_orders"],
         )
 
@@ -336,7 +718,7 @@ class FragmentEnumerator:
             Keys are node numbers.
         """
         resonance_types = {}
-        for index in self.graph.nodes:
+        for index in self.reduced_graph.nodes:
             try:
                 resonance_types[index] = self._get_atom_resonance_type(index)
             except KeyError:
@@ -347,6 +729,19 @@ class FragmentEnumerator:
         self,
         max_path_length: Optional[int] = None,
     ) -> Generator["FragmentEnumerator", None, None]:
+        """Enumerate all resonance forms of this fragment
+        by transferring electrons
+        
+        Parameters
+        ----------
+        max_path_length: int, optional
+            The maximum length of possible transfer paths.
+            If None, all paths are considered.
+
+        Returns
+        -------
+        resonance_forms: Generator[FragmentEnumerator, None, None]
+        """
         for acceptor_index in self.acceptor_indices:
             for donor_index in self.donor_indices:
                 for path in self._get_transfer_paths(
@@ -363,9 +758,10 @@ class FragmentEnumerator:
         include_all_transfer_pathways: bool = False,
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
-    ) -> List[nx.Graph]:
+    ) -> List["FragmentEnumerator"]:
         """
-        Enumerate all resonance forms for a fragment.
+        Recursively enumerate all resonance forms for a fragment
+        using the v-charge algorithm.
 
         Parameters
         ----------
@@ -375,6 +771,13 @@ class FragmentEnumerator:
             rearrangements, e.g. ring resonance structures
         lowest_energy_only: bool
             Whether to only include the lowest energy resonance forms.
+        max_path_length: int, optional
+            The maximum length of possible transfer paths.
+            If None, all paths are considered.
+
+        Returns
+        -------
+        resonance_forms: List[FragmentEnumerator]
         """
         
         self_hash = self._to_resonance_hash(include_bonds=True)
@@ -401,15 +804,14 @@ class FragmentEnumerator:
             # Drop resonance forms that only differ due to bond order re-arrangements as we
             # aren't interested in e.g. ring resonance structures.
             closed_forms = {
-                fragment.to_resonance_hash(include_bonds=False): fragment
+                fragment._to_resonance_hash(include_bonds=False): fragment
                 for fragment in closed_forms.values()
             }
 
         if lowest_energy_only:
             closed_forms = self._select_lowest_energy_forms(closed_forms)
 
-        graphs = [form.graph for form in closed_forms.values()]
-
+        graphs = list(closed_forms.values())
         return graphs
 
     
@@ -417,10 +819,22 @@ class FragmentEnumerator:
     def _select_lowest_energy_forms(
         forms: Dict[Any, "FragmentEnumerator"]
     ) -> Dict[Any, "FragmentEnumerator"]:
-        """Select the resonance forms with the lowest energy."""
+        """
+        Select the resonance forms with the lowest energy.
+        
+        Parameters
+        ----------
+        forms: Dict[Any, FragmentEnumerator]
+            All possible resonance forms
+
+        Returns
+        -------
+        lowest_energy_forms: Dict[Any, FragmentEnumerator]
+            The resonance forms with the lowest energy.
+        """
 
         energies: Dict[Any, float] = {
-            key: form._calculate_resonance_energy()
+            key: form._get_resonance_energy()
             for key, form in forms.items()
         }
         lowest = min(energies.values())
@@ -433,4 +847,11 @@ class FragmentEnumerator:
 
 
     def _get_resonance_energy(self) -> float:
+        """
+        Calculate the resonance energy sum of all resonance atoms in this form
+
+        Returns
+        -------
+        energy: float
+        """
         return sum(res.energy for res in self.resonance_types.values())

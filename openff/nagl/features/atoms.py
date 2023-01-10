@@ -6,6 +6,7 @@ import torch
 from pydantic import validator
 
 from openff.nagl.utils.types import HybridizationType
+from openff.units import unit
 from openff.utilities import requires_package
 
 from .base import CategoricalMixin, Feature, FeatureMeta
@@ -144,16 +145,15 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
 
 class AtomAverageFormalCharge(AtomFeature):
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        from openff.nagl.utils.resonance import ResonanceEnumerator
+        from openff.nagl.utils.resonance import enumerate_resonance_forms
         from openff.nagl.utils.openff import normalize_molecule
 
-        molecule = normalize_molecule(molecule, check_output=False)
-        enumerator = ResonanceEnumerator(molecule)
-        resonance_forms = enumerator.enumerate_resonance_forms(
+        molecule = normalize_molecule(molecule)
+        resonance_forms = enumerate_resonance_forms(
+            molecule,
             lowest_energy_only=True,
             include_all_transfer_pathways=False,
             as_dicts=True,
-            include_self=True
         )
         formal_charges: List[float] = []
         for index in range(molecule.n_atoms):
@@ -161,7 +161,13 @@ class AtomAverageFormalCharge(AtomFeature):
                 graph["atoms"][index]["formal_charge"]
                 for graph in resonance_forms
             ]
+            if not charges:
+                molecule.atoms[index].formal_charge
 
+            charges = [
+                q.m_as(unit.elementary_charge)
+                for q in charges
+            ]
             charge = np.mean(charges)
             formal_charges.append(charge)
 
