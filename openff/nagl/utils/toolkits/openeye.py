@@ -363,7 +363,70 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             bond_index = off_bond.molecule_bond_index
             is_in_ring_size[bond_index] = oechem.OEBondIsInRingSize(oebond, ring_size)
 
-        return in_ring_size
+        return is_in_ring_size
+
+    # TODO: this only outputs 0 or 1.
+    # def calculate_circular_fingerprint_similarity(
+    #     self,
+    #     molecule: "Molecule",
+    #     reference_molecule: "Molecule",
+    #     radius: int = 3,
+    #     nbits: int = 2048,
+    # ) -> float:
+    #     """
+    #     Compute the similarity between two molecules using a fingerprinting method.
+    #     Uses a Morgan fingerprint with RDKit and a Circular fingerprint with OpenEye.
+
+    #     Parameters
+    #     ----------
+    #     molecule: openff.toolkit.topology.Molecule
+    #         The molecule to compute the fingerprint for.
+    #     reference_molecule: openff.toolkit.topology.Molecule
+    #         The molecule to compute the fingerprint for.
+    #     radius: int, default 3
+    #         The radius of the fingerprint to use.
+    #     nbits: int, default 2048
+    #         The length of the fingerprint to use. Not used in RDKit.
+
+    #     Returns
+    #     -------
+    #     similarity: float
+    #         The Dice similarity between the two molecules.
+
+    #     """
+    #     from openeye import oegraphsim
+
+    #     oegraphsim.OEFPBondType_DefaultCircularBond
+
+    #     # Connectivity: (Element, #heavy neighbors, #Hs, charge, isotope, inRing
+    #     # Donor, Acceptor, Aromatic, Halogen, Basic, Acidic
+    #     atypes = (
+    #         oegraphsim.OEFPAtomType_AtomicNumber
+    #         | oegraphsim.OEFPAtomType_HvyDegree
+    #         | oegraphsim.OEFPAtomType_HCount
+    #         | oegraphsim.OEFPAtomType_FormalCharge
+    #         | oegraphsim.OEFPAtomType_InRing
+    #         | oegraphsim.OEFPAtomType_Chiral
+    #         | oegraphsim.OEFPAtomType_EqHBondDonor
+    #         | oegraphsim.OEFPAtomType_EqHBondAcceptor
+    #         | oegraphsim.OEFPAtomType_EqAromatic
+    #         | oegraphsim.OEFPAtomType_EqHalogen
+    #     )
+
+    #     btypes = oegraphsim.OEFPBondType_BondOrder
+
+    #     oemol1 = self.to_openeye(molecule)
+    #     oemol2 = self.to_openeye(reference_molecule)
+
+    #     fp1 = oegraphsim.OEFingerPrint()
+    #     oegraphsim.OEMakeCircularFP(fp1, oemol1, nbits, radius, radius, atypes, btypes)
+    #     fp2 = oegraphsim.OEFingerPrint()
+    #     oegraphsim.OEMakeCircularFP(fp2, oemol2, nbits, radius, radius, atypes, btypes)
+
+    #     similarity = oegraphsim.OEDice(fp1, fp2)
+
+    #     return similarity
+    
 
 
 # import contextlib
