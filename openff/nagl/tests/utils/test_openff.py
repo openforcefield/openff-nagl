@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
 from openff.units import unit
 
 from openff.nagl.utils.openff import (
@@ -11,6 +12,7 @@ from openff.nagl.utils.openff import (
     map_indexed_smiles,
     normalize_molecule,
     smiles_to_inchi_key,
+    calculate_circular_fingerprint_similarity
 )
 from openff.nagl.utils.utils import transform_coordinates
 
@@ -134,6 +136,22 @@ def test_not_is_conformer_identical():
     perturbed_conformer[4, :] = hydrogen_coordinates + 0.1
 
     assert not is_conformer_identical(offmol, conformer, perturbed_conformer)
+
+
+@pytest.mark.skipif(
+    not RDKIT_AVAILABLE,
+    reason="requires rdkit"
+)
+@pytest.mark.parametrize("smiles1, smiles2, radius, similarity", [
+    ("C", "C", 3, 1.0),
+    ("C", "N", 3, 0.33333333333333333),
+])
+def test_calculate_circular_fingerprint_similarity(smiles1, smiles2, radius, similarity):
+    mol1 = OFFMolecule.from_smiles(smiles1)
+    mol2 = OFFMolecule.from_smiles(smiles2)
+
+    dice = calculate_circular_fingerprint_similarity(mol1, mol2, radius=radius)
+    assert_allclose(dice, similarity)
 
 
 # def test_get_best_rmsd():

@@ -484,3 +484,42 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         if normalize_partial_charges:
             molecule._normalize_partial_charges()
         
+    def calculate_circular_fingerprint_similarity(
+        self,
+        molecule: "Molecule",
+        reference_molecule: "Molecule",
+        radius: int = 3,
+        nbits: int = 2048,
+    ) -> float:
+        """
+        Compute the similarity between two molecules using a fingerprinting method.
+        Uses a Morgan fingerprint with RDKit and a Circular fingerprint with OpenEye.
+
+        Parameters
+        ----------
+        molecule: openff.toolkit.topology.Molecule
+            The molecule to compute the fingerprint for.
+        reference_molecule: openff.toolkit.topology.Molecule
+            The molecule to compute the fingerprint for.
+        radius: int, default 3
+            The radius of the fingerprint to use.
+        nbits: int, default 2048
+            The length of the fingerprint to use. Not used in RDKit.
+
+        Returns
+        -------
+        similarity: float
+            The Dice similarity between the two molecules.
+
+        """
+        from rdkit import Chem
+        from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
+        from rdkit.DataStructs import DiceSimilarity
+
+        rdmol1 = self.to_rdkit(molecule)
+        rdmol2 = self.to_rdkit(reference_molecule)
+
+        fp1 = GetMorganFingerprint(rdmol1, radius)
+        fp2 = GetMorganFingerprint(rdmol2, radius)
+
+        return DiceSimilarity(fp1, fp2)
