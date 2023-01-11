@@ -63,6 +63,7 @@ class MoleculeAtomFingerprints:
         ]
         return sum(counts)
 
+    @requires_package("rdkit")
     @staticmethod
     def generate_fingerprints(smiles: str, exclude_elements=("H",)):
         from rdkit import Chem
@@ -283,6 +284,7 @@ class DatasetPartitioner:
         labelled = {x: self.labelled_smiles.get(x) for x in smiles}
         return type(self)(labelled)
 
+    @requires_package("rdkit")
     def select_diverse(
         self, n_molecules: int = 20000, seed: int = 42
     ) -> "DatasetPartitioner":

@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import dgl.function
 import torch
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import Molecule
 
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
@@ -14,7 +14,7 @@ FEATURE = "feat"
 
 
 def openff_molecule_to_base_dgl_graph(
-    molecule: OFFMolecule,
+    molecule: Molecule,
     forward: str = FORWARD,
     reverse: str = REVERSE,
 ) -> dgl.DGLHeteroGraph:
@@ -39,11 +39,11 @@ def openff_molecule_to_base_dgl_graph(
 
 
 def get_openff_molecule_information(
-    molecule: OFFMolecule,
+    molecule: Molecule,
 ) -> Dict[str, torch.Tensor]:
-    from openff.nagl.utils.openff import get_openff_molecule_formal_charges
+    from openff.units import unit
 
-    charges = get_openff_molecule_formal_charges(molecule)
+    charges = [atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms]
     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
     return {
         "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
@@ -53,7 +53,7 @@ def get_openff_molecule_information(
 
 
 def openff_molecule_to_dgl_graph(
-    molecule: OFFMolecule,
+    molecule: Molecule,
     atom_features: List[AtomFeature] = tuple(),
     bond_features: List[BondFeature] = tuple(),
     forward: str = FORWARD,

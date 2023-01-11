@@ -208,8 +208,9 @@ class MoleculeRecord(Record):
         partial_charge_method: str = None,
         bond_order_method: str = None,
     ):
+        from openff.units import unit
         from openff.nagl.nn.label import LabelPrecomputedMolecule
-        from openff.nagl.utils.openff import get_coordinates_in_angstrom
+        # from openff.nagl.utils.openff import get_coordinates_in_angstrom
 
         if not len(molecule.conformers) == 1:
             raise ValueError(
@@ -236,7 +237,8 @@ class MoleculeRecord(Record):
             bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
 
         conformer_record = ConformerRecord(
-            coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
+            coordinates=molecule.conformers[0].m_as(unit.angstrom),
+            # coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
             partial_charges=charges,
             bond_orders=bonds,
         )
@@ -278,7 +280,8 @@ class MoleculeRecord(Record):
         rms_cutoff
             The minimum RMS cutoff difference between conformers
         """
-        from openff.toolkit.topology.molecule import unit as off_unit
+        # from openff.toolkit.topology.molecule import unit as off_unit
+        from openff.units import unit
 
         from openff.nagl.storage.record import (
             ConformerRecord,
@@ -286,10 +289,10 @@ class MoleculeRecord(Record):
             WibergBondOrder,
             WibergBondOrderRecord,
         )
-        from openff.nagl.utils.openff import (
-            get_coordinates_in_angstrom,
-            get_unitless_charge,
-        )
+        # from openff.nagl.utils.openff import (
+        #     get_coordinates_in_angstrom,
+        #     get_unitless_charge,
+        # )
 
         partial_charge_methods = [
             ChargeMethod(method) for method in partial_charge_methods
@@ -303,7 +306,7 @@ class MoleculeRecord(Record):
         if generate_conformers:
             molecule.generate_conformers(
                 n_conformers=n_conformer_pool,
-                rms_cutoff=rms_cutoff * off_unit.angstrom,
+                rms_cutoff=rms_cutoff * unit.angstrom,
                 toolkit_registry=toolkit_registry,
             )
             molecule.apply_elf_conformer_selection(
@@ -327,9 +330,10 @@ class MoleculeRecord(Record):
                     use_conformers=[conformer],
                     toolkit_registry=toolkit_registry,
                 )
+                charges = molecule.partial_charges.m_as(unit.elementary_charge)
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
+                    values=charges.tolist(),
                 )
 
             bond_order_sets = {}
@@ -348,7 +352,8 @@ class MoleculeRecord(Record):
 
             conformer_records.append(
                 ConformerRecord(
-                    coordinates=get_coordinates_in_angstrom(conformer),
+                    coordinates=conformer.m_as(unit.angstrom),
+                    # coordinates=get_coordinates_in_angstrom(conformer),
                     partial_charges=charge_sets,
                     bond_orders=bond_order_sets,
                 )

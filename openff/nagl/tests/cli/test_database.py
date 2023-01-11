@@ -5,11 +5,13 @@ from click.testing import CliRunner
 from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
 
+from openff.units import unit
+
 from openff.nagl.cli.database import database_cli
 from openff.nagl.storage.record import MoleculeRecord
 from openff.nagl.storage.store import MoleculeStore
 from openff.nagl.utils.openff import (
-    get_unitless_charge,
+    # get_unitless_charge,
     stream_molecules_from_file,
 )
 
@@ -24,7 +26,8 @@ def test_store_molecule(
         openff_methane_charged.to_file("methane.sdf", "sdf")
 
         new_molecule = list(stream_molecules_from_file("methane.sdf"))[0]
-        new_charges = [get_unitless_charge(x) for x in new_molecule.partial_charges]
+        new_charges = new_molecule.partial_charges.m_as(unit.elementary_charge)
+        # new_charges = [get_unitless_charge(x) for x in new_molecule.partial_charges]
         assert_allclose(new_charges, openff_methane_charges)
 
         db_file = "methane.sqlite"
@@ -106,7 +109,8 @@ def test_retrieve_molecule(
         assert os.path.isfile(sdf_file)
 
         from_db_offmol = Molecule.from_file(sdf_file)
-        from_db_charges = [
-            get_unitless_charge(x) for x in from_db_offmol.partial_charges
-        ]
+        from_db_charges = from_db_offmol.partial_charges.m_as(unit.elementary_charge)
+        # from_db_charges = [
+        #     get_unitless_charge(x) for x in from_db_offmol.partial_charges
+        # ]
         assert_allclose(from_db_charges, openff_methane_charges)

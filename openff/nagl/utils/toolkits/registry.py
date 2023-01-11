@@ -1,24 +1,43 @@
-from typing import List
+from typing import List, Optional
 
 from openff.toolkit.utils.toolkit_registry import (
     ToolkitRegistry as _ToolkitRegistry,
     ToolkitUnavailableException
 )
 
-from openff.nagl.utils.toolkits.base import ToolkitWrapperMeta, ToolkitWrapperType
+from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase, ToolkitWrapperType
 
-class ToolkitRegistry(_ToolkitRegistry):
+class NAGLToolkitRegistry(_ToolkitRegistry):
 
     def __init__(
         self,
-        toolkit_wrappers: List[ToolkitWrapperType]
-
+        toolkit_precedence: Optional[List[ToolkitWrapperType]] = None,
+        exception_if_unavailable: bool = True,
+        _register_imported_toolkit_wrappers: bool = False,
     ):
         self._toolkits = []
+        toolkits_to_register = []
 
-        toolkit_wrappers = [ToolkitWrapperMeta._get_object(wrapper) for wrapper in toolkit_wrappers]
-        for toolkit in toolkit_wrappers:
-            self.register_toolkit(toolkit)
+        if _register_imported_toolkit_wrappers:
+            if toolkit_precedence is None:
+                toolkit_precedence = ["openeye", "rdkit"]
+            for toolkit in toolkit_precedence:
+                try:
+                    toolkit_class = NAGLToolkitWrapperMeta._get_class(toolkit)
+                except (KeyError, ValueError):
+                    pass
+                else:
+                    toolkits_to_register.append(toolkit_class)
+            
+        else:
+            if toolkit_precedence is not None:
+                toolkits_to_register = toolkit_precedence
+
+        if toolkits_to_register:
+            for toolkit in toolkits_to_register:
+                self.register_toolkit(
+                    toolkit, exception_if_unavailable=exception_if_unavailable
+                )
 
     
     def deregister_toolkit(self, toolkit_wrapper: ToolkitWrapperType):
@@ -39,7 +58,7 @@ class ToolkitRegistry(_ToolkitRegistry):
         ToolkitUnavailableException
             If toolkit_wrapper is not found in the registry
         """
-        toolkit_wrapper = ToolkitWrapperMeta._get_class(toolkit_wrapper)
+        toolkit_wrapper = NAGLToolkitWrapperMeta._get_class(toolkit_wrapper)
         toolkits_to_remove = []
 
         for toolkit in self._toolkits:
@@ -73,5 +92,6 @@ class ToolkitRegistry(_ToolkitRegistry):
         InvalidToolkitError
             If toolkit_wrapper is not a ToolkitWrapper or subclass
         """
-        toolkit_wrapper = ToolkitWrapperMeta._get_class(toolkit_wrapper)
+        toolkit_wrapper = NAGLToolkitWrapperMeta._get_class(toolkit_wrapper)
         self._toolkits.append(toolkit_wrapper)
+

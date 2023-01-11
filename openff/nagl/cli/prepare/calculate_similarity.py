@@ -4,6 +4,8 @@ import math
 import pathlib
 from typing import Dict, Tuple, Union
 
+from openff.toolkit.topology import Molecule
+
 import click
 import tqdm
 
@@ -12,17 +14,13 @@ def calculate_similarity(
     smiles_pair: Tuple[str, str],
     radius: int = 3,
 ) -> float:
-    from rdkit import Chem
-    from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
-    from rdkit.DataStructs import DiceSimilarity
+    from openff.nagl.utils.openff import calculate_circular_fingerprint_similarity
 
-    ref_smiles, target_smiles = smiles_pair
-    ref = Chem.MolFromSmiles(ref_smiles)
-    ref_fp = GetMorganFingerprint(ref, radius)
-    target = Chem.MolFromSmiles(target_smiles)
-    target_fp = GetMorganFingerprint(target, radius)
+    mol1 = Molecule.from_smiles(smiles_pair[0], allow_undefined_stereo=True)
+    mol2 = Molecule.from_smiles(smiles_pair[1], allow_undefined_stereo=True)
 
-    return DiceSimilarity(ref_fp, target_fp)
+    return calculate_circular_fingerprint_similarity(mol1, mol2, radius)
+
 
 
 def get_similarity(

@@ -46,7 +46,7 @@ def label_molecules(
     molecules = sorted([
         x
         for x in tqdm.tqdm(
-            stream_molecules_from_file(input_file, unsafe=True),
+            stream_molecules_from_file(input_file, include_sdf_data=False),
             desc="loading molecules",
         )
     ], key=lambda x: x.n_atoms, reverse=True)
