@@ -1,27 +1,29 @@
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
 
-import dgl.function
 import torch
+from openff.utilities import requires_package
 from openff.toolkit.topology.molecule import Molecule
 
-from ..features.atoms import AtomFeature
-from ..features.bonds import BondFeature
-from ..features._featurizers import AtomFeaturizer, BondFeaturizer
-
-FORWARD = "forward"
-REVERSE = "reverse"
-FEATURE = "feat"
+from openff.nagl.features.atoms import AtomFeature
+from openff.nagl.features.bonds import BondFeature
+from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
+from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 
 
+
+if TYPE_CHECKING:
+    import dgl
+
+@requires_package("dgl")
 def openff_molecule_to_base_dgl_graph(
     molecule: Molecule,
     forward: str = FORWARD,
     reverse: str = REVERSE,
-) -> dgl.DGLHeteroGraph:
+) -> "dgl.DGLHeteroGraph":
     """
     Convert an OpenFF Molecule to a DGL graph.
     """
-
+    import dgl
     from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
     bonds = get_openff_molecule_bond_indices(molecule)
@@ -38,27 +40,15 @@ def openff_molecule_to_base_dgl_graph(
     return molecule_graph
 
 
-def get_openff_molecule_information(
-    molecule: Molecule,
-) -> Dict[str, torch.Tensor]:
-    from openff.units import unit
-
-    charges = [atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms]
-    atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
-    return {
-        "idx": torch.arange(molecule.n_atoms, dtype=torch.int32),
-        "formal_charge": torch.tensor(charges, dtype=torch.int8),
-        "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
-    }
-
-
 def openff_molecule_to_dgl_graph(
     molecule: Molecule,
     atom_features: List[AtomFeature] = tuple(),
     bond_features: List[BondFeature] = tuple(),
     forward: str = FORWARD,
     reverse: str = REVERSE,
-) -> dgl.DGLHeteroGraph:
+) -> "dgl.DGLHeteroGraph":
+    from openff.nagl.molecule._utils import _get_openff_molecule_information
+
     # create base undirected graph
     molecule_graph = openff_molecule_to_base_dgl_graph(
         molecule,
@@ -72,7 +62,7 @@ def openff_molecule_to_dgl_graph(
         molecule_graph.ndata[FEATURE] = atom_featurizer.featurize(molecule)
 
     # add additional information
-    molecule_info = get_openff_molecule_information(molecule)
+    molecule_info = _get_openff_molecule_information(molecule)
     for key, value in molecule_info.items():
         molecule_graph.ndata[key] = value
 
@@ -94,7 +84,9 @@ def openff_molecule_to_dgl_graph(
     return molecule_graph
 
 
-def dgl_heterograph_to_homograph(graph: dgl.DGLHeteroGraph) -> dgl.DGLGraph:
+@requires_package("dgl")
+def dgl_heterograph_to_homograph(graph: "dgl.DGLHeteroGraph") -> "dgl.DGLGraph":
+    import dgl
     try:
         homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[FEATURE])
     except KeyError:

@@ -25,8 +25,8 @@ import pytorch_lightning as pl
 from openff.toolkit.topology import Molecule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
-from openff.nagl._dgl.batch import DGLMoleculeBatch
-from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.utils._utils import as_iterable

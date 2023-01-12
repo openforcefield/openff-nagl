@@ -6,8 +6,8 @@ from openff.nagl._base.metaregistry import create_registry_metaclass
 
 if TYPE_CHECKING:
     import torch
-    from openff.nagl._dgl.batch import DGLMoleculeBatch
-    from openff.nagl._dgl.molecule import DGLMolecule
+    from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+    from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
 
 class LossFunctionMeta(abc.ABCMeta, create_registry_metaclass("name")):

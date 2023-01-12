@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
-    from openff.nagl._dgl.batch import DGLMoleculeBatch
-    from openff.nagl._dgl.molecule import DGLMolecule
+    from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+    from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
 
 def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -183,7 +183,25 @@ class GNNModel(BaseGNNModel):
         self.save_hyperparameters()
 
     def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
-        from openff.nagl._dgl.molecule import DGLMolecule
+        try:
+            return self._compute_property_with_dgl(molecule)
+        except ImportError:
+            return self._compute_property_with_dgl(molecule)
+        
+    def _compute_property_with_networkx(self, molecule: "Molecule") -> "torch.Tensor":
+        from openff.nagl.molecule._graph.molecule import NXMolecule
+
+        nxmol = NXMolecule.from_openff(
+            molecule,
+            atom_features=self.atom_features,
+            bond_features=self.bond_features,
+        )
+        return self.forward(nxmol)[self.readout_name]
+
+
+    def _compute_property_with_dgl(self, molecule: "Molecule") -> "torch.Tensor":
+        from openff.nagl.molecule._dgl.molecule import DGLMolecule
+
         dglmol = DGLMolecule.from_openff(
             molecule,
             atom_features=self.atom_features,

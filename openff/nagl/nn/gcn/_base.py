@@ -1,8 +1,6 @@
 import abc
 from typing import ClassVar, Dict, Generic, List, Optional, Type, TypeVar
 
-import dgl
-import dgl.nn.pytorch
 import torch.nn
 import torch.nn.functional
 
@@ -245,7 +243,7 @@ class BaseGCNStack(
         for gnn in self:
             gnn.reset_parameters()
 
-    def forward(self, graph: dgl.DGLGraph, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, graph, inputs: torch.Tensor) -> torch.Tensor:
         """Update node representations.
 
         Args:

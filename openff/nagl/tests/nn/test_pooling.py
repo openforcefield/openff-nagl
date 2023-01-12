@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 
 

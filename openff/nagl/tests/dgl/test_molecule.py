@@ -2,7 +2,7 @@ import dgl
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
-from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
 

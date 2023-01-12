@@ -3,12 +3,10 @@ import torch
 from openff.toolkit.topology.molecule import Molecule
 from torch.testing import assert_close
 
-from openff.nagl._dgl.utils import (
+from openff.nagl.molecule._dgl.utils import (
     dgl_heterograph_to_homograph,
-    get_openff_molecule_information,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
-    get_openff_molecule_information,
 )
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
@@ -72,14 +70,3 @@ def test_dgl_heterograph_to_homograph(methane_dgl_heterograph):
 
     assert torch.allclose(indices_a[:4], indices_b[4:])
     assert torch.allclose(indices_b[4:], indices_a[:4])
-
-
-def test_get_openff_molecule_information(openff_methane_charged):
-    # from openff.nagl.tests.testing.torch import assert_equal
-    from numpy.testing import assert_equal
-
-    info = get_openff_molecule_information(openff_methane_charged)
-    assert sorted(info.keys()) == ["atomic_number", "formal_charge", "idx"]
-    assert_equal(info["idx"].numpy(), [0, 1, 2, 3, 4])
-    assert_equal(info["formal_charge"].numpy(), [0, 0, 0, 0, 0])
-    assert_equal(info["atomic_number"].numpy(), [6, 1, 1, 1, 1])

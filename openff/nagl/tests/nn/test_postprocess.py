@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.postprocess import ComputePartialCharges
 
 # @pytest.fixture

@@ -6,7 +6,7 @@ Global pytest fixtures
 import numpy as np
 import pytest
 
-from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
 

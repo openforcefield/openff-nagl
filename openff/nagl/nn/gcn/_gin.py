@@ -1,11 +1,18 @@
-import dgl
+from typing import TYPE_CHECKING
+
 import torch
+from openff.utilities import requires_package
 
 from ._base import ActivationFunction, BaseGCNStack
+
+if TYPE_CHECKING:
+    import dgl
+
 
 
 class GINConv(torch.nn.Module):
 
+    @requires_package("dgl")
     def __init__(
         self,
         n_input_features: int,
@@ -16,6 +23,8 @@ class GINConv(torch.nn.Module):
         init_eps: float = 0.0,
         learn_eps: bool = False
     ):
+        import dgl
+
         super().__init__()
 
         # self.activation = activation_function
@@ -32,7 +41,7 @@ class GINConv(torch.nn.Module):
         pass
         # self.gcn.reset_parameters()
 
-    def forward(self, graph: dgl.DGLGraph, inputs: torch.Tensor):
+    def forward(self, graph: "dgl.DGLGraph", inputs: torch.Tensor):
         dropped_inputs = self.feat_drop(inputs)
         output = self.gcn(graph, dropped_inputs)
         return output

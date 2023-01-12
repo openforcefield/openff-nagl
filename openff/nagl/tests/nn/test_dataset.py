@@ -9,7 +9,7 @@ from torch.utils.data import ConcatDataset
 from openff.toolkit.topology.molecule import Molecule
 from openff.toolkit.topology.molecule import unit as off_unit
 
-from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing, BondOrder
 from openff.nagl.nn.dataset import DGLMoleculeDataLoader, DGLMoleculeDataset, DGLMoleculeLightningDataModule

@@ -22,7 +22,7 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }})
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -31,6 +31,7 @@ jobs:
           python-version: ["3.9", "3.10"]
           include-rdkit: [true, false]
           include-openeye: [true, false]
+          include-dgl: [true, false]
           exclude:
             - include-rdkit: false
               include-openeye: false
