@@ -8,10 +8,6 @@ from openff.nagl.cli.label import label_molecules_cli
 from openff.nagl.cli.plot import plot_cli
 from openff.nagl.cli.prepare import prepare_cli
 
-__all__ = [
-    "cli",
-]
-
 
 @click.group()
 @optgroup.group("Parallelization configuration")

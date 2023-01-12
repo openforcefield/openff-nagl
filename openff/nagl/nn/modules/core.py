@@ -9,11 +9,6 @@ from ..sequential import SequentialLayers
 from .pooling import PoolingLayer
 from .postprocess import PostprocessLayer
 
-__all__ = [
-    "ConvolutionModule",
-    "ReadoutModule",
-]
-
 
 class ConvolutionModule(torch.nn.Module):
     def __init__(

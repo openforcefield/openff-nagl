@@ -16,10 +16,6 @@ from openff.nagl.nn.models import GNNModel
 from openff.nagl.nn.modules.lightning import DGLMoleculeLightningDataModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 
-__all__ = [
-    "Trainer",
-]
-
 
 class Trainer(ImmutableModel):
     convolution_architecture: str

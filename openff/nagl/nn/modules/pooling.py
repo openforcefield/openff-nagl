@@ -9,12 +9,6 @@ from dgl.udf import EdgeBatch
 from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn import SequentialLayers
 
-__all__ = [
-    "PoolingLayer",
-    "PoolAtomFeatures",
-    "PoolBondFeatures",
-]
-
 
 class PoolingLayer(torch.nn.Module, abc.ABC):
     """A convenience class for pooling together node feature vectors produced by

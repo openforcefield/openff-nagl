@@ -9,13 +9,6 @@ from .bonds import BondFeature
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
-__all__ = [
-    "Featurizer",
-    "AtomFeaturizer",
-    "BondFeaturizer",
-]
-
-
 T = TypeVar("T", bound=Feature)
 
 

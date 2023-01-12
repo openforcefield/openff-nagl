@@ -1,9 +1,5 @@
 from typing import Optional
 
-__all__ = [
-    "Streamer",
-]
-
 
 class Streamer:
     def __init__(

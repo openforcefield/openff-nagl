@@ -4,10 +4,6 @@ from openff.nagl.utils.utils import is_iterable
 
 from .activation import ActivationFunction
 
-__all__ = [
-    "ContainsLayersMixin",
-]
-
 
 class ContainsLayersMixin:
     @classmethod

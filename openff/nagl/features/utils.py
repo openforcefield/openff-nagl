@@ -2,11 +2,6 @@ from typing import List, TypeVar
 
 import torch
 
-__all__ = [
-    "one_hot_encode",
-]
-
-
 T = TypeVar("T")
 
 

@@ -15,11 +15,6 @@ from .utils import (
     openff_molecule_to_dgl_graph,
 )
 
-__all__ = [
-    "DGLBase",
-    "DGLMolecule",
-]
-
 
 class DGLBase(ImmutableModel):
     graph: dgl.DGLHeteroGraph

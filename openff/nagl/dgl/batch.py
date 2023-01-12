@@ -4,10 +4,6 @@ import dgl.function
 
 from .molecule import DGLBase, DGLMolecule
 
-__all__ = [
-    "DGLMoleculeBatch",
-]
-
 
 class DGLMoleculeBatch(DGLBase):
     n_representations: Tuple[int, ...]

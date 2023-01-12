@@ -2,11 +2,6 @@ from typing import Any
 
 import numpy as np
 
-__all__ = [
-    "Array",
-    "ArrayMeta",
-]
-
 
 class ArrayMeta(type):
     def __getitem__(cls, T):

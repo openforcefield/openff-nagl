@@ -7,13 +7,6 @@ from typing import Dict, Tuple, Union
 import click
 import tqdm
 
-__all__ = [
-    "calculate_similarity",
-    "get_similarity",
-    "calculate_all_similarity",
-    "calculate_similarity_cli",
-]
-
 
 def calculate_similarity(
     smiles_pair: Tuple[str, str],
@@ -39,6 +32,7 @@ def get_similarity(
     ref_smiles, target_smiles = smiles_pair
     similarity = calculate_similarity(smiles_pair, radius)
     return {"smiles_1": ref_smiles, "smiles_2": target_smiles, "similarity": similarity}
+
 
 
 def calculate_all_similarity(

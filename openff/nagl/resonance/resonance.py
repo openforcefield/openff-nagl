@@ -26,12 +26,6 @@ from openff.nagl.resonance.types import (
 from .bonds import decrement_bond, increment_bond
 from .paths import PathGenerator
 
-__all__ = [
-    "CURRENT_TRANSFER_PATH",
-    "ResonanceEnumerator",
-    "FragmentEnumerator",
-]
-
 CURRENT_TRANSFER_PATH = "current_transfer_path"
 
 
@@ -120,7 +114,7 @@ class ResonanceEnumerator:
         func = OFFMolecule.from_smiles
         if mapped:
             func = OFFMolecule.from_mapped_smiles
-
+        
         # terrible hack to get around radical issues for now
         # TODO: ... not do this
         try:
@@ -621,7 +615,6 @@ class FragmentEnumerator:
 
     def get_atom_resonance_type(self, index: int) -> ResonanceTypeValue:
         from rdkit import Chem
-
         atom = self.rdkit_molecule.GetAtomWithIdx(index)
 
         bondtype_to_int = {

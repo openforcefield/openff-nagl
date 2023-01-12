@@ -8,11 +8,6 @@ if TYPE_CHECKING:
     from openff.nagl.app.distributed import Manager
     from openff.nagl.storage.record import MoleculeRecord
 
-__all__ = [
-    "label_molecules",
-    "label_molecules_cli",
-]
-
 
 def label_molecules(
     input_file: str,

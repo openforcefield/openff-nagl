@@ -4,10 +4,6 @@ from typing import List
 
 import click
 
-__all__ = [
-    "partition_molecules_cli",
-]
-
 
 @click.command(
     "partition",

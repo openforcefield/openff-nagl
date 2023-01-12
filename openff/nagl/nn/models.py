@@ -8,10 +8,6 @@ if TYPE_CHECKING:
 
     from openff.nagl.features import AtomFeature, BondFeature
 
-__all__ = [
-    "GNNModel",
-]
-
 
 class GNNModel(DGLMoleculeLightningModel):
     @classmethod

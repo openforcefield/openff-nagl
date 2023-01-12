@@ -6,10 +6,6 @@ from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
 
-__all__ = [
-    "normalize_molecule",
-]
-
 
 def _toolkit_wrapper(function_name, *args, **kwargs):
     from openff.toolkit.utils.exceptions import MissingOptionalDependencyError

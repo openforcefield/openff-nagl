@@ -6,11 +6,6 @@ from click_option_group import optgroup
 if TYPE_CHECKING:
     from openff.nagl.app.distributed import Manager
 
-__all__ = [
-    "retrieve_molecules",
-    "retrieve_molecules_cli",
-]
-
 
 def retrieve_molecules(
     input_file: str,

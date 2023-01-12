@@ -10,8 +10,6 @@ import tqdm
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Manager"]
-
 
 @dataclasses.dataclass
 class Manager:
