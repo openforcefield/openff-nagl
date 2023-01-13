@@ -48,11 +48,11 @@ jobs:
         ulimit -a
 
     - name: Install environment
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          environment-file: devtools/conda-envs/test_env.yaml
-          extra-specs: |
-            python=${{ matrix.python-version }}
+      uses: mamba-org/provision-with-micromamba@main
+      with:
+        environment-file: devtools/conda-envs/test_env.yaml
+        extra-specs: |
+          python=${{ matrix.python-version }}
 
     - name: Install package
       run: |
