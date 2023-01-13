@@ -129,16 +129,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install conda dependencies
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install environment
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        python-version: ${{ matrix.python-version }}
-        add-pip-as-python-dependency: true
-        architecture: x64
-        mamba-version: "*"
-        channels: conda-forge, defaults
-        auto-update-conda: true
-        show-channel-urls: true
+        extra-specs: |
+          python=${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
@@ -165,16 +160,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install conda
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install environment
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        python-version: ${{ matrix.python-version }}
-        add-pip-as-python-dependency: true
-        architecture: x64
-        auto-update-conda: true
-        show-channel-urls: true
-        mamba-version: "*"
-        channels: conda-forge, defaults
+        environment-file: false
+        environment-name: test-install
+        extra-specs: |
+          python=${{ matrix.python-version }}
 
     - name: Build from source
       run: |
