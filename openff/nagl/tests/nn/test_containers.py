@@ -2,13 +2,13 @@ import torch
 
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn import SAGEConvStack
-from openff.nagl.nn.modules import (
+from openff.nagl.nn._containers import (
     ConvolutionModule,
-    PoolAtomFeatures,
     ReadoutModule,
 )
-from openff.nagl.nn.modules.postprocess import ComputePartialCharges
-from openff.nagl.nn.sequential import SequentialLayers
+from openff.nagl.nn._pooling import PoolAtomFeatures
+from openff.nagl.nn.postprocess import ComputePartialCharges
+from openff.nagl.nn._sequential import SequentialLayers
 
 
 class TestConvolutionModule:

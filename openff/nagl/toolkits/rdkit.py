@@ -7,9 +7,9 @@ import numpy as np
 from openff.units import unit
 
 
-from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperBase
+from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
-from openff.nagl.utils.types import HybridizationType
+from openff.nagl.utils._types import HybridizationType
 from openff.toolkit.topology import Molecule
     
 
@@ -133,7 +133,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         return hybridizations
 
     def to_rdkit(self, molecule: "Molecule"):
-        from openff.nagl.utils.openff import capture_toolkit_warnings
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         try:
             return super().to_rdkit(molecule)
@@ -175,7 +175,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         mapped_smiles: str
             The mapped SMILES string.
         """
-        from openff.nagl.utils.openff import capture_toolkit_warnings
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         with capture_toolkit_warnings():
             molecule = cls.from_smiles(smiles, allow_undefined_stereo=True)
@@ -195,7 +195,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         smiles: str
             The SMILES string.
         """
-        from openff.nagl.utils.openff import capture_toolkit_warnings
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         with capture_toolkit_warnings():
             molecule = cls.from_smiles(mapped_smiles, allow_undefined_stereo=True)

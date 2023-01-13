@@ -6,124 +6,114 @@ import numpy as np
 import pytest
 import torch
 from torch.utils.data import ConcatDataset
+from openff.toolkit.topology.molecule import Molecule
+from openff.toolkit.topology.molecule import unit as off_unit
 
-from openff.nagl.features import AtomFormalCharge, AtomicElement, BondOrder
-from openff.nagl.nn.data import DGLMoleculeDataset
-from openff.nagl.nn.gcn.sage import SAGEConvStack
-from openff.nagl.nn.modules.lightning import (
-    ConvolutionModule,
-    DGLMoleculeLightningDataModule,
-    DGLMoleculeLightningModel,
-    ReadoutModule,
-)
-from openff.nagl.nn.modules.pooling import PoolAtomFeatures, PoolBondFeatures
-from openff.nagl.nn.modules.postprocess import ComputePartialCharges
-from openff.nagl.nn.sequential import SequentialLayers
-from openff.nagl.storage.record import (
+from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
+from openff.nagl.features.bonds import BondIsInRing, BondOrder
+from openff.nagl.nn.dataset import DGLMoleculeDataLoader, DGLMoleculeDataset, DGLMoleculeLightningDataModule
+from openff.nagl.storage._store import (
     ConformerRecord,
     MoleculeRecord,
+    MoleculeStore,
     PartialChargeRecord,
     WibergBondOrderRecord,
 )
-from openff.nagl.storage.store import MoleculeStore
 
 
-@pytest.fixture()
-def mock_atom_model() -> DGLMoleculeLightningModel:
-    convolution = ConvolutionModule(
-        n_input_features=4,
-        hidden_feature_sizes=[4],
-        architecture="SAGEConv",
+def label_formal_charge(molecule: Molecule):
+    return {
+        "formal_charges": torch.tensor(
+            [
+                float(atom.formal_charge / off_unit.elementary_charge)
+                for atom in molecule.atoms
+            ],
+            dtype=torch.float,
+        ),
+    }
+
+
+def test_data_set_from_molecules(openff_methane_charged):
+
+    data_set = DGLMoleculeDataset.from_openff(
+        [openff_methane_charged],
+        label_function=label_formal_charge,
+        atom_features=[AtomConnectivity()],
+        bond_features=[BondIsInRing()],
     )
-    readout_layers = SequentialLayers.with_layers(
-        n_input_features=4,
-        hidden_feature_sizes=[2],
+    assert len(data_set) == 1
+    assert data_set.n_features == 4
+
+    dgl_molecule, labels = data_set[0]
+    assert isinstance(dgl_molecule, DGLMolecule)
+    assert dgl_molecule.n_atoms == 5
+
+    assert "formal_charges" in labels
+    label = labels["formal_charges"]
+    assert label.numpy().shape == (5,)
+
+
+def test_data_set_from_molecule_stores(tmpdir):
+
+    charges = PartialChargeRecord(method="am1", values=[0.1, -0.1])
+    bond_orders = WibergBondOrderRecord(
+        method="am1",
+        values=[(0, 1, 1.1)],
     )
-    model = DGLMoleculeLightningModel(
-        convolution_module=convolution,
-        readout_modules={
-            "atom": ReadoutModule(
-                pooling_layer=PoolAtomFeatures(),
-                readout_layers=readout_layers,
-                postprocess_layer=ComputePartialCharges(),
-            ),
-        },
-        learning_rate=0.01,
+    molecule_record = MoleculeRecord(
+        mapped_smiles="[Cl:1]-[H:2]",
+        conformers=[
+            ConformerRecord(
+                coordinates=np.array([[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0]]),
+                partial_charges=[charges],
+                bond_orders=[bond_orders],
+            )
+        ],
     )
-    return model
 
+    molecule_store = MoleculeStore(os.path.join(tmpdir, "store.sqlite"))
+    molecule_store.store(records=[molecule_record])
 
-class TestDGLMoleculeLightningModel:
-    def test_init(self):
-        model = DGLMoleculeLightningModel(
-            convolution_module=ConvolutionModule(
-                n_input_features=1,
-                hidden_feature_sizes=[2, 3],
-                architecture="SAGEConv",
-            ),
-            readout_modules={
-                "atom": ReadoutModule(
-                    pooling_layer=PoolAtomFeatures(),
-                    readout_layers=SequentialLayers.with_layers(
-                        n_input_features=2,
-                        hidden_feature_sizes=[2],
-                        layer_activation_functions=["Identity"],
-                    ),
-                    postprocess_layer=ComputePartialCharges(),
-                ),
-                "bond": ReadoutModule(
-                    pooling_layer=PoolBondFeatures(
-                        layers=SequentialLayers.with_layers(
-                            n_input_features=4,
-                            hidden_feature_sizes=[4],
-                        )
-                    ),
-                    readout_layers=SequentialLayers.with_layers(
-                        n_input_features=4,
-                        hidden_feature_sizes=[8],
-                    ),
-                ),
-            },
-            learning_rate=0.01,
-        )
-
-        assert model.convolution_module is not None
-        assert isinstance(model.convolution_module, ConvolutionModule)
-
-        assert isinstance(model.convolution_module.gcn_layers, SAGEConvStack)
-        assert len(model.convolution_module.gcn_layers) == 2
-
-        readouts = model.readout_modules
-        assert all(x in readouts for x in ["atom", "bond"])
-
-        assert isinstance(readouts["atom"].pooling_layer, PoolAtomFeatures)
-        assert isinstance(readouts["bond"].pooling_layer, PoolBondFeatures)
-
-        assert np.isclose(model.learning_rate, 0.01)
-
-    def test_forward(self, mock_atom_model, dgl_methane):
-        output = mock_atom_model.forward(dgl_methane)
-        assert "atom" in output
-        assert output["atom"].shape == (5, 1)
-
-    @pytest.mark.parametrize(
-        "method_name", ["training_step", "validation_step", "test_step"]
+    data_set = DGLMoleculeDataset.from_molecule_stores(
+        molecule_stores=[molecule_store],
+        atom_features=[AtomConnectivity()],
+        bond_features=[BondIsInRing()],
+        partial_charge_method="am1",
+        bond_order_method="am1",
     )
-    def test_step(self, mock_atom_model, method_name, dgl_methane, monkeypatch):
-        def mock_forward(_):
-            return {"atom": torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0]])}
 
-        monkeypatch.setattr(mock_atom_model, "forward", mock_forward)
+    assert len(data_set) == 1
+    assert data_set.n_features == 4
 
-        loss_function = getattr(mock_atom_model, method_name)
-        fake_comparison = {"atom": torch.tensor([[2.0, 3.0, 4.0, 5.0, 6.0]])}
-        loss = list(loss_function((dgl_methane, fake_comparison), 0).values())[0]
-        assert torch.isclose(loss, torch.tensor([1.0]))
+    dgl_molecule, labels = data_set[0]
 
-    def test_configure_optimizers(self, mock_atom_model):
-        optimizer = mock_atom_model.configure_optimizers()
-        assert isinstance(optimizer, torch.optim.Adam)
-        assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.01))
+    assert isinstance(dgl_molecule, DGLMolecule)
+    assert dgl_molecule.n_atoms == 2
+    assert "am1-charges" in labels
+    assert labels["am1-charges"].numpy().shape == (2,)
+    assert np.allclose(labels["am1-charges"].numpy(), [0.1, -0.1])
+    assert "am1-wbo" in labels
+    assert labels["am1-wbo"].numpy().shape == (1,)
+    assert np.allclose(labels["am1-wbo"].numpy(), [1.1])
+
+
+def test_data_set_loader():
+    data_loader = DGLMoleculeDataLoader(
+        dataset=DGLMoleculeDataset.from_openff(
+            molecules=[Molecule.from_smiles("C"), Molecule.from_smiles("C[O-]")],
+            label_function=label_formal_charge,
+            atom_features=[AtomConnectivity()],
+        ),
+    )
+
+    entries = [*data_loader]
+    for dgl_molecule, labels in entries:
+        assert isinstance(
+            dgl_molecule, DGLMoleculeBatch
+        ) and dgl_molecule.n_atoms_per_molecule == (5,)
+        assert "formal_charges" in labels
+
 
 
 class TestDGLMoleculeLightningDataModule:

@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import torch
 
-from openff.nagl.dgl.molecule import DGLMolecule
-from openff.nagl.nn.modules.pooling import PoolAtomFeatures, PoolBondFeatures
+from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 
 
 class BaseTestFeatures:

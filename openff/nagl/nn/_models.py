@@ -1,15 +1,106 @@
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 
-from openff.nagl.nn.modules.lightning import DGLMoleculeLightningModel
+import torch
+import pytorch_lightning as pl
+
+from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 
 if TYPE_CHECKING:
-    import torch
     from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.nagl.features.atoms import AtomFeature
+    from openff.nagl.features.bonds import BondFeature
+    from openff.nagl._dgl.batch import DGLMoleculeBatch
+    from openff.nagl._dgl.molecule import DGLMolecule
 
-    from openff.nagl.features import AtomFeature, BondFeature
+
+def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    return torch.sqrt(torch.nn.functional.mse_loss(pred, target))
 
 
-class GNNModel(DGLMoleculeLightningModel):
+class BaseGNNModel(pl.LightningModule):
+    """A model which applies a graph convolutional step followed by multiple (labelled)
+    pooling and readout steps.
+
+    Parameters
+    ----------
+    convolution_module
+        The graph convolutional module.
+    readout_modules
+        A dictionary of readout modules, keyed by the name of the readout.
+    learning_rate
+        The learning rate.
+    loss_function
+        The loss function. This is RMSE by default, but can be any function
+        that takes a predicted and target tensor and returns a scalar loss
+        in the form of a ``torch.Tensor``.
+    """
+
+
+    def __init__(
+        self,
+        convolution_module: ConvolutionModule,
+        readout_modules: Dict[str, ReadoutModule],
+        learning_rate: float,
+        loss_function: Callable = rmse_loss,
+    ):
+        super().__init__()
+        self.convolution_module = convolution_module
+        self.readout_modules = torch.nn.ModuleDict(readout_modules)
+        self.learning_rate = learning_rate
+        self.loss_function = loss_function
+
+    def forward(
+        self, molecule: Union[DGLMolecule, DGLMoleculeBatch]
+    ) -> Dict[str, torch.Tensor]:
+
+        self.convolution_module(molecule)
+
+        readouts: Dict[str, torch.Tensor] = {
+            readout_type: readout_module(molecule)
+            for readout_type, readout_module in self.readout_modules.items()
+        }
+        return readouts
+
+    def _default_step(
+        self,
+        batch: Tuple[DGLMolecule, Dict[str, torch.Tensor]],
+        step_type: str,
+    ) -> torch.Tensor:
+
+        molecule, labels = batch
+        y_pred = self.forward(molecule)
+        loss = torch.zeros(1).type_as(next(iter(y_pred.values())))
+
+        for label_name, label_values in labels.items():
+            pred_values = y_pred[label_name]
+            label_loss = self.loss_function(pred_values, label_values)
+            loss += label_loss
+        self.log(f"{step_type}_loss", loss)
+        return loss
+
+    def training_step(self, train_batch, batch_idx):
+        loss = self._default_step(train_batch, "train")
+        return {"loss": loss}
+
+    def validation_step(self, val_batch, batch_idx):
+        loss = self._default_step(val_batch, "val")
+        return {"val_loss": loss}
+
+    def test_step(self, test_batch, batch_idx):
+        loss = self._default_step(test_batch, "test")
+        return {"test_loss": loss}
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        return optimizer
+
+    @property
+    def _torch_optimizer(self):
+        optimizer = self.optimizers()
+        return optimizer.optimizer
+
+
+class GNNModel(BaseGNNModel):
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
         import yaml
@@ -42,14 +133,15 @@ class GNNModel(DGLMoleculeLightningModel):
         learning_rate: float,
         atom_features: Tuple["AtomFeature", ...],
         bond_features: Tuple["BondFeature", ...],
+        loss_function: Callable = rmse_loss,
     ):
-        from openff.nagl.features import AtomFeature, BondFeature
+        from openff.nagl.features.atoms import AtomFeature
+        from openff.nagl.features.bonds import BondFeature
         from openff.nagl.nn.activation import ActivationFunction
         from openff.nagl.nn.gcn import GCNStackMeta
-        from openff.nagl.nn.modules.core import ConvolutionModule, ReadoutModule
-        from openff.nagl.nn.modules.pooling import PoolAtomFeatures
-        from openff.nagl.nn.modules.postprocess import PostprocessLayerMeta
-        from openff.nagl.nn.sequential import SequentialLayers
+        from openff.nagl.nn._pooling import PoolAtomFeatures
+        from openff.nagl.nn.postprocess import PostprocessLayerMeta
+        from openff.nagl.nn._sequential import SequentialLayers
 
         self.readout_name = readout_name
 
@@ -80,16 +172,16 @@ class GNNModel(DGLMoleculeLightningModel):
             postprocess_layer=postprocess_layer(),
         )
 
-        super().__init__(
-            convolution_module=convolution_module,
-            readout_modules={self.readout_name: readout_module},
-            learning_rate=learning_rate,
-        )
+        readout_modules = {readout_name: readout_module}
+        self.convolution_module = convolution_module
+        self.readout_modules = torch.nn.ModuleDict(readout_modules)
+        self.learning_rate = learning_rate
+        self.loss_function = loss_function
 
         self.save_hyperparameters()
 
     def compute_property(self, molecule: "OFFMolecule") -> "torch.Tensor":
-        from openff.nagl.dgl.molecule import DGLMolecule
+        from openff.nagl._dgl.molecule import DGLMolecule
         dglmol = DGLMolecule.from_openff(
             molecule,
             atom_features=self.atom_features,
@@ -122,3 +214,4 @@ class GNNModel(DGLMoleculeLightningModel):
                     item = klass(**args)
                 instantiated.append(item)
         return instantiated
+

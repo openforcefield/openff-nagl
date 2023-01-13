@@ -3,12 +3,13 @@ from typing import List, Optional, Union
 import torch
 import dgl
 
-from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
 
-from ..gcn.base import ActivationFunction, GCNStackMeta
-from ..sequential import SequentialLayers
-from .pooling import PoolingLayer
-from .postprocess import PostprocessLayer
+from openff.nagl.nn.activation import ActivationFunction
+from openff.nagl.nn.gcn._base import GCNStackMeta
+from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.nn._pooling import PoolingLayer
+from openff.nagl.nn.postprocess import PostprocessLayer
 
 
 class ConvolutionModule(torch.nn.Module):

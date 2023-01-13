@@ -8,14 +8,14 @@ import numpy as np
 from openff.units import unit
 
 from openff.utilities import requires_package
-from openff.nagl.utils.toolkits import NAGL_TOOLKIT_REGISTRY
+from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
 from openff.toolkit.topology import Molecule
 
 if TYPE_CHECKING:
     
-    from openff.nagl.utils.types import HybridizationType
+    from openff.nagl.utils._types import HybridizationType
 
 
 def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
@@ -34,8 +34,8 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     **kwargs:
         The keyword arguments to pass to the function.
     """
-    from openff.nagl.utils.toolkits.registry import NAGLToolkitRegistry
-    from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
+    from openff.nagl.toolkits._base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):

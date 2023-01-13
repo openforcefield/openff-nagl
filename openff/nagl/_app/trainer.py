@@ -10,14 +10,15 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from rich import pretty
 from rich.console import NewLine
 
-from openff.nagl.base import ImmutableModel
-from openff.nagl.features import AtomFeature, BondFeature
-from openff.nagl.nn.models import GNNModel
-from openff.nagl.nn.modules.lightning import DGLMoleculeLightningDataModule
+from openff.nagl._base import ImmutableModel
+from openff.nagl.features.atoms import AtomFeature
+from openff.nagl.features.bonds import BondFeature
+from openff.nagl.nn._models import GNNModel
+from openff.nagl.nn.dataset import DGLMoleculeLightningDataModule
 from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
-from openff.nagl.utils.types import FromYamlMixin
+from openff.nagl.utils._types import FromYamlMixin
 
-from openff.nagl.nn.models import GNNModel
+from openff.nagl.nn._models import GNNModel
 
 class Trainer(ImmutableModel, FromYamlMixin):
     convolution_architecture: str
@@ -54,7 +55,7 @@ class Trainer(ImmutableModel, FromYamlMixin):
 
     @validator("training_set_paths", "validation_set_paths", "test_set_paths", pre=True)
     def _validate_paths(cls, v):
-        from openff.nagl.utils.utils import as_iterable
+        from openff.nagl.utils._utils import as_iterable
 
         v = as_iterable(v)
         v = [pathlib.Path(x).resolve() for x in v]
@@ -116,7 +117,7 @@ class Trainer(ImmutableModel, FromYamlMixin):
             yaml.dump(self.to_simple_dict(), f)
 
     def to_simple_hash(self) -> str:
-        from openff.nagl.utils.hash import hash_dict
+        from openff.nagl.utils._hash import hash_dict
 
         return hash_dict(self.to_simple_dict())
 

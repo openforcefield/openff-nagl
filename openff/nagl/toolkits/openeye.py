@@ -5,9 +5,9 @@ import numpy as np
 
 from openff.units import unit
 
-from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperBase
+from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
-from openff.nagl.utils.types import HybridizationType
+from openff.nagl.utils._types import HybridizationType
 
 
 if TYPE_CHECKING:

@@ -5,7 +5,7 @@ from openff.toolkit.utils.toolkit_registry import (
     ToolkitUnavailableException
 )
 
-from openff.nagl.utils.toolkits.base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase, ToolkitWrapperType
+from openff.nagl.toolkits._base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase, ToolkitWrapperType
 
 class NAGLToolkitRegistry(_ToolkitRegistry):
 
