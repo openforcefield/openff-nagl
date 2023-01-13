@@ -1,11 +1,13 @@
+"""Bond features for GNN models"""
+
 from typing import ClassVar, Dict, Type
 
 import torch
 
 from openff.nagl.utils.openff import get_openff_molecule_bond_indices
 
-from .base import CategoricalMixin, Feature, FeatureMeta
-from .utils import one_hot_encode
+from ._base import CategoricalMixin, Feature, FeatureMeta
+from ._utils import one_hot_encode
 
 __all__ = [
     "BondFeatureMeta",

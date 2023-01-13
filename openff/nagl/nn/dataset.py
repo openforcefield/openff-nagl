@@ -1,3 +1,5 @@
+"Classes for handling featurized molecule data to train GNN models"
+
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
@@ -16,8 +18,8 @@ import tqdm
 from openff.toolkit.topology import Molecule as OFFMolecule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
-from openff.nagl.dgl.batch import DGLMoleculeBatch
-from openff.nagl.dgl.molecule import DGLMolecule
+from openff.nagl._dgl.batch import DGLMoleculeBatch
+from openff.nagl._dgl.molecule import DGLMolecule
 from openff.nagl.features import AtomFeature, BondFeature
 from openff.nagl.utils.utils import as_iterable
 
@@ -31,6 +33,12 @@ if TYPE_CHECKING:
         WibergBondOrderMethod,
     )
     from openff.nagl.storage.store import MoleculeStore
+
+
+__all__ = [
+    "DGLMoleculeDataset",
+    "DGLMoleculeDatasetEntry",
+]
 
 
 OpenFFToDGLConverter = Callable[

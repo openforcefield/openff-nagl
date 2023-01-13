@@ -1,7 +1,9 @@
 """
 OpenFF NAGL
-A short description of the project.
+A toolkit for the generation of neural network models for predicting molecule properties.
 """
+
+from openff.nagl.nn._models import GNNModel
 
 # Handle versioneer
 from ._version import get_versions

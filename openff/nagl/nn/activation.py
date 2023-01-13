@@ -1,7 +1,13 @@
+"Activation functions"
+
 import enum
 from typing import Callable
 
 import torch
+
+__all__ = [
+    "ActivationFunction"
+]
 
 
 class ActivationFunction(enum.Enum):

@@ -16,8 +16,8 @@ import numpy as np
 from openff.units import unit as openff_unit
 from pydantic import Field, validator
 
-from openff.nagl.base.array import Array
-from openff.nagl.base.base import ImmutableModel
+from openff.nagl._base.array import Array
+from openff.nagl._base.base import ImmutableModel
 from openff.nagl.utils.openff import map_indexed_smiles
 
 from openff.toolkit.utils.toolkits import GLOBAL_TOOLKIT_REGISTRY
@@ -25,6 +25,15 @@ from openff.toolkit.utils.toolkits import GLOBAL_TOOLKIT_REGISTRY
 if TYPE_CHECKING:
     import openff.toolkit
 
+__all__ = [
+    "ChargeMethod",
+    "ConformerRecord",
+    "MoleculeRecord",
+    "PartialChargeRecord",
+    "WibergBondOrder",
+    "WibergBondOrderMethod",
+    "WibergBondOrderRecord",
+]
 
 class Record(ImmutableModel):
     class Config(ImmutableModel.Config):

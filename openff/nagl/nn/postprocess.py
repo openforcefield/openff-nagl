@@ -1,11 +1,20 @@
+"""
+Postprocessing functions to convert a graph representation to a predicted property
+"""
+
 import abc
 from typing import ClassVar, Dict, Type, Union
 
 import torch
 
-from openff.nagl.base.metaregistry import create_registry_metaclass
-from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl._base.metaregistry import create_registry_metaclass
+from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
 
+__all__ = [
+    "PostprocessLayerMeta",
+    "PostprocessLayer",
+    "ComputePartialCharges"
+]
 
 class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     registry: ClassVar[Dict[str, Type]] = {}

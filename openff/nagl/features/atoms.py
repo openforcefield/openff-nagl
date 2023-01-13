@@ -1,3 +1,5 @@
+"Atom features for GNN models"
+
 import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 

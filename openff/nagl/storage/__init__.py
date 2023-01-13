@@ -1,10 +1,7 @@
-from .record import (
-    ChargeMethod,
-    ConformerRecord,
-    MoleculeRecord,
-    PartialChargeRecord,
-    WibergBondOrder,
-    WibergBondOrderMethod,
-    WibergBondOrderRecord,
-)
-from .store import MoleculeStore
+"Classes to handle storage of labelled data for training"
+
+from ._store import MoleculeStore
+
+__all__ = [
+    "MoleculeStore"
+]
