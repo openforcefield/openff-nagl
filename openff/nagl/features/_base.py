@@ -13,9 +13,9 @@ from typing import (
 from pydantic import validator
 from pydantic.main import ModelMetaclass
 
-from openff.nagl.base.metaregistry import create_registry_metaclass
+from openff.nagl._base.metaregistry import create_registry_metaclass
 
-from ..base.base import ImmutableModel
+from .._base.base import ImmutableModel
 
 if TYPE_CHECKING:
     import torch

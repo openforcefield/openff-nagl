@@ -4,7 +4,7 @@ from typing import ClassVar, Dict, Type
 
 import torch
 
-from openff.nagl.utils.openff import get_openff_molecule_bond_indices
+from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
 from ._base import CategoricalMixin, Feature, FeatureMeta
 from ._utils import one_hot_encode
@@ -49,7 +49,7 @@ class BondInRingOfSize(BondFeature):
     ring_size: int
 
     def _encode(self, molecule) -> torch.Tensor:
-        from openff.nagl.utils.openff import get_bonds_are_in_ring_size
+        from openff.nagl.toolkits.openff import get_bonds_are_in_ring_size
         is_in_ring = get_bonds_are_in_ring_size(molecule, self.ring_size)
         return torch.tensor(is_in_ring, dtype=int)
 

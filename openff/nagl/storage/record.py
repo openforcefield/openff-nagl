@@ -18,7 +18,7 @@ from pydantic import Field, validator
 
 from openff.nagl._base.array import Array
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.utils.openff import map_indexed_smiles
+from openff.nagl.toolkits.openff import map_indexed_smiles
 
 from openff.toolkit.utils.toolkits import GLOBAL_TOOLKIT_REGISTRY
 

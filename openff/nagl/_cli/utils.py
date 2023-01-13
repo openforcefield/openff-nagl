@@ -32,7 +32,7 @@ def get_log_file_from_output(file: str, suffix: str = "-errors.log") -> str:
 
 
 def get_default_manager(ctx):
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
 
     try:
         manager = ctx.obj.get("manager")
@@ -62,7 +62,7 @@ def write_error_to_file_object(file_object, error: str, separator: bool = True):
 
 
 def preprocess_args(manager=None, input_file=None, output_file=None):
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
 
     if input_file is not None:
         input_file = os.path.abspath(str(input_file))

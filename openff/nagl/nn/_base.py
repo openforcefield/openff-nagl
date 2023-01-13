@@ -1,6 +1,6 @@
 from typing import Any, List, Optional
 
-from openff.nagl.utils.utils import is_iterable
+from openff.nagl.utils._utils import is_iterable
 
 from .activation import ActivationFunction
 

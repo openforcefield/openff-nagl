@@ -5,7 +5,7 @@ import click
 from click_option_group import optgroup
 
 if TYPE_CHECKING:
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
     from openff.nagl.storage.record import MoleculeRecord
 
 
@@ -64,13 +64,13 @@ def store_molecules(
     bond_order_method: str = None,
     allow_empty_molecules: bool = False,
 ):
-    from openff.nagl.cli.utils import (
+    from openff.nagl._cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
     from openff.nagl.storage.record import MoleculeRecord
-    from openff.nagl.storage.store import MoleculeStore
-    from openff.nagl.utils.openff import stream_molecules_from_file
+    from openff.nagl.storage._store import MoleculeStore
+    from openff.nagl.toolkits.openff import stream_molecules_from_file
 
     manager, input_file, output_file, log_file = preprocess_args(
         manager, input_file, output_file
@@ -160,7 +160,7 @@ def store_molecules_cli(
     bond_order_method,
     allow_empty_molecules,
 ):
-    from openff.nagl.cli.utils import get_default_manager
+    from openff.nagl._cli.utils import get_default_manager
 
     store_molecules(
         input_file=input_file,

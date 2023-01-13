@@ -1,6 +1,6 @@
 import dgl
 
-from .base import ActivationFunction, BaseGCNStack
+from ._base import ActivationFunction, BaseGCNStack
 
 
 class SAGEConvStack(BaseGCNStack[dgl.nn.pytorch.SAGEConv]):

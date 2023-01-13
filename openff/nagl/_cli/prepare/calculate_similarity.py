@@ -14,7 +14,7 @@ def calculate_similarity(
     smiles_pair: Tuple[str, str],
     radius: int = 3,
 ) -> float:
-    from openff.nagl.utils.openff import calculate_circular_fingerprint_similarity
+    from openff.nagl.toolkits.openff import calculate_circular_fingerprint_similarity
 
     mol1 = Molecule.from_smiles(smiles_pair[0], allow_undefined_stereo=True)
     mol2 = Molecule.from_smiles(smiles_pair[1], allow_undefined_stereo=True)
@@ -44,11 +44,11 @@ def calculate_all_similarity(
     import numpy as np
     import pandas as pd
 
-    from openff.nagl.cli.utils import (
+    from openff.nagl._cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
-    from openff.nagl.storage.store import MoleculeStore
+    from openff.nagl.storage._store import MoleculeStore
 
     # file_order = {}
     all_smiles = {}
@@ -136,7 +136,7 @@ def calculate_all_similarity(
 def calculate_similarity_cli(
     ctx, input_file, output_file, clean_filenames, fingerprint_radius, skip
 ):
-    from openff.nagl.cli.utils import get_default_manager
+    from openff.nagl._cli.utils import get_default_manager
 
     manager = get_default_manager(ctx)
     calculate_all_similarity(

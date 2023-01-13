@@ -11,7 +11,7 @@ import numpy as np
 from openff.units import unit
 from openff.toolkit.topology import Molecule
 
-from openff.nagl.utils.types import ResonanceType, ResonanceAtomType
+from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 

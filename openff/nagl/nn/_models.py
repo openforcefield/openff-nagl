@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.toolkit.topology import Molecule
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl._dgl.batch import DGLMoleculeBatch
@@ -50,7 +50,7 @@ class BaseGNNModel(pl.LightningModule):
         self.loss_function = loss_function
 
     def forward(
-        self, molecule: Union[DGLMolecule, DGLMoleculeBatch]
+        self, molecule: Union["DGLMolecule", "DGLMoleculeBatch"]
     ) -> Dict[str, torch.Tensor]:
 
         self.convolution_module(molecule)
@@ -63,7 +63,7 @@ class BaseGNNModel(pl.LightningModule):
 
     def _default_step(
         self,
-        batch: Tuple[DGLMolecule, Dict[str, torch.Tensor]],
+        batch: Tuple["DGLMolecule", Dict[str, torch.Tensor]],
         step_type: str,
     ) -> torch.Tensor:
 
@@ -180,7 +180,7 @@ class GNNModel(BaseGNNModel):
 
         self.save_hyperparameters()
 
-    def compute_property(self, molecule: "OFFMolecule") -> "torch.Tensor":
+    def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
         from openff.nagl._dgl.molecule import DGLMolecule
         dglmol = DGLMolecule.from_openff(
             molecule,

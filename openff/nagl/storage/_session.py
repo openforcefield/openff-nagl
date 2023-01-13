@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Type, Union
 
 import numpy as np
 
-from .db import (
+from ._db import (
     DB_VERSION,
     DBConformerRecord,
     DBGeneralProvenance,

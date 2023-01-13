@@ -1,11 +1,11 @@
 import click
 
-from openff.nagl.cli.prepare.calculate_similarity import (
+from openff.nagl._cli.prepare.calculate_similarity import (
     calculate_similarity_cli,
 )
-from openff.nagl.cli.prepare.generate_conformers import generate_conformers_cli
-from openff.nagl.cli.prepare.partition import partition_molecules_cli
-from openff.nagl.cli.prepare.select import select_molecules_cli
+from openff.nagl._cli.prepare.generate_conformers import generate_conformers_cli
+from openff.nagl._cli.prepare.partition import partition_molecules_cli
+from openff.nagl._cli.prepare.select import select_molecules_cli
 
 
 @click.group(

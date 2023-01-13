@@ -2,12 +2,12 @@ import abc
 import functools
 from typing import TYPE_CHECKING, Optional, Union
 
-from openff.nagl.base.metaregistry import create_registry_metaclass
+from openff.nagl._base.metaregistry import create_registry_metaclass
 
 if TYPE_CHECKING:
     import torch
-    from openff.nagl.dgl.batch import DGLMoleculeBatch
-    from openff.nagl.dgl.molecule import DGLMolecule
+    from openff.nagl._dgl.batch import DGLMoleculeBatch
+    from openff.nagl._dgl.molecule import DGLMolecule
 
 
 class LossFunctionMeta(abc.ABCMeta, create_registry_metaclass("name")):

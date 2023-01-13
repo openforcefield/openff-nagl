@@ -6,8 +6,8 @@ import dgl
 import torch.nn
 from dgl.udf import EdgeBatch
 
-from openff.nagl.dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.nn import SequentialLayers
+from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.nn._sequential import SequentialLayers
 
 
 class PoolingLayer(torch.nn.Module, abc.ABC):

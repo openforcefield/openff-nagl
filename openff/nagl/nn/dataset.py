@@ -31,16 +31,16 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.utils._utils import as_iterable
 from openff.nagl.utils._types import Pathlike, FromYamlMixin
+from openff.nagl.storage.record import (
+    ChargeMethod,
+    MoleculeRecord,
+    WibergBondOrderMethod,
+)
+
 
 from .label import EmptyLabeller, LabelFunctionLike, LabelPrecomputedMolecule
 
 if TYPE_CHECKING:
-
-    from openff.nagl.storage.record import (
-        ChargeMethod,
-        MoleculeRecord,
-        WibergBondOrderMethod,
-    )
     from openff.nagl.storage._store import MoleculeStore
 
 

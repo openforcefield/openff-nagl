@@ -191,7 +191,7 @@ def match_conformers(
 
     from openff.toolkit.topology import Molecule
 
-    from openff.nagl.utils.openff import is_conformer_identical
+    from openff.nagl.toolkits.openff import is_conformer_identical
 
     molecule = Molecule.from_mapped_smiles(
         indexed_mapped_smiles, allow_undefined_stereo=True

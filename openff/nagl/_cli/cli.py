@@ -3,10 +3,10 @@ from typing import Literal
 import click
 from click_option_group import optgroup
 
-from openff.nagl.cli.database import database_cli
-from openff.nagl.cli.label import label_molecules_cli
-from openff.nagl.cli.plot import plot_cli
-from openff.nagl.cli.prepare import prepare_cli
+from openff.nagl._cli.database import database_cli
+from openff.nagl._cli.label import label_molecules_cli
+from openff.nagl._cli.plot import plot_cli
+from openff.nagl._cli.prepare import prepare_cli
 
 
 @click.group()
@@ -75,7 +75,7 @@ def cli(
     convolutional neural networks.
     """
 
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
 
     ctx.ensure_object(dict)
 

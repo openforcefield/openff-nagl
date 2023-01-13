@@ -1,7 +1,7 @@
 import dgl
 import torch
 
-from .base import ActivationFunction, BaseGCNStack
+from ._base import ActivationFunction, BaseGCNStack
 
 
 class GINConv(torch.nn.Module):

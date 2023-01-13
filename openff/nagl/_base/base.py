@@ -9,7 +9,7 @@ from openff.units import unit
 from pydantic import BaseModel
 from pydantic.errors import DictError
 
-from ..utils.utils import round_floats
+from ..utils._utils import round_floats
 
 
 class MutableModel(BaseModel):

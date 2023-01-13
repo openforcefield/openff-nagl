@@ -7,10 +7,10 @@ from openff.toolkit.topology import Molecule
 
 from openff.units import unit
 
-from openff.nagl.cli.database import database_cli
+from openff.nagl._cli.database import database_cli
 from openff.nagl.storage.record import MoleculeRecord
-from openff.nagl.storage.store import MoleculeStore
-from openff.nagl.utils.openff import (
+from openff.nagl.storage._store import MoleculeStore
+from openff.nagl.toolkits.openff import (
     # get_unitless_charge,
     stream_molecules_from_file,
 )

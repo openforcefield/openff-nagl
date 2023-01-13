@@ -9,11 +9,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from tqdm import tqdm
 
-from openff.nagl.utils.time import PerformanceTimer
-from openff.nagl.utils.types import Pathlike
-from openff.nagl.utils.utils import as_iterable
+from openff.nagl.utils._time import PerformanceTimer
+from openff.nagl.utils._types import Pathlike
+from openff.nagl.utils._utils import as_iterable
 
-from .db import (
+from ._db import (
     DBBase,
     DBMoleculeRecord,
     DBPartialChargeSet,
@@ -27,7 +27,7 @@ from .record import (
     WibergBondOrderMethod,
     WibergBondOrderRecord,
 )
-from .session import DBQueryResult, DBSessionManager
+from ._session import DBQueryResult, DBSessionManager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -253,7 +253,7 @@ class MoleculeStore:
         suppress_toolkit_warnings: bool
             Whether to suppress toolkit warnings when loading molecules.
         """
-        from openff.nagl.utils.openff import (
+        from openff.nagl.toolkits.openff import (
             capture_toolkit_warnings,
             smiles_to_inchi_key,
         )

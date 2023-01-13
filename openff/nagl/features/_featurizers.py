@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Generic, List, TypeVar
 import torch
 
 from .atoms import AtomFeature
-from .base import Feature
+from ._base import Feature
 from .bonds import BondFeature
 
 if TYPE_CHECKING:

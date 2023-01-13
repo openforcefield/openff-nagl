@@ -99,8 +99,8 @@ def partition_molecules_cli(
     import pandas as pd
     import tqdm
 
-    from openff.nagl.app.partitioner import DatasetPartitioner
-    from openff.nagl.storage.store import MoleculeStore
+    from openff.nagl._app.partitioner import DatasetPartitioner
+    from openff.nagl.storage._store import MoleculeStore
 
     if not len(input_file) >= 1:
         raise ValueError("At least one input source must be given")

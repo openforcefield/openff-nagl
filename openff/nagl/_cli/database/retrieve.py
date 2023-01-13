@@ -4,7 +4,7 @@ import click
 from click_option_group import optgroup
 
 if TYPE_CHECKING:
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
 
 
 def retrieve_molecules(
@@ -14,12 +14,12 @@ def retrieve_molecules(
     partial_charge_method: Optional[str] = None,
     bond_order_method: Optional[str] = None,
 ):
-    from openff.nagl.cli.utils import (
+    from openff.nagl._cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
-    from openff.nagl.storage.store import MoleculeStore
-    from openff.nagl.utils.openff import stream_molecules_to_file
+    from openff.nagl.storage._store import MoleculeStore
+    from openff.nagl.toolkits.openff import stream_molecules_to_file
 
     manager, input_file, output_file, log_file = preprocess_args(
         manager, input_file, output_file
@@ -90,7 +90,7 @@ def retrieve_molecules(
 def retrieve_molecules_cli(
     ctx, input_file, output_file, partial_charge_method, bond_order_method
 ):
-    from openff.nagl.cli.utils import get_default_manager
+    from openff.nagl._cli.utils import get_default_manager
 
     retrieve_molecules(
         input_file=input_file,

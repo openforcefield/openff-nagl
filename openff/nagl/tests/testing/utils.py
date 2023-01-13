@@ -1,5 +1,5 @@
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
-from openff.nagl.utils.openff import capture_toolkit_warnings
+from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 def rdkit_molecule_to_smiles(rdkit_molecule):
     smiles = OFFMolecule.from_rdkit(

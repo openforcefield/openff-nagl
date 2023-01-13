@@ -1,8 +1,8 @@
 "Architectures for convolutional layers"
 
-from .base import GCNStackMeta
-from .sage import SAGEConvStack
-from .gin import GINConvStack
+from ._base import GCNStackMeta
+from ._sage import SAGEConvStack
+from ._gin import GINConvStack
 
 
 __all__ = [

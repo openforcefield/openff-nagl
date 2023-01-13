@@ -84,8 +84,8 @@ def filter_cli(
 ):
     import tqdm
 
-    from openff.nagl.app.filter import filter_molecules
-    from openff.nagl.utils.openff import (
+    from openff.nagl._app.filter import filter_molecules
+    from openff.nagl.toolkits.openff import (
         stream_molecules_from_file,
         stream_molecules_to_file,
     )

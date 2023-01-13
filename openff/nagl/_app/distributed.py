@@ -137,7 +137,7 @@ class Manager:
     ):
         from dask import distributed
 
-        from openff.nagl.cli.utils import (
+        from openff.nagl._cli.utils import (
             try_and_return_error,
             write_error_to_file_object,
         )

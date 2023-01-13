@@ -4,7 +4,7 @@ import dgl.function
 import torch
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 
-from ..base.base import ImmutableModel
+from .._base.base import ImmutableModel
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
 from .utils import (

@@ -6,7 +6,7 @@ from openff.toolkit.topology.molecule import Molecule
 
 from ..features.atoms import AtomFeature
 from ..features.bonds import BondFeature
-from ..features.featurizers import AtomFeaturizer, BondFeaturizer
+from ..features._featurizers import AtomFeaturizer, BondFeaturizer
 
 FORWARD = "forward"
 REVERSE = "reverse"
@@ -22,7 +22,7 @@ def openff_molecule_to_base_dgl_graph(
     Convert an OpenFF Molecule to a DGL graph.
     """
 
-    from openff.nagl.utils.openff import get_openff_molecule_bond_indices
+    from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
     bonds = get_openff_molecule_bond_indices(molecule)
     indices_a, indices_b = map(list, zip(*bonds))

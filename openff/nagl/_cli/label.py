@@ -5,7 +5,7 @@ import click
 from click_option_group import optgroup
 
 if TYPE_CHECKING:
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
     from openff.nagl.storage.record import MoleculeRecord
 
 def label_molecules(
@@ -25,17 +25,17 @@ def label_molecules(
         OpenEyeToolkitWrapper,
     )
 
-    from openff.nagl.app.distributed import Manager
-    from openff.nagl.cli.database.store import aggregate_records
-    from openff.nagl.cli.utils import (
+    from openff.nagl._app.distributed import Manager
+    from openff.nagl._cli.database.store import aggregate_records
+    from openff.nagl._cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
         try_and_return_error,
         write_error_to_file_object
     )
     from openff.nagl.storage.record import MoleculeRecord
-    from openff.nagl.storage.store import MoleculeStore
-    from openff.nagl.utils.openff import stream_molecules_from_file
+    from openff.nagl.storage._store import MoleculeStore
+    from openff.nagl.toolkits.openff import stream_molecules_from_file
 
     import tqdm
 
@@ -146,7 +146,7 @@ def label_molecules_cli(
     bond_order_method,
     openeye_only
 ):
-    from openff.nagl.cli.utils import get_default_manager
+    from openff.nagl._cli.utils import get_default_manager
 
     label_molecules(
         input_file=input_file,

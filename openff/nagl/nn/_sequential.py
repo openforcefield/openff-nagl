@@ -3,7 +3,7 @@ from typing import ClassVar, List, Optional
 import torch.nn
 
 from .activation import ActivationFunction
-from .base import ContainsLayersMixin
+from ._base import ContainsLayersMixin
 
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):

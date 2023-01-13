@@ -6,11 +6,11 @@ import tqdm
 from click_option_group import optgroup
 
 if TYPE_CHECKING:
-    from openff.nagl.app.distributed import Manager
+    from openff.nagl._app.distributed import Manager
 
 
 def get_unique_smiles(file: str, file_format: str = None) -> List[str]:
-    from openff.nagl.utils.openff import stream_molecules_from_file
+    from openff.nagl.toolkits.openff import stream_molecules_from_file
 
     all_smiles = list(
         tqdm.tqdm(
@@ -41,7 +41,7 @@ def generate_single_molecule_conformers(
     from openff.toolkit.topology.molecule import unit as off_unit
     from openff.toolkit.utils.toolkits import RDKitToolkitWrapper, OpenEyeToolkitWrapper, OPENEYE_AVAILABLE, RDKIT_AVAILABLE, GLOBAL_TOOLKIT_REGISTRY
 
-    from openff.nagl.utils.openff import generate_conformers, smiles_to_molecule
+    from openff.nagl.toolkits.openff import generate_conformers, smiles_to_molecule
 
     molecule = smiles_to_molecule(smiles, guess_stereochemistry=guess_stereochemistry)
 
@@ -90,12 +90,12 @@ def generate_all_conformers(
     n_conformers: int = 10,
     conformer_rms_cutoff: float = 0.05,
 ):
-    from openff.nagl.app.distributed import Manager
-    from openff.nagl.cli.utils import (
+    from openff.nagl._app.distributed import Manager
+    from openff.nagl._cli.utils import (
         as_batch_function_with_captured_errors,
         preprocess_args,
     )
-    from openff.nagl.utils.openff import stream_molecules_to_file
+    from openff.nagl.toolkits.openff import stream_molecules_to_file
 
     manager, input_file, output_file, log_file = preprocess_args(
         manager, input_file, output_file
@@ -170,7 +170,7 @@ def generate_all_conformers(
 def generate_conformers_cli(
     ctx, input_file, output_file, n_conformer_pool, n_conformers, conformer_rms_cutoff
 ):
-    from openff.nagl.cli.utils import get_default_manager
+    from openff.nagl._cli.utils import get_default_manager
 
     generate_all_conformers(
         input_file=input_file,

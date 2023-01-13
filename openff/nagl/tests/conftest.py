@@ -6,13 +6,13 @@ Global pytest fixtures
 import numpy as np
 import pytest
 
-from openff.nagl.dgl.molecule import DGLMolecule
-from openff.nagl.features import AtomConnectivity, BondIsInRing
+from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.bonds import BondIsInRing
 
 
 @pytest.fixture()
 def openff_methane_uncharged():
-    import openff.toolkit
     from openff.toolkit.topology.molecule import Molecule, unit
 
     molecule = Molecule.from_smiles("C")

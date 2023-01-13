@@ -4,7 +4,7 @@ import json
 import pathlib
 from typing import Any, Dict
 
-from .types import Pathlike
+from ._types import Pathlike
 
 
 class CustomJsonEncoder(json.JSONEncoder):

@@ -1,6 +1,6 @@
 import click
 
-from openff.nagl.cli.plot.plot_similarity import plot_similarity_cli
+from openff.nagl._cli.plot.plot_similarity import plot_similarity_cli
 
 
 @click.group(

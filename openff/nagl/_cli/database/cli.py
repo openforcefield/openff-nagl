@@ -1,7 +1,7 @@
 import click
 
-from openff.nagl.cli.database.retrieve import retrieve_molecules_cli
-from openff.nagl.cli.database.store import store_molecules_cli
+from openff.nagl._cli.database.retrieve import retrieve_molecules_cli
+from openff.nagl._cli.database.store import store_molecules_cli
 
 
 @click.group(

@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 from click.testing import CliRunner
 
-from openff.nagl.cli.label import label_molecules_cli
+from openff.nagl._cli.label import label_molecules_cli
 from openff.nagl.storage.record import WibergBondOrder
-from openff.nagl.storage.store import MoleculeStore
+from openff.nagl.storage._store import MoleculeStore
 
 
 def test_label_molecule(
