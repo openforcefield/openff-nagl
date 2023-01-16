@@ -1,11 +1,29 @@
+"""
+Components for constructing and processing GNN models
+"""
+
+
 from .activation import ActivationFunction
-from .data import DGLMoleculeDataLoader, DGLMoleculeDataset
-from .gcn import *
+from ._containers import ConvolutionModule, ReadoutModule
+from .dataset import DGLMoleculeDataLoader, DGLMoleculeDataset
 from .label import (
     ComputeAndLabelMolecule,
     EmptyLabeller,
     LabelFunction,
-    LabelFunctionLike,
     LabelPrecomputedMolecule,
 )
-from .sequential import SequentialLayers
+from ._sequential import SequentialLayers
+
+
+__all__ = [
+    "ActivationFunction",
+    "ConvolutionModule",
+    "DGLMoleculeDataLoader",
+    "DGLMoleculeDataset",
+    "EmptyLabeller",
+    "LabelFunction",
+    "LabelPrecomputedMolecule",
+    "ReadoutModule",
+    "SequentialLayers",
+    "ComputeAndLabelMolecule",
+]

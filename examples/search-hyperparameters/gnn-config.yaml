@@ -1,12 +1,12 @@
-partial_charge_method: am1
+partial_charge_method: am1bcc
 
 # base
-convolution_architecture: SAGEConv
 postprocess_layer: compute_partial_charges
 use_cached_data: True
 
 # hyperparameters
 # (will be overridden in hyperparameter search)
+convolution_architecture: SAGEConv
 activation_function: ReLU
 learning_rate: 0.001
 n_convolution_hidden_features: 128

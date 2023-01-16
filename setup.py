@@ -78,7 +78,7 @@ setup(
 
     entry_points={
         "console_scripts": [
-            "openff-nagl=openff.nagl.cli:cli",
+            "openff-nagl=openff.nagl._cli:cli",
         ]
     }
 )

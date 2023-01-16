@@ -3,7 +3,7 @@ import pytest
 import torch
 from openff.toolkit.topology.molecule import unit as offunit
 
-from openff.nagl.utils.utils import (
+from openff.nagl.utils._utils import (
     as_iterable,
     assert_same_lengths,
     is_iterable,

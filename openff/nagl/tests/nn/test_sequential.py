@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from openff.nagl.nn.sequential import SequentialLayers
+from openff.nagl.nn._sequential import SequentialLayers
 
 
 class TestSequentialLayers:

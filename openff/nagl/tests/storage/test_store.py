@@ -3,9 +3,9 @@ import re
 import numpy as np
 import pytest
 
-from openff.nagl.storage.db import DB_VERSION, DBInformation
-from openff.nagl.storage.session import IncompatibleDBVersion
-from openff.nagl.storage.store import (
+from openff.nagl.storage._db import DB_VERSION, DBInformation
+from openff.nagl.storage._session import IncompatibleDBVersion
+from openff.nagl.storage._store import (
     ChargeMethod,
     ConformerRecord,
     MoleculeRecord,

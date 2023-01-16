@@ -16,13 +16,24 @@ import numpy as np
 from openff.units import unit as openff_unit
 from pydantic import Field, validator
 
-from openff.nagl.base.array import Array
-from openff.nagl.base.base import ImmutableModel
-from openff.nagl.utils.openff import map_indexed_smiles
+from openff.nagl._base.array import Array
+from openff.nagl._base.base import ImmutableModel
+from openff.nagl.toolkits.openff import map_indexed_smiles
+
+from openff.toolkit.utils.toolkits import GLOBAL_TOOLKIT_REGISTRY
 
 if TYPE_CHECKING:
     import openff.toolkit
 
+__all__ = [
+    "ChargeMethod",
+    "ConformerRecord",
+    "MoleculeRecord",
+    "PartialChargeRecord",
+    "WibergBondOrder",
+    "WibergBondOrderMethod",
+    "WibergBondOrderRecord",
+]
 
 class Record(ImmutableModel):
     class Config(ImmutableModel.Config):
@@ -206,8 +217,9 @@ class MoleculeRecord(Record):
         partial_charge_method: str = None,
         bond_order_method: str = None,
     ):
+        from openff.units import unit
         from openff.nagl.nn.label import LabelPrecomputedMolecule
-        from openff.nagl.utils.openff import get_coordinates_in_angstrom
+        # from openff.nagl.utils.openff import get_coordinates_in_angstrom
 
         if not len(molecule.conformers) == 1:
             raise ValueError(
@@ -234,7 +246,8 @@ class MoleculeRecord(Record):
             bonds[bond_order_method] = labels[labeller.bond_order_label].numpy()
 
         conformer_record = ConformerRecord(
-            coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
+            coordinates=molecule.conformers[0].m_as(unit.angstrom),
+            # coordinates=get_coordinates_in_angstrom(molecule.conformers[0]),
             partial_charges=charges,
             bond_orders=bonds,
         )
@@ -254,6 +267,7 @@ class MoleculeRecord(Record):
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
         rms_cutoff: float = 0.05,
+        toolkit_registry = GLOBAL_TOOLKIT_REGISTRY,
     ):
         """Create a MoleculeRecord from an OpenFF molecule
 
@@ -275,7 +289,8 @@ class MoleculeRecord(Record):
         rms_cutoff
             The minimum RMS cutoff difference between conformers
         """
-        from openff.toolkit.topology.molecule import unit as off_unit
+        # from openff.toolkit.topology.molecule import unit as off_unit
+        from openff.units import unit
 
         from openff.nagl.storage.record import (
             ConformerRecord,
@@ -283,10 +298,10 @@ class MoleculeRecord(Record):
             WibergBondOrder,
             WibergBondOrderRecord,
         )
-        from openff.nagl.utils.openff import (
-            get_coordinates_in_angstrom,
-            get_unitless_charge,
-        )
+        # from openff.nagl.utils.openff import (
+        #     get_coordinates_in_angstrom,
+        #     get_unitless_charge,
+        # )
 
         partial_charge_methods = [
             ChargeMethod(method) for method in partial_charge_methods
@@ -300,9 +315,13 @@ class MoleculeRecord(Record):
         if generate_conformers:
             molecule.generate_conformers(
                 n_conformers=n_conformer_pool,
-                rms_cutoff=rms_cutoff * off_unit.angstrom,
+                rms_cutoff=rms_cutoff * unit.angstrom,
+                toolkit_registry=toolkit_registry,
             )
-            molecule.apply_elf_conformer_selection(limit=n_conformers)
+            molecule.apply_elf_conformer_selection(
+                limit=n_conformers,
+                toolkit_registry=toolkit_registry
+            )
 
         elif not molecule.conformers:
             raise ValueError(
@@ -318,10 +337,12 @@ class MoleculeRecord(Record):
                 molecule.assign_partial_charges(
                     method.to_openff_method(),
                     use_conformers=[conformer],
+                    toolkit_registry=toolkit_registry,
                 )
+                charges = molecule.partial_charges.m_as(unit.elementary_charge)
                 charge_sets[method] = PartialChargeRecord(
                     method=method,
-                    values=[get_unitless_charge(x) for x in molecule.partial_charges],
+                    values=charges.tolist(),
                 )
 
             bond_order_sets = {}
@@ -329,6 +350,7 @@ class MoleculeRecord(Record):
                 molecule.assign_fractional_bond_orders(
                     method.to_openff_method(),
                     use_conformers=[conformer],
+                    toolkit_registry=toolkit_registry,
                 )
                 bond_order_sets[method] = WibergBondOrderRecord(
                     method=method,
@@ -339,7 +361,8 @@ class MoleculeRecord(Record):
 
             conformer_records.append(
                 ConformerRecord(
-                    coordinates=get_coordinates_in_angstrom(conformer),
+                    coordinates=conformer.m_as(unit.angstrom),
+                    # coordinates=get_coordinates_in_angstrom(conformer),
                     partial_charges=charge_sets,
                     bond_orders=bond_order_sets,
                 )
@@ -354,6 +377,8 @@ class MoleculeRecord(Record):
         self,
         partial_charge_method: Optional[ChargeMethod] = None,
         bond_order_method: Optional[WibergBondOrderMethod] = None,
+        normalize_partial_charges: bool = True,
+        toolkit_registry=GLOBAL_TOOLKIT_REGISTRY,
     ) -> "openff.toolkit.topology.Molecule":
         """Convert the record to an OpenFF molecule with averaged properties"""
 
@@ -361,7 +386,8 @@ class MoleculeRecord(Record):
         from openff.toolkit.topology.molecule import unit as off_unit
 
         offmol = Molecule.from_mapped_smiles(
-            self.mapped_smiles, allow_undefined_stereo=True
+            self.mapped_smiles, allow_undefined_stereo=True,
+            toolkit_registry=toolkit_registry
         )
         offmol._conformers = [
             conformer.coordinates * off_unit.angstrom for conformer in self.conformers
@@ -369,6 +395,8 @@ class MoleculeRecord(Record):
         if partial_charge_method:
             charges = self.average_partial_charges(partial_charge_method)
             offmol.partial_charges = np.array(charges) * off_unit.elementary_charge
+            if normalize_partial_charges:
+                offmol._normalize_partial_charges()
 
         if bond_order_method:
             bond_orders = self.average_bond_orders(bond_order_method)

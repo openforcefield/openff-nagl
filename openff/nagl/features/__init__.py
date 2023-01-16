@@ -1,2 +1,3 @@
-from .atoms import *
-from .bonds import *
+"""
+Atom and bond features for GNN models
+"""

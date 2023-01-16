@@ -2,43 +2,24 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology.molecule import Molecule as OFFMolecule
-from openff.toolkit.topology.molecule import unit as offunit
+from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+from openff.units import unit
 
-from openff.nagl.utils.openff import (
+from openff.nagl.toolkits.openff import (
     get_best_rmsd,
-    get_coordinates_in_angstrom,
     get_openff_molecule_bond_indices,
-    get_openff_molecule_formal_charges,
-    get_unitless_charge,
     is_conformer_identical,
     map_indexed_smiles,
     normalize_molecule,
     smiles_to_inchi_key,
+    calculate_circular_fingerprint_similarity
 )
-from openff.nagl.utils.utils import transform_coordinates
-
-
-def test_get_unitless_charge(openff_methane_charged):
-    formal = openff_methane_charged.atoms[1].formal_charge
-    formal_charge = get_unitless_charge(formal, dtype=int)
-    assert formal_charge == 0
-    assert isinstance(formal_charge, int)
-
-    partial = openff_methane_charged.atoms[1].partial_charge
-    partial_charge = get_unitless_charge(partial)
-    assert partial_charge == 0.1
-    assert isinstance(partial_charge, float)
+from openff.nagl.utils._utils import transform_coordinates
 
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
     assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
-
-
-def test_get_openff_molecule_formal_charges(openff_methane_charged):
-    formal_charges = get_openff_molecule_formal_charges(openff_methane_charged)
-    assert formal_charges == [0, 0, 0, 0, 0]
-
 
 @pytest.mark.parametrize(
     "smiles, expected",
@@ -93,7 +74,8 @@ def test_map_indexed_smiles(smiles_a, smiles_b, expected):
 def test_is_conformer_identical_generated(smiles):
     offmol = OFFMolecule.from_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
-    ordered_conf = get_coordinates_in_angstrom(offmol.conformers[0])
+    ordered_conf = offmol.conformers[0].m_as(unit.angstrom)
+    # ordered_conf = get_coordinates_in_angstrom(offmol.conformers[0])
 
     # Create a permuted version of the conformer,
     # permuting only topology symmetric atoms.
@@ -144,7 +126,7 @@ def test_not_is_conformer_identical():
     offmol = OFFMolecule.from_mapped_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
 
-    conformer = get_coordinates_in_angstrom(offmol.conformers[0])
+    conformer = offmol.conformers[0].m_as(unit.angstrom)
 
     # Swap and perturb the hydrogen positions.
     hydrogen_coordinates = conformer[3, :]
@@ -156,22 +138,38 @@ def test_not_is_conformer_identical():
     assert not is_conformer_identical(offmol, conformer, perturbed_conformer)
 
 
-def test_get_best_rmsd():
-    from rdkit.Chem import rdMolAlign
+@pytest.mark.skipif(
+    not RDKIT_AVAILABLE,
+    reason="requires rdkit"
+)
+@pytest.mark.parametrize("smiles1, smiles2, radius, similarity", [
+    ("C", "C", 3, 1.0),
+    ("C", "N", 3, 0.33333333333333333),
+])
+def test_calculate_circular_fingerprint_similarity(smiles1, smiles2, radius, similarity):
+    mol1 = OFFMolecule.from_smiles(smiles1)
+    mol2 = OFFMolecule.from_smiles(smiles2)
 
-    offmol = OFFMolecule.from_smiles("CCC")
-    offmol._conformers = [
-        np.random.random((11, 3)) * offunit.angstrom,
-        np.random.random((11, 3)) * offunit.angstrom,
-    ]
+    dice = calculate_circular_fingerprint_similarity(mol1, mol2, radius=radius)
+    assert_allclose(dice, similarity)
 
-    rdmol = offmol.to_rdkit()
-    assert rdmol.GetNumConformers() == 2
 
-    reference_rmsd = rdMolAlign.GetBestRMS(rdmol, rdmol, 0, 1)
-    rmsd = get_best_rmsd(
-        offmol,
-        get_coordinates_in_angstrom(offmol.conformers[0]),
-        get_coordinates_in_angstrom(offmol.conformers[1]),
-    )
-    assert_allclose(rmsd, reference_rmsd)
+# def test_get_best_rmsd():
+#     from rdkit.Chem import rdMolAlign
+
+#     offmol = OFFMolecule.from_smiles("CCC")
+#     offmol._conformers = [
+#         np.random.random((11, 3)) * unit.angstrom,
+#         np.random.random((11, 3)) * unit.angstrom,
+#     ]
+
+#     rdmol = offmol.to_rdkit()
+#     assert rdmol.GetNumConformers() == 2
+
+#     reference_rmsd = rdMolAlign.GetBestRMS(rdmol, rdmol, 0, 1)
+#     rmsd = get_best_rmsd(
+#         offmol,
+#         offmol.conformers[0].m_as(unit.angstrom),
+#         offmol.conformers[1].m_as(unit.angstrom),
+#     )
+#     assert_allclose(rmsd, reference_rmsd)

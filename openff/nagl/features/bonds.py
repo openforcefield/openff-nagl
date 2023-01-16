@@ -1,11 +1,13 @@
+"""Bond features for GNN models"""
+
 from typing import ClassVar, Dict, Type
 
 import torch
 
-from openff.nagl.utils.openff import get_openff_molecule_bond_indices
+from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
-from .base import CategoricalMixin, Feature, FeatureMeta
-from .utils import one_hot_encode
+from ._base import CategoricalMixin, Feature, FeatureMeta
+from ._utils import one_hot_encode
 
 __all__ = [
     "BondFeatureMeta",
@@ -47,14 +49,8 @@ class BondInRingOfSize(BondFeature):
     ring_size: int
 
     def _encode(self, molecule) -> torch.Tensor:
-        from openff.nagl.utils.openff import openff_to_rdkit
-
-        rdmol = openff_to_rdkit(molecule)
-
-        is_in_ring = []
-        for bond in molecule.bonds:
-            rdbond = rdmol.GetBondBetweenAtoms(bond.atom1_index, bond.atom2_index)
-            is_in_ring.append(rdbond.IsInRingSize(self.ring_size))
+        from openff.nagl.toolkits.openff import get_bonds_are_in_ring_size
+        is_in_ring = get_bonds_are_in_ring_size(molecule, self.ring_size)
         return torch.tensor(is_in_ring, dtype=int)
 
 
