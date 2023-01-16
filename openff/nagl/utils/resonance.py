@@ -1,4 +1,4 @@
-
+"""Enumerate resonance forms of a molecule"""
 
 import copy
 import itertools
@@ -11,7 +11,7 @@ import numpy as np
 from openff.units import unit
 from openff.toolkit.topology import Molecule
 
-from openff.nagl.utils.types import ResonanceType, ResonanceAtomType
+from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 
@@ -183,7 +183,7 @@ class ResonanceEnumerator:
             A list of all resonance forms including the original molecule.
         
         """
-        from openff.nagl.utils.openff import molecule_from_networkx
+        from openff.nagl.toolkits.openff import molecule_from_networkx
 
         all_fragments = self._enumerate_resonance_fragments(
             lowest_energy_only=lowest_energy_only,

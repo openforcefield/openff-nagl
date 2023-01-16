@@ -1,3 +1,12 @@
-from .base import GCNStackMeta
-from .sage import SAGEConvStack
-from .gin import GINConvStack
+"Architectures for convolutional layers"
+
+from ._base import GCNStackMeta
+from ._sage import SAGEConvStack
+from ._gin import GINConvStack
+
+
+__all__ = [
+    "GCNStackMeta",
+    "SAGEConvStack",
+    "GINConvStack"
+]

@@ -5,7 +5,7 @@ from openff.toolkit.topology.molecule import Molecule as OFFMolecule
 from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
 from openff.units import unit
 
-from openff.nagl.utils.openff import (
+from openff.nagl.toolkits.openff import (
     get_best_rmsd,
     get_openff_molecule_bond_indices,
     is_conformer_identical,
@@ -14,7 +14,7 @@ from openff.nagl.utils.openff import (
     smiles_to_inchi_key,
     calculate_circular_fingerprint_similarity
 )
-from openff.nagl.utils.utils import transform_coordinates
+from openff.nagl.utils._utils import transform_coordinates
 
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):

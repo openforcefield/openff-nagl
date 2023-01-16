@@ -6,7 +6,6 @@ on:
   pull_request:
     branches:
       - main
-      - refactor-toolkits
 
 concurrency:
   # Specific group naming so CI is only cancelled
@@ -23,6 +22,7 @@ env:
 
 jobs:
   main_tests:
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }})
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -47,20 +47,12 @@ jobs:
         df -h
         ulimit -a
 
-    # More info on options: https://github.com/conda-incubator/setup-miniconda
-    - name: Install conda dependencies
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Install environment
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        python-version: ${{ matrix.python-version }}
         environment-file: devtools/conda-envs/test_env.yaml
-        add-pip-as-python-dependency: true
-        architecture: x64
-        mamba-version: "*"
-        channels: conda-forge, defaults
-        activate-environment: openff-nagl-test
-        auto-update-conda: true
-        auto-activate-base: false
-        show-channel-urls: true
+        extra-specs: |
+          python=${{ matrix.python-version }}
 
     - name: Install package
       run: |
@@ -137,16 +129,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install conda dependencies
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Set up Python
+      uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python-version }}
-        add-pip-as-python-dependency: true
-        architecture: x64
-        mamba-version: "*"
-        channels: conda-forge, defaults
-        auto-update-conda: true
-        show-channel-urls: true
+        python-version: 3.9
 
     - name: Install dependencies
       run: |

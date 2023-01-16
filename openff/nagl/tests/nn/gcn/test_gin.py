@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn.gin import GINConvStack, GINConv
+from openff.nagl.nn.gcn._gin import GINConvStack, GINConv
 
 
 class TestSAGEConvStack:

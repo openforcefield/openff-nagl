@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_equal
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule
-from openff.toolkit.topology.molecule import unit as offunit
+from openff.toolkit.topology.molecule import Molecule
 
 from openff.nagl.features.atoms import (
     AtomAverageFormalCharge,
@@ -21,12 +20,12 @@ from openff.nagl.features.bonds import (
     BondOrder,
     WibergBondOrder,
 )
-from openff.nagl.utils.types import HybridizationType
+from openff.nagl.utils._types import HybridizationType
 
 
 @pytest.fixture()
 def openff_benzene():
-    return OFFMolecule.from_smiles("c1ccccc1")
+    return Molecule.from_smiles("c1ccccc1")
 
 
 @pytest.mark.parametrize(
@@ -40,7 +39,7 @@ def test_atom_connectivity(smiles, connectivity):
     feature = AtomConnectivity()
     assert len(feature) == 4
 
-    offmol = OFFMolecule.from_smiles(smiles)
+    offmol = Molecule.from_smiles(smiles)
     assert_equal(feature(offmol).numpy(), connectivity)
 
 
@@ -59,7 +58,7 @@ def test_atom_hybridization(smiles, hybridization):
     feature = AtomHybridization(categories=["other", "sp", "sp2", "sp3"])
     assert len(feature) == 4
 
-    offmol = OFFMolecule.from_smiles(smiles)
+    offmol = Molecule.from_smiles(smiles)
     assert_equal(feature(offmol).numpy(), hybridization)
 
 
@@ -74,13 +73,13 @@ def test_atom_formal_charge(smiles, charge):
     feature = AtomFormalCharge(categories=[0, -1, 1])
     assert len(feature) == 3
 
-    offmol = OFFMolecule.from_smiles(smiles)
+    offmol = Molecule.from_smiles(smiles)
     assert_equal(feature(offmol).numpy(), charge)
 
 
 def test_atom_average_formal_charge():
     smiles = "[C:1](=[O:4])([O-:5])[C:2]([H:8])([H:9])[C:3](=[O:6])([O-:7])"
-    offmol = OFFMolecule.from_mapped_smiles(smiles)
+    offmol = Molecule.from_mapped_smiles(smiles)
     feature = AtomAverageFormalCharge()
     charges = feature(offmol).numpy()
 
@@ -106,7 +105,7 @@ def test_bond_order():
     feature = BondOrder(categories=[2, 1])
     assert len(feature) == 2
 
-    offmol = OFFMolecule.from_smiles("C=O")
+    offmol = Molecule.from_smiles("C=O")
     encoding = feature(offmol).numpy()
     assert encoding.shape == (3, 2)
 

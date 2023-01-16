@@ -1,21 +1,21 @@
 import pytest
 import torch
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import Molecule
 from torch.testing import assert_close
 
-from openff.nagl.dgl.utils import (
+from openff.nagl._dgl.utils import (
     dgl_heterograph_to_homograph,
     get_openff_molecule_information,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
     get_openff_molecule_information,
 )
-from openff.nagl.features import AtomConnectivity, BondIsInRing
-
+from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.bonds import BondIsInRing
 
 @pytest.fixture()
 def methane_dgl_heterograph():
-    offmol = OFFMolecule.from_smiles("C")
+    offmol = Molecule.from_smiles("C")
     graph = openff_molecule_to_base_dgl_graph(offmol)
     return graph
 

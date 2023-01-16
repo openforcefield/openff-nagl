@@ -1,3 +1,5 @@
+"Atom features for GNN models"
+
 import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
@@ -5,12 +7,12 @@ import numpy as np
 import torch
 from pydantic import validator
 
-from openff.nagl.utils.types import HybridizationType
+from openff.nagl.utils._types import HybridizationType
 from openff.units import unit
 from openff.utilities import requires_package
 
-from .base import CategoricalMixin, Feature, FeatureMeta
-from .utils import one_hot_encode
+from ._base import CategoricalMixin, Feature, FeatureMeta
+from ._utils import one_hot_encode
 
 
 if TYPE_CHECKING:
@@ -71,7 +73,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
         return v
 
     def _encode(self, molecule) -> torch.Tensor:
-        from openff.nagl.utils.openff import get_molecule_hybridizations
+        from openff.nagl.toolkits.openff import get_molecule_hybridizations
 
         hybridizations = get_molecule_hybridizations(molecule)
         return torch.vstack(
@@ -116,7 +118,7 @@ class AtomInRingOfSize(AtomFeature):
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         
-        from openff.nagl.utils.openff import get_atoms_are_in_ring_size
+        from openff.nagl.toolkits.openff import get_atoms_are_in_ring_size
         in_ring_size = get_atoms_are_in_ring_size(molecule, self.ring_size)
         # rdmol = openff_to_rdkit(molecule)
 
@@ -146,7 +148,7 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
 class AtomAverageFormalCharge(AtomFeature):
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from openff.nagl.utils.resonance import enumerate_resonance_forms
-        from openff.nagl.utils.openff import normalize_molecule
+        from openff.nagl.toolkits.openff import normalize_molecule
 
         molecule = normalize_molecule(molecule)
         resonance_forms = enumerate_resonance_forms(

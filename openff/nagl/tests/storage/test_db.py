@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from openff.nagl.storage.db import DBConformerRecord, match_conformers
+from openff.nagl.storage._db import DBConformerRecord, match_conformers
 from openff.nagl.storage.record import ConformerRecord
 
 

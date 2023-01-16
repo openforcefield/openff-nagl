@@ -1,3 +1,7 @@
+"""
+Functions to label OpenFF Molecules to construct datasets for GNN model training
+"""
+
 import abc
 import copy
 from typing import TYPE_CHECKING, Callable, Dict, Optional, Tuple, Union
@@ -9,6 +13,13 @@ if TYPE_CHECKING:
 
     from openff.nagl.storage.record import ChargeMethod, WibergBondOrderMethod
 
+
+__all__ = [
+    "LabelFunction",
+    "EmptyLabeller",
+    "LabelPrecomputedMolecule",
+    "ComputeAndLabelMolecule",
+]
 
 class LabelFunction(abc.ABC):
     def __call__(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
@@ -91,7 +102,7 @@ class ComputeAndLabelMolecule(LabelFunction):
         ]
 
     def run(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
-        from opneff.units import unit
+        from openff.units import unit
         from openff.toolkit.topology.molecule import Molecule as OFFMolecule
         from openff.toolkit.topology.molecule import unit as off_unit
 
