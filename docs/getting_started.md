@@ -37,3 +37,6 @@ And when you are finished, you can exit the virtual environment with:
 ```
 conda deactivate
 ```
+
+## Inference with NAGL
+
