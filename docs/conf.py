@@ -63,7 +63,7 @@ autosummary_context = {
     # Modules to exclude from API docs
     "exclude_modules": [
         "openff.nagl.tests",
-        "openff.nagl.cli",
+        "openff.nagl.data",
     ]
 }
 
@@ -117,12 +117,36 @@ intersphinx_mapping = {
     "rdkit": ("https://www.rdkit.org/docs", None),
     "openeye": ("https://docs.eyesopen.com/toolkits/python/", None),
     "mdtraj": ("https://www.mdtraj.org/1.9.5/", None),
+    "openff.toolkit": (
+        "https://docs.openforcefield.org/projects/toolkit/en/stable/",
+        None,
+    ),
     "openff.interchange": (
         "https://docs.openforcefield.org/projects/interchange/en/stable/",
         None,
     ),
+    "openff.units": (
+        "https://docs.openforcefield.org/projects/units/en/stable/",
+        None,
+    ),
+    "openff.bespokefit": (
+        "https://docs.openforcefield.org/projects/bespokefit/en/stable/",
+        None,
+    ),
+    "openff.qcsubmit": (
+        "https://docs.openforcefield.org/projects/qcsubmit/en/stable/",
+        None,
+    ),
     "openff.fragmenter": (
         "https://docs.openforcefield.org/projects/fragmenter/en/stable/",
+        None,
+    ),
+    "openff.evaluator": (
+        "https://docs.openforcefield.org/projects/evaluator/en/stable/",
+        None,
+    ),
+    "openff.recharge": (
+        "https://docs.openforcefield.org/projects/recharge/en/stable/",
         None,
     ),
     "torch": ("https://pytorch.org/docs/stable/", None),
