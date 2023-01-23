@@ -13,18 +13,18 @@ getting_started.md
 training.md
 theory.md
 examples.md
-toolkit_wrappers.md
 :::
 
-<!-- 
 :::{toctree}
 ---
 hidden: true
-caption: User Guide
+caption: Developer's Guide
 ---
 
-::: 
--->
+dev.md
+toolkit_wrappers.md
+:::
+
 
 <!--
 The autosummary directive renders to rST,
