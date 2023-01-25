@@ -165,9 +165,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
         add-pip-as-python-dependency: true
         architecture: x64
+        miniforge-variant: Mambaforge
+        use-mamba: true
         auto-update-conda: true
         show-channel-urls: true
-        mamba-version: "*"
         channels: conda-forge, defaults
 
     - name: Build from source
