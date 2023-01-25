@@ -180,6 +180,11 @@ class TestDGLMoleculeLightningDataModule:
     def mock_data_module_with_store(self, tmpdir, mock_data_store):
         return self.create_mock_data_module(tmpdir, mock_data_store)
 
+    def test_without_cache(self, tmpdir, mock_data_store):
+        data_module = self.create_mock_data_module(
+            tmpdir=tmpdir, mock_data_store=mock_data_store, use_cached_data=False
+        )
+
     def test_init(self, mock_data_module):
         assert isinstance(mock_data_module.atom_features[0], AtomicElement)
         assert mock_data_module.n_atom_features == 5
