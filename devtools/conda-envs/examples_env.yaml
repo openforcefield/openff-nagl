@@ -1,0 +1,42 @@
+name: openff-nagl-test
+channels:
+  - dglteam
+  - openeye
+  - conda-forge
+  - defaults
+dependencies:
+  # Base depends
+  - python
+  - pip
+
+  # Examples
+  - jupyterlab
+
+  # UI
+  - click
+  - click-option-group
+  - tqdm
+
+  # chemistry
+  - openff-toolkit ==0.11.1
+  - openff-units
+  - pydantic
+  - rdkit
+  - openeye-toolkits
+
+  # database
+  - sqlalchemy
+  - sqlite
+
+  # gcn
+  - dglteam::dgl >=0.7
+  - pytorch
+  - pytorch-lightning
+
+  # parallelism
+  - dask-jobqueue
+
+  # Pip-only installs
+  - pip:
+    - rich
+
