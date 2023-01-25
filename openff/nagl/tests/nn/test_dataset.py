@@ -180,6 +180,45 @@ class TestDGLMoleculeLightningDataModule:
     def mock_data_module_with_store(self, tmpdir, mock_data_store):
         return self.create_mock_data_module(tmpdir, mock_data_store)
 
+    def test_without_cache(self, tmpdir, mock_data_store):
+        from pytorch_lightning import Trainer
+        from openff.nagl import GNNModel
+
+        atoms = [AtomicElement(categories=["Cl", "H"])]
+        bonds = [BondOrder()]
+
+
+        data_module = DGLMoleculeLightningDataModule(
+            atom_features=atoms,
+            bond_features=bonds,
+            partial_charge_method="am1bcc",
+            training_set_paths=mock_data_store,
+            training_batch_size=None,
+            validation_set_paths=mock_data_store,
+            test_set_paths=mock_data_store,
+            data_cache_directory=os.path.join(tmpdir, "tmp"),
+            use_cached_data=False,
+        )
+        
+        model = GNNModel(
+            convolution_architecture="SAGEConv",
+            n_convolution_hidden_features=128,
+            n_convolution_layers=3,
+            n_readout_hidden_features=128,
+            n_readout_layers=4,
+            activation_function="ReLU",
+            postprocess_layer="compute_partial_charges",
+            atom_features=atoms,
+            readout_name="am1bcc-charges",
+            learning_rate=0.001,
+            bond_features=bonds,
+        )
+
+        with tmpdir.as_cwd():
+            trainer = Trainer(max_epochs=1)
+            trainer.fit(model, data_module)
+
+
     def test_init(self, mock_data_module):
         assert isinstance(mock_data_module.atom_features[0], AtomicElement)
         assert mock_data_module.n_atom_features == 5
@@ -267,16 +306,20 @@ class TestDGLMoleculeLightningDataModule:
 
     def test_error_on_cache(self, tmpdir, mock_data_store):
         mock_data_module_with_store = self.create_mock_data_module(
-            tmpdir, mock_data_store, use_cached_data=False
+            tmpdir, mock_data_store, use_cached_data=True
         )
+
         mock_data_module_with_store.data_cache_directory.mkdir(
             exist_ok=True, parents=True
         )
+
         with open(mock_data_module_with_store._training_cache_path, "wb") as file:
             pickle.dump("test", file)
 
         with pytest.raises(FileExistsError):
-            mock_data_module_with_store.prepare_data()
+            self.create_mock_data_module(
+            tmpdir, mock_data_store, use_cached_data=False
+        )
 
     def test_setup(self, tmpdir, mock_data_store):
         mock_data_module_with_store = self.create_mock_data_module(
