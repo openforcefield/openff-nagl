@@ -4,7 +4,7 @@ import torch
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
-from openff.nagl.nn._models import BaseGNNModel
+from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
@@ -106,4 +106,46 @@ class TestBaseGNNModel:
         optimizer = mock_atom_model.configure_optimizers()
         assert isinstance(optimizer, torch.optim.Adam)
         assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.01))
+
+
+
+class TestGNNModel:
+
+    def test_init():
+        from openff.nagl.features import atoms, bonds
+
+        atom_features = (
+            atoms.AtomicElement(["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]),
+            atoms.AtomConnectivity(),
+            atoms.AtomAverageFormalCharge(),
+            atoms.AtomHybridization(),
+            atoms.AtomInRingOfSize(3),
+            atoms.AtomInRingOfSize(4),
+            atoms.AtomInRingOfSize(5),
+            atoms.AtomInRingOfSize(6),
+        )
+
+        bond_features = (
+            bonds.BondInRingOfSize(3),
+            bonds.BondInRingOfSize(4),
+            bonds.BondInRingOfSize(5),
+            bonds.BondInRingOfSize(6),
+        )
+
+
+        model = GNNModel(
+            convolution_architecture="SAGEConv",
+            n_convolution_hidden_features=128,
+            n_convolution_layers=3,
+            n_readout_hidden_features=128,
+            n_readout_layers=4,
+            activation_function="ReLU",
+            postprocess_layer="compute_partial_charges",
+            readout_name=f"am1bcc-charges",
+            learning_rate=0.001,
+            atom_features=atom_features,
+            bond_features=bond_features,
+        )
+
+
 
