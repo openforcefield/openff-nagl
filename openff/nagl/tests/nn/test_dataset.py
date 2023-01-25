@@ -181,9 +181,29 @@ class TestDGLMoleculeLightningDataModule:
         return self.create_mock_data_module(tmpdir, mock_data_store)
 
     def test_without_cache(self, tmpdir, mock_data_store):
+        from pytorch_lightning import Trainer
+        from openff.nagl import GNNModel
+
         data_module = self.create_mock_data_module(
             tmpdir=tmpdir, mock_data_store=mock_data_store, use_cached_data=False
         )
+
+        trainer = Trainer(max_epochs=1)
+        model = GNNModel(
+            convolution_architecture="SAGEConv",
+            n_convolution_hidden_features=128,
+            n_convolution_layers=3,
+            n_readout_hidden_features=128,
+            n_readout_layers=4,
+            activation_function="ReLU",
+            postprocess_layer="compute_partial_charges",
+            atom_features=[AtomicElement(categories=["Cl", "H"])],
+            readout_name="am1bcc-charges",
+            learning_rate=0.001,
+            bond_features=[BondOrder()],
+        )
+
+        trainer.fit(model, data_module)
 
     def test_init(self, mock_data_module):
         assert isinstance(mock_data_module.atom_features[0], AtomicElement)
