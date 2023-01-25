@@ -325,6 +325,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
         self._training_cache_path = self._get_data_cache_path("training")
         self._validation_cache_path = self._get_data_cache_path("validation")
         self._test_cache_path = self._get_data_cache_path("test")
+        self._check_data_cache()
 
     @staticmethod
     def _as_path_lists(obj) -> List[pathlib.Path]:
@@ -352,20 +353,31 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
         ]
         return ConcatDataset(datasets)
 
-    def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
-        input_paths = getattr(self, f"{data_group}_set_paths")
-
-        self.data_cache_directory.mkdir(exist_ok=True, parents=True)
-        cache_path = self._get_data_cache_path(data_group)
-        if cache_path and cache_path.is_file():
-            if self.use_cached_data:
-                return
-            else:
+    def _check_data_cache(self):
+        all_paths = [
+            self._training_cache_path,
+            self._validation_cache_path,
+            self._test_cache_path,
+        ]
+        existing = [
+            path for path in all_paths
+            if path and path.is_file()
+        ]
+        if not self.use_cached_data:
+            if len(existing) > 0:
                 raise FileExistsError(
                     errno.EEXIST,
                     os.strerror(errno.EEXIST),
-                    cache_path.resolve(),
+                    [path.resolve() for path in existing]
                 )
+
+    def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
+        input_paths = getattr(self, f"{data_group}_set_paths")
+        self.data_cache_directory.mkdir(exist_ok=True, parents=True)
+
+        cache_path = self._get_data_cache_path(data_group)
+        if cache_path and cache_path.is_file():
+            return
 
         data = self._prepare_data_from_paths(input_paths)
         with cache_path.open("wb") as f:
