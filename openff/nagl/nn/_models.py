@@ -173,11 +173,13 @@ class GNNModel(BaseGNNModel):
         )
 
         readout_modules = {readout_name: readout_module}
-        self.convolution_module = convolution_module
-        self.readout_modules = torch.nn.ModuleDict(readout_modules)
-        self.learning_rate = learning_rate
-        self.loss_function = loss_function
 
+        super().__init__(
+            convolution_module=convolution_module,
+            readout_modules=torch.nn.ModuleDict(readout_modules),
+            learning_rate=learning_rate,
+            loss_function=loss_function,
+        )
         self.save_hyperparameters()
 
     def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
