@@ -111,7 +111,7 @@ class TestBaseGNNModel:
 
 class TestGNNModel:
 
-    def test_init():
+    def test_init(self):
         from openff.nagl.features import atoms, bonds
 
         atom_features = (
