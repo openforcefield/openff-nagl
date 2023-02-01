@@ -66,6 +66,7 @@ class NXMoleculeBatch(BatchMixin, NAGLMoleculeBase):
         if not molecules:
             raise ValueError("No molecules were provided.")
         batched_graph = molecules[0].graph._batch([molecule.graph for molecule in molecules])
+        batched_graph.batch_size = len(molecules)
         n_representations = tuple(molecule.n_representations for molecule in molecules)
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
         return cls(graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms)

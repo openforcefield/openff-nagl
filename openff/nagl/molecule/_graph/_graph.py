@@ -51,7 +51,8 @@ class NXMolGraph:
         The graph to wrap.
     """
     is_block = False
-    def __init__(self, graph: nx.Graph):
+    def __init__(self, graph: nx.Graph, batch_size: int = 1):
+        self.batch_size = batch_size
         self._graph = nx.freeze(copy.deepcopy(graph))
         self.data["node_data"] = FrameDict(self.data.get("node_data", {}))
         self.data["graph_data"] = FrameDict(self.data.get("graph_data", {}))
@@ -152,7 +153,7 @@ class NXMolGraph:
 
     def _node_data(self, nodes: List[int] = None):
         if nodes is None:
-            nodes = list(self.graph.nodes())
+            nodes = torch.tensor(list(self.graph.nodes()))
         
         data = {
             k: v[nodes]
@@ -162,7 +163,7 @@ class NXMolGraph:
 
     def _edge_data(self, edge_indices: List[int] = None):
         if edge_indices is None:
-            edge_indices = list(range(self.graph.edges()))
+            edge_indices = torch.tensor(list(range(self.graph.edges())))
         
         data = {
             k: v[edge_indices.long()]
