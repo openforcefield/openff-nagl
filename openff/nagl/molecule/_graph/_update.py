@@ -1,4 +1,9 @@
-from typing import TYPE_CHECKING, Dict, Optional, List
+"""
+This module contains functions for updating the graph,
+analogous to DGL's functionality.
+"""
+
+from typing import TYPE_CHECKING, Dict, Optional, List, Callable
 
 import torch
 import numpy as np
@@ -8,11 +13,31 @@ from ._batch import EdgeBatch, NodeBatch, FrameDict
 if TYPE_CHECKING:
     from ._graph import NXMolGraph
 
+__all__ = ["message_passing"]
 
 def apply_edge_function(
     nxmolecule: "NXMolGraph",
-    edge_function
+    edge_function: Callable[[EdgeBatch], Dict[str, torch.Tensor]]
 ):
+    """
+    Apply custom edge function to NXMolGraph.
+    We assume that the function is applied to all
+    edges of the molecule.
+
+    Analogous to :func:``dgl.core.invoke_edge_udf``.
+
+    #TODO: make this more general and analogous to DGL
+    
+    Parameters
+    ----------
+    nxmolecule : NXMolGraph
+        The molecule graph.
+    edge_function : callable
+        This function is applied to a ``dgl.udf.EdgeBatch``
+        or :class:``~openff.nagl.molecule._graph._batch.EdgeBatch``
+        and returns a dictionary of tensors.
+
+    """
     edge_batch = EdgeBatch._all_from_networkx_molecule(nxmolecule)
     return edge_function(edge_batch)
 
@@ -23,15 +48,43 @@ def _order_edge_index_buckets(nxmolecule, degree, node_bucket):
     new_shape = (len(node_bucket), degree)
     edge_index_buckets = as_numpy(edge_index_buckets).reshape(new_shape)
     edge_index_buckets = np.sort(edge_index_buckets, axis=1)
-    edge_index_buckets = torch.Tensor(edge_index_buckets)
+    edge_index_buckets = torch.tensor(edge_index_buckets, dtype=torch.long)
     return edge_index_buckets
 
 def apply_reduce_function(
     nxmolecule: "NXMolGraph",
-    reduce_function: callable,
+    reduce_function: Callable[["NodeBatch"], Dict[str, torch.Tensor]],
     message_data: Dict[str, torch.Tensor],
     original_node_ids: Optional[torch.Tensor] = None
 ) -> FrameDict:
+    """
+    Apply custom reduce function to NXMolGraph.
+    Nodes are 'bucketed' by degree and the
+    reduce function is applied to each bucket.
+
+    Analogous to ``dgl.core.invoke_udf_reduce``
+
+    Parameters
+    ----------
+    nxmolecule : NXMolGraph
+        The molecule graph.
+    reduce_function : callable
+        This function is applied to a :class:``dgl.udf.NodeBatch``
+        or :class:``~openff.nagl.molecule._graph._batch.NodeBatch``
+        and returns a dictionary of tensors.
+    message_data : dict
+        This is a dictionary of tensors
+        containing the message data for the entire graph.
+    original_node_ids : torch.Tensor, optional
+        The original node ids of the graph.
+        If the passed graph is a subgraph of the original graph,
+        this should be the node ids of the original graph.
+
+    Returns
+    -------
+    FrameDict
+        A dictionary of tensors containing the reduced data.
+    """
     from .._graph._utils import _bucketing
 
     message_data = FrameDict(message_data)
@@ -39,7 +92,9 @@ def apply_reduce_function(
     degrees = nxmolecule.in_degrees()
     unique_degrees, bucketor = _bucketing(degrees)
 
-    nodes = nxmolecule.dstnodes()
+    # nodes = nxmolecule.dstnodes()
+    nodes = np.array(nxmolecule.graph.nodes())
+    nodes = torch.tensor(nodes, dtype=torch.long)
     if original_node_ids is None:
         original_node_ids = nodes
 
@@ -64,13 +119,7 @@ def apply_reduce_function(
             nxmolecule, degree, node_bucket
         )
 
-        bucket_message_data = message_data.subframe(edge_index_buckets)
-        maildata = {}
-        # reshape tensors to (n_nodes, degree, feature_size ...)
-        for name, tensor in bucket_message_data.items():
-            new_shape = (len(node_bucket), degree) + tensor.shape[1:]
-            maildata[name] = tensor.reshape(new_shape)
-
+        maildata = message_data.subframe(edge_index_buckets)
         node_batch = NodeBatch(nxmolecule, original_node_bucket, "_N", node_data, maildata)
         bucket_results.append(reduce_function(node_batch))
 
@@ -98,7 +147,33 @@ def message_passing(
     reduce_func,
     apply_func: Optional[callable] = None
 ) -> FrameDict:
+    """
+    Perform message passing on a NXMolGraph.
+    This is analogous to :func:``dgl.core.message_passing``.
 
+    #TODO: incorporate apply_func
+
+    Parameters
+    ----------
+    nxmolecule : NXMolGraph
+        The molecule graph.
+    message_func : callable
+        This function is applied to a ``dgl.udf.EdgeBatch``
+        or :class:``~openff.nagl.molecule._graph._batch.EdgeBatch``
+        and returns a dictionary of tensors.
+    reduce_func : callable
+        This function is applied to a ``dgl.udf.NodeBatch``
+        or :class:``~openff.nagl.molecule._graph._batch.NodeBatch``
+        and returns a dictionary of tensors.
+    apply_func : callable, optional
+        This option is not currently supported
+        and only provided for compatibility with DGL.
+
+    Returns
+    -------
+    FrameDict
+        A dictionary of tensors containing the final data.
+    """
     message_data = apply_edge_function(nxmolecule, message_func)
     node_data = apply_reduce_function(nxmolecule, reduce_func, message_data)
     if apply_func is not None:

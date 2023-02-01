@@ -3,10 +3,18 @@ import pytest
 import torch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._gin import GINConvStack, GINConv
+from openff.nagl.nn.gcn._gin import GINConvStack, GINConv, DGLGINConv
+
+try:
+    import dgl
+    DGL_IS_AVAILABLE = True
+    _BASE_GINCONV_CLASS = DGLGINConv
+except ImportError:
+    DGL_IS_AVAILABLE = False
+    _BASE_GINCONV_CLASS = GINConv
 
 
-class TestSAGEConvStack:
+class TestGINConvStack:
     def test_default_with_layers(self):
         stack = GINConvStack.with_layers(
             n_input_features=1,
@@ -15,7 +23,7 @@ class TestSAGEConvStack:
         stack.reset_parameters()
 
         assert len(stack) == 2
-        assert all(isinstance(layer, GINConv) for layer in stack)
+        assert all(isinstance(layer, _BASE_GINCONV_CLASS) for layer in stack)
 
         first, second = stack
         assert np.isclose(first.feat_drop.p, 0.0)
@@ -36,7 +44,7 @@ class TestSAGEConvStack:
         )
 
         assert len(stack) == 1
-        assert all(isinstance(layer, GINConv) for layer in stack)
+        assert all(isinstance(layer, _BASE_GINCONV_CLASS) for layer in stack)
 
         layer = stack[0]
         assert np.isclose(layer.feat_drop.p, 0.5)

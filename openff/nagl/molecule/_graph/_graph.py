@@ -1,6 +1,7 @@
+import contextlib
 import copy
-from collections import defaultdict, UserDict
-from typing import List, Tuple, Optional, Dict
+from collections import defaultdict
+from typing import List, Tuple
 
 from openff.toolkit import Molecule
 from openff.nagl.features.atoms import AtomFeature
@@ -13,6 +14,10 @@ from ._batch import FrameDict
 
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 
+__all__ = [
+    "NXMolHeteroGraph",
+    "NXMolHomoGraph",
+]
 
 def openff_molecule_to_base_nx_graph(
     molecule: Molecule,
@@ -24,12 +29,62 @@ def openff_molecule_to_base_nx_graph(
 
 
 class NXMolGraph:
+    """
+    Base class for a NetworkX representation of a molecule graph.
+    The API is intended to mimic DGL's :class:`dgl.heterograph.DGLGraph`
+    as much as possible to facilitate sharing code.
+
+    Graph data is stored as data on the graph dictionary itself;
+    :attr:`NXMolGraph.ndata` is not stored on each individual node but
+    as ``networkx.Graph.graph["node_data"]``. Similarly, :attr:`NXMolGraph.edata`
+    is stored as ``networkx.Graph.graph["edge_data"]``.
+
+    Where possible this class should not be directly instantiated
+    by a user and **little effort has been made toward robustness**.
+    Instead, this class is intended to be a drop-in replacement for
+    :class:`dgl.heterograph.DGLGraph` during model inference
+    in cases where `dgl` cannot be installed.
+
+    Parameters
+    ----------
+    graph: :class:`networkx.Graph`
+        The graph to wrap.
+    """
+    is_block = False
     def __init__(self, graph: nx.Graph):
-        self._graph = nx.freeze(graph)
-        self.graph["node_data"] = FrameDict(self.graph.get("node_data", {}))
-        self.graph["edge_data"] = FrameDict(self.graph.get("edge_data", {}))
-        self.graph["graph_data"] = FrameDict(self.graph.get("graph_data", {}))
+        self._graph = nx.freeze(copy.deepcopy(graph))
+        self.data["node_data"] = FrameDict(self.data.get("node_data", {}))
+        self.data["graph_data"] = FrameDict(self.data.get("graph_data", {}))
+        self._set_edge_data()
         self.__post_init__()
+
+    def _set_edge_data(self):
+        """
+        Separate method for initiating edge_data dictionary
+        """
+        edge_data = self.data.get("edge_data", {})
+        if isinstance(edge_data, defaultdict):
+            edge_data = defaultdict(FrameDict, edge_data)
+        else:
+            edge_data = FrameDict(edge_data)
+        self.data["edge_data"] = edge_data
+
+    @contextlib.contextmanager
+    def local_scope(self):
+        """
+        Enter a local scope context for the graph. Any out-of-place changes
+        will not be reflected in the graph. In-place changes will.
+        """
+        old_data = defaultdict(FrameDict)
+        for k in ("node_data", "edge_data", "graph_data"):
+            for k_, v_ in self.data[k].items():
+                old_data[k][k_] = v_
+        
+        try:
+            yield
+        finally:
+            for k, v in old_data.items():
+                self.data[k] = v
         
     def __post_init__(self):
         self._degrees = self._get_degrees()
@@ -49,6 +104,10 @@ class NXMolGraph:
     @property
     def edges(self):
         return self.data["edge_data"]
+    
+    @property
+    def edata(self):
+        return self.edges
 
     def in_degrees(self):
         return self._degrees
@@ -62,11 +121,15 @@ class NXMolGraph:
         
 
     def _all_edges(self):
-        u, v = map(list, zip(*self.graph.edges()))
-        U = torch.tensor(u, dtype=torch.int32)
-        V = torch.tensor(v, dtype=torch.int32)
-        I = torch.arange(len(u), dtype=torch.int32)
-        return U, V, I
+        u, v = self._bond_indices()
+        i = torch.arange(len(u), dtype=torch.long)
+        return u, v, i
+    
+    def number_of_edges(self):
+        return len(self._bond_indices()[0])
+
+    def number_of_nodes(self):
+        return len(self.graph.nodes())
 
     def in_edges(self, nodes, form="uv"):
         u, v, i = self._all_edges()
@@ -83,8 +146,8 @@ class NXMolGraph:
 
     def _bond_indices(self):
         u, v = map(list, zip(*self.graph.edges()))
-        U = torch.tensor(u, dtype=torch.int32)
-        V = torch.tensor(v, dtype=torch.int32)
+        U = torch.tensor(u, dtype=torch.long)
+        V = torch.tensor(v, dtype=torch.long)
         return U, V
 
     def _node_data(self, nodes: List[int] = None):
@@ -93,7 +156,7 @@ class NXMolGraph:
         
         data = {
             k: v[nodes]
-            for k, v in self.ndata
+            for k, v in self.ndata.items()
         }
         return data
 
@@ -102,10 +165,13 @@ class NXMolGraph:
             edge_indices = list(range(self.graph.edges()))
         
         data = {
-            k: v[edge_indices]
-            for k, v in self.edata
+            k: v[edge_indices.long()]
+            for k, v in self.edata.items()
         }
         return data
+    
+    def srcnodes(self):
+        return self._bond_indices()[0]
 
     def dstnodes(self):
         return self._bond_indices()[1]
@@ -117,8 +183,53 @@ class NXMolGraph:
     @property
     def dstdata(self):
         return self.ndata
+    
+    def update_all(
+        self,
+        message_func,
+        reduce_func,
+        apply_node_func=None,
+        etype=None,
+    ):
+        from ._update import message_passing
+        results = message_passing(
+            self,
+            message_func,
+            reduce_func,
+            apply_node_func,
+        )
+        self.ndata.update(results)
+
+
+    def num_dst_nodes(self):
+        return len(self.dstnodes())
+    
+    def num_src_nodes(self):
+        return len(self.srcnodes())
 
 class NXMolHomoGraph(NXMolGraph):
+    """
+    NetworkX representation of a homogeneous molecule graph.
+    The API is intended to mimic DGL's :class:`dgl.heterograph.DGLGraph`
+    as much as possible to facilitate sharing code.
+
+    Graph data is stored as data on the graph dictionary itself;
+    :attr:`NXMolHomoGraph.ndata` is not stored on each individual node but
+    as ``networkx.Graph.graph["node_data"]``. Similarly, :attr:`NXMolHomoGraph.edata`
+    is stored as ``networkx.Graph.graph["edge_data"]``.
+
+    Where possible this class should not be directly instantiated
+    by a user and **little effort has been made toward robustness**.
+    Instead, this class is intended to be a drop-in replacement for
+    :class:`dgl.heterograph.DGLGraph` during model inference
+    in cases where `dgl` cannot be installed.
+
+    Parameters
+    ----------
+    graph: :class:`networkx.Graph`
+        The graph to wrap.
+    """
+
     def _bond_indices(self):
         u, v = super()._bond_indices()
         U = torch.cat([u, v], dim=0)
@@ -127,10 +238,32 @@ class NXMolHomoGraph(NXMolGraph):
 
 
 class NXMolHeteroGraph(NXMolGraph):
-    def __init__(self, graph: nx.Graph):
-        super().__init__(graph)
-        self.graph["edge_data"] = defaultdict(FrameDict)
-        self.__post_init__()
+    """
+    Base class for a NetworkX representation of a molecule graph.
+    The API is intended to mimic DGL's :class:`dgl.heterograph.DGLHeteroGraph`
+    as much as possible to facilitate sharing code.
+
+    Graph data is stored as data on the graph dictionary itself;
+    :attr:`NXMolHeteroGraph.ndata` is not stored on each individual node but
+    as ``networkx.Graph.graph["node_data"]``. Similarly, :attr:`NXMolHeteroGraph.edata`
+    is stored as ``networkx.Graph.graph["edge_data"]``.
+
+    Where possible this class should not be directly instantiated
+    by a user and **little effort has been made toward robustness**.
+    Instead, this class is intended to be a drop-in replacement for
+    :class:`dgl.heterograph.DGLHeteroGraph` during model inference
+    in cases where `dgl` cannot be installed.
+
+    Parameters
+    ----------
+    graph: :class:`networkx.Graph`
+        The graph to wrap.
+    """
+
+    def _set_edge_data(self):
+        edge_data = self.data.get("edge_data", {})
+        edge_data = defaultdict(FrameDict, edge_data)
+        self.data["edge_data"] = edge_data
     
     @property
     def srcdata(self):
@@ -140,6 +273,17 @@ class NXMolHeteroGraph(NXMolGraph):
     def dstdata(self):
         raise NotImplementedError
     
+    @classmethod
+    def _batch(cls, graphs: List["NXMolHeteroGraph"]) -> "NXMolHeteroGraph":
+        from openff.nagl.molecule._graph._utils import _batch_nx_graphs
+
+        if not graphs:
+            return cls(nx.Graph())
+        
+        batched_graph = _batch_nx_graphs([g.graph for g in graphs])
+        batched_graph = cls(batched_graph)
+        return batched_graph
+    
 
     @classmethod
     def from_openff(
@@ -147,64 +291,34 @@ class NXMolHeteroGraph(NXMolGraph):
         molecule: Molecule,
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
-        enumerate_resonance_forms: bool = False,
-        lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
-        include_all_transfer_pathways: bool = False,
     ):
         from openff.nagl.molecule._utils import _get_openff_molecule_information
-        from openff.nagl.utils.resonance import ResonanceEnumerator
+        nx_graph = openff_molecule_to_base_nx_graph(molecule)
 
-        offmols = [molecule]
-        if enumerate_resonance_forms:
-            enumerator = ResonanceEnumerator(molecule)
-            offmols = enumerator.enumerate_resonance_forms(
-                lowest_energy_only=lowest_energy_only,
-                max_path_length=max_path_length,
-                include_all_transfer_pathways=include_all_transfer_pathways,
-                as_dicts=False,
-            )
-
-        
-        nx_graphs = [
-            openff_molecule_to_base_nx_graph(mol)
-             for mol in offmols
-        ]
-        joined_graph = nx.disjoint_union_all(nx_graphs)
-        molecule_graph = cls(joined_graph)
+        molecule_graph = cls(nx_graph)
 
         if len(atom_features):
             atom_featurizer = AtomFeaturizer(atom_features)
-
-            atom_features = [
-                atom_featurizer.featurize(mol)
-                for mol in offmols
-            ]
-            overall_features = torch.cat(atom_features, dim=0)
-            molecule_graph.ndata[FEATURE] = overall_features
+            atom_features = atom_featurizer.featurize(molecule)
+            molecule_graph.ndata[FEATURE] = atom_features
         
         molecule_info = _get_openff_molecule_information(molecule)
         for key, value in molecule_info.items():
-            tiled_value = torch.tensor(list(value) * len(offmols))
-            molecule_graph.ndata[key] = tiled_value
+            molecule_graph.ndata[key] = value
        
        # add bond features
-        single_bond_orders = [bond.bond_order for bond in molecule.bonds]
         bond_orders = torch.tensor(
-            single_bond_orders * len(offmols), dtype=torch.uint8
+            [bond.bond_order for bond in molecule.bonds],
+            dtype=torch.uint8
         )
         molecule_graph.edges[FORWARD].data["bond_order"] = bond_orders
         molecule_graph.edges[REVERSE].data["bond_order"] = bond_orders
 
         if len(bond_features):
             bond_featurizer = BondFeaturizer(bond_features)
-            bond_feature_tensor = [
-                bond_featurizer.featurize(mol)
-                for mol in offmols
-            ]
-            overall_features = torch.cat(bond_feature_tensor, dim=0)
-            molecule_graph.edges[FORWARD].data[FEATURE] = overall_features
-            molecule_graph.edges[REVERSE].data[FEATURE] = overall_features
+            bond_features = bond_featurizer.featurize(molecule)
+            molecule_graph.edges[FORWARD].data[FEATURE] = bond_features
+            molecule_graph.edges[REVERSE].data[FEATURE] = bond_features
 
         return molecule_graph
     
@@ -214,13 +328,13 @@ class NXMolHeteroGraph(NXMolGraph):
         # only keep FEATURE information
         non_features = [x for x in self.ndata if x != FEATURE]
         for non_feature in non_features:
-            del graph["node_data"][non_feature]
+            del graph.graph["node_data"][non_feature]
 
         all_edge_features = []
         for edge_features in self.edges.values():
             if FEATURE in edge_features:
                 all_edge_features.append(edge_features[FEATURE])
-        graph["edge_data"] = FrameDict()
+        graph.graph["edge_data"] = FrameDict()
         if len(all_edge_features):
-            graph["edge_data"][FEATURE] = torch.cat(all_edge_features, dim=0)
+            graph.graph["edge_data"][FEATURE] = torch.cat(all_edge_features, dim=0)
         return NXMolHomoGraph(graph)
