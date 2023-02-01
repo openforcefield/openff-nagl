@@ -13,7 +13,7 @@ from openff.nagl.features.bonds import BondIsInRing
 @pytest.fixture()
 def openff_methyl_methanoate():
     from openff.toolkit.topology.molecule import Molecule
-    
+
     mapped_smiles = "[H:5][C:1](=[O:2])[O:3][C:4]([H:6])([H:7])[H:8]"
     return Molecule.from_mapped_smiles(mapped_smiles)
 
@@ -56,6 +56,7 @@ def openff_methane_charged(openff_methane_uncharged, openff_methane_charges):
 
 @pytest.fixture()
 def dgl_methane(openff_methane_uncharged):
+    pytest.importorskip("dgl")
     return DGLMolecule.from_openff(
         openff_methane_uncharged,
         atom_features=[AtomConnectivity()],

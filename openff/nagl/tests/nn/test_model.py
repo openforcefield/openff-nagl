@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from numpy.testing import assert_allclose
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -8,6 +9,7 @@ from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.data.files import EXAMPLE_AM1BCC_MODEL, MODEL_CONFIG_V7
 
 
 @pytest.fixture()
@@ -111,6 +113,17 @@ class TestBaseGNNModel:
 
 class TestGNNModel:
 
+    @pytest.fixture()
+    def am1bcc_model(self):
+        model = GNNModel.from_yaml_file(MODEL_CONFIG_V7)
+        model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL))
+        model.eval()
+        return model
+        # model = torch.load(EXAMPLE_AM1BCC_MODEL)
+        # model.eval()
+        # return model
+    
+
     def test_init(self):
         from openff.nagl.features import atoms, bonds
 
@@ -148,4 +161,8 @@ class TestGNNModel:
         )
 
 
-
+    
+    def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged):
+        charges = am1bcc_model._compute_property_with_dgl(openff_methane_uncharged)
+        charges = charges.detach().numpy().flatten()
+        assert_allclose(charges, [-0.1, 0.1, 0.1, 0.1, 0.1], atol=1e-2)
