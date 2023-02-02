@@ -199,7 +199,7 @@ class GNNModel(BaseGNNModel):
         try:
             return self._compute_property_with_dgl(molecule)
         except MissingOptionalDependencyError:
-            return self._compute_property_with_dgl(molecule)
+            return self._compute_property_with_networkx(molecule)
         
     def _compute_property_with_networkx(self, molecule: "Molecule") -> "torch.Tensor":
         from openff.nagl.molecule._graph.molecule import NXMolecule
