@@ -208,8 +208,8 @@ class TestNXMolHomoGraph:
     def test_num_nodes(self, methyl_methanoate_homo_graph):
         assert methyl_methanoate_homo_graph.number_of_nodes() == 8
         assert methyl_methanoate_homo_graph.number_of_edges() == 14
-        assert methyl_methanoate_homo_graph.num_dst_nodes() == 14
-        assert methyl_methanoate_homo_graph.num_src_nodes() == 14
+        assert methyl_methanoate_homo_graph.num_dst_nodes() == 8
+        assert methyl_methanoate_homo_graph.num_src_nodes() == 8
 
     def test_get_edge_data(self, methyl_methanoate_homo_graph):
         indices = torch.tensor([4, 0, 2])

@@ -28,6 +28,10 @@ class DGLBase(NAGLMoleculeBase):
 class DGLMolecule(MoleculeMixin, DGLBase):
     n_representations: int = 1
 
+    def to(self, device: str):
+        graph = self.graph.to(device)
+        return type(self)(graph, n_representations=self.n_representations)
+
     @property
     def n_graph_nodes(self):
         return int(self.graph.number_of_nodes())

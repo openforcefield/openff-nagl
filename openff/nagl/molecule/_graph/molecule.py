@@ -14,7 +14,7 @@ class NXMolecule(MoleculeMixin, NAGLMoleculeBase):
         return self.graph.to_homogeneous()
     
     def to(self, device: str):
-        return type(self)(self.graph)
+        return type(self)(self.graph, n_representations=self.n_representations)
 
     @property
     def n_graph_nodes(self):
@@ -59,6 +59,9 @@ class NXMolecule(MoleculeMixin, NAGLMoleculeBase):
         return cls(graph=graph, n_representations=len(graphs))
 
 class NXMoleculeBatch(BatchMixin, NAGLMoleculeBase):
+
+    def to(self, device: str):
+        return type(self)(self.graph, n_representations=self.n_representations, n_atoms=self.n_atoms)
     
     @classmethod
     def from_nx_molecules(cls, molecules: List[NXMolecule]):

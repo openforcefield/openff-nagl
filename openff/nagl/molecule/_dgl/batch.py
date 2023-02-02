@@ -9,6 +9,10 @@ from openff.nagl.molecule._base import BatchMixin
 class DGLMoleculeBatch(BatchMixin, DGLBase):
     n_representations: Tuple[int, ...]
     n_atoms: Tuple[int, ...]
+
+    def to(self, device: str):
+        graph = self.graph.to(device)
+        return type(self)(graph, n_representations=self.n_representations, n_atoms=self.n_atoms)
     
     @classmethod
     @requires_package("dgl")
