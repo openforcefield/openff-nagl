@@ -123,7 +123,7 @@ class GINConv(BaseGINConv):
         self.activation = activation_function
         self.feat_drop = torch.nn.Dropout(dropout)
         self.gcn = GINConvLayer(
-            nn=torch.nn.Linear(n_input_features, n_output_features),
+            apply_func=torch.nn.Linear(n_input_features, n_output_features),
             aggregator_type=aggregator_type,
             init_eps=init_eps,
             learn_eps=learn_eps,

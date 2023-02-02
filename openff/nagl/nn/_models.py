@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 import torch
 import pytorch_lightning as pl
 
+from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 
 if TYPE_CHECKING:
@@ -197,7 +198,7 @@ class GNNModel(BaseGNNModel):
     def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
         try:
             return self._compute_property_with_dgl(molecule)
-        except ImportError:
+        except MissingOptionalDependencyError:
             return self._compute_property_with_dgl(molecule)
         
     def _compute_property_with_networkx(self, molecule: "Molecule") -> "torch.Tensor":
