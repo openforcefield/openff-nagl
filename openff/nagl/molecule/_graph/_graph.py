@@ -137,7 +137,6 @@ class NXMolGraph:
         mask = [x in nodes for x in v]
         U, V, I = u[mask], v[mask], i[mask]
 
-        print('in edges', nodes, U, V, I)
         if form == "uv":
             return U, V
         elif form == "eid":
@@ -156,11 +155,6 @@ class NXMolGraph:
     def _node_data(self, nodes: List[int] = None):
         if nodes is None:
             nodes = torch.tensor(list(self.graph.nodes()))
-        
-        # data = {
-        #     k: torch.tensor(v[nodes])
-        #     for k, v in self.ndata.items()
-        # }
         data = {
             k: v[nodes]
             for k, v in self.ndata.items()
@@ -209,6 +203,8 @@ class NXMolGraph:
         )
         self.ndata.update(results)
 
+    def apply_edges(self, func, edges="__ALL__", etype=None):
+        raise NotImplementedError
 
     def num_dst_nodes(self):
         return len(self.dstnodes())

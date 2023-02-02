@@ -124,8 +124,8 @@ class TestNXMolHeteroGraph:
     def test_num_nodes(self, methyl_methanoate_hetero_graph):
         assert methyl_methanoate_hetero_graph.number_of_nodes() == 8
         assert methyl_methanoate_hetero_graph.number_of_edges() == 7
-        assert methyl_methanoate_hetero_graph.num_dst_nodes() == 7
-        assert methyl_methanoate_hetero_graph.num_src_nodes() == 7
+        assert methyl_methanoate_hetero_graph.num_dst_nodes() == 8
+        assert methyl_methanoate_hetero_graph.num_src_nodes() == 8
 
     
     def test_in_edges(self, methyl_methanoate_hetero_graph):

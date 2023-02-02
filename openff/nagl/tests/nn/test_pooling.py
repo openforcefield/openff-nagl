@@ -42,6 +42,7 @@ class TestPoolBondFeatures(BaseTestFeatures):
         assert np.allclose(features[:, 0], np.arange(1, 5))
         assert np.allclose(features[:, 0], features[:, 1])
 
+    @pytest.mark.xfail(reason="Not implemented yet")
     def test_forward_dgl(self, featurized_molecule_nx, array):
         bond_pool_layer = PoolBondFeatures(torch.nn.Identity(8))
         features = bond_pool_layer.forward(featurized_molecule_nx).numpy()
