@@ -7,6 +7,7 @@ from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 from openff.nagl.nn.gcn import _function as _fn
 # import dgl.function as fn
 from openff.utilities import requires_package
+from openff.utilities.exceptions import MissingOptionalDependencyError
 
 if TYPE_CHECKING:
     import dgl
@@ -230,7 +231,7 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
                 activation_function=activation_function,
                 **kwargs,
             )
-        except ImportError:
+        except MissingOptionalDependencyError:
             return cls._create_gcn_layer_nagl(
                 n_input_features=n_input_features,
                 n_output_features=n_output_features,

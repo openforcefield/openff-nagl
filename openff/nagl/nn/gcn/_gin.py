@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Union
 
 import torch
 from openff.utilities import requires_package
+from openff.utilities.exceptions import MissingOptionalDependencyError
 
 from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 import openff.nagl.nn.gcn._function as _fn
@@ -190,7 +191,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
                 init_eps=init_eps,
                 learn_eps=learn_eps
             )
-        except ImportError:
+        except MissingOptionalDependencyError:
             return cls._create_gcn_layer_nagl(
                 n_input_features=n_input_features,
                 n_output_features=n_output_features,
