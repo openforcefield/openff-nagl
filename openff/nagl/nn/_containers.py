@@ -1,3 +1,4 @@
+import copy
 from typing import List, Optional, Union
 
 import torch
@@ -5,7 +6,7 @@ import torch
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import GCNStackMeta
+from openff.nagl.nn.gcn._base import GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn.postprocess import PostprocessLayer
@@ -41,6 +42,16 @@ class ConvolutionModule(torch.nn.Module):
         homograph = molecule.to_homogenous()
         feature_tensor = self.gcn_layers(homograph, molecule.atom_features)
         molecule.graph.ndata[molecule._graph_feature_name] = feature_tensor
+
+    @property
+    def _is_dgl(self):
+        return self.gcn_layers._is_dgl
+    
+    def _as_nagl(self, copy_weights: bool = False):
+        copied = copy.deepcopy(self)
+        if self._is_dgl:
+            copied.gcn_layers = copied.gcn_layers._as_nagl(copy_weights=copy_weights)
+        return copied
 
 
 class ReadoutModule(torch.nn.Module):

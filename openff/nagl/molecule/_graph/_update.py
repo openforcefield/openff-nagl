@@ -136,7 +136,9 @@ def apply_reduce_function(
                 ],
                 dim=0
             )
-            result[name] = tensor[merged_nodes]
+            result[name] = torch.empty_like(tensor)
+            for i, j in zip(merged_nodes, tensor):
+                result[name][i] = j
     return result
 
 

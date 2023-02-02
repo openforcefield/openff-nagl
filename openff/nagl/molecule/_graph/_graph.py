@@ -136,6 +136,8 @@ class NXMolGraph:
         u, v, i = self._all_edges()
         mask = [x in nodes for x in v]
         U, V, I = u[mask], v[mask], i[mask]
+
+        print('in edges', nodes, U, V, I)
         if form == "uv":
             return U, V
         elif form == "eid":
@@ -155,6 +157,10 @@ class NXMolGraph:
         if nodes is None:
             nodes = torch.tensor(list(self.graph.nodes()))
         
+        # data = {
+        #     k: torch.tensor(v[nodes])
+        #     for k, v in self.ndata.items()
+        # }
         data = {
             k: v[nodes]
             for k, v in self.ndata.items()
@@ -166,16 +172,18 @@ class NXMolGraph:
             edge_indices = torch.tensor(list(range(self.graph.edges())))
         
         data = {
-            k: v[edge_indices.long()]
+            k: torch.tensor(v[edge_indices.long()])
             for k, v in self.edata.items()
         }
         return data
     
     def srcnodes(self):
-        return self._bond_indices()[0]
+        return torch.tensor(self.graph.nodes(), dtype=torch.int32)
+        # return self._bond_indices()[0]
 
     def dstnodes(self):
-        return self._bond_indices()[1]
+        return torch.tensor(self.graph.nodes(), dtype=torch.int32)
+        # return self._bond_indices()[1]
 
     @property
     def srcdata(self):

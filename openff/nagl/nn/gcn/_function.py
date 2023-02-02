@@ -11,9 +11,6 @@ def u_mul_e(msg: str, weight: str, out: str):
 def mean(msg: str, out: str):
     def wrapped(nodes):
         import torch
-        print("===MEAN===")
-        print(nodes.mailbox[msg])
-        print(torch.mean(nodes.mailbox[msg], dim=1))
         return {out: torch.mean(nodes.mailbox[msg], dim=1)}
     return wrapped
 

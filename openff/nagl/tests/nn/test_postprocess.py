@@ -61,6 +61,7 @@ def test_compute_charges_forward(dgl_methane):
 
 
 def test_compute_charges_forward_batched(openff_carboxylate):
+    pytest.importorskip("dgl")
     dgl_carboxylate = DGLMolecule.from_openff(
         openff_carboxylate,
         enumerate_resonance_forms=True,

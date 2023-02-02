@@ -1,3 +1,5 @@
+import copy
+
 from collections import UserDict
 
 from typing import Dict
@@ -190,6 +192,11 @@ class EdgeBatch:
 
     @classmethod
     def _all_from_networkx_molecule(cls, nxmolecule):
+        """Create an edge batch that contains all edges in the graph.
+        This takes advantage of some shortcuts and assumes that
+        the edge function is applied to all edges.
+        
+        """
         eid = "__ALL__"
         etype = ('_N', '_E', '_N')
         source, destination, edge_ids = nxmolecule._all_edges()

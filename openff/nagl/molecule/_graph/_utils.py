@@ -36,11 +36,7 @@ def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
         selected = torch.index_select(sorted_indices_in_original, 0, value_indices)
         bucket_indices.append(selected.long())
 
-    print(unique_values, "unique")
-
     def bucketor(data) -> List[torch.Tensor]:
-        print("bucketor")
-        print(data, bucket_indices)
         buckets = [torch.index_select(data, 0, idx) for idx in bucket_indices]
 
         return buckets

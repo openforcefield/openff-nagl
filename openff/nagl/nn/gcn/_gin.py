@@ -1,16 +1,17 @@
+import copy
 from typing import TYPE_CHECKING, Union
 
 import torch
 from openff.utilities import requires_package
 
-from ._base import ActivationFunction, BaseGCNStack
+from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 import openff.nagl.nn.gcn._function as _fn
 
 if TYPE_CHECKING:
     import dgl
 
 
-class GINConvLayer(torch.nn.Module):
+class GINConvLayer(BaseConvModule):
     def __init__(
         self,
         apply_func=None,
@@ -189,8 +190,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
                 init_eps=init_eps,
                 learn_eps=learn_eps
             )
-        except ImportError as e:
-            print(e)
+        except ImportError:
             return cls._create_gcn_layer_nagl(
                 n_input_features=n_input_features,
                 n_output_features=n_output_features,
@@ -244,3 +244,37 @@ class GINConvStack(BaseGCNStack[GINConv]):
             init_eps=init_eps,
             learn_eps=learn_eps
         )
+    
+    @property
+    def _is_dgl(self):
+        return not isinstance(self[0].gcn, BaseConvModule)
+    
+    def _as_nagl(self, copy_weights: bool = False):
+        if self._is_dgl:
+            new_obj = type(self)()
+            new_obj.hidden_feature_sizes = self.hidden_feature_sizes
+            for layer in self:
+                n_input_features = layer.gcn.apply_func.in_features
+                n_output_features = layer.gcn.apply_func.out_features
+                aggregator_type = layer.gcn._aggregator_type
+                dropout = layer.feat_drop.p
+                activation_function = layer.gcn.activation
+                learn_eps = isinstance(layer.gcn.eps, torch.nn.Parameter)
+                eps = float(layer.gcn.eps.data[0])
+
+
+                new_layer = self._create_gcn_layer_nagl(
+                    n_input_features=n_input_features,
+                    n_output_features=n_output_features,
+                    aggregator_type=aggregator_type,
+                    dropout=dropout,
+                    activation_function=activation_function,
+                    init_eps=eps,
+                    learn_eps=learn_eps
+                )
+                if copy_weights:
+                    new_layer.load_state_dict(layer.state_dict())
+                new_obj.append(new_layer)
+                
+            return copy.deepcopy(new_obj)
+        return copy.deepcopy(self)

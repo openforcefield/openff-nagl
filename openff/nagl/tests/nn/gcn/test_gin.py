@@ -7,10 +7,8 @@ from openff.nagl.nn.gcn._gin import GINConvStack, GINConv, DGLGINConv
 
 try:
     import dgl
-    DGL_IS_AVAILABLE = True
     _BASE_GINCONV_CLASS = DGLGINConv
 except ImportError:
-    DGL_IS_AVAILABLE = False
     _BASE_GINCONV_CLASS = GINConv
 
 

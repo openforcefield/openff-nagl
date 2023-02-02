@@ -1,16 +1,17 @@
+import copy
 from typing import Optional, Literal, Dict, TYPE_CHECKING, Union
 
 import torch
 
-from ._base import ActivationFunction, BaseGCNStack
+from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 from openff.nagl.nn.gcn import _function as _fn
-import dgl.function as fn
+# import dgl.function as fn
 from openff.utilities import requires_package
 
 if TYPE_CHECKING:
     import dgl
 
-class SAGEConv(torch.nn.Module):
+class SAGEConv(BaseConvModule):
 
     def __init__(
         self,
@@ -42,6 +43,7 @@ class SAGEConv(torch.nn.Module):
 
         self.fc_neigh = torch.nn.Linear(self._in_src_feats, out_feats, bias=False)
 
+        # TODO: replace lower code with upper code -- more up-to-date with DGL 1.x
         if aggregator_type != 'gcn':
             self.fc_self = torch.nn.Linear(self._in_dst_feats, out_feats, bias=bias)
         elif bias:
@@ -114,7 +116,6 @@ class SAGEConv(torch.nn.Module):
             :math:`D_{out}` is the size of the output feature.
         """
         with graph.local_scope():
-            print(graph.number_of_edges())
             if isinstance(feat, tuple):
                 feat_src = self.feat_drop(feat[0])
                 feat_dst = self.feat_drop(feat[1])
@@ -145,7 +146,7 @@ class SAGEConv(torch.nn.Module):
                 graph.srcdata['h'] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 graph.update_all(msg_fn, _fn.mean('m', 'neigh'))
                 h_neigh = graph.dstdata['neigh']
-
+                print("h_neigh", h_neigh)
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
 
@@ -187,6 +188,8 @@ class SAGEConv(torch.nn.Module):
                 if self.bias is not None:
                     rst = rst + self.bias
             else:
+                print("h_self", h_self)
+                print("h_neigh", h_neigh)
                 rst = self.fc_self(h_self) + h_neigh
 
 
@@ -196,6 +199,7 @@ class SAGEConv(torch.nn.Module):
             # normalization
             if self.norm is not None:
                 rst = self.norm(rst)
+            
             return rst
 
 class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
@@ -273,3 +277,21 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
             feat_drop=dropout,
             aggregator_type=aggregator_type,
         )
+    
+    def _as_nagl(self, copy_weights: bool = False):
+        if self._is_dgl:
+            new_obj = type(self)()
+            new_obj.hidden_feature_sizes = self.hidden_feature_sizes
+            for layer in self:
+                new_layer = self._create_gcn_layer_nagl(
+                    n_input_features=layer._in_src_feats,
+                    n_output_features=layer._out_feats,
+                    aggregator_type=layer._aggre_type,
+                    dropout=layer.feat_drop.p,
+                    activation_function=layer.activation,
+                )
+                if copy_weights:
+                    new_layer.load_state_dict(layer.state_dict())
+                new_obj.append(new_layer)
+            return copy.deepcopy(new_obj)
+        return copy.deepcopy(self)

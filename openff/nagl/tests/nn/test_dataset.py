@@ -21,6 +21,7 @@ from openff.nagl.storage._store import (
     WibergBondOrderRecord,
 )
 
+pytest.importorskip("dgl")
 
 def label_formal_charge(molecule: Molecule):
     return {
@@ -35,7 +36,6 @@ def label_formal_charge(molecule: Molecule):
 
 
 def test_data_set_from_molecules(openff_methane_charged):
-
     data_set = DGLMoleculeDataset.from_openff(
         [openff_methane_charged],
         label_function=label_formal_charge,

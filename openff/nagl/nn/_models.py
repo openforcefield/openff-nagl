@@ -1,3 +1,4 @@
+import copy
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 
 import torch
@@ -98,6 +99,17 @@ class BaseGNNModel(pl.LightningModule):
     def _torch_optimizer(self):
         optimizer = self.optimizers()
         return optimizer.optimizer
+    
+    @property
+    def _is_dgl(self):
+        return self.convolution_module._is_dgl
+    
+    def _as_nagl(self):
+        copied = copy.deepcopy(self)
+        if self._is_dgl:
+            copied.convolution_module = copied.convolution_module._as_nagl(copy_weights=True)
+        copied.load_state_dict(self.state_dict())
+        return copied
 
 
 class GNNModel(BaseGNNModel):
@@ -196,7 +208,10 @@ class GNNModel(BaseGNNModel):
             atom_features=self.atom_features,
             bond_features=self.bond_features,
         )
-        return self.forward(nxmol)[self.readout_name]
+        model = self
+        if self._is_dgl:
+            model = self._as_nagl()
+        return model.forward(nxmol)[self.readout_name]
 
 
     def _compute_property_with_dgl(self, molecule: "Molecule") -> "torch.Tensor":
@@ -208,6 +223,8 @@ class GNNModel(BaseGNNModel):
             bond_features=self.bond_features,
         )
         return self.forward(dglmol)[self.readout_name]
+    
+    
 
     @staticmethod
     def _validate_features(features, feature_class):

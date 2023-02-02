@@ -10,11 +10,9 @@ from openff.nagl.nn.gcn._sage import SAGEConv
 
 try:
     import dgl
-    DGL_IS_AVAILABLE = True
     _BASE_SAGECONV_CLASS = dgl.nn.pytorch.SAGEConv
 except ImportError:
     _BASE_SAGECONV_CLASS = SAGEConv
-    DGL_IS_AVAILABLE = False
 
 
 
@@ -80,10 +78,9 @@ class TestDGLSAGEConvStack:
             )
 
 
-@pytest.mark.skipif(not DGL_IS_AVAILABLE, reason="DGL is not available.")
 class TestDGLSageConv:
     def test_forward_values(self, dgl_methane):
-        import dgl
+        dgl = pytest.importorskip("dgl")
         layer = dgl.nn.pytorch.SAGEConv(
             in_feats=4,
             out_feats=3,
