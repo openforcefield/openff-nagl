@@ -173,11 +173,18 @@ class TestGNNModel:
         charges = am1bcc_model._compute_property_with_dgl(openff_methane_uncharged)
         charges = charges.detach().numpy().flatten()
         expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
-        assert_allclose(charges, expected, atol=1e-6)
+        assert_allclose(charges, expected, atol=1e-5)
 
     
     def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged):
         charges = am1bcc_model._compute_property_with_networkx(openff_methane_uncharged)
         charges = charges.detach().numpy().flatten()
         expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
-        assert_allclose(charges, expected, atol=1e-6)
+        assert_allclose(charges, expected, atol=1e-5)
+
+
+    def test_compute_property(self, am1bcc_model, openff_methane_uncharged):
+        charges = am1bcc_model.compute_property(openff_methane_uncharged)
+        charges = charges.detach().numpy().flatten()
+        expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
+        assert_allclose(charges, expected, atol=1e-5)

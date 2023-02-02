@@ -84,6 +84,10 @@ jobs:
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
+    - name: Uninstall DGL
+      if: matrix.include-dgl == false
+      run: conda remove --force dgl --yes || echo "dgl not installed"
+
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
       run: |
