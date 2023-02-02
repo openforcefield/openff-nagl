@@ -147,7 +147,6 @@ class SAGEConv(BaseConvModule):
                 graph.srcdata['h'] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 graph.update_all(msg_fn, _fn.mean('m', 'neigh'))
                 h_neigh = graph.dstdata['neigh']
-                print("h_neigh", h_neigh)
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
 
@@ -189,8 +188,6 @@ class SAGEConv(BaseConvModule):
                 if self.bias is not None:
                     rst = rst + self.bias
             else:
-                print("h_self", h_self)
-                print("h_neigh", h_neigh)
                 rst = self.fc_self(h_self) + h_neigh
 
 

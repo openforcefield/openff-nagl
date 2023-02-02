@@ -257,7 +257,6 @@ class BaseGCNStack(
             The output hidden features with shape=(n_nodes, hidden_feats[-1]).
         """
         for gnn in self:
-            print("inputs", inputs)
             inputs: torch.Tensor = gnn(graph, inputs)
         return inputs
     
