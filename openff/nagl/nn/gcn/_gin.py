@@ -16,24 +16,22 @@ class GINConvLayer(BaseConvModule):
     def __init__(
         self,
         apply_func=None,
-        aggregator_type='sum',
+        aggregator_type="sum",
         init_eps=0,
         learn_eps=False,
-        activation=None
+        activation=None,
     ):
         super().__init__()
         self.apply_func = apply_func
         self._aggregator_type = aggregator_type
         self.activation = activation
         if aggregator_type not in GINConvStack.available_aggregator_types:
-            raise KeyError(
-                f'Aggregator type {aggregator_type} not recognized.'
-                )
+            raise KeyError(f"Aggregator type {aggregator_type} not recognized.")
         # to specify whether eps is trainable or not.
         if learn_eps:
             self.eps = torch.nn.Parameter(torch.FloatTensor([init_eps]))
         else:
-            self.register_buffer('eps', torch.FloatTensor([init_eps]))
+            self.register_buffer("eps", torch.FloatTensor([init_eps]))
 
     def forward(self, graph, feat, edge_weight=None):
         r"""
@@ -88,6 +86,7 @@ class GINConvLayer(BaseConvModule):
         #         rst = self.activation(rst)
         #     return rst
 
+
 class BaseGINConv(torch.nn.Module):
     def reset_parameters(self):
         pass
@@ -116,7 +115,7 @@ class GINConv(BaseGINConv):
         dropout: float,
         activation_function: ActivationFunction,
         init_eps: float = 0.0,
-        learn_eps: bool = False
+        learn_eps: bool = False,
     ):
         super().__init__()
 
@@ -126,7 +125,7 @@ class GINConv(BaseGINConv):
             aggregator_type=aggregator_type,
             init_eps=init_eps,
             learn_eps=learn_eps,
-            activation=activation_function
+            activation=activation_function,
         )
 
 
@@ -140,7 +139,7 @@ class DGLGINConv(BaseGINConv):
         dropout: float,
         activation_function: ActivationFunction,
         init_eps: float = 0.0,
-        learn_eps: bool = False
+        learn_eps: bool = False,
     ):
         import dgl
 
@@ -153,10 +152,8 @@ class DGLGINConv(BaseGINConv):
             aggregator_type=aggregator_type,
             init_eps=init_eps,
             learn_eps=learn_eps,
-            activation=activation_function
+            activation=activation_function,
         )
-
-    
 
 
 class GINConvStack(BaseGCNStack[GINConv]):
@@ -188,7 +185,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
                 dropout=dropout,
                 activation_function=activation_function,
                 init_eps=init_eps,
-                learn_eps=learn_eps
+                learn_eps=learn_eps,
             )
         except MissingOptionalDependencyError:
             return cls._create_gcn_layer_nagl(
@@ -198,7 +195,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
                 dropout=dropout,
                 activation_function=activation_function,
                 init_eps=init_eps,
-                learn_eps=learn_eps
+                learn_eps=learn_eps,
             )
 
     @classmethod
@@ -220,9 +217,9 @@ class GINConvStack(BaseGCNStack[GINConv]):
             dropout=dropout,
             activation_function=activation_function,
             init_eps=init_eps,
-            learn_eps=learn_eps
+            learn_eps=learn_eps,
         )
-    
+
     @classmethod
     def _create_gcn_layer_dgl(
         cls,
@@ -242,13 +239,13 @@ class GINConvStack(BaseGCNStack[GINConv]):
             dropout=dropout,
             activation_function=activation_function,
             init_eps=init_eps,
-            learn_eps=learn_eps
+            learn_eps=learn_eps,
         )
-    
+
     @property
     def _is_dgl(self):
         return not isinstance(self[0].gcn, BaseConvModule)
-    
+
     def _as_nagl(self, copy_weights: bool = False):
         if self._is_dgl:
             new_obj = type(self)()
@@ -262,7 +259,6 @@ class GINConvStack(BaseGCNStack[GINConv]):
                 learn_eps = isinstance(layer.gcn.eps, torch.nn.Parameter)
                 eps = float(layer.gcn.eps.data[0])
 
-
                 new_layer = self._create_gcn_layer_nagl(
                     n_input_features=n_input_features,
                     n_output_features=n_output_features,
@@ -270,11 +266,11 @@ class GINConvStack(BaseGCNStack[GINConv]):
                     dropout=dropout,
                     activation_function=activation_function,
                     init_eps=eps,
-                    learn_eps=learn_eps
+                    learn_eps=learn_eps,
                 )
                 if copy_weights:
                     new_layer.load_state_dict(layer.state_dict())
                 new_obj.append(new_layer)
-                
+
             return copy.deepcopy(new_obj)
         return copy.deepcopy(self)

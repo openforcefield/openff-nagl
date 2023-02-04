@@ -35,6 +35,7 @@ __all__ = [
     "WibergBondOrderRecord",
 ]
 
+
 class Record(ImmutableModel):
     class Config(ImmutableModel.Config):
         orm_mode = True
@@ -219,6 +220,7 @@ class MoleculeRecord(Record):
     ):
         from openff.units import unit
         from openff.nagl.nn.label import LabelPrecomputedMolecule
+
         # from openff.nagl.utils.openff import get_coordinates_in_angstrom
 
         if not len(molecule.conformers) == 1:
@@ -267,7 +269,7 @@ class MoleculeRecord(Record):
         n_conformer_pool: int = 500,
         n_conformers: int = 10,
         rms_cutoff: float = 0.05,
-        toolkit_registry = GLOBAL_TOOLKIT_REGISTRY,
+        toolkit_registry=GLOBAL_TOOLKIT_REGISTRY,
     ):
         """Create a MoleculeRecord from an OpenFF molecule
 
@@ -298,6 +300,7 @@ class MoleculeRecord(Record):
             WibergBondOrder,
             WibergBondOrderRecord,
         )
+
         # from openff.nagl.utils.openff import (
         #     get_coordinates_in_angstrom,
         #     get_unitless_charge,
@@ -319,8 +322,7 @@ class MoleculeRecord(Record):
                 toolkit_registry=toolkit_registry,
             )
             molecule.apply_elf_conformer_selection(
-                limit=n_conformers,
-                toolkit_registry=toolkit_registry
+                limit=n_conformers, toolkit_registry=toolkit_registry
             )
 
         elif not molecule.conformers:
@@ -386,8 +388,9 @@ class MoleculeRecord(Record):
         from openff.toolkit.topology.molecule import unit as off_unit
 
         offmol = Molecule.from_mapped_smiles(
-            self.mapped_smiles, allow_undefined_stereo=True,
-            toolkit_registry=toolkit_registry
+            self.mapped_smiles,
+            allow_undefined_stereo=True,
+            toolkit_registry=toolkit_registry,
         )
         offmol._conformers = [
             conformer.coordinates * off_unit.angstrom for conformer in self.conformers

@@ -15,7 +15,8 @@ def as_batch_function_with_captured_errors(
         for entry in tqdm.tqdm(batch, ncols=80, desc=desc):
             results.append(
                 try_and_return_error(
-                    functools.partial(func, entry, *args, **kwargs), error=f"Failed to process {entry}"
+                    functools.partial(func, entry, *args, **kwargs),
+                    error=f"Failed to process {entry}",
                 )
             )
         return results

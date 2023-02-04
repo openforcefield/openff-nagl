@@ -3,14 +3,17 @@ from typing import List, Tuple
 
 import torch
 
+
 def nonzero_1d(values):
     output = torch.nonzero(values, as_tuple=False).squeeze()
     if output.dim() == 1:
         return output
     return output.view(-1)
 
+
 def as_numpy(val: torch.Tensor):
     return val.cpu().detach().numpy()
+
 
 def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
     """Internal function to create groups on the values.
@@ -43,6 +46,7 @@ def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
 
     return unique_values, bucketor
 
+
 def _batch_nx_graphs(graphs):
     import torch
     import networkx as nx
@@ -50,13 +54,15 @@ def _batch_nx_graphs(graphs):
 
     if not len(graphs):
         raise ValueError("Cannot batch empty graphs")
-    
+
     for graph in graphs:
-        assert all(key in graph.graph for key in ["node_data","graph_data","edge_data"])
+        assert all(
+            key in graph.graph for key in ["node_data", "graph_data", "edge_data"]
+        )
 
     joined_graph = nx.disjoint_union_all(graphs)
 
-    framedict_keys = ["node_data","graph_data"]
+    framedict_keys = ["node_data", "graph_data"]
     if isinstance(graphs[0].graph["edge_data"], FrameDict):
         framedict_keys.append("edge_data")
     else:

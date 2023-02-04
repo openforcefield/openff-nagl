@@ -3,11 +3,9 @@ import pytest
 from openff.toolkit.topology import Molecule
 from openff.units import unit
 
-from openff.nagl.utils.resonance import (
-    ResonanceEnumerator,
-    FragmentEnumerator
-)
+from openff.nagl.utils.resonance import ResonanceEnumerator, FragmentEnumerator
 from openff.nagl.tests.testing.utils import assert_smiles_equal
+
 
 @pytest.fixture
 def resonance_enumerator():
@@ -18,10 +16,9 @@ def resonance_enumerator():
 
 
 class TestFragmentEnumerator:
-
     @pytest.fixture
     def fragment_enumerator(self, resonance_enumerator):
-        enumerator =  FragmentEnumerator(resonance_enumerator.reduced_graph)
+        enumerator = FragmentEnumerator(resonance_enumerator.reduced_graph)
 
         # ensure a particular kekulization
         aromatic_bonds = {
@@ -30,7 +27,7 @@ class TestFragmentEnumerator:
             (6, 7): 2,
             (7, 8): 1,
             (8, 9): 2,
-            (4, 9): 1
+            (4, 9): 1,
         }
 
         for (i, j), bond_order in aromatic_bonds.items():
@@ -40,7 +37,9 @@ class TestFragmentEnumerator:
 
     def test_creation(self, fragment_enumerator):
         atomic_numbers = [8, 7, 8, 7, 6, 6, 6, 6, 6, 7, 8]
-        fragment_atomic_numbers = [z for _, z in fragment_enumerator.reduced_graph.nodes(data="atomic_number")]
+        fragment_atomic_numbers = [
+            z for _, z in fragment_enumerator.reduced_graph.nodes(data="atomic_number")
+        ]
         assert fragment_atomic_numbers == atomic_numbers
 
         formal_charges = [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1]
@@ -49,11 +48,11 @@ class TestFragmentEnumerator:
             for _, q in fragment_enumerator.reduced_graph.nodes(data="formal_charge")
         ]
         assert fragment_formal_charges == formal_charges
-    
+
     def test_get_resonance_types(self, fragment_enumerator):
         assert fragment_enumerator.donor_indices == [0, 3, 10]
         assert fragment_enumerator.acceptor_indices == [1, 2, 9]
-    
+
     @pytest.mark.parametrize(
         "donor, acceptor, expected_paths",
         [
@@ -72,11 +71,9 @@ class TestFragmentEnumerator:
         acceptor,
         expected_paths,
     ):
-        paths = fragment_enumerator._get_all_odd_n_simple_paths(
-            donor, acceptor
-        )
+        paths = fragment_enumerator._get_all_odd_n_simple_paths(donor, acceptor)
         assert paths == expected_paths
-    
+
     @pytest.mark.parametrize(
         "path, is_transfer_path",
         [
@@ -109,7 +106,7 @@ class TestFragmentEnumerator:
     ):
         paths = fragment_enumerator._get_transfer_paths(donor, acceptor)
         assert list(paths) == expected_paths
-    
+
     def test_to_resonance_dict(self, fragment_enumerator):
         expected = {
             "acceptor_indices": [1, 2, 9],
@@ -125,19 +122,23 @@ class TestFragmentEnumerator:
                 (6, 7): 2,
                 (7, 8): 1,
                 (8, 9): 2,
-                (9, 10): 1
+                (9, 10): 1,
             },
             "formal_charges": [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1],
         }
         given = fragment_enumerator._to_resonance_dict(include_formal_charges=True)
         assert given == expected
-    
+
     def test_enumerate_donor_acceptor_resonance_forms(self, fragment_enumerator):
-        fragments = list(fragment_enumerator._enumerate_donor_acceptor_resonance_forms())
+        fragments = list(
+            fragment_enumerator._enumerate_donor_acceptor_resonance_forms()
+        )
         assert len(fragments) == 3
 
         # (0, 1, 2)
-        resonance_fragment1 = fragments[0]._to_resonance_dict(include_formal_charges=True)
+        resonance_fragment1 = fragments[0]._to_resonance_dict(
+            include_formal_charges=True
+        )
         expected_fragment1 = {
             "acceptor_indices": [0, 1, 9],
             "donor_indices": [2, 3, 10],
@@ -152,14 +153,16 @@ class TestFragmentEnumerator:
                 (6, 7): 2,
                 (7, 8): 1,
                 (8, 9): 2,
-                (9, 10): 1
+                (9, 10): 1,
             },
             "formal_charges": [0, 1, -1, 0, 0, 0, 0, 0, 0, 1, -1],
         }
         assert resonance_fragment1 == expected_fragment1
 
         # (3, 1, 2)
-        resonance_fragment2 = fragments[1]._to_resonance_dict(include_formal_charges=True)
+        resonance_fragment2 = fragments[1]._to_resonance_dict(
+            include_formal_charges=True
+        )
         expected_fragment2 = {
             "acceptor_indices": [1, 3, 9],
             "donor_indices": [0, 2, 10],
@@ -174,14 +177,16 @@ class TestFragmentEnumerator:
                 (6, 7): 2,
                 (7, 8): 1,
                 (8, 9): 2,
-                (9, 10): 1
+                (9, 10): 1,
             },
             "formal_charges": [-1, 1, -1, 1, 0, 0, 0, 0, 0, 1, -1],
         }
         assert resonance_fragment2 == expected_fragment2
 
         # (3, 4, 5, 6, 7, 8, 9)
-        resonance_fragment3 = fragments[2]._to_resonance_dict(include_formal_charges=True)
+        resonance_fragment3 = fragments[2]._to_resonance_dict(
+            include_formal_charges=True
+        )
         expected_fragment3 = {
             "acceptor_indices": [1, 2, 3],
             "donor_indices": [0, 9, 10],
@@ -196,13 +201,12 @@ class TestFragmentEnumerator:
                 (6, 7): 1,
                 (7, 8): 2,
                 (8, 9): 1,
-                (9, 10): 1
+                (9, 10): 1,
             },
-            
             "formal_charges": [-1, 1, 0, 1, 0, 0, 0, 0, 0, 0, -1],
         }
         assert resonance_fragment3 == expected_fragment3
-    
+
     @pytest.mark.parametrize(
         "path, expected_bonds",
         [
@@ -241,21 +245,14 @@ class TestFragmentEnumeratorCarboxylate:
         original = enumerator._to_resonance_dict(include_formal_charges=True)
 
         assert original["formal_charges"] == [0, -1, 0]
-        assert original["bond_orders"] == {
-            (0, 1): 1,
-            (0, 2): 2
-        }
+        assert original["bond_orders"] == {(0, 1): 1, (0, 2): 2}
 
         path = (1, 0, 2)
         transferred = enumerator._transfer_electrons(path)
         transferred_info = transferred._to_resonance_dict(include_formal_charges=True)
 
         assert transferred_info["formal_charges"] == [0, 0, -1]
-        assert transferred_info["bond_orders"] == {
-            (0, 1): 2,
-            (0, 2): 1
-        }
-
+        assert transferred_info["bond_orders"] == {(0, 1): 2, (0, 2): 1}
 
     def test_enumerate_donor_acceptor_resonance_forms(self, enumerator):
         forms = list(enumerator._enumerate_donor_acceptor_resonance_forms())
@@ -263,15 +260,10 @@ class TestFragmentEnumeratorCarboxylate:
 
         info = forms[0]._to_resonance_dict(include_formal_charges=True)
         assert info["formal_charges"] == [0, 0, -1]
-        assert info["bond_orders"] == {
-            (0, 1): 2,
-            (0, 2): 1
-        }
-
+        assert info["bond_orders"] == {(0, 1): 2, (0, 2): 1}
 
 
 class TestResonanceEnumerator:
-
     expected_resonance_smiles = [
         "[H]C1=C(C(=[N+]([H])N([O-])[O-])[N+](=O)C(=C1[H])[H])[H]",
         "[H]C1=C(C(=[N+]([H])[N+](=O)[O-])N(C(=C1[H])[H])[O-])[H]",
@@ -301,7 +293,7 @@ class TestResonanceEnumerator:
         resonance_forms = resonance_enumerator.enumerate_resonance_forms(
             lowest_energy_only=lowest_energy_only,
             include_all_transfer_pathways=include_all_transfer_pathways,
-            as_dicts=False
+            as_dicts=False,
         )
         smiles = {form.to_smiles() for form in resonance_forms}
 
@@ -325,8 +317,6 @@ class TestResonanceEnumerator:
 
         output_smiles = resonance_molecules[0].to_smiles()
         assert_smiles_equal(output_smiles, "C")
-
-
 
     @pytest.mark.parametrize(
         "smiles, expected_indices",
@@ -355,10 +345,6 @@ class TestResonanceEnumerator:
         fragments = enumerator._get_acceptor_donor_fragments()
 
         fragment_indices = sorted(
-            tuple(fragment.reduced_graph.nodes)
-            for fragment in fragments
+            tuple(fragment.reduced_graph.nodes) for fragment in fragments
         )
         assert fragment_indices == expected_indices
-
-
-

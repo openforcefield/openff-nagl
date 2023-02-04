@@ -19,6 +19,7 @@ __all__ = [
     "NXMolHomoGraph",
 ]
 
+
 def openff_molecule_to_base_nx_graph(
     molecule: Molecule,
     forward: str = FORWARD,
@@ -50,7 +51,9 @@ class NXMolGraph:
     graph: :class:`networkx.Graph`
         The graph to wrap.
     """
+
     is_block = False
+
     def __init__(self, graph: nx.Graph, batch_size: int = 1):
         self.batch_size = batch_size
         self._graph = nx.freeze(copy.deepcopy(graph))
@@ -80,13 +83,13 @@ class NXMolGraph:
         for k in ("node_data", "edge_data", "graph_data"):
             for k_, v_ in self.data[k].items():
                 old_data[k][k_] = v_
-        
+
         try:
             yield
         finally:
             for k, v in old_data.items():
                 self.data[k] = v
-        
+
     def __post_init__(self):
         self._degrees = self._get_degrees()
 
@@ -105,7 +108,7 @@ class NXMolGraph:
     @property
     def edges(self):
         return self.data["edge_data"]
-    
+
     @property
     def edata(self):
         return self.edges
@@ -114,18 +117,15 @@ class NXMolGraph:
         return self._degrees
 
     def _get_degrees(self):
-        return torch.tensor([
-            degree
-            for _, degree
-            in self.graph.degree()
-        ], dtype=torch.int32)
-        
+        return torch.tensor(
+            [degree for _, degree in self.graph.degree()], dtype=torch.int32
+        )
 
     def _all_edges(self):
         u, v = self._bond_indices()
         i = torch.arange(len(u), dtype=torch.long)
         return u, v, i
-    
+
     def number_of_edges(self):
         return len(self._bond_indices()[0])
 
@@ -155,22 +155,16 @@ class NXMolGraph:
     def _node_data(self, nodes: List[int] = None):
         if nodes is None:
             nodes = torch.tensor(list(self.graph.nodes()))
-        data = {
-            k: v[nodes]
-            for k, v in self.ndata.items()
-        }
+        data = {k: v[nodes] for k, v in self.ndata.items()}
         return data
 
     def _edge_data(self, edge_indices: List[int] = None):
         if edge_indices is None:
             edge_indices = torch.tensor(list(range(self.graph.edges())))
-        
-        data = {
-            k: torch.tensor(v[edge_indices.long()])
-            for k, v in self.edata.items()
-        }
+
+        data = {k: torch.tensor(v[edge_indices.long()]) for k, v in self.edata.items()}
         return data
-    
+
     def srcnodes(self):
         return torch.tensor(self.graph.nodes(), dtype=torch.int32)
         # return self._bond_indices()[0]
@@ -182,11 +176,11 @@ class NXMolGraph:
     @property
     def srcdata(self):
         return self.ndata
-    
+
     @property
     def dstdata(self):
         return self.ndata
-    
+
     def update_all(
         self,
         message_func,
@@ -195,6 +189,7 @@ class NXMolGraph:
         etype=None,
     ):
         from ._update import message_passing
+
         results = message_passing(
             self,
             message_func,
@@ -208,9 +203,10 @@ class NXMolGraph:
 
     def num_dst_nodes(self):
         return len(self.dstnodes())
-    
+
     def num_src_nodes(self):
         return len(self.srcnodes())
+
 
 class NXMolHomoGraph(NXMolGraph):
     """
@@ -269,7 +265,7 @@ class NXMolHeteroGraph(NXMolGraph):
         edge_data = self.data.get("edge_data", {})
         edge_data = defaultdict(FrameDict, edge_data)
         self.data["edge_data"] = edge_data
-    
+
     @property
     def srcdata(self):
         raise NotImplementedError
@@ -277,18 +273,17 @@ class NXMolHeteroGraph(NXMolGraph):
     @property
     def dstdata(self):
         raise NotImplementedError
-    
+
     @classmethod
     def _batch(cls, graphs: List["NXMolHeteroGraph"]) -> "NXMolHeteroGraph":
         from openff.nagl.molecule._graph._utils import _batch_nx_graphs
 
         if not graphs:
             return cls(nx.Graph())
-        
+
         batched_graph = _batch_nx_graphs([g.graph for g in graphs])
         batched_graph = cls(batched_graph)
         return batched_graph
-    
 
     @classmethod
     def from_openff(
@@ -298,6 +293,7 @@ class NXMolHeteroGraph(NXMolGraph):
         bond_features: Tuple[BondFeature, ...] = tuple(),
     ):
         from openff.nagl.molecule._utils import _get_openff_molecule_information
+
         nx_graph = openff_molecule_to_base_nx_graph(molecule)
 
         molecule_graph = cls(nx_graph)
@@ -306,15 +302,14 @@ class NXMolHeteroGraph(NXMolGraph):
             atom_featurizer = AtomFeaturizer(atom_features)
             atom_features = atom_featurizer.featurize(molecule)
             molecule_graph.ndata[FEATURE] = atom_features
-        
+
         molecule_info = _get_openff_molecule_information(molecule)
         for key, value in molecule_info.items():
             molecule_graph.ndata[key] = value
-       
-       # add bond features
+
+        # add bond features
         bond_orders = torch.tensor(
-            [bond.bond_order for bond in molecule.bonds],
-            dtype=torch.uint8
+            [bond.bond_order for bond in molecule.bonds], dtype=torch.uint8
         )
         molecule_graph.edges[FORWARD].data["bond_order"] = bond_orders
         molecule_graph.edges[REVERSE].data["bond_order"] = bond_orders
@@ -326,7 +321,7 @@ class NXMolHeteroGraph(NXMolGraph):
             molecule_graph.edges[REVERSE].data[FEATURE] = bond_features
 
         return molecule_graph
-    
+
     def to_homogeneous(self):
         graph = copy.deepcopy(self.graph)
 

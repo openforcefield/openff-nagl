@@ -12,7 +12,11 @@ from openff.toolkit.topology.molecule import unit as off_unit
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing, BondOrder
-from openff.nagl.nn.dataset import DGLMoleculeDataLoader, DGLMoleculeDataset, DGLMoleculeLightningDataModule
+from openff.nagl.nn.dataset import (
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    DGLMoleculeLightningDataModule,
+)
 from openff.nagl.storage._store import (
     ConformerRecord,
     MoleculeRecord,
@@ -22,6 +26,7 @@ from openff.nagl.storage._store import (
 )
 
 pytest.importorskip("dgl")
+
 
 def label_formal_charge(molecule: Molecule):
     return {
@@ -55,7 +60,6 @@ def test_data_set_from_molecules(openff_methane_charged):
 
 
 def test_data_set_from_molecule_stores(tmpdir):
-
     charges = PartialChargeRecord(method="am1", values=[0.1, -0.1])
     bond_orders = WibergBondOrderRecord(
         method="am1",
@@ -113,7 +117,6 @@ def test_data_set_loader():
             dgl_molecule, DGLMoleculeBatch
         ) and dgl_molecule.n_atoms_per_molecule == (5,)
         assert "formal_charges" in labels
-
 
 
 class TestDGLMoleculeLightningDataModule:
@@ -187,7 +190,6 @@ class TestDGLMoleculeLightningDataModule:
         atoms = [AtomicElement(categories=["Cl", "H"])]
         bonds = [BondOrder()]
 
-
         data_module = DGLMoleculeLightningDataModule(
             atom_features=atoms,
             bond_features=bonds,
@@ -199,7 +201,7 @@ class TestDGLMoleculeLightningDataModule:
             data_cache_directory=os.path.join(tmpdir, "tmp"),
             use_cached_data=False,
         )
-        
+
         model = GNNModel(
             convolution_architecture="SAGEConv",
             n_convolution_hidden_features=128,
@@ -217,7 +219,6 @@ class TestDGLMoleculeLightningDataModule:
         with tmpdir.as_cwd():
             trainer = Trainer(max_epochs=1)
             trainer.fit(model, data_module)
-
 
     def test_init(self, mock_data_module):
         assert isinstance(mock_data_module.atom_features[0], AtomicElement)
@@ -317,9 +318,7 @@ class TestDGLMoleculeLightningDataModule:
             pickle.dump("test", file)
 
         with pytest.raises(FileExistsError):
-            self.create_mock_data_module(
-            tmpdir, mock_data_store, use_cached_data=False
-        )
+            self.create_mock_data_module(tmpdir, mock_data_store, use_cached_data=False)
 
     def test_setup(self, tmpdir, mock_data_store):
         mock_data_module_with_store = self.create_mock_data_module(

@@ -7,11 +7,10 @@ from typing import Dict
 
 import torch
 
-class FrameDict(UserDict):
 
+class FrameDict(UserDict):
     def subframe(self, indices):
         return type(self)((key, value[indices]) for key, value in self.items())
-
 
 
 class EdgeBatch:
@@ -60,7 +59,7 @@ class EdgeBatch:
                 [2.]])
         """
         return self._edge_data
-    
+
     @property
     def src(self):
         """Return a view of the source node features for the edges in the batch.
@@ -136,7 +135,7 @@ class EdgeBatch:
                 [2.]])
         """
         return self._dst_data
-    
+
     def batch_size(self):
         """Return the number of edges in the batch.
 
@@ -189,25 +188,31 @@ class EdgeBatch:
         destination node type) for this edge batch."""
         return self._etype
 
-
     @classmethod
-    def _all_from_networkx_molecule(cls, nxmolecule):
+    def _all_from_graph_molecule(cls, nx_molecule):
         """Create an edge batch that contains all edges in the graph.
         This takes advantage of some shortcuts and assumes that
         the edge function is applied to all edges.
-        
+
         """
         eid = "__ALL__"
-        etype = ('_N', '_E', '_N')
-        source, destination, edge_ids = nxmolecule._all_edges()
-        src_data = nxmolecule._node_data(source)
-        dst_data = nxmolecule._node_data(destination)
-        edge_data = nxmolecule._edge_data(edge_ids)
-        return cls(nxmolecule, eid, etype, src_data, edge_data, dst_data)
+        etype = ("_N", "_E", "_N")
+        source, destination, edge_ids = nx_molecule._all_edges()
+        src_data = nx_molecule._node_data(source)
+        dst_data = nx_molecule._node_data(destination)
+        edge_data = nx_molecule._edge_data(edge_ids)
+        return cls(nx_molecule, eid, etype, src_data, edge_data, dst_data)
 
 
 class NodeBatch:
-    def __init__(self, graph, nodes: torch.Tensor, ntype: str, data: Dict[str, torch.Tensor], msgs=None):
+    def __init__(
+        self,
+        graph,
+        nodes: torch.Tensor,
+        ntype: str,
+        data: Dict[str, torch.Tensor],
+        msgs=None,
+    ):
         self._graph = graph
         self._nodes = nodes
         self._ntype = ntype

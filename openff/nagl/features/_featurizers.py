@@ -13,7 +13,6 @@ T = TypeVar("T", bound=Feature)
 
 
 class Featurizer(Generic[T]):
-
     features: List[T]
 
     def __init__(self, features: List[T]):

@@ -56,7 +56,7 @@ def train_model(
     n_gpus: int = 1,
     n_epochs: int = 200,
 ):
-    from openff.nagl.app.trainer import Trainer
+    from openff.nagl._app.trainer import Trainer
     from pytorch_lightning.callbacks import ModelCheckpoint
 
     trainer = Trainer.from_yaml_file(

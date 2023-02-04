@@ -20,7 +20,6 @@ class ResonanceAtomType(enum.Enum):
 
 
 class ResonanceType:
-
     class Key(NamedTuple):
         """A convenient data structure for storing information used to recognize a possible
         resonance atom type by."""
@@ -41,7 +40,6 @@ class ResonanceType:
         def get_conjugate_key(self):
             return ResonanceType._resonance_keys_by_id[self.conjugate_id]
 
-
     _registry = {
         Key(8, 0, (2,)): Value("A", 0.0, 1, 2),
         Key(8, -1, (1,)): Value("D", 5.0, 2, 1),
@@ -60,8 +58,7 @@ class ResonanceType:
     }
 
     _resonance_keys_by_id = {
-        resonance_type.id: key
-        for key, resonance_type in _registry.items()
+        resonance_type.id: key for key, resonance_type in _registry.items()
     }
 
     @classmethod
@@ -76,9 +73,7 @@ class ResonanceType:
         return cls._registry[key]
 
 
-
 class FromYamlMixin:
-
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
         import yaml
@@ -91,5 +86,3 @@ class FromYamlMixin:
                 yaml_kwargs.update(dct)
         yaml_kwargs.update(kwargs)
         return cls(**yaml_kwargs)
-
-

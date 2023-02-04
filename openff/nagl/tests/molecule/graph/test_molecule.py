@@ -1,11 +1,11 @@
-
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
-from openff.nagl.molecule._graph.molecule import NXMolecule
+from openff.nagl.molecule._graph.molecule import GraphMolecule
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph, NXMolHomoGraph
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
+
 
 class TestNXMolecule:
     def test_homograph_property(self, nx_methane):
@@ -15,12 +15,11 @@ class TestNXMolecule:
     def test_atom_features_property(self, nx_methane):
         assert nx_methane.atom_features.shape == (5, 4)
 
-
     def test_n_properties(self):
         """Test that the number of atoms and bonds properties work correctly with
         multiple resonance structures"""
 
-        nx_molecule = NXMolecule.from_smiles("[H]C(=O)[O-]", [], [])
+        nx_molecule = GraphMolecule.from_smiles("[H]C(=O)[O-]", [], [])
 
         assert nx_molecule.n_atoms == 4
         assert nx_molecule.n_bonds == 3
@@ -29,7 +28,7 @@ class TestNXMolecule:
     def test_from_smiles(self):
         """Test that the DGLMolecule.from_smiles method works correctly"""
 
-        nx_molecule = NXMolecule.from_smiles(
+        nx_molecule = GraphMolecule.from_smiles(
             "[H:1][C:2](=[O:3])[O-:4]",
             mapped=True,
             atom_features=[AtomConnectivity()],

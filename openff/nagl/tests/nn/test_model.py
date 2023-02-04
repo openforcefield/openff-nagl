@@ -9,7 +9,7 @@ from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.data.files import EXAMPLE_AM1BCC_MODEL, MODEL_CONFIG_V7
+from openff.nagl.data.files import EXAMPLE_AM1BCC_MODEL_STATE_DICT, MODEL_CONFIG_V7
 
 
 @pytest.fixture()
@@ -110,16 +110,16 @@ class TestBaseGNNModel:
         assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.01))
 
 
-
 class TestGNNModel:
-
     @pytest.fixture()
     def am1bcc_model(self):
         model = GNNModel.from_yaml_file(MODEL_CONFIG_V7)
-        model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL))
-        model.eval()
-        return model
+        model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
 
+        torch.save(model, "test.pt")
+        model.eval()
+
+        return model
 
     def test_init(self):
         from openff.nagl.features import atoms, bonds
@@ -142,7 +142,6 @@ class TestGNNModel:
             bonds.BondInRingOfSize(6),
         )
 
-
         model = GNNModel(
             convolution_architecture="SAGEConv",
             n_convolution_hidden_features=128,
@@ -161,30 +160,28 @@ class TestGNNModel:
         pytest.importorskip("dgl")
         assert am1bcc_model._is_dgl
         nagl_model = am1bcc_model._as_nagl()
-        
+
         original_state_dict = am1bcc_model.state_dict()
         new_state_dict = nagl_model.state_dict()
         assert original_state_dict.keys() == new_state_dict.keys()
         for key in original_state_dict.keys():
             assert torch.allclose(original_state_dict[key], new_state_dict[key])
-    
+
     def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged):
         pytest.importorskip("dgl")
-        charges = am1bcc_model._compute_property_with_dgl(openff_methane_uncharged)
+        charges = am1bcc_model._compute_property_dgl(openff_methane_uncharged)
         charges = charges.detach().numpy().flatten()
-        expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
+        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
         assert_allclose(charges, expected, atol=1e-5)
 
-    
     def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged):
-        charges = am1bcc_model._compute_property_with_networkx(openff_methane_uncharged)
+        charges = am1bcc_model._compute_property_nagl(openff_methane_uncharged)
         charges = charges.detach().numpy().flatten()
-        expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
+        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
         assert_allclose(charges, expected, atol=1e-5)
-
 
     def test_compute_property(self, am1bcc_model, openff_methane_uncharged):
         charges = am1bcc_model.compute_property(openff_methane_uncharged)
         charges = charges.detach().numpy().flatten()
-        expected = np.array([-0.143774,  0.035943,  0.035943,  0.035943,  0.035943])
+        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
         assert_allclose(charges, expected, atol=1e-5)

@@ -10,9 +10,9 @@ from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 
 
-
 if TYPE_CHECKING:
     import dgl
+
 
 @requires_package("dgl")
 def openff_molecule_to_base_dgl_graph(
@@ -87,10 +87,10 @@ def openff_molecule_to_dgl_graph(
 @requires_package("dgl")
 def dgl_heterograph_to_homograph(graph: "dgl.DGLHeteroGraph") -> "dgl.DGLGraph":
     import dgl
+
     try:
         homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[FEATURE])
     except KeyError:
-
         # A nasty workaround to check when we don't have any atom / bond features as
         # DGL doesn't allow easy querying of features dicts for hetereographs with
         # multiple edge / node types.

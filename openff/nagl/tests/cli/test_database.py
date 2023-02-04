@@ -22,7 +22,6 @@ def test_store_molecule(
 ):
     runner = CliRunner()
     with runner.isolated_filesystem():
-
         openff_methane_charged.to_file("methane.sdf", "sdf")
 
         new_molecule = list(stream_molecules_from_file("methane.sdf"))[0]

@@ -10,6 +10,7 @@ from openff.nagl.nn._sequential import SequentialLayers
 if TYPE_CHECKING:
     import dgl
 
+
 class PoolingLayer(torch.nn.Module, abc.ABC):
     """A convenience class for pooling together node feature vectors produced by
     a graph convolutional layer.
@@ -48,8 +49,7 @@ class PoolBondFeatures(PoolingLayer):
 
     @staticmethod
     def _apply_edges(
-        edges: "dgl.udf.EdgeBatch",
-        feature_name: str = "h"
+        edges: "dgl.udf.EdgeBatch", feature_name: str = "h"
     ) -> Dict[str, torch.Tensor]:
         h_u = edges.src[feature_name]
         h_v = edges.dst[feature_name]

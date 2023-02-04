@@ -14,7 +14,6 @@ from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.toolkit.topology import Molecule
 
 if TYPE_CHECKING:
-    
     from openff.nagl.utils._types import HybridizationType
 
 
@@ -35,12 +34,15 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         The keyword arguments to pass to the function.
     """
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
-    from openff.nagl.toolkits._base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase
+    from openff.nagl.toolkits._base import (
+        NAGLToolkitWrapperMeta,
+        NAGLToolkitWrapperBase,
+    )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
         toolkit_registry = toolkit_registry()
-    
+
     if isinstance(toolkit_registry, NAGLToolkitWrapperBase):
         toolkit_function = getattr(toolkit_registry, function_name)
         return toolkit_function(*args, **kwargs)
@@ -57,8 +59,12 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
 def toolkit_registry_function(function):
     @functools.wraps(function)
     def wrapper(*args, toolkit_registry=NAGL_TOOLKIT_REGISTRY, **kwargs):
-        return call_toolkit_function(function.__name__, toolkit_registry, *args, **kwargs)
+        return call_toolkit_function(
+            function.__name__, toolkit_registry, *args, **kwargs
+        )
+
     return wrapper
+
 
 @contextlib.contextmanager
 @requires_package("openeye.oechem")
@@ -101,6 +107,7 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
         yield
 
     toolkit_logger.setLevel(openff_logger_level)
+
 
 @contextlib.contextmanager
 @toolkit_registry_function
@@ -155,6 +162,7 @@ def get_molecule_hybridizations(
     """
     pass
 
+
 @toolkit_registry_function
 def get_atoms_are_in_ring_size(
     molecule: "Molecule",
@@ -163,7 +171,7 @@ def get_atoms_are_in_ring_size(
 ) -> List[bool]:
     """
     Determine whether each atom in a molecule is in a ring of a given size.
-    
+
     Parameters
     ----------
     molecule: openff.toolkit.topology.Molecule
@@ -172,13 +180,14 @@ def get_atoms_are_in_ring_size(
         The size of the ring to check for.
     toolkit_registry:
         The toolkit registry to use
-    
+
     Returns
     -------
     in_ring_size: List[bool]
 
     """
     pass
+
 
 @toolkit_registry_function
 def get_bonds_are_in_ring_size(
@@ -188,7 +197,7 @@ def get_bonds_are_in_ring_size(
 ) -> List[bool]:
     """
     Determine whether each bond in a molecule is in a ring of a given size.
-    
+
     Parameters
     ----------
     molecule: openff.toolkit.topology.Molecule
@@ -197,13 +206,14 @@ def get_bonds_are_in_ring_size(
         The size of the ring to check for.
     toolkit_registry:
         The toolkit registry to use
-    
+
     Returns
     -------
     in_ring_size: List[bool]
         Bonds are in the same order as the molecule's ``bonds`` attribute.
     """
     pass
+
 
 @toolkit_registry_function
 def get_best_rmsd(
@@ -228,7 +238,7 @@ def get_best_rmsd(
         If a numpy array, it is assumed to be in units of angstrom.
     toolkit_registry:
         The toolkit registry to use
-    
+
     Returns
     -------
     rmsd: unit.Quantity
@@ -244,6 +254,7 @@ def get_best_rmsd(
     >>> print(f"RMSD in angstrom: {rmsd.m_as(unit.angstrom)}")
 
     """
+
 
 @toolkit_registry_function
 def calculate_circular_fingerprint_similarity(
@@ -301,7 +312,7 @@ def is_conformer_identical(
     atol: float, default=1.0e-3
         The absolute tolerance to use when comparing the RMSD.
         This is given in angstrom.
-    
+
     Returns
     -------
     is_identical: bool
@@ -399,7 +410,7 @@ def enumerate_stereoisomers(
     max_isomers: int = 20,
     rationalize: bool = True,
     include_self: bool = False,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY
+    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
 ) -> List["Molecule"]:
     """Enumerate stereoisomers for a molecule.
 
@@ -436,12 +447,12 @@ def enumerate_stereoisomers(
 def guess_file_format(file: str) -> str:
     """
     Guess the file format of a file from the extension
-    
+
     Parameters
     ----------
     file: str
         The file to guess the format of
-    
+
     Returns
     -------
     str
@@ -459,7 +470,6 @@ def guess_file_format(file: str) -> str:
     return file_format
 
 
-
 @toolkit_registry_function
 def stream_molecules_from_sdf_file(
     file: str,
@@ -467,7 +477,7 @@ def stream_molecules_from_sdf_file(
     as_smiles: bool = False,
     mapped_smiles: bool = False,
     include_sdf_data: bool = True,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY
+    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
 ):
     """Stream molecules from an SDF file.
 
@@ -493,20 +503,18 @@ def stream_molecules_from_sdf_file(
     pass
 
 
-
-def validate_smiles(
-    smiles: str,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY
-):
+def validate_smiles(smiles: str, toolkit_registry=NAGL_TOOLKIT_REGISTRY):
     offmol = Molecule.from_smiles(smiles, toolkit_registry=toolkit_registry)
-    return offmol.to_smiles(mapped=False, isomeric=True, toolkit_registry=toolkit_registry)
+    return offmol.to_smiles(
+        mapped=False, isomeric=True, toolkit_registry=toolkit_registry
+    )
 
 
 def stream_molecules_from_smiles_file(
     file: str,
     as_smiles: bool = False,
     mapped_smiles: bool = False,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY
+    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
 ):
     """Stream molecules from a SMILES file.
 
@@ -533,7 +541,7 @@ def stream_molecules_from_smiles_file(
 
     with open(file, "r") as f:
         smiles = [x.strip() for x in f.readlines()]
-    
+
     for line in smiles:
         for field in line.split():
             try:
@@ -541,18 +549,13 @@ def stream_molecules_from_smiles_file(
                     field, toolkit_registry=toolkit_registry
                 )
             except (ValueError, SmilesParsingError):
-                offmol = Molecule.from_smiles(
-                    field,
-                    allow_undefined_stereo=True
-                )
+                offmol = Molecule.from_smiles(field, allow_undefined_stereo=True)
 
             if as_smiles:
                 offmol = offmol.to_smiles(
-                    mapped=mapped_smiles,
-                    toolkit_registry=toolkit_registry
+                    mapped=mapped_smiles, toolkit_registry=toolkit_registry
                 )
             yield offmol
-
 
 
 def stream_molecules_from_file(
@@ -562,7 +565,7 @@ def stream_molecules_from_file(
     as_smiles: bool = False,
     mapped_smiles: bool = False,
     include_sdf_data: bool = True,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY
+    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
 ):
     """Stream molecules from a file.
 
@@ -591,7 +594,7 @@ def stream_molecules_from_file(
     """
     if file_format is None:
         file_format = guess_file_format(file)
-    
+
     if file_format in ("sdf", "sdf.gz"):
         func = functools.partial(
             stream_molecules_from_sdf_file,
@@ -599,14 +602,14 @@ def stream_molecules_from_file(
             as_smiles=as_smiles,
             mapped_smiles=mapped_smiles,
             include_sdf_data=include_sdf_data,
-            toolkit_registry=toolkit_registry
+            toolkit_registry=toolkit_registry,
         )
     elif file_format == "smiles":
         func = functools.partial(
             stream_molecules_from_smiles_file,
             as_smiles=as_smiles,
             mapped_smiles=mapped_smiles,
-            toolkit_registry=toolkit_registry
+            toolkit_registry=toolkit_registry,
         )
 
     for mol in func(file):
@@ -619,7 +622,7 @@ def smiles_to_inchi_key(smiles: str) -> str:
     Parameters
     ----------
     smiles
-        The SMILES string to convert.   
+        The SMILES string to convert.
 
     Returns
     -------
@@ -641,7 +644,7 @@ def get_openff_molecule_bond_indices(molecule: "Molecule") -> List[Tuple[int, in
     ----------
     molecule
         The molecule to get the bond indices for.
-    
+
     Returns
     -------
     bond_indices
@@ -653,6 +656,7 @@ def get_openff_molecule_bond_indices(molecule: "Molecule") -> List[Tuple[int, in
         tuple(sorted((bond.atom1_index, bond.atom2_index))) for bond in molecule.bonds
     ]
 
+
 def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, int]:
     """
     Map the indices of the target SMILES to the indices of the reference SMILES.
@@ -663,7 +667,7 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
         The reference SMILES string, mapped with atom indices.
     target_smiles
         The target SMILES string, mapped with atom indices.
-    
+
     Returns
     -------
     atom_map
@@ -672,7 +676,6 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
     from openff.toolkit.topology import Molecule
 
     with capture_toolkit_warnings():
-
         reference_molecule = Molecule.from_mapped_smiles(
             reference_smiles, allow_undefined_stereo=True
         )
@@ -698,10 +701,11 @@ def molecule_from_networkx(graph):
             is_aromatic=info["is_aromatic"],
             stereochemistry=info.get("stereochemistry", None),
         )
-    
+
     for u, v, info in graph.edges(data=True):
         molecule.add_bond(
-            u, v,
+            u,
+            v,
             bond_order=info["bond_order"],
             is_aromatic=info["is_aromatic"],
             stereochemistry=info.get("stereochemistry", None),

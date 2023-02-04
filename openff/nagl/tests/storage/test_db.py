@@ -6,7 +6,6 @@ from openff.nagl.storage.record import ConformerRecord
 
 
 def test_match_conformers():
-
     matches = match_conformers(
         "[Cl:1][H:2]",
         db_conformers=[

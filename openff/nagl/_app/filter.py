@@ -26,7 +26,6 @@ def apply_filter(
     max_mass: "unit.Quantity",
     n_rotatable_bonds: int,
 ) -> bool:
-
     mass = sum(MASSES[atom.atomic_number] for atom in molecule.atoms)
 
     return (
@@ -45,7 +44,7 @@ def split_and_apply_filter(
     n_rotatable_bonds: int,
     only_retain_largest: bool = True,
     as_smiles: bool = False,
-    mapped_smiles: bool = False
+    mapped_smiles: bool = False,
 ):
     from openff.toolkit.topology import Molecule
 
@@ -77,7 +76,6 @@ def split_and_apply_filter(
         logger.warning(f"Failed to process molecule {molecule}, {e}")
 
 
-
 def filter_molecules(
     molecules: Iterable["Molecule"],
     only_retain_largest: bool = True,
@@ -99,7 +97,6 @@ def filter_molecules(
     n_processes: int = 1,
     as_smiles: bool = False,
 ) -> Iterable["Molecule"]:
-
     import tqdm
     from openff.toolkit.topology.molecule import unit
 

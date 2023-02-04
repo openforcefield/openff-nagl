@@ -1,6 +1,9 @@
 """
 This module contains functions for updating the graph,
 analogous to DGL's functionality.
+
+Functions here are not intended to be called directly
+and may be fragile.
 """
 
 from typing import TYPE_CHECKING, Dict, Optional, List, Callable
@@ -15,9 +18,10 @@ if TYPE_CHECKING:
 
 __all__ = ["message_passing"]
 
+
 def apply_edge_function(
-    nxmolecule: "NXMolGraph",
-    edge_function: Callable[[EdgeBatch], Dict[str, torch.Tensor]]
+    nx_molecule: "NXMolGraph",
+    edge_function: Callable[[EdgeBatch], Dict[str, torch.Tensor]],
 ):
     """
     Apply custom edge function to NXMolGraph.
@@ -27,10 +31,10 @@ def apply_edge_function(
     Analogous to :func:``dgl.core.invoke_edge_udf``.
 
     #TODO: make this more general and analogous to DGL
-    
+
     Parameters
     ----------
-    nxmolecule : NXMolGraph
+    nx_molecule : NXMolGraph
         The molecule graph.
     edge_function : callable
         This function is applied to a ``dgl.udf.EdgeBatch``
@@ -38,24 +42,26 @@ def apply_edge_function(
         and returns a dictionary of tensors.
 
     """
-    edge_batch = EdgeBatch._all_from_networkx_molecule(nxmolecule)
+    edge_batch = EdgeBatch._all_from_graph_molecule(nx_molecule)
     return edge_function(edge_batch)
 
 
-def _order_edge_index_buckets(nxmolecule, degree, node_bucket):
+def _order_edge_index_buckets(nx_molecule, degree, node_bucket):
     from .._graph._utils import as_numpy
-    edge_index_buckets = nxmolecule.in_edges(node_bucket, form="eid")
+
+    edge_index_buckets = nx_molecule.in_edges(node_bucket, form="eid")
     new_shape = (len(node_bucket), degree)
     edge_index_buckets = as_numpy(edge_index_buckets).reshape(new_shape)
     edge_index_buckets = np.sort(edge_index_buckets, axis=1)
     edge_index_buckets = torch.tensor(edge_index_buckets, dtype=torch.long)
     return edge_index_buckets
 
+
 def apply_reduce_function(
-    nxmolecule: "NXMolGraph",
+    nx_molecule: "NXMolGraph",
     reduce_function: Callable[["NodeBatch"], Dict[str, torch.Tensor]],
     message_data: Dict[str, torch.Tensor],
-    original_node_ids: Optional[torch.Tensor] = None
+    original_node_ids: Optional[torch.Tensor] = None,
 ) -> FrameDict:
     """
     Apply custom reduce function to NXMolGraph.
@@ -66,7 +72,7 @@ def apply_reduce_function(
 
     Parameters
     ----------
-    nxmolecule : NXMolGraph
+    nx_molecule : NXMolGraph
         The molecule graph.
     reduce_function : callable
         This function is applied to a :class:``dgl.udf.NodeBatch``
@@ -89,11 +95,11 @@ def apply_reduce_function(
 
     message_data = FrameDict(message_data)
 
-    degrees = nxmolecule.in_degrees()
+    degrees = nx_molecule.in_degrees()
     unique_degrees, bucketor = _bucketing(degrees)
 
-    # nodes = nxmolecule.dstnodes()
-    nodes = np.array(nxmolecule.graph.nodes())
+    # nodes = nx_molecule.dstnodes()
+    nodes = np.array(nx_molecule.graph.nodes())
     nodes = torch.tensor(nodes, dtype=torch.long)
     if original_node_ids is None:
         original_node_ids = nodes
@@ -104,50 +110,40 @@ def apply_reduce_function(
     bucket_nodes: List[torch.Tensor] = []
     bucket_results: List[torch.Tensor] = []
     for degree, node_bucket, original_node_bucket in zip(
-        unique_degrees,
-        node_buckets,
-        original_node_buckets
+        unique_degrees, node_buckets, original_node_buckets
     ):
         if degree == 0:  # skip 0-degree nodes
             continue
-            
+
         bucket_nodes.append(node_bucket)
-        node_data: dict = nxmolecule._node_data(node_bucket)
+        node_data: dict = nx_molecule._node_data(node_bucket)
 
         # order incoming edges per node, by edge index
-        edge_index_buckets = _order_edge_index_buckets(
-            nxmolecule, degree, node_bucket
-        )
+        edge_index_buckets = _order_edge_index_buckets(nx_molecule, degree, node_bucket)
 
         maildata = message_data.subframe(edge_index_buckets)
-        node_batch = NodeBatch(nxmolecule, original_node_bucket, "_N", node_data, maildata)
+        node_batch = NodeBatch(
+            nx_molecule, original_node_bucket, "_N", node_data, maildata
+        )
         bucket_results.append(reduce_function(node_batch))
 
     # concatenate results into a new frame
     result = FrameDict()
     if len(bucket_results) != 0:
-    
         merged_nodes = torch.cat(bucket_nodes, dim=0)
         for name in bucket_results[0]:
-            tensor = torch.cat(
-                [
-                    bucket[name]
-                    for bucket in bucket_results
-                ],
-                dim=0
-            )
+            tensor = torch.cat([bucket[name] for bucket in bucket_results], dim=0)
             result[name] = torch.empty_like(tensor)
             for i, j in zip(merged_nodes, tensor):
                 result[name][i] = j
     return result
 
 
-
 def message_passing(
-    nxmolecule: "NXMolGraph",
+    nx_molecule: "NXMolGraph",
     message_func,
     reduce_func,
-    apply_func: Optional[callable] = None
+    apply_func: Optional[callable] = None,
 ) -> FrameDict:
     """
     Perform message passing on a NXMolGraph.
@@ -157,7 +153,7 @@ def message_passing(
 
     Parameters
     ----------
-    nxmolecule : NXMolGraph
+    nx_molecule : NXMolGraph
         The molecule graph.
     message_func : callable
         This function is applied to a ``dgl.udf.EdgeBatch``
@@ -176,8 +172,8 @@ def message_passing(
     FrameDict
         A dictionary of tensors containing the final data.
     """
-    message_data = apply_edge_function(nxmolecule, message_func)
-    node_data = apply_reduce_function(nxmolecule, reduce_func, message_data)
+    message_data = apply_edge_function(nx_molecule, message_func)
+    node_data = apply_reduce_function(nx_molecule, reduce_func, message_data)
     if apply_func is not None:
         raise NotImplementedError("Apply function not implemented")
     return node_data

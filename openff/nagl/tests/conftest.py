@@ -10,6 +10,7 @@ from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
 
+
 @pytest.fixture()
 def openff_methyl_methanoate():
     from openff.toolkit.topology.molecule import Molecule
@@ -63,19 +64,20 @@ def dgl_methane(openff_methane_uncharged):
         bond_features=[BondIsInRing()],
     )
 
+
 @pytest.fixture()
 def nx_methane(openff_methane_uncharged):
-    from openff.nagl.molecule._graph.molecule import NXMolecule
-    return NXMolecule.from_openff(
+    from openff.nagl.molecule._graph.molecule import GraphMolecule
+
+    return GraphMolecule.from_openff(
         openff_methane_uncharged,
         atom_features=[AtomConnectivity()],
         bond_features=[BondIsInRing()],
     )
+
 
 @pytest.fixture()
 def openff_carboxylate():
     from openff.toolkit.topology.molecule import Molecule
 
     return Molecule.from_mapped_smiles("[H:1][C:2](=[O:3])[O-:4]")
-
-

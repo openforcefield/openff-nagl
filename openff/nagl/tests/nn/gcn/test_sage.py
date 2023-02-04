@@ -10,10 +10,10 @@ from openff.nagl.nn.gcn._sage import SAGEConv
 
 try:
     import dgl
+
     _BASE_SAGECONV_CLASS = dgl.nn.pytorch.SAGEConv
 except ImportError:
     _BASE_SAGECONV_CLASS = SAGEConv
-
 
 
 class TestDGLSAGEConvStack:
@@ -36,7 +36,6 @@ class TestDGLSAGEConvStack:
         assert second.fc_self.in_features == 2
         assert second.fc_self.out_features == 3
 
-    
     def test_with_layers_inputs(self):
         stack = SAGEConvStack.with_layers(
             n_input_features=2,
@@ -93,15 +92,17 @@ class TestDGLSageConv:
         layer.fc_neigh.weight.data.fill_(1.0)
         layer.fc_self.weight.data.fill_(2.0)
 
-        expected_features = np.array([
-            [0, 0, 0, 1],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-        ])
+        expected_features = np.array(
+            [
+                [0, 0, 0, 1],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+            ]
+        )
         assert_allclose(dgl_methane.atom_features.detach().numpy(), expected_features)
-        
+
         results = layer.forward(dgl_methane.homograph, dgl_methane.atom_features)
         results = results.detach().numpy()
         assert results.shape == (5, 3)
@@ -109,7 +110,6 @@ class TestDGLSageConv:
 
 
 class TestSageConv:
-
     @pytest.fixture()
     def sageconv_layer(self):
         layer = SAGEConv(
@@ -118,7 +118,7 @@ class TestSageConv:
             aggregator_type="mean",
             feat_drop=0,
             activation=torch.nn.Sigmoid(),
-            bias=False
+            bias=False,
         )
 
         layer.fc_neigh.weight.data.fill_(1.0)
@@ -126,31 +126,36 @@ class TestSageConv:
         return layer
 
     def test_forward_values_dgl(self, sageconv_layer, dgl_methane):
-        expected_features = np.array([
-            [0, 0, 0, 1],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-        ])
+        expected_features = np.array(
+            [
+                [0, 0, 0, 1],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+            ]
+        )
         assert_allclose(dgl_methane.atom_features.detach().numpy(), expected_features)
-        
-        results = sageconv_layer.forward(dgl_methane.homograph, dgl_methane.atom_features)
+
+        results = sageconv_layer.forward(
+            dgl_methane.homograph, dgl_methane.atom_features
+        )
         results = results.detach().numpy()
         assert results.shape == (5, 3)
         assert_array_almost_equal(results, 0.952574)
 
-
     def test_forward_values_dgl(self, sageconv_layer, nx_methane):
-        expected_features = np.array([
-            [0, 0, 0, 1],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-            [1, 0, 0, 0],
-        ])
+        expected_features = np.array(
+            [
+                [0, 0, 0, 1],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+                [1, 0, 0, 0],
+            ]
+        )
         assert_allclose(nx_methane.atom_features.detach().numpy(), expected_features)
-        
+
         results = sageconv_layer.forward(nx_methane.homograph, nx_methane.atom_features)
         results = results.detach().numpy()
         assert results.shape == (5, 3)

@@ -33,18 +33,15 @@ if TYPE_CHECKING:
 
 DBBase = declarative_base()
 
+
 @functools.lru_cache(maxsize=1000)
 def unmap_smiles(smiles: str) -> str:
     from openff.toolkit.topology import Molecule
     from openff.nagl.utils.openff import capture_toolkit_warnings
 
     with capture_toolkit_warnings():
-        offmol = Molecule.from_smiles(
-            smiles,
-            allow_undefined_stereo=True
-        )
+        offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
         return offmol.to_smiles(mapped=False)
-
 
 
 class vdWTypeRecord(Record):
@@ -98,8 +95,7 @@ class MoleculeInfoRecord(Record):
             ff_name = pathlib.Path(ff_file).stem
             counts = cls._count_vdw_types(offmol, ff_file)
             vdw_type_counts[ff_name] = vdWTypeRecord(
-                forcefield=ff_name,
-                type_counts=counts
+                forcefield=ff_name, type_counts=counts
             )
 
         chemical_environment_counts = analyze_functional_groups(offmol)
@@ -107,10 +103,9 @@ class MoleculeInfoRecord(Record):
             smiles=smiles,
             element_counts=element_counts,
             vdw_type_counts=vdw_type_counts,
-            chemical_environment_counts=chemical_environment_counts
+            chemical_environment_counts=chemical_environment_counts,
         )
         return obj
-
 
     @staticmethod
     def _count_vdw_types(
@@ -118,7 +113,7 @@ class MoleculeInfoRecord(Record):
         forcefield_file: str,
     ) -> Dict[str, int]:
         from openff.toolkit.typing.engines.smirnoff import ForceField
-        
+
         ff = ForceField(forcefield_file)
         labels = ff.label_molecules(molecule.to_topology())[0]["vdW"]
         parameter_counts = Counter(labels.values())
@@ -126,30 +121,23 @@ class MoleculeInfoRecord(Record):
         sorted_counts = {k: counts[k] for k in sorted(counts)}
         return sorted_counts
 
-
     def count_vdw_types(
-        self,
-        forcefield_file: str,
-        forcefield_name: Optional[str] = None
+        self, forcefield_file: str, forcefield_name: Optional[str] = None
     ):
         from openff.toolkit.typing.engines.smirnoff import ForceField
         from openff.toolkit.topology import Molecule
 
         if forcefield_name is None:
             forcefield_name = pathlib.Path(forcefield_file).stem
-        
+
         if forcefield_name in self.vdw_type_counts:
             raise ValueError(f"{forcefield_name} already has vdW type counts")
 
         with capture_toolkit_warnings():
-            offmol = Molecule.from_smiles(
-                self.smiles,
-                allow_undefined_stereo=True
-            )
+            offmol = Molecule.from_smiles(self.smiles, allow_undefined_stereo=True)
         counts = _count_vdw_types(offmol, forcefield_file)
         self.vdw_type_counts[forcefield_name] = counts
         return self.vdw_type_counts[forcefield_name]
-    
 
 
 class DBvdWTypeRecord(DBBase):
@@ -176,10 +164,7 @@ class DBMoleculeInfoRecord(DBBase):
     element_counts = Column(PickleType, nullable=False)
     vdw_type_counts = relationship("DBvdWTypeRecord", cascade="all, delete-orphan")
 
-    def store_vdw_type_record(
-        self,
-        vdw_type_record: vdWTypeRecord
-    ):
+    def store_vdw_type_record(self, vdw_type_record: vdWTypeRecord):
         existing_ffs = [record.forcefield for record in self.vdw_type_counts]
         if vdw_type_record.forcefield in existing_ffs:
             warnings.warn(
@@ -189,14 +174,13 @@ class DBMoleculeInfoRecord(DBBase):
             return
         vdw_data = DBvdWTypeRecord(
             forcefield=vdw_type_record.forcefield,
-            type_counts=vdw_type_record.type_counts
+            type_counts=vdw_type_record.type_counts,
         )
         self.vdw_type_counts.append(vdw_data)
 
+
 class MoleculeInfoStore:
-
     def __init__(self, database_path: Pathlike = "molecule-store.sqlite"):
-
         database_path = pathlib.Path(database_path)
         if not database_path.suffix.lower() == ".sqlite":
             raise NotImplementedError(
@@ -229,16 +213,14 @@ class MoleculeInfoStore:
     def get_smiles(self) -> List[str]:
         with self._get_session() as db:
             return [
-                smiles
-                for (smiles,) in db.query(DBMoleculeInfoRecord.smiles).distinct()
+                smiles for (smiles,) in db.query(DBMoleculeInfoRecord.smiles).distinct()
             ]
 
     def store(self, records: Tuple[MoleculeInfoRecord, ...] = tuple()):
         if isinstance(records, MoleculeInfoRecord):
             records = [records]
-        
+
         with self._get_session() as db:
-        
             # for record in tqdm.tqdm(records, desc="Storing MoleculeInfoRecords"):
             for record in records:
                 smiles = unmap_smiles(record.smiles)
@@ -256,10 +238,9 @@ class MoleculeInfoStore:
                     db.add(existing_record)
                 else:
                     existing_record = existing[0]
-                
+
                 for vdw_record in record.vdw_type_counts.values():
                     existing_record.store_vdw_type_record(vdw_record)
-
 
     def retrieve(
         self,
@@ -285,27 +266,28 @@ class MoleculeInfoStore:
                 .order_by(DBMoleculeInfoRecord.id)
                 .join(
                     DBvdWTypeRecord,
-                    DBvdWTypeRecord.parent_id == DBMoleculeInfoRecord.id
+                    DBvdWTypeRecord.parent_id == DBMoleculeInfoRecord.id,
                 )
             )
             if forcefields is not None:
                 results = results.filter(DBvdWTypeRecord.forcefield.in_(forcefields))
             if smiles is not None:
                 results = results.filter(DBMoleculeInfoRecord.smiles.in_(smiles))
-            
-            records = defaultdict(lambda: {
-                "smiles": None,
-                "chemical_environment_counts": {},
-                "element_counts": {},
-                "vdw_type_counts": {}
-            })
+
+            records = defaultdict(
+                lambda: {
+                    "smiles": None,
+                    "chemical_environment_counts": {},
+                    "element_counts": {},
+                    "vdw_type_counts": {},
+                }
+            )
             for molid, molsmiles, molenv, molel, vdwid, vdwff, vdwtypes in results:
                 data = records[molid]
                 data["smiles"] = molsmiles
                 data["chemical_environment_counts"] = molenv
                 data["element_counts"] = molel
                 data["vdw_type_counts"][vdwff] = vdWTypeRecord(
-                    forcefield=vdwff,
-                    type_counts=vdwtypes
+                    forcefield=vdwff, type_counts=vdwtypes
                 )
         return [MoleculeInfoRecord(**kwargs) for kwargs in records.values()]

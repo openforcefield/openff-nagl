@@ -96,7 +96,6 @@ class TestMoleculeRecord:
         assert offmol.conformers is None
 
     def test_average_partial_charges(self):
-
         record = MoleculeRecord(
             mapped_smiles="[C:1]([H:2])([H:3])([H:4])",
             conformers=[
@@ -121,7 +120,6 @@ class TestMoleculeRecord:
         assert np.allclose(average_charges, (0.2, 0.3, 0.4, 0.5))
 
     def test_reorder(self):
-
         original_coordinates = np.arange(6).reshape((2, 3))
 
         original_record = MoleculeRecord(

@@ -34,18 +34,15 @@ if TYPE_CHECKING:
 
 DBBase = declarative_base()
 
+
 @functools.lru_cache(maxsize=1000)
 def unmap_smiles(smiles: str) -> str:
     from openff.toolkit.topology import Molecule
     from openff.nagl.utils.openff import capture_toolkit_warnings
 
     with capture_toolkit_warnings():
-        offmol = Molecule.from_smiles(
-            smiles,
-            allow_undefined_stereo=True
-        )
+        offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
         return offmol.to_smiles(mapped=False)
-
 
 
 class vdWTypeRecord(Record):
@@ -58,7 +55,6 @@ class ElementRecord(Record):
     count: int
 
 
-
 class ChemicalEnvironmentRecord(Record):
     environment: ChemicalEnvironment
     count: int
@@ -66,7 +62,9 @@ class ChemicalEnvironmentRecord(Record):
 
 class MoleculeInfoRecord(Record):
     smiles: str
-    chemical_environment_counts: Dict[ChemicalEnvironment, ChemicalEnvironmentRecord] = {}
+    chemical_environment_counts: Dict[
+        ChemicalEnvironment, ChemicalEnvironmentRecord
+    ] = {}
     element_counts: Dict[str, ElementRecord] = {}
     vdw_type_counts: Dict[str, vdWTypeRecord] = {}
 
@@ -103,36 +101,28 @@ class MoleculeInfoRecord(Record):
             offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
         zs = Counter([atom.symbol for atom in offmol.atoms])
-        element_counts = {
-            k: ElementRecord(element=k, count=zs[k])
-            for k in sorted(zs)
-        }
+        element_counts = {k: ElementRecord(element=k, count=zs[k]) for k in sorted(zs)}
 
         vdw_type_counts = {}
         for ff_file in forcefield_files:
             ff_name = pathlib.Path(ff_file).stem
             counts = cls._count_vdw_types(offmol, ff_file)
             vdw_type_counts[ff_name] = vdWTypeRecord(
-                forcefield=ff_name,
-                type_counts=counts
+                forcefield=ff_name, type_counts=counts
             )
 
         chemical_environment_counts = analyze_functional_groups(offmol)
         environment_records = {
-            k: ChemicalEnvironmentRecord(
-                environment=k,
-                count=v
-            )
+            k: ChemicalEnvironmentRecord(environment=k, count=v)
             for k, v in chemical_environment_counts.items()
         }
         obj = cls(
             smiles=smiles,
             element_counts=element_counts,
             vdw_type_counts=vdw_type_counts,
-            chemical_environment_counts=environment_records
+            chemical_environment_counts=environment_records,
         )
         return obj
-
 
     @staticmethod
     def _count_vdw_types(
@@ -140,7 +130,7 @@ class MoleculeInfoRecord(Record):
         forcefield_file: str,
     ) -> Dict[str, int]:
         from openff.toolkit.typing.engines.smirnoff import ForceField
-        
+
         ff = ForceField(forcefield_file)
         labels = ff.label_molecules(molecule.to_topology())[0]["vdW"]
         parameter_counts = Counter(labels.values())
@@ -148,30 +138,23 @@ class MoleculeInfoRecord(Record):
         sorted_counts = {k: counts[k] for k in sorted(counts)}
         return sorted_counts
 
-
     def count_vdw_types(
-        self,
-        forcefield_file: str,
-        forcefield_name: Optional[str] = None
+        self, forcefield_file: str, forcefield_name: Optional[str] = None
     ):
         from openff.toolkit.typing.engines.smirnoff import ForceField
         from openff.toolkit.topology import Molecule
 
         if forcefield_name is None:
             forcefield_name = pathlib.Path(forcefield_file).stem
-        
+
         if forcefield_name in self.vdw_type_counts:
             raise ValueError(f"{forcefield_name} already has vdW type counts")
 
         with capture_toolkit_warnings():
-            offmol = Molecule.from_smiles(
-                self.smiles,
-                allow_undefined_stereo=True
-            )
+            offmol = Molecule.from_smiles(self.smiles, allow_undefined_stereo=True)
         counts = _count_vdw_types(offmol, forcefield_file)
         self.vdw_type_counts[forcefield_name] = counts
         return self.vdw_type_counts[forcefield_name]
-    
 
 
 class DBvdWTypeRecord(DBBase):
@@ -200,6 +183,7 @@ class DBElementRecord(DBBase):
         UniqueConstraint("parent_id", "element", name="_parent_element_uc"),
     )
 
+
 class DBChemicalEnvironmentRecord(DBBase):
     __tablename__ = "chemical_environments"
     id = Column(Integer, primary_key=True, index=True)
@@ -213,7 +197,6 @@ class DBChemicalEnvironmentRecord(DBBase):
     )
 
 
-
 class DBMoleculeInfoRecord(DBBase):
     __tablename__ = "molecules"
 
@@ -222,15 +205,14 @@ class DBMoleculeInfoRecord(DBBase):
 
     # chemical_environment_counts = Column(PickleType, nullable=False)
     # element_counts = Column(PickleType, nullable=False)
-    chemical_environment_counts = relationship("DBChemicalEnvironmentRecord", cascade="all, delete-orphan")
+    chemical_environment_counts = relationship(
+        "DBChemicalEnvironmentRecord", cascade="all, delete-orphan"
+    )
     element_counts = relationship("DBElementRecord", cascade="all, delete-orphan")
-    
+
     vdw_type_counts = relationship("DBvdWTypeRecord", cascade="all, delete-orphan")
 
-    def store_vdw_type_record(
-        self,
-        vdw_type_record: vdWTypeRecord
-    ):
+    def store_vdw_type_record(self, vdw_type_record: vdWTypeRecord):
         existing_ffs = [record.forcefield for record in self.vdw_type_counts]
         if vdw_type_record.forcefield in existing_ffs:
             warnings.warn(
@@ -240,16 +222,13 @@ class DBMoleculeInfoRecord(DBBase):
             return
         vdw_data = DBvdWTypeRecord(
             forcefield=vdw_type_record.forcefield,
-            type_counts=vdw_type_record.type_counts
+            type_counts=vdw_type_record.type_counts,
         )
         self.vdw_type_counts.append(vdw_data)
 
     def store_count_data(self, record):
         environment_records = [
-            DBChemicalEnvironmentRecord(
-                environment=rec.environment,
-                count=rec.count
-            )
+            DBChemicalEnvironmentRecord(environment=rec.environment, count=rec.count)
             for rec in record.chemical_environment_counts.values()
         ]
         # for rec in environment_records:
@@ -257,20 +236,16 @@ class DBMoleculeInfoRecord(DBBase):
         self.chemical_environment_counts.extend(environment_records)
 
         element_records = [
-            DBElementRecord(
-                element=rec.element,
-                count=rec.count
-            )
+            DBElementRecord(element=rec.element, count=rec.count)
             for rec in record.element_counts.values()
         ]
         # for rec in element_records:
         #     self.element_counts.append(rec)
         self.element_counts.extend(element_records)
 
+
 class MoleculeInfoStore:
-
     def __init__(self, database_path: Pathlike = "molecule-store.sqlite"):
-
         database_path = pathlib.Path(database_path)
         if not database_path.suffix.lower() == ".sqlite":
             raise NotImplementedError(
@@ -303,16 +278,14 @@ class MoleculeInfoStore:
     def get_smiles(self) -> List[str]:
         with self._get_session() as db:
             return [
-                smiles
-                for (smiles,) in db.query(DBMoleculeInfoRecord.smiles).distinct()
+                smiles for (smiles,) in db.query(DBMoleculeInfoRecord.smiles).distinct()
             ]
 
     def store(self, records: Tuple[MoleculeInfoRecord, ...] = tuple()):
         if isinstance(records, MoleculeInfoRecord):
             records = [records]
-        
+
         with self._get_session() as db:
-        
             # for record in tqdm.tqdm(records, desc="Storing MoleculeInfoRecords"):
             for record in records:
                 smiles = unmap_smiles(record.smiles)
@@ -324,24 +297,18 @@ class MoleculeInfoStore:
                 if not len(existing):
                     environment_counts = [
                         DBChemicalEnvironmentRecord(
-                            environment=rec.environment,
-                            count=rec.count
+                            environment=rec.environment, count=rec.count
                         )
                         for rec in record.chemical_environment_counts.values()
                     ]
                     element_counts = [
-                        DBElementRecord(
-                            element=rec.element,
-                            count=rec.count
-                        )
+                        DBElementRecord(element=rec.element, count=rec.count)
                         for rec in record.element_counts.values()
                     ]
                     existing_record = DBMoleculeInfoRecord(
                         smiles=smiles,
                         chemical_environment_counts=environment_counts,
                         element_counts=element_counts
-                        
-                        
                         # record.chemical_environment_counts,
                         # element_counts=record.element_counts,
                     )
@@ -350,10 +317,9 @@ class MoleculeInfoStore:
                     # db.add(existing_record)
                 else:
                     existing_record = existing[0]
-                
+
                 for vdw_record in record.vdw_type_counts.values():
                     existing_record.store_vdw_type_record(vdw_record)
-
 
     def retrieve(
         self,
@@ -385,15 +351,15 @@ class MoleculeInfoStore:
                 .order_by(DBMoleculeInfoRecord.id)
                 .join(
                     DBvdWTypeRecord,
-                    DBvdWTypeRecord.parent_id == DBMoleculeInfoRecord.id
+                    DBvdWTypeRecord.parent_id == DBMoleculeInfoRecord.id,
                 )
                 .join(
                     DBChemicalEnvironmentRecord,
-                    DBChemicalEnvironmentRecord.parent_id == DBMoleculeInfoRecord.id
+                    DBChemicalEnvironmentRecord.parent_id == DBMoleculeInfoRecord.id,
                 )
                 .join(
                     DBElementRecord,
-                    DBElementRecord.parent_id == DBMoleculeInfoRecord.id
+                    DBElementRecord.parent_id == DBMoleculeInfoRecord.id,
                 )
             )
             if forcefields is not None:
@@ -401,29 +367,38 @@ class MoleculeInfoStore:
             if smiles is not None:
                 results = results.filter(DBMoleculeInfoRecord.smiles.in_(smiles))
             if chemical_environments is not None:
-                results = results.filter(DBChemicalEnvironmentRecord.environment.in_(chemical_environments))
+                results = results.filter(
+                    DBChemicalEnvironmentRecord.environment.in_(chemical_environments)
+                )
             if elements is not None:
                 results = results.filter(DBElementRecord.element.in_(elements))
-            
-            records = defaultdict(lambda: {
-                "smiles": None,
-                "chemical_environment_counts": defaultdict(dict),
-                "element_counts": defaultdict(dict),
-                "vdw_type_counts": {}
-            })
-            for molid, molsmiles, env, envcount, el, elcount, vdwid, vdwff, vdwtypes in results:
+
+            records = defaultdict(
+                lambda: {
+                    "smiles": None,
+                    "chemical_environment_counts": defaultdict(dict),
+                    "element_counts": defaultdict(dict),
+                    "vdw_type_counts": {},
+                }
+            )
+            for (
+                molid,
+                molsmiles,
+                env,
+                envcount,
+                el,
+                elcount,
+                vdwid,
+                vdwff,
+                vdwtypes,
+            ) in results:
                 data = records[molid]
                 data["smiles"] = molsmiles
                 data["chemical_environment_counts"][env] = ChemicalEnvironmentRecord(
-                        environment=env,
-                        count=envcount
-                    )                
-                data["element_counts"][el] = ElementRecord(
-                    element=el,
-                    count=elcount
+                    environment=env, count=envcount
                 )
+                data["element_counts"][el] = ElementRecord(element=el, count=elcount)
                 data["vdw_type_counts"][vdwff] = vdWTypeRecord(
-                    forcefield=vdwff,
-                    type_counts=vdwtypes
+                    forcefield=vdwff, type_counts=vdwtypes
                 )
         return [MoleculeInfoRecord(**kwargs) for kwargs in records.values()]

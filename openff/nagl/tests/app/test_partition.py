@@ -90,7 +90,7 @@
 #         assert counts[:8] == expected_counts
 #         assert set(counts[8:]) == {25, 27}
 
-    
+
 #     def test_partition(self):
 #         smiles = [
 #             'C=C', 'C=CC', 'C=CCC', 'C=CCCC',
@@ -128,7 +128,7 @@
 #         assert len(train) == 20
 #         assert len(val) == 5
 #         assert len(test) == 2
-        
+
 
 #         training_partition = DatasetPartitioner.from_smiles(train)
 #         expected_training_element_counts = {
@@ -145,7 +145,7 @@
 #             env_dict = training_partition.environments_by_element[el]
 #             counts = sorted([len(x) for x in env_dict.values()])
 #             assert counts == expected_counts
-        
+
 
 #         val_partition = DatasetPartitioner.from_smiles(val)
 #         expected_val_element_counts = {

@@ -20,6 +20,7 @@ from openff.nagl.utils._types import FromYamlMixin
 
 from openff.nagl.nn._models import GNNModel
 
+
 class Trainer(ImmutableModel, FromYamlMixin):
     convolution_architecture: str
     n_convolution_hidden_features: int
@@ -109,7 +110,6 @@ class Trainer(ImmutableModel, FromYamlMixin):
             new_dict[k] = v
         return new_dict
 
-
     def to_yaml_file(self, path):
         import yaml
 
@@ -183,7 +183,6 @@ class Trainer(ImmutableModel, FromYamlMixin):
         logger_name: str = "default",
         checkpoint_file: Optional[str] = None,
     ):
-
         if self._model is None:
             self.prepare()
 

@@ -7,14 +7,15 @@ if TYPE_CHECKING:
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
 
+
 class NAGLMoleculeBase:
     _graph_feature_name: ClassVar[str] = "h"
     _graph_forward_edge_type: ClassVar[str] = "forward"
     _graph_backward_edge_type: ClassVar[str] = "reverse"
-    
+
     def __init__(self, graph):
         self.graph = graph
-    
+
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
@@ -25,7 +26,6 @@ class NAGLMoleculeBase:
 
 
 class MoleculeMixin:
-
     def __init__(self, graph, n_representations: int = 1):
         self.graph = graph
         self.n_representations = n_representations
@@ -76,7 +76,9 @@ class MoleculeMixin:
 
 
 class BatchMixin:
-    def __init__(self, graph, n_representations: Tuple[int, ...], n_atoms: Tuple[int, ...]):
+    def __init__(
+        self, graph, n_representations: Tuple[int, ...], n_atoms: Tuple[int, ...]
+    ):
         self.graph = graph
         self.n_representations = n_representations
         self.n_atoms = n_atoms

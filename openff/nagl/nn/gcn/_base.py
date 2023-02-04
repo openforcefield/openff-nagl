@@ -42,6 +42,7 @@ GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 class BaseConvModule(torch.nn.Module):
     pass
 
+
 class GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
     pass
 
@@ -259,7 +260,7 @@ class BaseGCNStack(
         for gnn in self:
             inputs: torch.Tensor = gnn(graph, inputs)
         return inputs
-    
+
     @property
     def _is_dgl(self):
         return not isinstance(self[0], BaseConvModule)

@@ -12,8 +12,10 @@ class DGLMoleculeBatch(BatchMixin, DGLBase):
 
     def to(self, device: str):
         graph = self.graph.to(device)
-        return type(self)(graph, n_representations=self.n_representations, n_atoms=self.n_atoms)
-    
+        return type(self)(
+            graph, n_representations=self.n_representations, n_atoms=self.n_atoms
+        )
+
     @classmethod
     @requires_package("dgl")
     def from_dgl_molecules(cls, molecules: List[DGLMolecule]):
@@ -23,5 +25,3 @@ class DGLMoleculeBatch(BatchMixin, DGLBase):
         n_representations = tuple(molecule.n_representations for molecule in molecules)
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
         return cls(graph=graph, n_representations=n_representations, n_atoms=n_atoms)
-
-    

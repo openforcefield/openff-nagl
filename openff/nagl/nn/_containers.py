@@ -46,7 +46,7 @@ class ConvolutionModule(torch.nn.Module):
     @property
     def _is_dgl(self):
         return self.gcn_layers._is_dgl
-    
+
     def _as_nagl(self, copy_weights: bool = False):
         copied = copy.deepcopy(self)
         if self._is_dgl:
@@ -86,7 +86,6 @@ class ReadoutModule(torch.nn.Module):
         self.postprocess_layer = postprocess_layer
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
-
         x = self.pooling_layer.forward(molecule)
         x = self.readout_layers.forward(x)
         if self.postprocess_layer is not None:

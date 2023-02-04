@@ -10,11 +10,8 @@ import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
-__all__ = [
-    "PostprocessLayerMeta",
-    "PostprocessLayer",
-    "ComputePartialCharges"
-]
+__all__ = ["PostprocessLayerMeta", "PostprocessLayer", "ComputePartialCharges"]
+
 
 class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     registry: ClassVar[Dict[str, Type]] = {}
@@ -90,7 +87,6 @@ class ComputePartialCharges(PostprocessLayer):
         molecule: Union[DGLMolecule, DGLMoleculeBatch],
         inputs: torch.Tensor,
     ) -> torch.Tensor:
-
         electronegativity = inputs[:, 0]
         hardness = inputs[:, 1]
         formal_charges = molecule.graph.ndata["formal_charge"]

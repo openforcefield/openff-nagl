@@ -22,7 +22,6 @@ def calculate_similarity(
     return calculate_circular_fingerprint_similarity(mol1, mol2, radius)
 
 
-
 def get_similarity(
     smiles_pair: Tuple[str, str],
     radius: int = 3,
@@ -30,7 +29,6 @@ def get_similarity(
     ref_smiles, target_smiles = smiles_pair
     similarity = calculate_similarity(smiles_pair, radius)
     return {"smiles_1": ref_smiles, "smiles_2": target_smiles, "similarity": similarity}
-
 
 
 def calculate_all_similarity(
@@ -96,6 +94,7 @@ def calculate_all_similarity(
     df["source_2"] = [all_smiles[x] for x in df.smiles_2]
     df.to_csv(output_file)
     print(f"Saved dataframe to {output_file}")
+
 
 @click.command("calculate-similarity", help="Calculate similarity between datasets")
 @click.option(

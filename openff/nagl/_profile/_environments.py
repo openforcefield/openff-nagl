@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Dict
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
 
+
 class ChemicalEnvironment(enum.Enum):
     Alkane = "Alkane"
     Cation = "Cation"
@@ -211,6 +212,7 @@ class ChemicalEnvironment(enum.Enum):
     AlphaAminoacid = "Alpha Aminoacid"
     AlphaHydroxyacid = "Alpha Hydroxyacid"
     Aqueous = "Aqueous"
+
 
 CHECKMOL_CODES = {
     "000": ChemicalEnvironment.Alkane,

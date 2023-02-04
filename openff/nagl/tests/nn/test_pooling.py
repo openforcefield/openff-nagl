@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from openff.nagl.molecule._dgl.molecule import DGLMolecule
-from openff.nagl.molecule._graph.molecule import NXMolecule
+from openff.nagl.molecule._graph.molecule import GraphMolecule
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 
 
@@ -21,8 +21,9 @@ class BaseTestFeatures:
     @pytest.fixture
     def featurized_molecule_nx(self, nx_methane, array):
         tensor = torch.from_numpy(array)
-        nx_methane.graph.ndata[NXMolecule._graph_feature_name] = tensor
+        nx_methane.graph.ndata[GraphMolecule._graph_feature_name] = tensor
         return nx_methane
+
 
 class TestPoolAtomFeatures(BaseTestFeatures):
     def test_forward_dgl(self, featurized_molecule_dgl, array):

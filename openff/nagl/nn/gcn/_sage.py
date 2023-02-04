@@ -5,6 +5,7 @@ import torch
 
 from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 from openff.nagl.nn.gcn import _function as _fn
+
 # import dgl.function as fn
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
@@ -12,8 +13,8 @@ from openff.utilities.exceptions import MissingOptionalDependencyError
 if TYPE_CHECKING:
     import dgl
 
-class SAGEConv(BaseConvModule):
 
+class SAGEConv(BaseConvModule):
     def __init__(
         self,
         in_feats: int,
@@ -37,15 +38,17 @@ class SAGEConv(BaseConvModule):
         self.activation = activation
 
         # aggregator type: mean/pool/lstm/gcn
-        if aggregator_type == 'pool':
+        if aggregator_type == "pool":
             self.fc_pool = torch.nn.Linear(self._in_src_feats, self._in_src_feats)
-        if aggregator_type == 'lstm':
-            self.lstm = torch.nn.LSTM(self._in_src_feats, self._in_src_feats, batch_first=True)
+        if aggregator_type == "lstm":
+            self.lstm = torch.nn.LSTM(
+                self._in_src_feats, self._in_src_feats, batch_first=True
+            )
 
         self.fc_neigh = torch.nn.Linear(self._in_src_feats, out_feats, bias=False)
 
         # TODO: replace lower code with upper code -- more up-to-date with DGL 1.x
-        if aggregator_type != 'gcn':
+        if aggregator_type != "gcn":
             self.fc_self = torch.nn.Linear(self._in_dst_feats, out_feats, bias=bias)
         elif bias:
             self.bias = torch.nn.parameter.Parameter(torch.zeros(self._out_feats))
@@ -66,27 +69,28 @@ class SAGEConv(BaseConvModule):
         The linear weights :math:`W^{(l)}` are initialized using Glorot uniform initialization.
         The LSTM module is using xavier initialization method for its weights.
         """
-        gain = torch.nn.init.calculate_gain('relu')
-        if self._aggre_type == 'pool':
+        gain = torch.nn.init.calculate_gain("relu")
+        if self._aggre_type == "pool":
             torch.nn.init.xavier_uniform_(self.fc_pool.weight, gain=gain)
-        if self._aggre_type == 'lstm':
+        if self._aggre_type == "lstm":
             self.lstm.reset_parameters()
-        if self._aggre_type != 'gcn':
+        if self._aggre_type != "gcn":
             torch.nn.init.xavier_uniform_(self.fc_self.weight, gain=gain)
         torch.nn.init.xavier_uniform_(self.fc_neigh.weight, gain=gain)
-
 
     def _lstm_reducer(self, nodes) -> Dict[str, torch.Tensor]:
         """LSTM reducer
         NOTE(zihao): lstm reducer with default schedule (degree bucketing)
         is slow, we could accelerate this with degree padding in the future.
         """
-        m = nodes.mailbox['m'] # (B, L, D)
+        m = nodes.mailbox["m"]  # (B, L, D)
         batch_size = m.shape[0]
-        h = (m.new_zeros((1, batch_size, self._in_src_feats)),
-             m.new_zeros((1, batch_size, self._in_src_feats)))
+        h = (
+            m.new_zeros((1, batch_size, self._in_src_feats)),
+            m.new_zeros((1, batch_size, self._in_src_feats)),
+        )
         _, (rst, _) = self.lstm(m, h)
-        return {'neigh': rst.squeeze(0)}
+        return {"neigh": rst.squeeze(0)}
 
     def forward(self, graph, feat, edge_weight=None):
         r"""
@@ -123,66 +127,77 @@ class SAGEConv(BaseConvModule):
             else:
                 feat_src = feat_dst = self.feat_drop(feat)
                 if graph.is_block:
-                    feat_dst = feat_src[:graph.number_of_dst_nodes()]
+                    feat_dst = feat_src[: graph.number_of_dst_nodes()]
 
-            msg_fn = _fn.copy_u('h', 'm')
+            msg_fn = _fn.copy_u("h", "m")
             # msg_fn = fn.copy_u('h', 'm')
             if edge_weight is not None:
                 assert edge_weight.shape[0] == graph.number_of_edges()
-                graph.edata['_edge_weight'] = edge_weight
-                msg_fn = _fn.u_mul_e('h', '_edge_weight', 'm')
+                graph.edata["_edge_weight"] = edge_weight
+                msg_fn = _fn.u_mul_e("h", "_edge_weight", "m")
 
             h_self = feat_dst
 
             # Handle the case of graphs without edges
             if graph.number_of_edges() == 0:
-                graph.dstdata['neigh'] = torch.zeros(
-                    feat_dst.shape[0], self._in_src_feats).to(feat_dst)
+                graph.dstdata["neigh"] = torch.zeros(
+                    feat_dst.shape[0], self._in_src_feats
+                ).to(feat_dst)
 
             # Determine whether to apply linear transformation before message passing A(XW)
             lin_before_mp = self._in_src_feats > self._out_feats
 
             # Message Passing
-            if self._aggre_type == 'mean':
-                graph.srcdata['h'] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
-                graph.update_all(msg_fn, _fn.mean('m', 'neigh'))
-                h_neigh = graph.dstdata['neigh']
+            if self._aggre_type == "mean":
+                graph.srcdata["h"] = (
+                    self.fc_neigh(feat_src) if lin_before_mp else feat_src
+                )
+                graph.update_all(msg_fn, _fn.mean("m", "neigh"))
+                h_neigh = graph.dstdata["neigh"]
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
 
-            elif self._aggre_type == 'gcn':
+            elif self._aggre_type == "gcn":
                 if isinstance(feat, tuple):  # heterogeneous
                     assert feat[0].shape == feat[1].shape
-                graph.srcdata['h'] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
+                graph.srcdata["h"] = (
+                    self.fc_neigh(feat_src) if lin_before_mp else feat_src
+                )
                 if isinstance(feat, tuple):  # heterogeneous
-                    graph.dstdata['h'] = self.fc_neigh(feat_dst) if lin_before_mp else feat_dst
+                    graph.dstdata["h"] = (
+                        self.fc_neigh(feat_dst) if lin_before_mp else feat_dst
+                    )
                 else:
                     if graph.is_block:
-                        graph.dstdata['h'] = graph.srcdata['h'][:graph.num_dst_nodes()]
+                        graph.dstdata["h"] = graph.srcdata["h"][: graph.num_dst_nodes()]
                     else:
-                        graph.dstdata['h'] = graph.srcdata['h']
-                graph.update_all(msg_fn, _fn.sum('m', 'neigh'))
+                        graph.dstdata["h"] = graph.srcdata["h"]
+                graph.update_all(msg_fn, _fn.sum("m", "neigh"))
                 # divide in_degrees
                 degs = graph.in_degrees().to(feat_dst)
-                h_neigh = (graph.dstdata['neigh'] + graph.dstdata['h']) / (degs.unsqueeze(-1) + 1)
+                h_neigh = (graph.dstdata["neigh"] + graph.dstdata["h"]) / (
+                    degs.unsqueeze(-1) + 1
+                )
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
 
-            elif self._aggre_type == 'pool':
-                graph.srcdata['h'] = torch.relu(self.fc_pool(feat_src))
-                graph.update_all(msg_fn, _fn.max('m', 'neigh'))
-                h_neigh = self.fc_neigh(graph.dstdata['neigh'])
+            elif self._aggre_type == "pool":
+                graph.srcdata["h"] = torch.relu(self.fc_pool(feat_src))
+                graph.update_all(msg_fn, _fn.max("m", "neigh"))
+                h_neigh = self.fc_neigh(graph.dstdata["neigh"])
 
-            elif self._aggre_type == 'lstm':
-                graph.srcdata['h'] = feat_src
+            elif self._aggre_type == "lstm":
+                graph.srcdata["h"] = feat_src
                 graph.update_all(msg_fn, self._lstm_reducer)
-                h_neigh = self.fc_neigh(graph.dstdata['neigh'])
+                h_neigh = self.fc_neigh(graph.dstdata["neigh"])
 
             else:
-                raise KeyError('Aggregator type {} not recognized.'.format(self._aggre_type))
+                raise KeyError(
+                    "Aggregator type {} not recognized.".format(self._aggre_type)
+                )
 
             # GraphSAGE GCN does not require fc_self.
-            if self._aggre_type == 'gcn':
+            if self._aggre_type == "gcn":
                 rst = h_neigh
                 # add bias manually for GCN
                 if self.bias is not None:
@@ -190,15 +205,15 @@ class SAGEConv(BaseConvModule):
             else:
                 rst = self.fc_self(h_self) + h_neigh
 
-
             # activation
             if self.activation is not None:
                 rst = self.activation(rst)
             # normalization
             if self.norm is not None:
                 rst = self.norm(rst)
-            
+
             return rst
+
 
 class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
     """A wrapper around a stack of SAGEConv graph convolutional layers"""
@@ -238,7 +253,6 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
                 **kwargs,
             )
 
-    
     @classmethod
     def _create_gcn_layer_nagl(
         cls,
@@ -247,7 +261,7 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
         aggregator_type: str,
         dropout: float,
         activation_function: ActivationFunction,
-        **kwargs
+        **kwargs,
     ) -> "SAGEConv":
         return SAGEConv(
             in_feats=n_input_features,
@@ -256,6 +270,7 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
             feat_drop=dropout,
             aggregator_type=aggregator_type,
         )
+
     @classmethod
     @requires_package("dgl")
     def _create_gcn_layer_dgl(
@@ -265,9 +280,10 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
         aggregator_type: str,
         dropout: float,
         activation_function: ActivationFunction,
-        **kwargs
+        **kwargs,
     ) -> "dgl.nn.pytorch.SAGEConv":
         import dgl
+
         return dgl.nn.pytorch.SAGEConv(
             in_feats=n_input_features,
             out_feats=n_output_features,
@@ -275,7 +291,7 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
             feat_drop=dropout,
             aggregator_type=aggregator_type,
         )
-    
+
     def _as_nagl(self, copy_weights: bool = False):
         if self._is_dgl:
             new_obj = type(self)()

@@ -1,4 +1,3 @@
-
 from typing import List, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
@@ -9,10 +8,11 @@ if TYPE_CHECKING:
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
 
-class NXMolecule(MoleculeMixin, NAGLMoleculeBase):
+
+class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
     def to_homogenous(self):
         return self.graph.to_homogeneous()
-    
+
     def to(self, device: str):
         return type(self)(self.graph, n_representations=self.n_representations)
 
@@ -23,7 +23,7 @@ class NXMolecule(MoleculeMixin, NAGLMoleculeBase):
     @property
     def n_graph_edges(self):
         return int(self.graph.graph.number_of_edges())
-    
+
     @classmethod
     def from_openff(
         cls,
@@ -58,18 +58,23 @@ class NXMolecule(MoleculeMixin, NAGLMoleculeBase):
 
         return cls(graph=graph, n_representations=len(graphs))
 
-class NXMoleculeBatch(BatchMixin, NAGLMoleculeBase):
 
+class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
     def to(self, device: str):
-        return type(self)(self.graph, n_representations=self.n_representations, n_atoms=self.n_atoms)
-    
-    @classmethod
-    def from_nx_molecules(cls, molecules: List[NXMolecule]):
+        return type(self)(
+            self.graph, n_representations=self.n_representations, n_atoms=self.n_atoms
+        )
 
+    @classmethod
+    def from_nx_molecules(cls, molecules: List[GraphMolecule]):
         if not molecules:
             raise ValueError("No molecules were provided.")
-        batched_graph = molecules[0].graph._batch([molecule.graph for molecule in molecules])
+        batched_graph = molecules[0].graph._batch(
+            [molecule.graph for molecule in molecules]
+        )
         batched_graph.batch_size = len(molecules)
         n_representations = tuple(molecule.n_representations for molecule in molecules)
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
-        return cls(graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms)
+        return cls(
+            graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms
+        )

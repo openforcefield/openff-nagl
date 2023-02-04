@@ -7,6 +7,7 @@ from openff.nagl.features.bonds import BondIsInRing
 
 dgl = pytest.importorskip("dgl")
 
+
 class TestDGLBase:
     def test_graph_property(self, dgl_methane):
         assert isinstance(dgl_methane.graph, dgl.DGLHeteroGraph)
@@ -19,7 +20,6 @@ class TestDGLBase:
         assert dgl_methane.atom_features.shape == (5, 4)
 
     def test_to(self, dgl_methane):
-
         dgl_methane_to = dgl_methane.to("cpu")
 
         assert not dgl_methane_to is dgl_methane

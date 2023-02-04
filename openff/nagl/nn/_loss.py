@@ -61,4 +61,3 @@ class LossRMSE(BaseLossFunction):
 
         mse = torch.nn.functional.mse_loss(predicted_values, expected_values)
         return torch.sqrt(mse)
-

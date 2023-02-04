@@ -14,9 +14,7 @@ from .utils import (
 )
 
 
-
 class DGLBase(NAGLMoleculeBase):
-
     def to_homogenous(self):
         return dgl_heterograph_to_homograph(self.graph)
 
@@ -39,8 +37,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     @property
     def n_graph_edges(self):
         return int(self.graph.number_of_edges(FORWARD))
-    
-    
+
     @classmethod
     @requires_package("dgl")
     def from_openff(
@@ -86,5 +83,3 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         )
 
         return cls(graph=graph, n_representations=len(offmols))
-
-    

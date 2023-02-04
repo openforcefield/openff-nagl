@@ -18,7 +18,6 @@ from openff.nagl.storage._store import (
 
 @pytest.fixture()
 def tmp_molecule_store(tmp_path) -> MoleculeStore:
-
     store = MoleculeStore(f"{tmp_path}.sqlite")
     argon = MoleculeRecord(
         mapped_smiles="[Ar:1]",
@@ -128,7 +127,6 @@ class TestMoleculeStore:
         assert error_info.value.expected_version == DB_VERSION
 
     def test_store_partial_charge_data(self, tmp_path, hcl_am1bcc):
-
         store = MoleculeStore(f"{tmp_path}.sqlite")
 
         store.store(
@@ -169,7 +167,6 @@ class TestMoleculeStore:
         assert len(record.conformers) == 1
 
     def test_store_bond_order_data(self, tmp_path, hcl_am1bcc):
-
         store = MoleculeStore(f"{tmp_path}.sqlite")
 
         store.store(hcl_am1bcc)
@@ -227,7 +224,6 @@ class TestMoleculeStore:
     def test_retrieve_data(
         self, partial_charge_method, bond_order_method, n_expected, tmp_molecule_store
     ):
-
         retrieved_records = tmp_molecule_store.retrieve(
             partial_charge_methods=partial_charge_method,
             bond_order_methods=bond_order_method,
@@ -235,9 +231,7 @@ class TestMoleculeStore:
         assert len(retrieved_records) == n_expected
 
         for record in retrieved_records:
-
             for conformer in record.conformers:
-
                 assert partial_charge_method is None or all(
                     partial_charges == partial_charge_method
                     for partial_charges in conformer.partial_charges

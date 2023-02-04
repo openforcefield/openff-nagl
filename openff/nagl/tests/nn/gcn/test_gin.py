@@ -7,6 +7,7 @@ from openff.nagl.nn.gcn._gin import GINConvStack, GINConv, DGLGINConv
 
 try:
     import dgl
+
     _BASE_GINCONV_CLASS = DGLGINConv
 except ImportError:
     _BASE_GINCONV_CLASS = GINConv

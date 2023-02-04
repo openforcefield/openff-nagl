@@ -13,6 +13,7 @@ from openff.nagl.features.bonds import BondIsInRing
 
 pytest.importorskip("dgl")
 
+
 @pytest.fixture()
 def methane_dgl_heterograph():
     offmol = Molecule.from_smiles("C")

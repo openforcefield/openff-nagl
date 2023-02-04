@@ -13,6 +13,7 @@ from openff.nagl.utils._types import HybridizationType
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
 
+
 class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     name = "openeye"
 
@@ -20,7 +21,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         self,
         molecule: "Molecule",
         normalization_reactions: Tuple[str, ...] = tuple(),
-        **kwargs
+        **kwargs,
     ):
         """
         Normalize the bond orders and charges of a molecule by applying a series of transformations to it.
@@ -51,8 +52,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         return molecule
 
     def get_molecule_hybridizations(
-        self,
-        molecule: "Molecule"
+        self, molecule: "Molecule"
     ) -> List[HybridizationType]:
         """
         Get the hybridization of each atom in a molecule.
@@ -91,7 +91,6 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
                 raise ValueError(f"Unknown hybridization {hybridization}")
         return hybridizations
 
-
     def _molecule_from_openeye(
         self,
         oemol,
@@ -100,7 +99,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     ):
         """
         Create a Molecule from an OpenEye OEMol with charges
-        
+
         Parameters
         ----------
         oemol: openeye.oechem.OEMol
@@ -109,7 +108,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             If True, return a SMILES string instead of an OpenFF Molecule
         mapped_smiles: bool, default=False
             If True, return a SMILES string with atom indices as atom map numbers.
-        
+
         Returns
         -------
         molecule: openff.toolkit.topology.Molecule or str
@@ -117,8 +116,8 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
 
         from openff.toolkit.topology import Molecule
 
-        has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(
-            oemol
+        has_charges = (
+            OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
         )
         offmol = Molecule.from_openeye(oemol, allow_undefined_stereo=True)
         if not has_charges:
@@ -127,15 +126,13 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             return offmol.to_smiles(mapped=mapped_smiles)
         return offmol
 
-
-
     def stream_molecules_from_sdf_file(
         self,
         file: str,
         as_smiles: bool = False,
         mapped_smiles: bool = False,
         include_sdf_data: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Stream molecules from an SDF file.
@@ -174,9 +171,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             else:
                 confmol = oemol
             yield self._molecule_from_openeye(
-                confmol,
-                as_smiles=as_smiles,
-                mapped_smiles=mapped_smiles
+                confmol, as_smiles=as_smiles, mapped_smiles=mapped_smiles
             )
 
     def to_openeye(self, molecule: "Molecule"):
@@ -188,7 +183,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         ----------
         molecule: openff.toolkit.topology.Molecule
             The molecule to convert
-        
+
         Returns
         -------
         oemol: openeye.oechem.OEMol
@@ -213,7 +208,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         ----------
         file: str
             The path to the SDF file to stream molecules to.
-        
+
 
         Examples
         --------
@@ -239,7 +234,6 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         yield writer
 
         stream.close()
-    
 
     def get_best_rmsd(
         self,
@@ -261,7 +255,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         target_conformer: np.ndarray or openff.units.unit.Quantity
             The target conformer to compare to the reference conformer.
             If a numpy array, it is assumed to be in units of angstrom.
-        
+
         Returns
         -------
         rmsd: unit.Quantity
@@ -284,7 +278,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             reference_conformer = reference_conformer * unit.angstrom
         if not isinstance(target_conformer, unit.Quantity):
             target_conformer = target_conformer * unit.angstrom
-        
+
         mol1 = copy.deepcopy(molecule)
         mol1._conformers = [reference_conformer]
         mol2 = copy.deepcopy(molecule)
@@ -304,14 +298,14 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     ) -> List[bool]:
         """
         Determine whether each atom in a molecule is in a ring of a given size.
-        
+
         Parameters
         ----------
         molecule: openff.toolkit.topology.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
-        
+
         Returns
         -------
         in_ring_size: List[bool]
@@ -323,11 +317,9 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         oechem.OEFindRingAtomsAndBonds(oemol)
 
         in_ring_size = [
-            oechem.OEAtomIsInRingSize(atom, ring_size)
-            for atom in oemol.GetAtoms()
+            oechem.OEAtomIsInRingSize(atom, ring_size) for atom in oemol.GetAtoms()
         ]
         return in_ring_size
-
 
     def get_bonds_are_in_ring_size(
         self,
@@ -336,14 +328,14 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     ) -> List[bool]:
         """
         Determine whether each bond in a molecule is in a ring of a given size.
-        
+
         Parameters
         ----------
         molecule: openff.toolkit.topology.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
-        
+
         Returns
         -------
         in_ring_size: List[bool]
@@ -354,7 +346,6 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         oemol = self.to_openeye(molecule)
         oechem.OEFindRingAtomsAndBonds(oemol)
 
-        
         is_in_ring_size = [None] * len(molecule.bonds)
         for oebond in oemol.GetBonds():
             oe_i = oebond.GetBgnIdx()
@@ -426,7 +417,6 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     #     similarity = oegraphsim.OEDice(fp1, fp2)
 
     #     return similarity
-    
 
 
 # import contextlib
