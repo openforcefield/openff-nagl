@@ -18,15 +18,20 @@ The rules for this file:
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
+- @sboothroyd
+- @jthorton
+- @lilyminium
 
 ### Added
 <!-- New added features -->
+- New toolkit wrappers (PR #14, PR #16)
 
 ### Fixed
 <!-- Bug fixes -->
 
 ### Changed
 <!-- Changes in existing functionality -->
+- Refactored code so DGL is not required for install or model inference (PR #23)
 
 ### Deprecated
 <!-- Soon-to-be removed features -->
