@@ -1,13 +1,14 @@
 import abc
 import functools
-from typing import ClassVar, Dict, Union
+from typing import ClassVar, Dict, Union, TYPE_CHECKING
 
-import dgl
 import torch.nn
-from dgl.udf import EdgeBatch
 
-from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn._sequential import SequentialLayers
+
+if TYPE_CHECKING:
+    import dgl
 
 
 class PoolingLayer(torch.nn.Module, abc.ABC):
@@ -48,7 +49,7 @@ class PoolBondFeatures(PoolingLayer):
 
     @staticmethod
     def _apply_edges(
-        edges: EdgeBatch, feature_name: str = "h"
+        edges: "dgl.udf.EdgeBatch", feature_name: str = "h"
     ) -> Dict[str, torch.Tensor]:
         h_u = edges.src[feature_name]
         h_v = edges.dst[feature_name]

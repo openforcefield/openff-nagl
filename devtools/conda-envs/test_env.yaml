@@ -26,7 +26,7 @@ dependencies:
   - sqlite
 
   # gcn
-  - dglteam::dgl >=0.7
+  - dglteam::dgl >=1.0
   - pytorch
   - pytorch-lightning
 

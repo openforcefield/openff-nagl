@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
 
 class DBPartialChargeSet(DBBase):
-
     __tablename__ = "partial_charge_sets"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -40,7 +39,6 @@ class DBPartialChargeSet(DBBase):
 
 
 class DBWibergBondOrderSet(DBBase):
-
     __tablename__ = "wiberg_bond_order_sets"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -55,7 +53,6 @@ class DBWibergBondOrderSet(DBBase):
 
 
 class DBConformerRecord(DBBase):
-
     __tablename__ = "conformers"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -86,7 +83,6 @@ class DBConformerRecord(DBBase):
 
 
 class DBMoleculeRecord(DBBase):
-
     __tablename__ = "molecules"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -133,7 +129,6 @@ class DBMoleculeRecord(DBBase):
 
 
 class DBGeneralProvenance(DBBase):
-
     __tablename__ = "general_provenance"
 
     key = Column(String, primary_key=True, index=True, unique=True)
@@ -143,7 +138,6 @@ class DBGeneralProvenance(DBBase):
 
 
 class DBSoftwareProvenance(DBBase):
-
     __tablename__ = "software_provenance"
 
     key = Column(String, primary_key=True, index=True, unique=True)

@@ -21,6 +21,7 @@ __all__ = [
     "ComputeAndLabelMolecule",
 ]
 
+
 class LabelFunction(abc.ABC):
     def __call__(self, molecule: "OFFMolecule") -> Dict[str, torch.Tensor]:
         return self.run(molecule)
@@ -112,6 +113,7 @@ class ComputeAndLabelMolecule(LabelFunction):
             WibergBondOrder,
             WibergBondOrderRecord,
         )
+
         # from openff.nagl.utils.openff import (
         #     get_coordinates_in_angstrom,
         #     get_unitless_charge,

@@ -13,7 +13,6 @@ from openff.nagl.nn._sequential import SequentialLayers
 
 class TestConvolutionModule:
     def test_init(self):
-
         module = ConvolutionModule(
             n_input_features=2,
             hidden_feature_sizes=[2, 2],

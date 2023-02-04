@@ -39,7 +39,13 @@ def generate_single_molecule_conformers(
     guess_stereochemistry: bool = True,
 ):
     from openff.toolkit.topology.molecule import unit as off_unit
-    from openff.toolkit.utils.toolkits import RDKitToolkitWrapper, OpenEyeToolkitWrapper, OPENEYE_AVAILABLE, RDKIT_AVAILABLE, GLOBAL_TOOLKIT_REGISTRY
+    from openff.toolkit.utils.toolkits import (
+        RDKitToolkitWrapper,
+        OpenEyeToolkitWrapper,
+        OPENEYE_AVAILABLE,
+        RDKIT_AVAILABLE,
+        GLOBAL_TOOLKIT_REGISTRY,
+    )
 
     from openff.nagl.toolkits.openff import generate_conformers, smiles_to_molecule
 
@@ -59,11 +65,13 @@ def generate_single_molecule_conformers(
         n_conformers=n_conformer_pool,
         rms_cutoff=rms_cutoff * off_unit.angstrom,
         make_carboxylic_acids_cis=True,
-        toolkit_registry=conformer_registry
+        toolkit_registry=conformer_registry,
     )
     if molecule.conformers is None or not len(molecule.conformers):
         raise ValueError(f"Could not generate conformers for {smiles}")
-    molecule.apply_elf_conformer_selection(limit=n_conformers, toolkit_registry=conformer_registry)
+    molecule.apply_elf_conformer_selection(
+        limit=n_conformers, toolkit_registry=conformer_registry
+    )
     # try:
     #     molecule.apply_elf_conformer_selection(limit=n_conformers)
     # except RuntimeError as e:

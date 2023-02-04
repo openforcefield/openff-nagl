@@ -8,9 +8,17 @@ Use as ::
 
 """
 
-__all__ = ["MOLECULE_NORMALIZATION_REACTIONS", "EXAMPLE_MODEL_CONFIG"]
+__all__ = [
+    "MOLECULE_NORMALIZATION_REACTIONS",
+    "EXAMPLE_MODEL_CONFIG",
+    "MODEL_CONFIG_V7",
+    "EXAMPLE_AM1BCC_MODEL_STATE_DICT",
+    "EXAMPLE_AM1BCC_MODEL",
+]
 
 from pkg_resources import resource_filename
 
 MOLECULE_NORMALIZATION_REACTIONS = resource_filename(__name__, "normalizations.json")
 EXAMPLE_MODEL_CONFIG = resource_filename(__name__, "example_model_config.yaml")
+MODEL_CONFIG_V7 = resource_filename(__name__, "model_config_v7.yaml")
+EXAMPLE_AM1BCC_MODEL_STATE_DICT = resource_filename(__name__, "example_am1bcc_model_state_dict.pt")

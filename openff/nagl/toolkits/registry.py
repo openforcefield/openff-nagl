@@ -2,13 +2,17 @@ from typing import List, Optional
 
 from openff.toolkit.utils.toolkit_registry import (
     ToolkitRegistry as _ToolkitRegistry,
-    ToolkitUnavailableException
+    ToolkitUnavailableException,
 )
 
-from openff.nagl.toolkits._base import NAGLToolkitWrapperMeta, NAGLToolkitWrapperBase, ToolkitWrapperType
+from openff.nagl.toolkits._base import (
+    NAGLToolkitWrapperMeta,
+    NAGLToolkitWrapperBase,
+    ToolkitWrapperType,
+)
+
 
 class NAGLToolkitRegistry(_ToolkitRegistry):
-
     def __init__(
         self,
         toolkit_precedence: Optional[List[ToolkitWrapperType]] = None,
@@ -28,7 +32,7 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                     pass
                 else:
                     toolkits_to_register.append(toolkit_class)
-            
+
         else:
             if toolkit_precedence is not None:
                 toolkits_to_register = toolkit_precedence
@@ -39,7 +43,6 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                     toolkit, exception_if_unavailable=exception_if_unavailable
                 )
 
-    
     def deregister_toolkit(self, toolkit_wrapper: ToolkitWrapperType):
         """
         Remove a ToolkitWrapper from the list of toolkits in this ToolkitRegistry
@@ -75,7 +78,6 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
         for toolkit_to_remove in toolkits_to_remove:
             self._toolkits.remove(toolkit_to_remove)
 
-
     def add_toolkit(self, toolkit_wrapper: ToolkitWrapperType):
         """
         Append a ToolkitWrapper onto the list of toolkits in this ToolkitRegistry
@@ -94,4 +96,3 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
         """
         toolkit_wrapper = NAGLToolkitWrapperMeta._get_class(toolkit_wrapper)
         self._toolkits.append(toolkit_wrapper)
-

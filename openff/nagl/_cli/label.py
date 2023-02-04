@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from openff.nagl._app.distributed import Manager
     from openff.nagl.storage.record import MoleculeRecord
 
+
 def label_molecules(
     input_file: str,
     output_file: str,
@@ -16,7 +17,6 @@ def label_molecules(
     bond_order_methods: Tuple[str] = tuple(),
     openeye_only: bool = False,
 ):
-
     import tqdm
     from dask import distributed
 
@@ -31,7 +31,7 @@ def label_molecules(
         as_batch_function_with_captured_errors,
         preprocess_args,
         try_and_return_error,
-        write_error_to_file_object
+        write_error_to_file_object,
     )
     from openff.nagl.storage.record import MoleculeRecord
     from openff.nagl.storage._store import MoleculeStore
@@ -43,13 +43,17 @@ def label_molecules(
         manager, input_file, output_file
     )
 
-    molecules = sorted([
-        x
-        for x in tqdm.tqdm(
-            stream_molecules_from_file(input_file, include_sdf_data=False),
-            desc="loading molecules",
-        )
-    ], key=lambda x: x.n_atoms, reverse=True)
+    molecules = sorted(
+        [
+            x
+            for x in tqdm.tqdm(
+                stream_molecules_from_file(input_file, include_sdf_data=False),
+                desc="loading molecules",
+            )
+        ],
+        key=lambda x: x.n_atoms,
+        reverse=True,
+    )
     manager.set_entries(molecules)
 
     if openeye_only:
@@ -84,7 +88,7 @@ def label_molecules(
                         write_error_to_file_object(f, error)
                         continue
                     all_records.append(result)
-                
+
                 future.release()
 
     store = MoleculeStore(output_file)
@@ -139,12 +143,7 @@ def label_molecules(
 )
 @click.pass_context
 def label_molecules_cli(
-    ctx,
-    input_file,
-    output_file,
-    partial_charge_method,
-    bond_order_method,
-    openeye_only
+    ctx, input_file, output_file, partial_charge_method, bond_order_method, openeye_only
 ):
     from openff.nagl._cli.utils import get_default_manager
 

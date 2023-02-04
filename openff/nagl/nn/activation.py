@@ -5,9 +5,7 @@ from typing import Callable
 
 import torch
 
-__all__ = [
-    "ActivationFunction"
-]
+__all__ = ["ActivationFunction"]
 
 
 class ActivationFunction(enum.Enum):
@@ -45,6 +43,7 @@ class ActivationFunction(enum.Enum):
     @classmethod
     def get_function(cls, name: str) -> Callable[[torch.tensor], torch.Tensor]:
         import torch.nn.functional as F
+
         x = cls.get(name)
 
         FUNCTIONS = {

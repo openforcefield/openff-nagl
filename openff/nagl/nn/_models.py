@@ -1,16 +1,18 @@
+import copy
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 
 import torch
 import pytorch_lightning as pl
 
+from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
-    from openff.nagl._dgl.batch import DGLMoleculeBatch
-    from openff.nagl._dgl.molecule import DGLMolecule
+    from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+    from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
 
 def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -35,7 +37,6 @@ class BaseGNNModel(pl.LightningModule):
         in the form of a ``torch.Tensor``.
     """
 
-
     def __init__(
         self,
         convolution_module: ConvolutionModule,
@@ -52,7 +53,6 @@ class BaseGNNModel(pl.LightningModule):
     def forward(
         self, molecule: Union["DGLMolecule", "DGLMoleculeBatch"]
     ) -> Dict[str, torch.Tensor]:
-
         self.convolution_module(molecule)
 
         readouts: Dict[str, torch.Tensor] = {
@@ -66,7 +66,6 @@ class BaseGNNModel(pl.LightningModule):
         batch: Tuple["DGLMolecule", Dict[str, torch.Tensor]],
         step_type: str,
     ) -> torch.Tensor:
-
         molecule, labels = batch
         y_pred = self.forward(molecule)
         loss = torch.zeros(1).type_as(next(iter(y_pred.values())))
@@ -98,6 +97,19 @@ class BaseGNNModel(pl.LightningModule):
     def _torch_optimizer(self):
         optimizer = self.optimizers()
         return optimizer.optimizer
+
+    @property
+    def _is_dgl(self):
+        return self.convolution_module._is_dgl
+
+    def _as_nagl(self):
+        copied = copy.deepcopy(self)
+        if self._is_dgl:
+            copied.convolution_module = copied.convolution_module._as_nagl(
+                copy_weights=True
+            )
+        copied.load_state_dict(self.state_dict())
+        return copied
 
 
 class GNNModel(BaseGNNModel):
@@ -183,7 +195,27 @@ class GNNModel(BaseGNNModel):
         self.save_hyperparameters()
 
     def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
-        from openff.nagl._dgl.molecule import DGLMolecule
+        try:
+            return self._compute_property_dgl(molecule)
+        except MissingOptionalDependencyError:
+            return self._compute_property_nagl(molecule)
+
+    def _compute_property_nagl(self, molecule: "Molecule") -> "torch.Tensor":
+        from openff.nagl.molecule._graph.molecule import GraphMolecule
+
+        nxmol = GraphMolecule.from_openff(
+            molecule,
+            atom_features=self.atom_features,
+            bond_features=self.bond_features,
+        )
+        model = self
+        if self._is_dgl:
+            model = self._as_nagl()
+        return model.forward(nxmol)[self.readout_name]
+
+    def _compute_property_dgl(self, molecule: "Molecule") -> "torch.Tensor":
+        from openff.nagl.molecule._dgl.molecule import DGLMolecule
+
         dglmol = DGLMolecule.from_openff(
             molecule,
             atom_features=self.atom_features,
@@ -216,4 +248,3 @@ class GNNModel(BaseGNNModel):
                     item = klass(**args)
                 instantiated.append(item)
         return instantiated
-

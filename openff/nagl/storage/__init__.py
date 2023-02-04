@@ -2,6 +2,4 @@
 
 from ._store import MoleculeStore
 
-__all__ = [
-    "MoleculeStore"
-]
+__all__ = ["MoleculeStore"]

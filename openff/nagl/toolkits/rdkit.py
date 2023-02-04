@@ -11,11 +11,10 @@ from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
 from openff.toolkit.topology import Molecule
-    
+
 
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     name = "rdkit"
-
 
     @staticmethod
     def _run_normalization_reactions(
@@ -91,8 +90,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         return new_mol.remap(adjusted_mapping, current_to_new=True)
 
     def get_molecule_hybridizations(
-        self,
-        molecule: "Molecule"
+        self, molecule: "Molecule"
     ) -> List[HybridizationType]:
         """
         Get the hybridization of each atom in a molecule.
@@ -107,7 +105,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         hybridizations: List[HybridizationType]
             The hybridization of each atom in the molecule.
         """
-
 
         from rdkit.Chem import rdchem
 
@@ -138,10 +135,10 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         try:
             return super().to_rdkit(molecule)
         except AssertionError:
-        # OpenEye just accepts all stereochemistry
-        # unlike RDKit which e.g. does not allow stereogenic bonds in a ring < 8
-        # try patching via smiles
-        # smiles = "C1CC/C=C/(CC1)Cl"
+            # OpenEye just accepts all stereochemistry
+            # unlike RDKit which e.g. does not allow stereogenic bonds in a ring < 8
+            # try patching via smiles
+            # smiles = "C1CC/C=C/(CC1)Cl"
 
             with capture_toolkit_warnings():
                 mapped_smiles = molecule.to_smiles(mapped=True)
@@ -157,7 +154,9 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
                 molecule = copy.deepcopy(molecule)
                 for bond in molecule.bonds:
-                    bond._stereochemistry = mol2_bonds[bond.atom1_index, bond.atom2_index]
+                    bond._stereochemistry = mol2_bonds[
+                        bond.atom1_index, bond.atom2_index
+                    ]
 
             return molecule.to_rdkit()
 
@@ -189,7 +188,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         ----------
         mapped_smiles: str
             The mapped SMILES string to convert.
-        
+
         Returns
         -------
         smiles: str
@@ -200,7 +199,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         with capture_toolkit_warnings():
             molecule = cls.from_smiles(mapped_smiles, allow_undefined_stereo=True)
             return cls.to_smiles(molecule)
-    
+
     @classmethod
     def stream_molecules_from_sdf_file(
         cls,
@@ -208,7 +207,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         as_smiles: bool = False,
         mapped_smiles: bool = False,
         explicit_hydrogens: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Stream molecules from an SDF file.
@@ -230,20 +229,19 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         """
         from rdkit import Chem
+
         if as_smiles:
             if mapped_smiles:
                 converter = cls.smiles_to_mapped_smiles
             else:
                 converter = functools.partial(
-                    Chem.MolToSmiles,
-                    allHsExplicit=explicit_hydrogens
+                    Chem.MolToSmiles, allHsExplicit=explicit_hydrogens
                 )
         else:
             converter = functools.partial(
-                Molecule.from_rdkit,
-                allow_undefined_stereo=True
+                Molecule.from_rdkit, allow_undefined_stereo=True
             )
-        
+
         if file.endswith(".gz"):
             file = file[:-3]
 
@@ -252,7 +250,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         ):
             if rdmol is not None:
                 yield converter(rdmol)
-        
 
     def stream_molecules_to_file(self, file: str):
         """
@@ -262,7 +259,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         ----------
         file: str
             The path to the SDF file to stream molecules to.
-        
+
 
         Examples
         --------
@@ -295,7 +292,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         stream.close()
 
-    
     def get_best_rmsd(
         self,
         molecule: "Molecule",
@@ -316,7 +312,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         target_conformer: np.ndarray or openff.units.unit.Quantity
             The target conformer to compare to the reference conformer.
             If a numpy array, it is assumed to be in units of angstrom.
-        
+
         Returns
         -------
         rmsd: unit.Quantity
@@ -340,7 +336,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             reference_conformer = reference_conformer * unit.angstrom
         if not isinstance(target_conformer, unit.Quantity):
             target_conformer = target_conformer * unit.angstrom
-        
+
         mol1 = copy.deepcopy(molecule)
         mol1._conformers = [reference_conformer]
         mol2 = copy.deepcopy(molecule)
@@ -352,7 +348,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         rmsd = rdMolAlign.GetBestRMS(rdmol1, rdmol2)
         return rmsd * unit.angstrom
 
-
     def get_atoms_are_in_ring_size(
         self,
         molecule: "Molecule",
@@ -360,14 +355,14 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     ) -> List[bool]:
         """
         Determine whether each atom in a molecule is in a ring of a given size.
-        
+
         Parameters
         ----------
         molecule: openff.toolkit.topology.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
-        
+
         Returns
         -------
         in_ring_size: List[bool]
@@ -377,7 +372,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         in_ring_size = [atom.IsInRingSize(ring_size) for atom in rdmol.GetAtoms()]
         return in_ring_size
 
-    
     def get_bonds_are_in_ring_size(
         self,
         molecule: "Molecule",
@@ -385,14 +379,14 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     ) -> List[bool]:
         """
         Determine whether each bond in a molecule is in a ring of a given size.
-        
+
         Parameters
         ----------
         molecule: openff.toolkit.topology.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
-        
+
         Returns
         -------
         in_ring_size: List[bool]
@@ -404,8 +398,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             rdbond = rdmol.GetBondBetweenAtoms(bond.atom1_index, bond.atom2_index)
             in_ring_size.append(rdbond.IsInRingSize(ring_size))
         return in_ring_size
-
-
 
     def assign_partial_charges(
         self,
@@ -461,7 +453,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         from rdkit.Chem import AllChem
 
         if not partial_charge_method == "gasteiger":
-
             return super().assign_partial_charges(
                 molecule,
                 partial_charge_method=partial_charge_method,
@@ -483,7 +474,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         if normalize_partial_charges:
             molecule._normalize_partial_charges()
-        
+
     def calculate_circular_fingerprint_similarity(
         self,
         molecule: "Molecule",

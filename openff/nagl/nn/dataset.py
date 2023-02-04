@@ -25,8 +25,8 @@ import pytorch_lightning as pl
 from openff.toolkit.topology import Molecule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
-from openff.nagl._dgl.batch import DGLMoleculeBatch
-from openff.nagl._dgl.molecule import DGLMolecule
+from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.utils._utils import as_iterable
@@ -359,16 +359,13 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
             self._validation_cache_path,
             self._test_cache_path,
         ]
-        existing = [
-            path for path in all_paths
-            if path and path.is_file()
-        ]
+        existing = [path for path in all_paths if path and path.is_file()]
         if not self.use_cached_data:
             if len(existing) > 0:
                 raise FileExistsError(
                     errno.EEXIST,
                     os.strerror(errno.EEXIST),
-                    [path.resolve() for path in existing]
+                    [path.resolve() for path in existing],
                 )
 
     def _prepare_data(self, data_group: Literal["training", "validation", "test"]):
@@ -386,7 +383,6 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
     def _get_data_cache_path(
         self, data_group: Literal["training", "validation", "test"]
     ) -> pathlib.Path:
-
         from openff.nagl.utils._hash import hash_dict
 
         input_hash = hash_dict(getattr(self, f"{data_group}_set_paths"))
@@ -408,6 +404,7 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
 
     def get_feature_hash(self):
         from openff.nagl.utils._hash import hash_dict
+
         atom_features, bond_features = [], []
         for feature in self.atom_features:
             obj = feature.dict()
@@ -430,12 +427,10 @@ class DGLMoleculeLightningDataModule(pl.LightningDataModule, FromYamlMixin):
         for stage in ["training", "validation", "test"]:
             self._prepare_data(stage)
 
-
     def setup(self, stage: Optional[str] = None):
         self._train_data = self._load_data_cache("training")
         self._val_data = self._load_data_cache("validation")
         self._test_data = self._load_data_cache("test")
-
 
     def _default_dataloader(self, data_name, batch_size):
         from openff.nagl.nn.dataset import DGLMoleculeDataLoader

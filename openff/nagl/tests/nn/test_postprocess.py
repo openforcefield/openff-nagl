@@ -1,7 +1,8 @@
+import pytest
 import numpy as np
 import torch
 
-from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.postprocess import ComputePartialCharges
 
 # @pytest.fixture
@@ -61,6 +62,7 @@ def test_compute_charges_forward(dgl_methane):
 
 
 def test_compute_charges_forward_batched(openff_carboxylate):
+    pytest.importorskip("dgl")
     dgl_carboxylate = DGLMolecule.from_openff(
         openff_carboxylate,
         enumerate_resonance_forms=True,

@@ -12,7 +12,7 @@ from openff.nagl.toolkits.openff import (
     map_indexed_smiles,
     normalize_molecule,
     smiles_to_inchi_key,
-    calculate_circular_fingerprint_similarity
+    calculate_circular_fingerprint_similarity,
 )
 from openff.nagl.utils._utils import transform_coordinates
 
@@ -20,6 +20,7 @@ from openff.nagl.utils._utils import transform_coordinates
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
     assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
+
 
 @pytest.mark.parametrize(
     "smiles, expected",
@@ -138,15 +139,17 @@ def test_not_is_conformer_identical():
     assert not is_conformer_identical(offmol, conformer, perturbed_conformer)
 
 
-@pytest.mark.skipif(
-    not RDKIT_AVAILABLE,
-    reason="requires rdkit"
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "smiles1, smiles2, radius, similarity",
+    [
+        ("C", "C", 3, 1.0),
+        ("C", "N", 3, 0.33333333333333333),
+    ],
 )
-@pytest.mark.parametrize("smiles1, smiles2, radius, similarity", [
-    ("C", "C", 3, 1.0),
-    ("C", "N", 3, 0.33333333333333333),
-])
-def test_calculate_circular_fingerprint_similarity(smiles1, smiles2, radius, similarity):
+def test_calculate_circular_fingerprint_similarity(
+    smiles1, smiles2, radius, similarity
+):
     mol1 = OFFMolecule.from_smiles(smiles1)
     mol2 = OFFMolecule.from_smiles(smiles2)
 

@@ -22,7 +22,7 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }})
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -31,12 +31,17 @@ jobs:
           python-version: ["3.9", "3.10"]
           include-rdkit: [true, false]
           include-openeye: [true, false]
+          include-dgl: [true, false]
           exclude:
             - include-rdkit: false
               include-openeye: false
               # broken OpenMM build for Mac on 3.10
             - os: "macOS-latest"
               python-version: "3.10"
+            - os: "macOS-latest"
+              python-version: "3.9"
+              include-dgl: false
+
 
     steps:
     - uses: actions/checkout@v3
@@ -78,6 +83,10 @@ jobs:
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
+
+    - name: Uninstall DGL
+      if: matrix.include-dgl == false
+      run: conda remove --force dgl --yes || echo "dgl not installed"
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"

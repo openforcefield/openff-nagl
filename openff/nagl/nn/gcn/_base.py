@@ -1,8 +1,6 @@
 import abc
 from typing import ClassVar, Dict, Generic, List, Optional, Type, TypeVar
 
-import dgl
-import dgl.nn.pytorch
 import torch.nn
 import torch.nn.functional
 
@@ -39,6 +37,10 @@ GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 #                 f"Unknown GCN layer type: {class_name}. "
 #                 f"Supported types: {list(cls.registry.keys())}"
 #             )
+
+
+class BaseConvModule(torch.nn.Module):
+    pass
 
 
 class GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
@@ -153,7 +155,7 @@ class BaseGCNStack(
             n_input_features = n_output_features
         return obj
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, _is_dgl: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.hidden_feature_sizes = []
 
@@ -245,7 +247,7 @@ class BaseGCNStack(
         for gnn in self:
             gnn.reset_parameters()
 
-    def forward(self, graph: dgl.DGLGraph, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, graph, inputs: torch.Tensor) -> torch.Tensor:
         """Update node representations.
 
         Args:
@@ -258,3 +260,7 @@ class BaseGCNStack(
         for gnn in self:
             inputs: torch.Tensor = gnn(graph, inputs)
         return inputs
+
+    @property
+    def _is_dgl(self):
+        return not isinstance(self[0], BaseConvModule)

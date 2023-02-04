@@ -56,7 +56,6 @@ class AtomicElement(CategoricalMixin, AtomFeature):
 
 
 class AtomHybridization(CategoricalMixin, AtomFeature):
-
     categories: List[HybridizationType] = [
         HybridizationType.OTHER,
         HybridizationType.SP,
@@ -117,8 +116,8 @@ class AtomInRingOfSize(AtomFeature):
     ring_size: int
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
-        
         from openff.nagl.toolkits.openff import get_atoms_are_in_ring_size
+
         in_ring_size = get_atoms_are_in_ring_size(molecule, self.ring_size)
         # rdmol = openff_to_rdkit(molecule)
 
@@ -135,9 +134,9 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
         # charges = get_openff_molecule_formal_charges(molecule)
 
         from openff.units import unit
+
         charges = [
-            atom.formal_charge.m_as(unit.elementary_charge)
-            for atom in molecule.atoms
+            atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms
         ]
 
         return torch.vstack(
@@ -160,16 +159,12 @@ class AtomAverageFormalCharge(AtomFeature):
         formal_charges: List[float] = []
         for index in range(molecule.n_atoms):
             charges = [
-                graph["atoms"][index]["formal_charge"]
-                for graph in resonance_forms
+                graph["atoms"][index]["formal_charge"] for graph in resonance_forms
             ]
             if not charges:
                 molecule.atoms[index].formal_charge
 
-            charges = [
-                q.m_as(unit.elementary_charge)
-                for q in charges
-            ]
+            charges = [q.m_as(unit.elementary_charge) for q in charges]
             charge = np.mean(charges)
             formal_charges.append(charge)
 
@@ -184,4 +179,3 @@ class AtomGasteigerCharge(AtomFeature):
         molecule.assign_partial_charges("gasteiger")
         charges = molecule.partial_charges.m_as(unit.elementary_charge)
         return torch.tensor(charges)
-

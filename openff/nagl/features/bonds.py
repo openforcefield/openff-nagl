@@ -50,6 +50,7 @@ class BondInRingOfSize(BondFeature):
 
     def _encode(self, molecule) -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_bonds_are_in_ring_size
+
         is_in_ring = get_bonds_are_in_ring_size(molecule, self.ring_size)
         return torch.tensor(is_in_ring, dtype=int)
 

@@ -32,6 +32,7 @@ class MoleculeSmiles(NamedTuple):
     smiles: str
     label: Any = None
 
+
 class Fingerprint(NamedTuple):
     element: str
     fingerprint: str
@@ -43,12 +44,17 @@ class MoleculeAtomFingerprints:
 
     def __hash__(self):
         return hash(self.to_tuple())
+
     def __eq__(self, other):
         return self.to_tuple() == other.to_tuple()
 
     def __init__(self, smiles, exclude_elements=("H",)):
         self.smiles = smiles
-        fingerprints = tuple(sorted(self.generate_fingerprints(smiles, exclude_elements=exclude_elements)))
+        fingerprints = tuple(
+            sorted(
+                self.generate_fingerprints(smiles, exclude_elements=exclude_elements)
+            )
+        )
         self.atom_pair_fingerprints = fingerprints
         element_n_fingerprints = defaultdict(lambda: 0)
         for fp in self.atom_pair_fingerprints:
@@ -93,7 +99,7 @@ class MoleculeAtomFingerprints:
 
 class FingerprintCollection:
     @classmethod
-    def from_smiles(cls, smiles: List[str], exclude_elements: Tuple[str, ...] = ("H", )):
+    def from_smiles(cls, smiles: List[str], exclude_elements: Tuple[str, ...] = ("H",)):
         fingerprints = []
         for smi in smiles:
             try:
@@ -170,7 +176,6 @@ class FingerprintCollection:
         n_min_molecules: int = 4,
         element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"],
     ) -> List[str]:
-
         # all_smiles = set()
         selected_smiles = set()
         all_fingerprints = {}
@@ -271,10 +276,14 @@ class DatasetPartitioner:
         self,
         n_min_molecules: int = 4,
         element_order: List[str] = ["S", "F", "Cl", "Br", "I", "P", "O", "N", "C"],
-        exclude_elements: Tuple[str, ...] = ("H",)
+        exclude_elements: Tuple[str, ...] = ("H",),
     ) -> "DatasetPartitioner":
-        exclude_elements = tuple([x for x in exclude_elements if x not in element_order])
-        fp_collection = FingerprintCollection.from_smiles(self.labelled_smiles, exclude_elements=exclude_elements)
+        exclude_elements = tuple(
+            [x for x in exclude_elements if x not in element_order]
+        )
+        fp_collection = FingerprintCollection.from_smiles(
+            self.labelled_smiles, exclude_elements=exclude_elements
+        )
         selected = fp_collection.select_atom_environments(
             n_min_molecules=n_min_molecules, element_order=element_order
         )

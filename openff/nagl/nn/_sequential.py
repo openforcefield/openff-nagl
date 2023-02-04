@@ -7,7 +7,6 @@ from ._base import ContainsLayersMixin
 
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
-
     default_activation_function: ClassVar[ActivationFunction] = ActivationFunction.ReLU
     default_dropout: ClassVar[float] = 0.0
 
@@ -19,7 +18,6 @@ class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
         layer_activation_functions: Optional[List[ActivationFunction]] = None,
         layer_dropout: Optional[List[float]] = None,
     ):
-
         n_layers = len(hidden_feature_sizes)
         layer_activation_functions, layer_dropout = cls._check_input_lengths(
             n_layers,

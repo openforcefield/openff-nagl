@@ -57,6 +57,7 @@ class Manager:
 
     def batch_entries(self):
         import itertools
+
         # contort around generators
         size = self.batch_size - 1
         entries = iter(self.entries)
@@ -109,7 +110,8 @@ class Manager:
     def submit_to_client(self, submit_function, *args, **kwargs):
         self.set_up_cluster()
         futures = [
-            self.client.submit(submit_function, batch, *args, **kwargs) for batch in self.batch_entries()
+            self.client.submit(submit_function, batch, *args, **kwargs)
+            for batch in self.batch_entries()
         ]
         return futures
 

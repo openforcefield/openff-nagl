@@ -1,12 +1,12 @@
+import copy
 from typing import List, Optional, Union
 
 import torch
-import dgl
 
-from openff.nagl._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import GCNStackMeta
+from openff.nagl.nn.gcn._base import GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn.postprocess import PostprocessLayer
@@ -39,9 +39,19 @@ class ConvolutionModule(torch.nn.Module):
         # doesn't need this information and hence we produce a homogeneous graph for
         # it to operate on with only a single edge type.
 
-        homograph: dgl.DGLGraph = molecule.to_homogenous()
+        homograph = molecule.to_homogenous()
         feature_tensor = self.gcn_layers(homograph, molecule.atom_features)
         molecule.graph.ndata[molecule._graph_feature_name] = feature_tensor
+
+    @property
+    def _is_dgl(self):
+        return self.gcn_layers._is_dgl
+
+    def _as_nagl(self, copy_weights: bool = False):
+        copied = copy.deepcopy(self)
+        if self._is_dgl:
+            copied.gcn_layers = copied.gcn_layers._as_nagl(copy_weights=copy_weights)
+        return copied
 
 
 class ReadoutModule(torch.nn.Module):
@@ -76,7 +86,6 @@ class ReadoutModule(torch.nn.Module):
         self.postprocess_layer = postprocess_layer
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
-
         x = self.pooling_layer.forward(molecule)
         x = self.readout_layers.forward(x)
         if self.postprocess_layer is not None:

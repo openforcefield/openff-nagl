@@ -36,7 +36,7 @@ def retrieve_molecules(
         record = record.to_openff(
             partial_charge_method=partial_charge_method,
             bond_order_method=bond_order_method,
-            normalize_partial_charges=False
+            normalize_partial_charges=False,
         )
         return record
 
