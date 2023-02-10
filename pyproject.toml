@@ -19,9 +19,6 @@ maintainers = [
 ]
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = [
-    "openff-toolkit-base",
-]
 
 [project.optional-dependencies]
 test = [
