@@ -35,6 +35,7 @@ dependencies:
   - dglteam::dgl >=0.7
   - pytorch
   - pytorch-lightning
+  - tensorboard
 
   # parallelism
   - dask-jobqueue
