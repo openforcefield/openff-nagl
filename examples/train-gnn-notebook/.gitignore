@@ -1,3 +1,4 @@
 output/
 data/
 my_first_test_dataset.sqlite
+lightning_logs/
