@@ -6,3 +6,4 @@ dependencies:
   - python>=3.8
   - pip
   - mamba
+  - anaconda-client
