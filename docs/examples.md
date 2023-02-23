@@ -1,1 +1,4 @@
-# Examples
+(examples)=
+
+:::{include} ../examples/README.md
+:::
