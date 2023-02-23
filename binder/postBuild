@@ -1,6 +1,4 @@
 #! /bin/bash
 
 # Install the examples environment in Binder
-
-conda install -c conda-forge mamba
 mamba env update devtools/conda-envs/examples_env.yaml

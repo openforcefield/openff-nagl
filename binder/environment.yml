@@ -1,0 +1,8 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Base depends
+  - python>=3.8
+  - pip
+  - mamba
