@@ -37,7 +37,13 @@
 
    {%- set types = [] -%}
    {%- for item in members -%}
-      {%- if not item.startswith('_') and not (item in functions or item in attributes or item in exceptions or item in modules or item in methods) -%}
+      {%- if not item.startswith('_') and not (
+         item in functions
+         or item in attributes
+         or item in exceptions
+         or fullname ~ "." ~ item in modules
+         or item in methods
+      ) -%}
          {%- set _ = types.append(item) -%}
       {%- endif -%}
    {%- endfor %}
