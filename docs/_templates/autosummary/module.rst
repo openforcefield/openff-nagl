@@ -12,6 +12,7 @@
    .. rubric:: {{ _('Module Attributes') }}
 
    .. autosummary::
+      :caption: Attributes
       :toctree:
       :nosignatures:
    {% for item in attributes %}
@@ -25,6 +26,7 @@
    .. rubric:: {{ _('Functions') }}
 
    .. autosummary::
+      :caption: Functions
       :toctree:
       :nosignatures:
    {% for item in functions %}
@@ -52,6 +54,7 @@
    .. rubric:: {{ _('Classes') }}
 
    .. autosummary::
+      :caption: Classes
       :toctree:
       :nosignatures:
    {% for item in types %}
@@ -65,6 +68,7 @@
    .. rubric:: {{ _('Exceptions') }}
 
    .. autosummary::
+      :caption: Exceptions
       :toctree:
       :nosignatures:
    {% for item in exceptions %}
@@ -78,6 +82,7 @@
 .. rubric:: Modules
 
 .. autosummary::
+   :caption: Modules
    :toctree:
    :recursive:
 {% for item in modules %}
