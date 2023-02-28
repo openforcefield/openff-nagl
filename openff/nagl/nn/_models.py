@@ -1,4 +1,5 @@
 import copy
+import pathlib
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 
 import torch
@@ -194,11 +195,14 @@ class GNNModel(BaseGNNModel):
         )
         self.save_hyperparameters()
 
-    def compute_property(self, molecule: "Molecule") -> "torch.Tensor":
+    def compute_property(self, molecule: "Molecule", as_numpy: bool = False) -> "torch.Tensor":
         try:
-            return self._compute_property_dgl(molecule)
+            values = self._compute_property_dgl(molecule)
         except MissingOptionalDependencyError:
-            return self._compute_property_nagl(molecule)
+            values = self._compute_property_nagl(molecule)
+        if as_numpy:
+            values = values.detach().numpy().flatten()
+        return values
 
     def _compute_property_nagl(self, molecule: "Molecule") -> "torch.Tensor":
         from openff.nagl.molecule._graph.molecule import GraphMolecule
@@ -248,3 +252,25 @@ class GNNModel(BaseGNNModel):
                     item = klass(**args)
                 instantiated.append(item)
         return instantiated
+
+    @staticmethod
+    def _validate_source_path(path: str) -> str:
+        from pkg_resources import resource_filename
+        from openff.nagl.utils._utils import search_file_path
+
+        model_directory = resource_filename("openff.nagl", "models")
+        full_path = search_file_path(path, model_directory)
+        if full_path is None:
+            raise FileNotFoundError(f"Could not find {path}")
+        return full_path
+    
+    @classmethod
+    def load(cls, model: str, eval_mode: bool = True):
+        import torch
+        model_path = cls._validate_source_path(model)
+        model = torch.load(model_path)
+        if eval_mode:
+            model.eval()
+        
+        return model
+

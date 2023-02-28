@@ -115,8 +115,6 @@ class TestGNNModel:
     def am1bcc_model(self):
         model = GNNModel.from_yaml_file(MODEL_CONFIG_V7)
         model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
-
-        torch.save(model, "test.pt")
         model.eval()
 
         return model
@@ -181,7 +179,14 @@ class TestGNNModel:
         assert_allclose(charges, expected, atol=1e-5)
 
     def test_compute_property(self, am1bcc_model, openff_methane_uncharged):
-        charges = am1bcc_model.compute_property(openff_methane_uncharged)
-        charges = charges.detach().numpy().flatten()
+        charges = am1bcc_model.compute_property(openff_methane_uncharged, as_numpy=True)
         expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
+        assert_allclose(charges, expected, atol=1e-5)
+
+    def test_load(self, openff_methane_uncharged):
+        model = GNNModel.load("openff-gnn-am1bcc-0.0.1-alpha.1.pt")
+        assert isinstance(model, GNNModel)
+
+        charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
+        expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
         assert_allclose(charges, expected, atol=1e-5)

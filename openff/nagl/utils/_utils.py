@@ -91,3 +91,40 @@ def transform_coordinates(
     translated = rotated + translate
 
     return translated
+
+
+def search_file_path(
+    file_name: str,
+    search_paths: Optional[Union[str, List[str]]] = None,
+) -> Optional[str]:
+    """
+    Search for a file in a list of paths.
+
+    Parameters
+    ----------
+    file_name : str
+        The name of the file to search for.
+    search_paths : Optional[Union[str, List[str]]], optional
+        The paths to search for the file, by default None
+
+    Returns
+    -------
+    Optional[str]
+        The path to the file if it was found, otherwise None.
+    """
+    import os
+
+    if search_paths is None:
+        search_paths = []
+
+    if isinstance(search_paths, str):
+        search_paths = [search_paths]
+
+    search_paths.insert(0, ".")
+
+    for path in search_paths:
+        file_path = os.path.join(path, file_name)
+        if os.path.exists(file_path):
+            return os.path.abspath(file_path)
+
+    return None
