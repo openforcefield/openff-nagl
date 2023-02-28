@@ -47,6 +47,7 @@ dependencies:
   - sphinx<5
   - sphinx-notfound-page
   - autodoc-pydantic
+  - sphinx-click
 
   #  Pip-only installs
   - pip:

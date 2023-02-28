@@ -4,7 +4,7 @@ A playground for applying graph convolutional networks to molecules, with a focu
 
 ## Getting started
 
-OpenFF recommends using Conda virtual environments for all scientific Python work. NAGL can be installed into a new Conda environment named `nagl` with the `openff-nagl` package:
+OpenFF recommends using Conda virtual environments for all scientific Python work. NAGL can be installed into a new Conda environment named `nagl` with the [`openff-nagl`] package:
 
 ```shell
 mamba create -n nagl -c conda-forge openff-nagl
@@ -13,7 +13,7 @@ conda activate nagl
 
 For more information on installing NAGL, see [](installation.md).
 
-NAGL can then be imported from the `openff.nagl` module:
+NAGL can then be imported from the [`openff.nagl`] module:
 
 ```python
 import openff.nagl
@@ -24,6 +24,9 @@ Or executed from the command line:
 ```shell
 openff-nagl --help
 ```
+
+[`openff-nagl`]: https://anaconda.org/conda-forge/openff-nagl
+[`openff.nagl`]: openff.nagl
 
 ## Inference with NAGL
 
@@ -70,6 +73,15 @@ caption: Developer's Guide
 
 dev.md
 toolkit_wrappers.md
+:::
+
+:::{toctree}
+---
+hidden: true
+caption: CLI Reference
+---
+
+cli.md
 :::
 
 

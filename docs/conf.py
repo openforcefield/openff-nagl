@@ -53,6 +53,7 @@ extensions = [
     "sphinxcontrib.autodoc_pydantic",
     "openff_sphinx_theme",
     "myst_nb",
+    "sphinx_click",
 ]
 
 # Autodoc settings
