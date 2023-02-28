@@ -1,6 +1,4 @@
-# Getting started
-
-## Installation
+# Installation
 
 OpenFF recommends using Conda virtual environments for all scientific Python work. OpenFF NAGL can be installed automatically from the open source [Conda Forge] channel; if you do not yet have Conda, we recommend installing the [MambaForge] distribution, which includes the faster Mamba package manager and is pre-configured to work with Conda Forge.
 
@@ -30,8 +28,9 @@ conda config --env --set channel_priority strict
 
 In environments with this configuration, the `-c conda-forge` switch is unnecessary. Other channels, like `psi4` and `bioconda`, can still be used in the usual way.
 
+More information on installing OpenFF packages can be found in the [OpenFF Toolkit documentation](openff.toolkit:installation).
+
 [Conda Forge]: https://conda-forge.org/
 [MambaForge]: https://github.com/conda-forge/miniforge#mambaforge
 
-## Inference with NAGL
 
