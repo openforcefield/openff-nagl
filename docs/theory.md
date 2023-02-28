@@ -16,15 +16,15 @@ https://tkipf.github.io/graph-convolutional-networks/
 
 <style>
 :root {
-    --arrow-thickness: 1px;
+    --arrow-thickness: 1.5px;
     --arrow-head-size: 7px;
     --arrow-color: black;
-    --arrow-label-position: 1.5em;
-    --arrow-pos-offset: 0;
+    --arrow-head-pos-offset: 0;
     --flowchart-spacing: 10px;
+    --label-size: 0.8em;
 }
 .arrow.thick {
-    --arrow-thickness: 3px;
+    --arrow-thickness: 4px;
     --arrow-head-size: 10px;
 }
 .arrow::after {
@@ -47,17 +47,16 @@ https://tkipf.github.io/graph-convolutional-networks/
     content: "";
     border-bottom: var(--arrow-color) solid var(--arrow-thickness);
     height: 0;
-    width: 100%;
+    width: calc(100% - var(--arrow-thickness));
     display: inline-block;
-    font-size: 0.7em;
     position: absolute;
     left: 0;
-    top: 50%;
+    top: calc(50% - var(--arrow-thickness)/2);
     z-index: -1;
 }
 .arrow {
     display: inline-block;
-    min-width: calc(2 * var(--arrow-head-size));
+    padding: 0 var(--arrow-head-size);
     flex-grow: 1;
     flex-shrink: 0;
     font-size: 0.7em;
@@ -73,38 +72,50 @@ https://tkipf.github.io/graph-convolutional-networks/
 }
 
 .arrow.fullwidth {
-    --arrow-head-size: 10px;
     flex-basis: 100%;
     height: calc(
         var(--arrow-thickness) 
         + 4 * var(--arrow-head-size)
     );
     font-size: 1.2em;
+    margin: 0 var(--flowchart-spacing);
 }
 .arrow.fullwidth::after {
     transform: rotate(45deg);
-    float: left;
-    margin-left: 0;
     background-image: linear-gradient(
         45deg,
         transparent calc(50% - var(--arrow-thickness)/2), 
-        black calc(50% - var(--arrow-thickness)/2), 
-        black calc(50% + var(--arrow-thickness)/2), 
+        var(--arrow-color) calc(50% - var(--arrow-thickness)/2), 
+        var(--arrow-color) calc(50% + var(--arrow-thickness)/2), 
         transparent calc(50% + var(--arrow-thickness)/2)
     );
     position:absolute;
     left: calc(var(--arrow-head-pos-offset) + var(--arrow-thickness));
     top: calc(var(--arrow-head-pos-offset) + 2 * var(--arrow-head-size));
-    z-index: -10;
+    z-index: -1;
 }
 .arrow.fullwidth::before {
     border-right: var(--arrow-color) solid var(--arrow-thickness);
-    width: calc(100% - 2 * var(--arrow-head-size));
+    width: calc(100% - 2 * var(--arrow-head-size) - 2 * var(--flowchart-spacing));
     height: calc(2 * var(--arrow-head-size));
     position: absolute;
     top:0;
     left: var(--arrow-head-size);
-    z-index: -10;
+    z-index: -1;
+}
+
+.arrow.fullwidth.loopback {
+    height: calc(
+        var(--arrow-thickness) 
+        + 2 * var(--arrow-head-size)
+    );
+}
+.arrow.fullwidth.loopback::after {
+    transform: rotate(-135deg);
+    position:absolute;
+    left: calc(var(--arrow-head-pos-offset) + var(--arrow-thickness));
+    top: var(--arrow-head-pos-offset);
+    z-index: -1;
 }
 
 .flowchart {
@@ -130,58 +141,76 @@ https://tkipf.github.io/graph-convolutional-networks/
     padding: 12px;
     align-self: stretch;
     border: solid 1px black;
-    z-index: -10;
+    z-index: -1;
 }
 
 .flowchart .module {
-    --arrow-head-size: 5px;
-    --flowchart-spacing: 7px;
     display: flex;
     align-items: center;
+    align-content: center;
     position: relative;
     gap: var(--flowchart-spacing);
     border: none;
+    flex-wrap: wrap;
 }
 .flowchart .module[label] {
-    padding-top: 15px;
+    padding-top: calc(var(--label-size) + var(--flowchart-spacing));
 }
 .flowchart .module::before {
     content: attr(label);
-    font-size: 0.7em;
+    font-size: var(--label-size);
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-}
-.flowchart .module > * {
-    margin-top: var(--flowchart-spacing);
-    margin-bottom: var(--flowchart-spacing);
+    font-weight: bold;
 }
 
-.flowchart .module.blue {
-    background: #2f9ed2;
+.flowchart ul {
+    text-align: left;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.flowchart .module.blue, .flowchart .module.orange {
     color: white;
     --arrow-color: white;
+}
+.flowchart .module.blue, .flowchart .module.orange {
+    background: #2f9ed2;
 }
 .flowchart .module.orange {
     background: #f03a21;
-    color: white;
-    --arrow-color: white;
 }
+
 </style>
 <div class="flowchart">
     <div>
-    Molecule
+        Molecule
     </div>
-    <div class="arrow">Label</div>
+    <div class="arrow"></div>
+    <div>
+        <ul>
+            <li>Feature vector</li>
+            <li>Adjacency matrix</li>
+        </ul>
+    </div>
+    <div class="arrow fullwidth"></div>
     <div class="module blue" label="Message-passing convolution">
         <div>Aggregate</div>
         <div class="arrow"></div>
+        <div>Activate</div>
+        <div class="arrow"></div>
         <div>Update</div>
+        <div class="arrow fullwidth loopback"></div>
     </div>
-    <div class="arrow"></div>
-    <div class="module orange" label="Readout">Neural net</div>
-    <div class="arrow thick fullwidth">Testing</div>
+    <div class="arrow fullwidth"></div>
+    <div class="module orange" label="Readout">
+        <div>Neural net</div>
+        <div class="arrow"></div>
+        <div>Post-processing</div>
+    </div>
+    <div class="arrow thick"></div>
     <div><em>Prediction</em></div>
 </div>
 
