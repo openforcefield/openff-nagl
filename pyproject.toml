@@ -1,14 +1,13 @@
 [build-system]
 requires = [
   "setuptools >= 40.9.0",
-  "versioneer-518",
+  "versioneer[toml]==0.26",
   "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "openff-nagl"
-version = "0.0.0"
 description = "A short description of the project."
 license = { file = "LICENSE" }
 authors = [
@@ -19,6 +18,7 @@ maintainers = [
 ]
 readme = "README.md"
 requires-python = ">=3.8"
+dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
