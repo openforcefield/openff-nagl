@@ -20,6 +20,7 @@ https://tkipf.github.io/graph-convolutional-networks/
     --arrow-head-size: 7px;
     --arrow-color: black;
     --arrow-label-position: 1.5em;
+    --arrow-pos-offset: 0;
     --flowchart-spacing: 10px;
 }
 .arrow.thick {
@@ -32,33 +33,78 @@ https://tkipf.github.io/graph-convolutional-networks/
     content: "";
     padding: 0;
     margin: 0;
-    margin-left: calc(-1.5 * var(--arrow-head-size));
-    vertical-align: middle;
     border: solid var(--arrow-color);
     border-width: 0 var(--arrow-thickness) var(--arrow-thickness) 0;
     display: inline-block;
     transform: rotate(-45deg);
+    --arrow-head-pos-offset: calc(0.2071 * var(--arrow-head-size));
+    position: absolute;
+    right: var(--arrow-head-pos-offset);
+    top: calc(var(--arrow-thickness) + var(--arrow-head-pos-offset));
+    z-index: -1;
 }
 .arrow::before {
-    content: attr(label);
+    content: "";
     border-bottom: var(--arrow-color) solid var(--arrow-thickness);
     height: 0;
     width: 100%;
-    overflow-y: visible;
     display: inline-block;
-    vertical-align: middle;
     font-size: 0.7em;
-}
-.arrow[label]::before {
-    padding: 0 min(calc(var(--arrow-head-size) / 2 + 5px), calc(5em - var(--arrow-head-size)));
-    padding-bottom: var(--arrow-label-position);
-    margin-top: calc(-1 * var(--arrow-label-position));
+    position: absolute;
+    left: 0;
+    top: 50%;
+    z-index: -1;
 }
 .arrow {
     display: inline-block;
     min-width: calc(2 * var(--arrow-head-size));
     flex-grow: 1;
     flex-shrink: 0;
+    font-size: 0.7em;
+    position: relative;
+    height: calc(
+        var(--arrow-thickness) 
+        + 2 * var(--arrow-head-size)
+    );
+    text-decoration: underline white 1rem;
+    text-decoration-skip-ink: none;
+    text-underline-position: under;
+    text-underline-offset: -1rem;
+}
+
+.arrow.fullwidth {
+    --arrow-head-size: 10px;
+    flex-basis: 100%;
+    height: calc(
+        var(--arrow-thickness) 
+        + 4 * var(--arrow-head-size)
+    );
+    font-size: 1.2em;
+}
+.arrow.fullwidth::after {
+    transform: rotate(45deg);
+    float: left;
+    margin-left: 0;
+    background-image: linear-gradient(
+        45deg,
+        transparent calc(50% - var(--arrow-thickness)/2), 
+        black calc(50% - var(--arrow-thickness)/2), 
+        black calc(50% + var(--arrow-thickness)/2), 
+        transparent calc(50% + var(--arrow-thickness)/2)
+    );
+    position:absolute;
+    left: calc(var(--arrow-head-pos-offset) + var(--arrow-thickness));
+    top: calc(var(--arrow-head-pos-offset) + 2 * var(--arrow-head-size));
+    z-index: -10;
+}
+.arrow.fullwidth::before {
+    border-right: var(--arrow-color) solid var(--arrow-thickness);
+    width: calc(100% - 2 * var(--arrow-head-size));
+    height: calc(2 * var(--arrow-head-size));
+    position: absolute;
+    top:0;
+    left: var(--arrow-head-size);
+    z-index: -10;
 }
 
 .flowchart {
@@ -67,7 +113,8 @@ https://tkipf.github.io/graph-convolutional-networks/
     text-align: center;
     gap: var(--flowchart-spacing);
     padding: var(--flowchart-spacing) 0;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    max-width: 100%;
 }
 .flowchart em {
     font-style: normal;
@@ -77,22 +124,28 @@ https://tkipf.github.io/graph-convolutional-networks/
     flex-direction: column;
 }
 
-.module {
-    --arrow-head-size: 5px;
-    --flowchart-spacing: 7px;
+.flowchart > *:not(.arrow) {
+    flex-grow: 1;
     border-radius: 12px;
     padding: 12px;
+    align-self: stretch;
+    border: solid 1px black;
+    z-index: -10;
+}
+
+.flowchart .module {
+    --arrow-head-size: 5px;
+    --flowchart-spacing: 7px;
     display: flex;
     align-items: center;
-    flex-grow: 1;
-    align-self: stretch;
     position: relative;
     gap: var(--flowchart-spacing);
+    border: none;
 }
-.module[label] {
+.flowchart .module[label] {
     padding-top: 15px;
 }
-.module::before {
+.flowchart .module::before {
     content: attr(label);
     font-size: 0.7em;
     position: absolute;
@@ -100,17 +153,17 @@ https://tkipf.github.io/graph-convolutional-networks/
     left: 0;
     width: 100%;
 }
-.module > * {
+.flowchart .module > * {
     margin-top: var(--flowchart-spacing);
     margin-bottom: var(--flowchart-spacing);
 }
 
-.module.blue {
+.flowchart .module.blue {
     background: #2f9ed2;
     color: white;
     --arrow-color: white;
 }
-.module.orange {
+.flowchart .module.orange {
     background: #f03a21;
     color: white;
     --arrow-color: white;
@@ -120,7 +173,7 @@ https://tkipf.github.io/graph-convolutional-networks/
     <div>
     Molecule
     </div>
-    <div class="arrow" label="featurization"></div>
+    <div class="arrow">Label</div>
     <div class="module blue" label="Message-passing convolution">
         <div>Aggregate</div>
         <div class="arrow"></div>
@@ -128,7 +181,7 @@ https://tkipf.github.io/graph-convolutional-networks/
     </div>
     <div class="arrow"></div>
     <div class="module orange" label="Readout">Neural net</div>
-    <div class="arrow thick"></div>
+    <div class="arrow thick fullwidth">Testing</div>
     <div><em>Prediction</em></div>
 </div>
 
