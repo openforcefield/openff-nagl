@@ -1,5 +1,4 @@
 import copy
-import pathlib
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable
 
 import torch
@@ -252,23 +251,11 @@ class GNNModel(BaseGNNModel):
                     item = klass(**args)
                 instantiated.append(item)
         return instantiated
-
-    @staticmethod
-    def _validate_source_path(path: str) -> str:
-        from pkg_resources import resource_filename
-        from openff.nagl.utils._utils import search_file_path
-
-        model_directory = resource_filename("openff.nagl", "models")
-        full_path = search_file_path(path, model_directory)
-        if full_path is None:
-            raise FileNotFoundError(f"Could not find {path}")
-        return full_path
     
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
         import torch
-        model_path = cls._validate_source_path(model)
-        model = torch.load(model_path)
+        model = torch.load(model)
         if eval_mode:
             model.eval()
         
