@@ -6,6 +6,8 @@
 
 https://tkipf.github.io/graph-convolutional-networks/
 
+http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
+
 - Nodes of input graph are featurized
 - Message-passing convolution to generate graph's embedding
     + Features of neighbors are mixed in to each node
@@ -166,12 +168,6 @@ https://tkipf.github.io/graph-convolutional-networks/
     font-weight: bold;
 }
 
-.flowchart ul {
-    text-align: left;
-    width: fit-content;
-    margin: 0 auto;
-}
-
 .flowchart .module.blue, .flowchart .module.orange {
     color: white;
     --arrow-color: white;
@@ -183,17 +179,26 @@ https://tkipf.github.io/graph-convolutional-networks/
     background: #f03a21;
 }
 
+.flowchart > div > *:first-child {  
+    margin: 0 auto var(--flowchart-spacing) auto;
+    text-align: left;
+    max-width: fit-content;
+}
+
 </style>
 <div class="flowchart">
     <div>
-        Molecule
+        <div>Molecule</div>
+        <img class="block" src="_static/images/theory/alanine.svg">
     </div>
-    <div class="arrow"></div>
+    <div class="arrow">featurization</div>
     <div>
         <ul>
-            <li>Feature vector</li>
+            <li>Feature vectors </li>
             <li>Adjacency matrix</li>
         </ul>
+        <img src="_static/images/theory/alanine-atom-features.svg">
+        <img src="_static/images/theory/alanine-graph.svg">
     </div>
     <div class="arrow fullwidth"></div>
     <div class="module blue" label="Message-passing convolution">

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 26.458333 26.458333"
+   version="1.1"
+   id="svg2048"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="alanine-bond-features.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2050"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     showguides="true"
+     inkscape:zoom="6.23626"
+     inkscape:cx="54.43968"
+     inkscape:cy="50.511043"
+     inkscape:window-width="1173"
+     inkscape:window-height="1322"
+     inkscape:window-x="1173"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1">
+    <sodipodi:guide
+       position="22.10426,24.464283"
+       orientation="0,-1"
+       id="guide1693"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2045" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265702px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 2.2056654,1.9319939 H 0.132851 V 26.325482 h 2.0728144"
+       id="path2595"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265184px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 24.25542,1.9978094 h 2.070321 V 26.325741 H 24.25542"
+       id="path2695"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111px;line-height:1.25;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="3.034035"
+       y="3.3561399"
+       id="text3108"><tspan
+         sodipodi:role="line"
+         id="tspan3106"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="3.034035"
+         y="3.3561399" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="4.3671312"
+       id="text3415"><tspan
+         sodipodi:role="line"
+         id="tspan3413"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="4.3671312">H   1   +0    -    0 </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:1.85208px;line-height:1.25;font-family:sans-serif;fill:#aaaaaa;fill-opacity:1;stroke-width:0.264583"
+       x="0.11392718"
+       y="1.468197"
+       id="text3422"><tspan
+         sodipodi:role="line"
+         id="tspan3420"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:1.85208px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';fill:#aaaaaa;fill-opacity:1;stroke-width:0.264583"
+         x="0.11392718"
+         y="1.468197">elem cnct fchg  hybrd ring</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="7.1292291"
+       id="text3434"><tspan
+         sodipodi:role="line"
+         id="tspan3432"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="7.1292291">O   2   +0   sp<tspan
+   style="font-size:2.11667px;baseline-shift:super"
+   id="tspan3430">3</tspan>   0 </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="9.8913269"
+       id="text3522"><tspan
+         sodipodi:role="line"
+         id="tspan3520"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="9.8913269">O   1   +0   sp<tspan
+   style="font-size:2.11667px;baseline-shift:super"
+   id="tspan1984">2</tspan>   0 </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="12.653424"
+       id="text3528"><tspan
+         sodipodi:role="line"
+         id="tspan3526"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="12.653424">C   3   +0   sp<tspan
+   style="font-size:2.11667px;baseline-shift:super"
+   id="tspan1978">2</tspan>   0 </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="14.482264"
+       id="text3534"><tspan
+         sodipodi:role="line"
+         id="tspan3532"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="14.482264">.          . </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="25.530655"
+       id="text3540"><tspan
+         sodipodi:role="line"
+         id="tspan3538"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="25.530655">.                  . </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="17.244362"
+       id="text1792"><tspan
+         sodipodi:role="line"
+         id="tspan1790"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="17.244362">.            . </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="20.00646"
+       id="text1798"><tspan
+         sodipodi:role="line"
+         id="tspan1796"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="20.00646">.              . </tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="1.6211671"
+       y="22.768557"
+       id="text1804"><tspan
+         sodipodi:role="line"
+         id="tspan1802"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Victor Mono';-inkscape-font-specification:'Victor Mono';stroke-width:0.264583"
+         x="1.6211671"
+         y="22.768557">.                . </tspan></text>
+  </g>
+</svg>
