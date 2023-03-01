@@ -51,3 +51,6 @@ versionfile_source = "openff/nagl/_version.py"
 versionfile_build = "openff/nagl/_version.py"
 tag_prefix = "v"
 parentdir_prefix = "openff-nagl-"
+
+[tool.setuptools.packages.find]
+include = ["openff.*"]
