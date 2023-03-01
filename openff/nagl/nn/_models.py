@@ -146,6 +146,8 @@ class GNNModel(BaseGNNModel):
         atom_features: Tuple["AtomFeature", ...],
         bond_features: Tuple["BondFeature", ...],
         loss_function: Callable = rmse_loss,
+        convolution_dropout: float = 0,
+        readout_dropout: float = 0,
     ):
         from openff.nagl.features.atoms import AtomFeature
         from openff.nagl.features.bonds import BondFeature
@@ -168,6 +170,7 @@ class GNNModel(BaseGNNModel):
             architecture=convolution_architecture,
             n_input_features=self.n_atom_features,
             hidden_feature_sizes=hidden_conv,
+            layer_dropout=convolution_dropout,
         )
 
         hidden_readout = [n_readout_hidden_features] * n_readout_layers
@@ -180,6 +183,7 @@ class GNNModel(BaseGNNModel):
                 n_input_features=n_convolution_hidden_features,
                 hidden_feature_sizes=hidden_readout,
                 layer_activation_functions=readout_activation,
+                layer_dropout=readout_dropout,
             ),
             postprocess_layer=postprocess_layer(),
         )
@@ -258,7 +262,14 @@ class GNNModel(BaseGNNModel):
     def load(cls, model: str, eval_mode: bool = True):
         import torch
 
-        model = torch.load(model)
+        model_kwargs = torch.load(model)
+        if isinstance(model_kwargs, dict):
+            model = cls(**model_kwargs["hyperparameters"])
+            model.load_state_dict(model_kwargs["state_dict"])
+        elif isinstance(model_kwargs, cls):
+            model = model_kwargs
+        else:
+            raise ValueError(f"Unknown model type {type(model_kwargs)}")
         if eval_mode:
             model.eval()
 

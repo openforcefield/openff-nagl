@@ -5,6 +5,7 @@ from typing import Optional, Tuple, List, Any
 import pytorch_lightning as pl
 import rich
 from pydantic import validator
+from typing import List, Union
 from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import TensorBoardLogger
 from rich import pretty
@@ -47,6 +48,8 @@ class Trainer(ImmutableModel, FromYamlMixin):
     n_gpus: int = 0
     n_epochs: int = 100
     seed: Optional[int] = None
+    convolution_dropout: Union[List[float], float] = 0.0
+    readout_dropout: Union[List[float], float] = 0.0
 
     _model = None
     _data_module = None
@@ -154,6 +157,8 @@ class Trainer(ImmutableModel, FromYamlMixin):
             learning_rate=self.learning_rate,
             atom_features=self.atom_features,
             bond_features=self.bond_features,
+            convolution_dropout=self.convolution_dropout,
+            readout_dropout=self.readout_dropout,
         )
         return model
 

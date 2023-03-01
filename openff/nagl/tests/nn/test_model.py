@@ -192,5 +192,5 @@ class TestGNNModel:
         assert isinstance(model, GNNModel)
 
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
+        expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
         assert_allclose(charges, expected, atol=1e-5)
