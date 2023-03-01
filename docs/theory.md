@@ -20,10 +20,11 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 :root {
     --arrow-thickness: 1.5px;
     --arrow-head-size: 7px;
-    --arrow-color: black;
     --arrow-head-pos-offset: 0;
     --flowchart-spacing: 10px;
     --label-size: 0.8em;
+    --bg-color: white;
+    --fg-color: black;
 }
 .arrow.thick {
     --arrow-thickness: 4px;
@@ -35,7 +36,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     content: "";
     padding: 0;
     margin: 0;
-    border: solid var(--arrow-color);
+    border: solid var(--fg-color);
     border-width: 0 var(--arrow-thickness) var(--arrow-thickness) 0;
     display: inline-block;
     transform: rotate(-45deg);
@@ -47,7 +48,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 }
 .arrow::before {
     content: "";
-    border-bottom: var(--arrow-color) solid var(--arrow-thickness);
+    border-bottom: var(--fg-color) solid var(--arrow-thickness);
     height: 0;
     width: calc(100% - var(--arrow-thickness));
     display: inline-block;
@@ -58,16 +59,16 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 }
 .arrow {
     display: inline-block;
+    line-height: 1.2;
     padding: 0 var(--arrow-head-size);
-    flex-grow: 1;
-    flex-shrink: 0;
-    font-size: 0.7em;
+    flex: 1 1 0px;
+    font-size: var(--label-size);
     position: relative;
     height: calc(
         var(--arrow-thickness) 
         + 2 * var(--arrow-head-size)
     );
-    text-decoration: underline white 1rem;
+    text-decoration: underline var(--bg-color) 1rem;
     text-decoration-skip-ink: none;
     text-underline-position: under;
     text-underline-offset: -1rem;
@@ -79,16 +80,16 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
         var(--arrow-thickness) 
         + 4 * var(--arrow-head-size)
     );
-    font-size: 1.2em;
     margin: 0 var(--flowchart-spacing);
+    line-height: 1.8;
 }
 .arrow.fullwidth::after {
     transform: rotate(45deg);
     background-image: linear-gradient(
         45deg,
         transparent calc(50% - var(--arrow-thickness)/2), 
-        var(--arrow-color) calc(50% - var(--arrow-thickness)/2), 
-        var(--arrow-color) calc(50% + var(--arrow-thickness)/2), 
+        var(--fg-color) calc(50% - var(--arrow-thickness)/2), 
+        var(--fg-color) calc(50% + var(--arrow-thickness)/2), 
         transparent calc(50% + var(--arrow-thickness)/2)
     );
     position:absolute;
@@ -97,7 +98,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     z-index: -1;
 }
 .arrow.fullwidth::before {
-    border-right: var(--arrow-color) solid var(--arrow-thickness);
+    border-right: var(--fg-color) solid var(--arrow-thickness);
     width: calc(100% - 2 * var(--arrow-head-size) - 2 * var(--flowchart-spacing));
     height: calc(2 * var(--arrow-head-size));
     position: absolute;
@@ -142,8 +143,9 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     border-radius: 12px;
     padding: 12px;
     align-self: stretch;
-    border: solid 1px black;
+    border: solid 1px var(--fg-color);
     z-index: -1;
+    color: var(--fg-color);
 }
 
 .flowchart .module {
@@ -154,6 +156,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     gap: var(--flowchart-spacing);
     border: none;
     flex-wrap: wrap;
+    background: var(--bg-color);
 }
 .flowchart .module[label] {
     padding-top: calc(var(--label-size) + var(--flowchart-spacing));
@@ -168,18 +171,16 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     font-weight: bold;
 }
 
-.flowchart .module.blue, .flowchart .module.orange {
-    color: white;
-    --arrow-color: white;
-}
-.flowchart .module.blue, .flowchart .module.orange {
-    background: #2f9ed2;
+.flowchart .module.blue {
+    --fg-color: white;
+    --bg-color: #2f9ed2;
 }
 .flowchart .module.orange {
-    background: #f03a21;
+    --fg-color: white;
+    --bg-color: #f03a21;
 }
 
-.flowchart > div > *:first-child {  
+.flowchart > div:not(.arrow):not(.module) > *:first-child {  
     margin: 0 auto var(--flowchart-spacing) auto;
     text-align: left;
     max-width: fit-content;
@@ -191,7 +192,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
         <div>Molecule</div>
         <img class="block" src="_static/images/theory/alanine.svg">
     </div>
-    <div class="arrow">featurization</div>
+    <div class="arrow">featurize</div>
     <div>
         <ul>
             <li>Feature vectors </li>
@@ -201,16 +202,16 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
         <img src="_static/images/theory/alanine-graph.svg">
     </div>
     <div class="arrow fullwidth"></div>
-    <div class="module blue" label="Message-passing convolution">
-        <div>Aggregate</div>
-        <div class="arrow"></div>
-        <div>Activate</div>
-        <div class="arrow"></div>
-        <div>Update</div>
-        <div class="arrow fullwidth loopback"></div>
+    <div class="module blue" label="Convolution module">
+        <div><img src="_static/images/theory/alanine-message_passing_input.svg"></div>
+        <div class="arrow">Message-passing</div>
+        <div><img src="_static/images/theory/alanine-message_passing_output.svg"></div>
+        <div class="arrow">Update</div>
+        <div><img src="_static/images/theory/alanine-update_output.svg"></div>
+        <div class="arrow fullwidth loopback">Iterate with greater hop distances</div>
     </div>
     <div class="arrow fullwidth"></div>
-    <div class="module orange" label="Readout">
+    <div class="module orange" label="Readout module">
         <div>Neural net</div>
         <div class="arrow"></div>
         <div>Post-processing</div>
