@@ -19,9 +19,9 @@ The rules for this file:
   * Don't ever delete anything
 -->
 **2021**
-- Simon Boothroyd \<@SimonBoothroyd\>
+- Simon Boothroyd <@SimonBoothroyd>
 
 **2022**
-- Matthew Thompson \<@mattwthompson\>
-- Josh Horton \<@jthorton\>
-- Lily Wang \<@lilyminium\>
+- Matthew Thompson <@mattwthompson>
+- Josh Horton <@jthorton>
+- Lily Wang <@lilyminium>

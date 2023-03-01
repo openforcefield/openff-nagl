@@ -14,12 +14,31 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+
 ## [Unreleased]
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+
+### Reviewers
+- @mattwthompson
+
+### Added
+- `GNNModel.load` function (PR #26)
+- `convolution_dropout` and `readout_dropout` keywords to GNNModel (PR #26)
+
+### Fixed
+<!-- Bug fixes -->
+- Versioneer `__version__` string (PR #25)
+
+## v0.2.0
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @sboothroyd
 - @jthorton
+- @mattwthompson
 - @lilyminium
 
 ### Added
