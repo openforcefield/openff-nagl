@@ -9,7 +9,7 @@ from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.data.files import (
+from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL_STATE_DICT,
     MODEL_CONFIG_V7,
     EXAMPLE_AM1BCC_MODEL,
