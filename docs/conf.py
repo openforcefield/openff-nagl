@@ -69,9 +69,6 @@ autosummary_context = {
 }
 
 autodoc_default_options = {
-    "members": True,
-    "inherited-members": True,
-    "undoc-members": True,
     "member-order": "alphabetical",
     "show-inheritance": True,
 }
