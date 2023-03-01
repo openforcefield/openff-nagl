@@ -1,3 +1,5 @@
+{% block title -%}
+
 {%- if fullname.startswith("openff") and fullname.count(".") == 1 -%}
 {%- set title = fullname -%}
 {%- else -%}
@@ -5,7 +7,27 @@
 {%- endif -%}
 {{ ("``" ~ title ~ "``") | underline('=')}}
 
+{%- endblock %}
+{% block base %}
+
 .. automodule:: {{ fullname }}
+
+   {% block modules %}
+   {% if modules %}
+   .. rubric:: Modules
+
+   .. autosummary::
+      :caption: Modules
+      :toctree:
+      :recursive:
+   {% for item in modules %}
+   {%- if item not in exclude_modules %}
+      ~{{ item }}
+   {% endif -%}
+   {%- endfor %}
+
+   {% endif %}
+   {% endblock %}
 
    {% block attributes %}
    {% if attributes %}
@@ -77,19 +99,4 @@
    {% endif %}
    {% endblock %}
 
-{% block modules %}
-{% if modules %}
-.. rubric:: Modules
-
-.. autosummary::
-   :caption: Modules
-   :toctree:
-   :recursive:
-{% for item in modules %}
-{%- if item not in exclude_modules %}
-   ~{{ item }}
-{% endif -%}
-{%- endfor %}
-
-{% endif %}
 {% endblock %}

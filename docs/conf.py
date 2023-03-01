@@ -58,7 +58,7 @@ extensions = [
 
 # Autodoc settings
 autosummary_generate = True
-autosummary_imported_members = True
+autosummary_imported_members = False
 autosummary_ignore_module_all = False
 autosummary_context = {
     # Modules to exclude from API docs
@@ -71,11 +71,12 @@ autosummary_context = {
 autodoc_default_options = {
     "members": True,
     "inherited-members": True,
-    "member-order": "bysource",
+    "undoc-members": True,
+    "member-order": "alphabetical",
     "show-inheritance": True,
 }
 autodoc_preserve_defaults = True
-autodoc_inherit_docstrings = False
+autodoc_inherit_docstrings = True
 autodoc_typehints_format = "short"
 # Fold the __init__ or __new__ methods into class documentation
 autoclass_content = "both"

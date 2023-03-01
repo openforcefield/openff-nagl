@@ -1,11 +1,13 @@
+{% block title -%}
+
 {{ ("``" ~ objname ~ "``") | underline('=')}}
+
+{%- endblock %}
+{% block base %}
 
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
-   :members:
-   :undoc-members:
-   :inherited-members:
 
    {% block methods %}
 
@@ -33,3 +35,4 @@
    {%- endfor %}
    {% endif %}
    {% endblock %}
+{% endblock %}

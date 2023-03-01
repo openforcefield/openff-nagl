@@ -1,4 +1,9 @@
+{% block title -%}
+
 {{ ("``" ~ objname ~ "``") | underline}}
+
+{%- endblock %}
+{% block base %}
 
 .. currentmodule:: {{ module }}
 
@@ -6,3 +11,5 @@
     {% if objtype in ["attribute", "data"] -%}
     :no-value:
     {%- endif %}
+
+{%- endblock %}
