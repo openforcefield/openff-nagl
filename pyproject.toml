@@ -54,4 +54,4 @@ parentdir_prefix = "openff-nagl-"
 
 [tool.setuptools.packages.find]
 include = ["openff.*"]
-namespaces = false
+# namespaces = false
