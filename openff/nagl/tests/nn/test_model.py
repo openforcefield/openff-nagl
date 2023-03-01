@@ -9,7 +9,11 @@ from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.data.files import EXAMPLE_AM1BCC_MODEL_STATE_DICT, MODEL_CONFIG_V7
+from openff.nagl.data.files import (
+    EXAMPLE_AM1BCC_MODEL_STATE_DICT,
+    MODEL_CONFIG_V7,
+    EXAMPLE_AM1BCC_MODEL,
+)
 
 
 @pytest.fixture()
@@ -184,9 +188,9 @@ class TestGNNModel:
         assert_allclose(charges, expected, atol=1e-5)
 
     def test_load(self, openff_methane_uncharged):
-        model = GNNModel.load("openff-gnn-am1bcc-0.0.1-alpha.1.pt")
+        model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
         assert isinstance(model, GNNModel)
 
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
+        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
         assert_allclose(charges, expected, atol=1e-5)
