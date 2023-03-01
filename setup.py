@@ -1,12 +1,12 @@
 """
 OpenFF NAGL
-A short description of the project.
+A playground for applying graph convolutional networks to molecules.
 """
 import sys
 from setuptools import setup, find_namespace_packages
 import versioneer
 
-short_description = "A short description of the project.".strip().split("\n")[0]
+short_description = "A playground for applying graph convolutional networks to molecules.".strip().split("\n")[0]
 
 # from https://github.com/pytest-dev/pytest-runner#conditional-requirement
 needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)

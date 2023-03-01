@@ -1,15 +1,14 @@
 [build-system]
 requires = [
   "setuptools >= 40.9.0",
-  "versioneer-518",
+  "versioneer[toml]==0.26",
   "wheel",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "openff-nagl"
-version = "0.0.0"
-description = "A short description of the project."
+description = "A playground for applying graph convolutional networks to molecules."
 license = { file = "LICENSE" }
 authors = [
     {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
@@ -19,6 +18,7 @@ maintainers = [
 ]
 readme = "README.md"
 requires-python = ">=3.8"
+dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
@@ -43,3 +43,11 @@ minversion = "6.0"
 testpaths = [
     "openff/nagl/tests",
 ]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "openff/nagl/_version.py"
+versionfile_build = "openff/nagl/_version.py"
+tag_prefix = "v"
+parentdir_prefix = "openff-nagl-"
