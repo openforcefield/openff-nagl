@@ -60,6 +60,7 @@ hidden: true
 
 Overview <self>
 installation.md
+inference.md
 training.md
 theory.md
 examples.md
