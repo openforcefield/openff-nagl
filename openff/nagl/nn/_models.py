@@ -194,7 +194,9 @@ class GNNModel(BaseGNNModel):
         )
         self.save_hyperparameters()
 
-    def compute_property(self, molecule: "Molecule", as_numpy: bool = False) -> "torch.Tensor":
+    def compute_property(
+        self, molecule: "Molecule", as_numpy: bool = False
+    ) -> "torch.Tensor":
         try:
             values = self._compute_property_dgl(molecule)
         except MissingOptionalDependencyError:
@@ -251,13 +253,13 @@ class GNNModel(BaseGNNModel):
                     item = klass(**args)
                 instantiated.append(item)
         return instantiated
-    
+
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
         import torch
+
         model = torch.load(model)
         if eval_mode:
             model.eval()
-        
-        return model
 
+        return model
