@@ -162,7 +162,7 @@ class NXMolGraph:
         if edge_indices is None:
             edge_indices = torch.tensor(list(range(self.graph.edges())))
 
-        data = {k: torch.tensor(v[edge_indices.long()]) for k, v in self.edata.items()}
+        data = {k: v[edge_indices.long()].clone().detach() for k, v in self.edata.items()}
         return data
 
     def srcnodes(self):
