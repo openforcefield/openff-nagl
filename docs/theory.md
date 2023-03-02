@@ -20,7 +20,6 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 :root {
     --arrow-thickness: 1.5px;
     --arrow-head-size: 7px;
-    --arrow-head-pos-offset: 0;
     --flowchart-spacing: 10px;
     --label-size: 0.8em;
     --bg-color: white;
@@ -40,10 +39,9 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     border-width: 0 var(--arrow-thickness) var(--arrow-thickness) 0;
     display: inline-block;
     transform: rotate(-45deg);
-    --arrow-head-pos-offset: calc(0.2071 * var(--arrow-head-size));
     position: absolute;
-    right: var(--arrow-head-pos-offset);
-    top: calc(var(--arrow-thickness) + var(--arrow-head-pos-offset));
+    right: calc(0.2071 * var(--arrow-head-size));
+    top: calc(var(--arrow-thickness) + 0.2071 * var(--arrow-head-size));
     z-index: -1;
 }
 .arrow::before {
@@ -92,19 +90,15 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
         var(--fg-color) calc(50% + var(--arrow-thickness)/2), 
         transparent calc(50% + var(--arrow-thickness)/2)
     );
-    position:absolute;
-    left: calc(var(--arrow-head-pos-offset) + var(--arrow-thickness));
-    top: calc(var(--arrow-head-pos-offset) + 2 * var(--arrow-head-size));
-    z-index: -1;
+    left: calc(0.2071 * var(--arrow-head-size) + var(--arrow-thickness));
+    top: calc(0.2071 * var(--arrow-head-size) + 2 * var(--arrow-head-size));
 }
 .arrow.fullwidth::before {
     border-right: var(--fg-color) solid var(--arrow-thickness);
     width: calc(100% - 2 * var(--arrow-head-size) - 2 * var(--flowchart-spacing));
     height: calc(2 * var(--arrow-head-size));
-    position: absolute;
     top:0;
     left: var(--arrow-head-size);
-    z-index: -1;
 }
 
 .arrow.fullwidth.loopback {
@@ -116,8 +110,8 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 .arrow.fullwidth.loopback::after {
     transform: rotate(-135deg);
     position:absolute;
-    left: calc(var(--arrow-head-pos-offset) + var(--arrow-thickness));
-    top: var(--arrow-head-pos-offset);
+    left: calc(0.2071 * var(--arrow-head-size) + var(--arrow-thickness));
+    top: calc(0.2071 * var(--arrow-head-size));
     z-index: -1;
 }
 
@@ -129,6 +123,8 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     padding: var(--flowchart-spacing) 0;
     flex-wrap: wrap;
     max-width: 100%;
+    container-type: inline-size;
+    container-name: flowchart;
 }
 .flowchart em {
     font-style: normal;
@@ -186,6 +182,69 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
     max-width: fit-content;
 }
 
+@container flowchart (max-width: 550px) {
+    .flowchart > * {
+        flex-basis: 100%;
+    }
+    .arrow, .arrow.fullwidth {
+        height: unset;
+        width: unset;
+        margin: 0 auto;
+        line-height: 1.8;
+        padding: calc(2 * var(--arrow-head-size)) 0
+    }
+    .arrow::after, .arrow.fullwidth::after {
+        transform: rotate(45deg);
+        background: none;
+        top: calc(100% - 2*var(--arrow-head-size) + 0.2071 * var(--arrow-head-size));
+        left: calc(50% - var(--arrow-head-size) + 0.2071 * var(--arrow-head-size));
+    }
+    .arrow::before, .arrow.fullwidth::before {
+        border: none;
+        width: var(--arrow-thickness);
+        background-color: var(--fg-color);
+        height: 100%;
+        top: 0;
+        left: calc(50% - var(--arrow-thickness)/2);
+    }
+    
+    .arrow.fullwidth.loopback {
+        position: absolute;
+        right: var(--flowchart-spacing);
+        top: calc(var(--flowchart-spacing) + var(--label-size));
+        height: calc(100% - 2*var(--flowchart-spacing) - var(--label-size) - 2*var(--arrow-head-size));
+        margin: 0;
+        padding: var(--arrow-head-size) 0;
+        max-width: 10%;
+        line-height: 1.2;
+        text-decoration-thickness: 1.2rem;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+    }
+    
+    .arrow.fullwidth.loopback::before {
+        background: none;
+        border: var(--fg-color) solid var(--arrow-thickness);
+        border-left: none;
+        height: calc(100% - 2*var(--arrow-head-size));
+        width: calc(2*var(--arrow-head-size));
+        left: -50%;
+        top: var(--arrow-head-size);
+    }
+    
+    .arrow.fullwidth.loopback::after {
+        right: 100%;
+        transform: rotate(135deg)
+    }
+    
+    .flowchart .module {
+        flex-wrap: nowrap;
+        flex-direction: column;
+        position: relative;
+    }
+
+}
+
 </style>
 <div class="flowchart">
     <div>
@@ -208,7 +267,7 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
         <div><img src="_static/images/theory/alanine-message_passing_output.svg"></div>
         <div class="arrow">Update</div>
         <div><img src="_static/images/theory/alanine-update_output.svg"></div>
-        <div class="arrow fullwidth loopback">Iterate with greater hop distances</div>
+        <div class="arrow fullwidth loopback">Iterate with greater hop distance</div>
     </div>
     <div class="arrow fullwidth"></div>
     <div class="module orange" label="Readout module">
