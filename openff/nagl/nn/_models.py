@@ -128,13 +128,18 @@ class GNNModel(BaseGNNModel):
         e.g. :class:`~openff.nagl.nn.gcn._sage.SAGEConvStack`
         or as a string, e.g. ``"SAGEConv"``.
     n_convolution_hidden_features: int
-        The number of hidden features in the convolutional layers.
+        The number of features in each of the hidden convolutional layers.
     n_convolution_layers: int
-        The number of convolutional layers.
+        The number of hidden convolutional layers to generate. These are the 
+        layers in the convolutional module between the input layer and the 
+        pooling layer.
     n_readout_hidden_features: int
-        The number of hidden features in the readout layers.
+        The number of features in each of the hidden readout layers.
     n_readout_layers: int
-        The number of readout layers.
+        The number of hidden readout layers to generate. These are the layers
+        between the convolution module's pooling layer and the readout module's
+        output layer. The pooling layer may be considered to be both the
+        convolution module's output layer and the readout module's input layer.
     activation_function: Union[str, ActivationFunction]
         The activation function to use for the readout module.
         This can be given either as a class,
