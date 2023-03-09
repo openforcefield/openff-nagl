@@ -343,6 +343,11 @@ class GNNModel(BaseGNNModel):
         >>> model.save("model.pt")
         >>> new_model = GNNModel.load("model.pt")
 
+        Notes   
+        -----
+        This method is not compatible with normal Pytorch
+        models saved with ``torch.save``, as it expects
+        a dictionary of hyperparameters and a state dictionary.
         """
         model_kwargs = torch.load(str(model))
         if isinstance(model_kwargs, dict):
@@ -374,8 +379,7 @@ class GNNModel(BaseGNNModel):
 
         Notes
         -----
-        This method is not compatible with normal Pytorch models.
-        Instead, it writes a dictionary of the hyperparameters and the state dictionary,
+        This method writes a dictionary of the hyperparameters and the state dictionary,
         with the keys "hyperparameters" and "state_dict".
         """
         torch.save(
