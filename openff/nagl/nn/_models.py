@@ -242,6 +242,21 @@ class GNNModel(BaseGNNModel):
     def compute_property(
         self, molecule: "Molecule", as_numpy: bool = False
     ) -> "torch.Tensor":
+        """
+        Compute the trained property for a molecule.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to compute the property for.
+        as_numpy: bool
+            Whether to return the result as a numpy array.
+            If ``False``, the result will be a ``torch.Tensor``.
+        
+        Returns
+        -------
+        result: torch.Tensor or numpy.ndarray
+        """
         try:
             values = self._compute_property_dgl(molecule)
         except MissingOptionalDependencyError:
