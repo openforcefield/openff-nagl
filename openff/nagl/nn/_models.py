@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
     from openff.nagl.molecule._dgl.molecule import DGLMolecule
+    from openff.nagl.nn.postprocess import PostprocessLayerMeta
+    from openff.nagl.nn.activation import ActivationFunction
+    from openff.nagl.nn.gcn._base import GCNStackMeta
 
 
 def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
