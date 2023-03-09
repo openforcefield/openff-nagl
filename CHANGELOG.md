@@ -25,6 +25,7 @@ The rules for this file:
 - @mattwthompson
 
 ### Added
+- `GNNModel.save` function (PR #29)
 - `GNNModel.load` function (PR #26)
 - `convolution_dropout` and `readout_dropout` keywords to GNNModel (PR #26)
 
