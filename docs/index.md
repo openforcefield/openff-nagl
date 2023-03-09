@@ -35,7 +35,7 @@ NAGL GNN models are used via the [`openff.nagl.GNNModel`] class. A checkpoint fi
 ```python
 from openff.nagl import GNNModel
 
-model = GNNModel.load_from_checkpoint("trained_model.chkpt")
+model = GNNModel.load("trained_model.pt")
 ```
 
 Then, the properties the model is trained to predict can be computed with the [`GNNModel.compute_property()`] method, which takes an OpenFF [`Molecule`] object:
