@@ -113,6 +113,47 @@ class BaseGNNModel(pl.LightningModule):
 
 
 class GNNModel(BaseGNNModel):
+    """
+    A model that applies a graph convolutional step followed by
+    pooling and readout steps.
+
+    Parameters
+    ----------
+    convolution_architecture: Union[str, GCNStackMeta]
+        The graph convolution architecture.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.gcn._sage.SAGEConvStack`
+        or as a string, e.g. ``"SAGEConv"``.
+    n_convolution_hidden_features: int
+        The number of hidden features in the convolutional layers.
+    n_convolution_layers: int
+        The number of convolutional layers.
+    n_readout_hidden_features: int
+        The number of hidden features in the readout layers.
+    n_readout_layers: int
+        The number of readout layers.
+    activation_function: Union[str, ActivationFunction]
+        The activation function to use.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.activation.ActivationFunction.ReLU`,
+        or as a string, e.g. ``"ReLU"``.
+    postprocess_layer: Union[str, PostprocessLayerMeta]
+        The postprocess layer to use.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
+        or as a string, e.g. ``"compute_partial_charges"``.
+    atom_features: Tuple[AtomFeature, ...]
+        The atom features to use.
+    bond_features: Tuple[BondFeature, ...]
+        The bond features to use.
+    loss_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
+        The loss function. This is RMSE by default, but can be any function
+        that takes a predicted and target tensor and returns a scalar loss tensor.
+    convolution_dropout: float
+        The dropout probability to use in the convolutional layers.
+    readout_dropout: float
+        The dropout probability to use in the readout layers.
+    """
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
         import yaml
@@ -134,13 +175,13 @@ class GNNModel(BaseGNNModel):
 
     def __init__(
         self,
-        convolution_architecture: str,
+        convolution_architecture: Union[str, "GCNStackMeta"],
         n_convolution_hidden_features: int,
         n_convolution_layers: int,
         n_readout_hidden_features: int,
         n_readout_layers: int,
-        activation_function: str,
-        postprocess_layer: str,
+        activation_function: Union[str, "ActivationFunction"],
+        postprocess_layer: Union[str, "PostprocessLayerMeta"],
         readout_name: str,
         learning_rate: float,
         atom_features: Tuple["AtomFeature", ...],
@@ -260,9 +301,32 @@ class GNNModel(BaseGNNModel):
 
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
-        import torch
+        """
+        Load a model from a file.
 
-        model_kwargs = torch.load(model)
+        Parameters
+        ----------
+        model: str
+            The path to the model to load.
+            This should be a file containing a dictionary of
+            hyperparameters and a state dictionary,
+            with the keys "hyperparameters" and "state_dict".
+            This can be created using the `save` method.
+        eval_mode: bool
+            Whether to set the model to evaluation mode.
+
+        Returns
+        -------
+        model: GNNModel
+
+        Examples
+        --------
+
+        >>> model.save("model.pt")
+        >>> new_model = GNNModel.load("model.pt")
+
+        """
+        model_kwargs = torch.load(str(model))
         if isinstance(model_kwargs, dict):
             model = cls(**model_kwargs["hyperparameters"])
             model.load_state_dict(model_kwargs["state_dict"])
@@ -274,3 +338,32 @@ class GNNModel(BaseGNNModel):
             model.eval()
 
         return model
+
+    def save(self, path: str):
+        """
+        Save this model to a file.
+        
+        Parameters
+        ----------
+        path: str
+            The path to save this file to.
+
+        Examples
+        --------
+
+        >>> model.save("model.pt")
+        >>> new_model = GNNModel.load("model.pt")
+
+        Notes
+        -----
+        This method is not compatible with normal Pytorch models.
+        Instead, it writes a dictionary of the hyperparameters and the state dictionary,
+        with the keys "hyperparameters" and "state_dict".
+        """
+        torch.save(
+            {
+                "hyperparameters": self.hparams,
+                "state_dict": self.state_dict(),
+            },
+            str(path),
+        )
