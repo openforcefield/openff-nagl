@@ -22,7 +22,7 @@ A molecular graph is essentially a Lewis structure represented as a mathematical
 
 In a molecular graph, atoms are nodes and bonds are edges. A molecular graph can store extra information in its nodes and edges; in a Lewis structure, this is things like an atom's element and lone pairs, or a bond's bond order or stereochemistry, but for a molecular graph they can be anything. Element and bond order are usually somewhere near the top of the list. Envisioning a molecule as a graph lets us apply computer science techniques designed for graphs to molecules.
 
-Note that a particular molecular species may have more than one molecular graph topology that represents it. This most commonly happens with tautomers and resonance forms. NAGL operates on molecular graphs, and on the OpenFF [`Molecule`] class, and it doesn't try to be clever about whether two molecules are the same or not. If you want tautomers to produce the same charges, you may need to prepare your dataset accordingly.
+Note that a particular molecular species may have more than one molecular graph topology that represents it. This most commonly happens with tautomers and resonance forms. NAGL operates on molecular graphs, and on the OpenFF [`Molecule`] class, and it doesn't try to be clever about whether two molecules are the same or not. If you want tautomers to produce the same charges, you will need to prepare your dataset and featurization accordingly.
 
 :::{figure-md} fig-diff_graphs
 ![Neutral and zwitterionic alanine](_static/images/theory/alanine_zwitterion.svg)
@@ -47,7 +47,11 @@ NAGL therefore uses **one-hot encoding** for most featurization, in which each f
 
 This prevents the model from assuming that adjacent elements are similar. Note that these values are represented internally as floating point numbers, not single bits. The model's internal representation is therefore free to mix and scale them as needed, which allows the model to represent a carbon atom (#6) with some oxygen character (#8) without the result appearing like nitrogen (#7).
 
-## Message-passing Graph Convolution Networks
+## The Convolution Module: Message-passing Graph Convolutional Networks
+
+NAGL's goal is to produce machine-learned models that can compute partial charges and other properties for all the atoms in a molecule. To do this, it needs a way to represent atoms to the network in their full molecular context. This representation is called an **embedding**, because it embeds all the information there is to know about a particular atom in some relatively low-dimensional space. An atom's feature vector is a simplistic, human-readable embedding, but we want something that a neural network can use to infer charges, even if that means losing simplicity and readability. That means folding in information about the surrounding atoms and their connectivity.
+
+NAGL produces atom embeddings with a message-passing graph convolutional network (GCN). A GCN takes each node's feature vector and iteratively mixes it with those of progressively more distant neighbours to produce an embedding for the node. This embedding can then be passed on to a **readout** network that predicts some particular property of interest. Both the **convolution module** and **readout module** can be trained in concert to produce an embedding that is bespoke to the computed property. 
 
 https://docs.dgl.ai/en/1.0.x/tutorials/models/1_gnn/1_gcn.html
 
