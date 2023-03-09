@@ -136,7 +136,7 @@ class GNNModel(BaseGNNModel):
     n_readout_layers: int
         The number of readout layers.
     activation_function: Union[str, ActivationFunction]
-        The activation function to use.
+        The activation function to use for the readout module.
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.activation.ActivationFunction.ReLU`,
         or as a string, e.g. ``"ReLU"``.
