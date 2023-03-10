@@ -1,6 +1,14 @@
 {% block title -%}
 
+.. raw:: html
+
+   <div style="display: None;">
+
 {{ ("``" ~ objname ~ "``") | underline('=')}}
+
+.. raw:: html
+
+   </div>
 
 {%- endblock %}
 {% block base %}
@@ -9,8 +17,11 @@
 
 .. autoclass:: {{ objname }}
    :members:
-   :inherited-members:
-   :undoc-members:
+   :member-order: alphabetical  {# For consistency with Autosummary #}
+   {% if show_inherited_members %}:inherited-members:
+   {% endif %}{% if show_undoc_members %}:undoc-members:
+   {% endif %}{% if show_inheritance %}:show-inheritance:
+   {% endif %}
 
    {% block methods %}
 
@@ -21,7 +32,9 @@
       :nosignatures:
    {% for item in methods %}
    {%- if item not in ["__new__", "__init__"] %}
-      ~{{ name }}.{{ item }}
+      {% if show_inherited_members or item not in inherited_members -%}
+         ~{{ name }}.{{ item }}
+      {%- endif %}
    {% endif -%}
    {%- endfor %}
    {% endif %}
@@ -34,7 +47,9 @@
    .. autosummary::
       :nosignatures:
    {% for item in attributes %}
-      ~{{ name }}.{{ item }}
+      {% if show_inherited_members or item not in inherited_members -%}
+         ~{{ name }}.{{ item }}
+      {%- endif %}
    {%- endfor %}
    {% endif %}
    {% endblock %}

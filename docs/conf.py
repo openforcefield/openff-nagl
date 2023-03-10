@@ -56,22 +56,23 @@ extensions = [
     "sphinx_click",
 ]
 
-# Autodoc settings
+# API docs settings
 autosummary_generate = True
+# Document imported items iff they're in __all__
 autosummary_imported_members = False
 autosummary_ignore_module_all = False
+# Autosummary template configuration
 autosummary_context = {
     # Modules to exclude from API docs
     "exclude_modules": [
         "openff.nagl.tests",
         "openff.nagl.data",
-    ]
+    ],
+    "show_inheritance": True,
+    "show_inherited_members": True,
+    "show_undoc_members": True,
 }
 
-autodoc_default_options = {
-    "member-order": "alphabetical",
-    "show-inheritance": True,
-}
 autodoc_preserve_defaults = True
 autodoc_inherit_docstrings = True
 autodoc_typehints_format = "short"
@@ -149,6 +150,10 @@ intersphinx_mapping = {
         None,
     ),
     "torch": ("https://pytorch.org/docs/stable/", None),
+    "pytorch_lightning": (
+        "https://pytorch-lightning.readthedocs.io/en/stable/",
+        None,
+    ),
 }
 myst_url_schemes = [
     "http",
@@ -254,6 +259,7 @@ html_theme_options = {
     "css_minify": True,
     "master_doc": False,
     "globaltoc_include_local": True,
+    "globaltoc_depth": 3,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
