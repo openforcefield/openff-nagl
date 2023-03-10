@@ -69,7 +69,7 @@ autosummary_context = {
         "openff.nagl.data",
     ],
     "show_inheritance": True,
-    "show_inherited_members": True,
+    "show_inherited_members": False,
     "show_undoc_members": True,
 }
 
