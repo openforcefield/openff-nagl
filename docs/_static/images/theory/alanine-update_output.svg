@@ -26,15 +26,15 @@
      inkscape:document-units="mm"
      showgrid="false"
      showguides="true"
-     inkscape:zoom="7.0969811"
-     inkscape:cx="46.710002"
-     inkscape:cy="54.741586"
+     inkscape:zoom="25.139982"
+     inkscape:cx="61.933219"
+     inkscape:cy="77.10825"
      inkscape:window-width="2346"
      inkscape:window-height="1322"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="g11076" />
   <defs
      id="defs1118">
     <linearGradient
@@ -830,11 +830,11 @@
        id="g11076"
        transform="translate(4.5025838,-7.1557754)">
       <path
-         style="fill:none;stroke:#666666;stroke-width:1.66667px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:1.66667px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 98.749693,140.1311 17.371657,-4.73335 -17.371657,-6.53542 17.371657,17.80419 -17.371657,4.73335 17.732087,6.53542 -17.732087,4.73335 17.371657,-16.00212 z"
          id="path10989" />
       <path
-         style="fill:none;stroke:#666666;stroke-width:1.66667px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="fill:none;stroke:#000000;stroke-width:1.66667px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          d="m 133.49301,140.1311 -17.37166,-4.73335 17.37166,-6.53542 -17.37166,17.80419 17.37166,4.73335 -17.73209,6.53542 17.73209,4.73335 -17.37166,-16.00212 z"
          id="path11001" />
       <ellipse

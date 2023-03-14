@@ -47,26 +47,43 @@ NAGL therefore uses **one-hot encoding** for most featurization, in which each f
 
 This prevents the model from assuming that adjacent elements are similar. Note that these values are represented internally as floating point numbers, not single bits. The model's internal representation is therefore free to mix and scale them as needed, which allows the model to represent a carbon atom (#6) with some oxygen character (#8) without the result appearing like nitrogen (#7).
 
+## Neural Networks - a quick primer
+
+NAGL makes heavy use of the workhorse of machine learning, the **neural network**. A neural network is a machine learning model inspired by the animal brain that can provide [arbitrarily accurate approximations] to a huge variety of mathematical functions. The quality of the approximation depends on the structure and size of the neural network; larger networks are capable of producing better approximations, but require more parameters to describe. Neural networks work just fine on functions that map between vector spaces, and modern computer hardware is well-equipped to compute them efficiently. 
+
+A prepared neural network consists of many computational "neurons" connected to each other as inputs and outputs, a non-linear **activation function** for each neuron that specifies how it transforms its inputs into its outputs, and **parameters** for each neuron that specify how its inputs should be weighted and biased. Usually, the structure of the network and the functional form of the activation function is chosen by the developer, and the parameters are iteratively tweaked until the network reproduces an example dataset of paired inputs and outputs. The process of determining parameters is called **training**; through this process, the network "learns" a function that allows it to reproduce the dataset.
+
+The design of the training dataset is very important; it must include many examples for the network to infer from, but it must also cover the entire space of possible evaluations. Choosing the size of the neural network is also crucial to training a useful model. The network must be large enough to model the underlying function with the desired accuracy, but if the network is too large it will encounter the scourge of machine learning: **overfitting**.
+
+Most real datasets are not perfect reproductions of evaluations of the desired function; there is almost always noise, whether from measurement error or confounding variables or something else. A model is overfitted when it reproduces this noise, rather than just the underlying function. On top of that, any finite training dataset can be perfectly approximated by an infinite number of functions that can do anything they like to inputs missing from the training set. This means that a neural network always interpolates; when the network is overfitted, it "expects" this interpolation to include meaningless noise.
+
+A smaller network that cannot reproduce a highly detailed function is more likely to produce a high quality interpolation rather than invent noise. It is also important to only train a model on a subset of the available data, and use the remaining data (which the model hasn't "seen" before) to evaluate the model. If the model performs as well on the evaluation data as it did during training, it is likely to generalize to other data as well.
+
+[arbitrarily accurate approximations]: https://www.tivadardanka.com/blog/universal-approximation-theorem
+
 ## The Convolution Module: Message-passing Graph Convolutional Networks
 
 NAGL's goal is to produce machine-learned models that can compute partial charges and other properties for all the atoms in a molecule. To do this, it needs a way to represent atoms to the network in their full molecular context. This representation is called an **embedding**, because it embeds all the information there is to know about a particular atom in some relatively low-dimensional space. An atom's feature vector is a simplistic, human-readable embedding, but we want something that a neural network can use to infer charges, even if that means losing simplicity and readability. That means folding in information about the surrounding atoms and their connectivity.
 
-NAGL produces atom embeddings with a message-passing graph convolutional network (GCN). A GCN takes each node's feature vector and iteratively mixes it with those of progressively more distant neighbours to produce an embedding for the node. This embedding can then be passed on to a **readout** network that predicts some particular property of interest. Both the **convolution module** and **readout module** can be trained in concert to produce an embedding that is bespoke to the computed property. 
+NAGL produces atom embeddings with a message-passing graph convolutional network (GCN). A GCN takes each node's feature vector and iteratively mixes it with those of progressively more distant neighbours to produce an embedding for the node. To start with, NAGL uses an atom's feature vector as its embedding, and its neighbours are the atoms directly bonded to it. On each iteration, the GCN first **aggregates** the feature vectors of a atom's neighbours, and then **updates** the embedding with the aggregated features of its neighbours. On the next iteration, the new embedding will be updated again, and the atoms an additional step away will form its new neighbourhood.
 
-https://docs.dgl.ai/en/1.0.x/tutorials/models/1_gnn/1_gcn.html
+NAGL's convolution module uses the [GraphSAGE] architecture to train a single neural network to produce an embedding for any atom in any molecule. GraphSAGE uses any of a number of simple mathematical functions for its aggregation step, and trains a neural network to perform the update function. NAGL currently uses simple elementwise averaging of features for its aggregation step, and trains the update network automatically as part of training a model. The update function is thus custom built to produce an embedding for the property we're trying to predict!
 
-https://tkipf.github.io/graph-convolutional-networks/
+:::{admonition} Note
+GraphSAGE has nothing to do with the Sage force field!
+:::
 
-http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
+[GraphSAGE]: https://snap.stanford.edu/graphsage/
 
-- Nodes of input graph are featurized
-- Message-passing convolution to generate graph's embedding
-    + Features of neighbors are mixed in to each node
-    + Iterate to capture long-range effects
-- Readout processes convolved embedding to make prediction
+## The Readout Module: The Charge Equilibration Method
+
+A trained convolution module takes a molecular graph and produces a representation for each atom that is custom-made for prediction of the desired property. These embeddings are then passed directly to the **Readout module** to predict the properties themselves; in fact, both modules are trained together to optimize their performance.
+
+The readout module consists of a neural network and a **post-processing** function. The post-processing function takes the outputs of the neural network and applies some traditional computation to them before producing the model's final result. NAGL therefore sandwiches its machine learning core between conventional, symbolic computation where chemistry knowledge can be injected.
+
+NAGL uses an interesting application of the post-processing layer when calculating charges.
 
 :::{raw} html
-
 <style>
 :root {
     --arrow-thickness: 1.5px;
@@ -187,7 +204,6 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 }
 
 .flowchart > *:not(.arrow) {
-    flex-grow: 1;
     border-radius: 12px;
     padding: 12px;
     align-self: stretch;
@@ -299,39 +315,49 @@ http://www.aritrasen.com/graph-neural-network-message-passing-gcn-1-1/
 }
 
 </style>
-<div class="flowchart">
-    <div>
-        <div>Molecule</div>
-        <img class="block" src="_static/images/theory/alanine.svg">
+<figure style="display: block; width: 100%; margin: 0;">
+    <div class="flowchart">
+        <div>
+            <div>Molecule</div>
+            <img class="block" src="_static/images/theory/alanine.svg">
+        </div>
+        <div class="arrow">featurize</div>
+        <div>
+            <ul>
+                <li>Feature vectors </li>
+                <li>Adjacency matrix</li>
+            </ul>
+            <img src="_static/images/theory/alanine-featurized.svg">
+        </div>
+        <div class="arrow fullwidth"></div>
+        <div class="module blue" label="Convolution module">
+            <div><img src="_static/images/theory/alanine-message_passing_input.svg"></div>
+            <div class="arrow">Aggregate</div>
+            <div><img src="_static/images/theory/alanine-message_passing_output.svg"></div>
+            <div class="arrow">Update</div>
+            <div><img src="_static/images/theory/alanine-update_output.svg"></div>
+            <div class="arrow fullwidth loopback">Iterate with greater hop distance</div>
+        </div>
+        <div class="arrow fullwidth"></div>
+        <div class="module orange" label="Readout module">
+            <div>Neural net</div>
+            <div class="arrow"></div>
+            <div>Post-processing</div>
+        </div>
+        <div class="arrow thick"></div>
+        <div><em>Prediction</em></div>
     </div>
-    <div class="arrow">featurize</div>
-    <div>
-        <ul>
-            <li>Feature vectors </li>
-            <li>Adjacency matrix</li>
-        </ul>
-        <img src="_static/images/theory/alanine-atom-features.svg">
-        <img src="_static/images/theory/alanine-graph.svg">
-    </div>
-    <div class="arrow fullwidth"></div>
-    <div class="module blue" label="Convolution module">
-        <div><img src="_static/images/theory/alanine-message_passing_input.svg"></div>
-        <div class="arrow">Message-passing</div>
-        <div><img src="_static/images/theory/alanine-message_passing_output.svg"></div>
-        <div class="arrow">Update</div>
-        <div><img src="_static/images/theory/alanine-update_output.svg"></div>
-        <div class="arrow fullwidth loopback">Iterate with greater hop distance</div>
-    </div>
-    <div class="arrow fullwidth"></div>
-    <div class="module orange" label="Readout module">
-        <div>Neural net</div>
-        <div class="arrow"></div>
-        <div>Post-processing</div>
-    </div>
-    <div class="arrow thick"></div>
-    <div><em>Prediction</em></div>
-</div>
-
+    <figcaption>
 :::
+<!-- Markdown caption goes here: -->
 
-## Charge prediction with the charge equilibration method
+Flowchart depicting evaluation of a typical NAGL [model]. An [OpenFF `Molecule`] is ingested and interpreted as a molecular graph. The adjacency matrix is extracted from the graph and the nodes and edges are [featurized]. These data are passed through the convolution module to prepare each atom's embedding; this iterative process consists of aggregating neighbours into a vector, and then passing the aggregate and the current embedding through a neural network to produce a new embedding. This is repeated with more distant neighbours to produce an embedding that the network recognises as a chemical atom. These embeddings are then passed through a readout neural network to produce physically meaningful predictions, and these predictions are post-processed with chemical knowledge into the desired result.
+
+[OpenFF `Molecule`]: openff.toolkit.Molecule
+[featurized]: openff.nagl.features
+[model]: openff.nagl.GNNModel
+
+:::{raw} html
+    </figcaption>
+</figure>
+:::
