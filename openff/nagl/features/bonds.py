@@ -10,7 +10,6 @@ from ._base import CategoricalMixin, Feature, FeatureMeta
 from ._utils import one_hot_encode
 
 __all__ = [
-    "BondFeatureMeta",
     "BondFeature",
     "BondIsAromatic",
     "BondIsInRing",
@@ -20,11 +19,11 @@ __all__ = [
 ]
 
 
-class BondFeatureMeta(FeatureMeta):
+class _BondFeatureMeta(FeatureMeta):
     registry: ClassVar[Dict[str, Type]] = {}
 
 
-class BondFeature(Feature, metaclass=BondFeatureMeta):
+class BondFeature(Feature, metaclass=_BondFeatureMeta):
     pass
 
 
