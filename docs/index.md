@@ -49,7 +49,7 @@ model.compute_property(ethanol)
 ```
 
 [`openff.nagl.GNNModel`]: openff.nagl.GNNModel
-[`GNNModel.load_from_checkpoint()`]: openff.nagl.GNNModel.load_from_checkpoint
+[`GNNModel.load()`]: openff.nagl.GNNModel.load
 [`GNNModel.compute_property()`]: openff.nagl.GNNModel.compute_property
 [`Molecule`]: openff.toolkit.topology.Molecule
 
