@@ -80,6 +80,27 @@ Here we'll go through each option, what it means, where to find the available ch
 [`GNNModel`]: openff.nagl.GNNModel
 [`GNNModel.from_yaml_file()`]: openff.nagl.GNNModel.from_yaml_file 
 
+## `atom_features` and `bond_features`
+
+These arguments specify the featurization scheme for the model. `atom_features` takes a tuple of features from the [`openff.nagl.features.atoms`] module, and `bond_features` a tuple of features from the [`openff.nagl.features.bonds`] module. These features inherit from the [`AtomFeature`] and [`BondFeature`] abstract base classes, respectively.
+
+[`openff.nagl.features.atoms`]: openff.nagl.features.atoms
+[`openff.nagl.features.bonds`]: openff.nagl.features.bonds
+[`AtomFeature`]: openff.nagl.features.atoms.AtomFeature
+[`BondFeature`]: openff.nagl.features.bonds.BondFeature
+
 ## `convolution_architecture`
 
-The `convolution_architecture` specifies the 
+The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.nn.gcn`] module. 
+
+[`openff.nagl.nn.gcn`]: openff.nagl.nn.gcn
+
+
+    n_convolution_hidden_features=128,
+    n_convolution_layers=3,
+    n_readout_hidden_features=128,
+    n_readout_layers=4,
+    activation_function=ReLU,
+    postprocess_layer=ComputePartialCharges,
+    readout_name=f"am1bcc-charges",
+    learning_rate=0.001,
