@@ -28,9 +28,10 @@ openff-nagl --help
 [`openff-nagl`]: https://anaconda.org/conda-forge/openff-nagl
 [`openff.nagl`]: openff.nagl
 
+(inference)=
 ## Inference with NAGL
 
-NAGL GNN models are used via the [`openff.nagl.GNNModel`] class. A checkpoint file produced by NAGL can be loaded with the [`GNNModel.load_from_checkpoint()`] method:
+NAGL GNN models are used via the [`openff.nagl.GNNModel`] class. A checkpoint file produced by NAGL can be loaded with the [`GNNModel.load()`] method:
 
 ```python
 from openff.nagl import GNNModel
@@ -60,9 +61,9 @@ hidden: true
 
 Overview <self>
 installation.md
-inference.md
-training.md
 theory.md
+designing.md
+training.md
 examples.md
 :::
 

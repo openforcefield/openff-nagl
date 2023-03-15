@@ -1,1 +1,1 @@
-# Training a GCN
+# Preparing a dataset

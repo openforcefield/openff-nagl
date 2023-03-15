@@ -1,6 +1,6 @@
 # Installation
 
-OpenFF recommends using Conda virtual environments for all scientific Python work. OpenFF NAGL can be installed automatically from the open source [Conda Forge] channel; if you do not yet have Conda, we recommend installing the [MambaForge] distribution, which includes the faster Mamba package manager and is pre-configured to work with Conda Forge.
+OpenFF recommends using Conda virtual environments for all scientific Python work. OpenFF NAGL can be installed automatically from the open source [Conda Forge] channel; if you do not yet have Conda, we recommend installing the [MambaForge] distribution, which includes the faster Mamba package manager and is pre-configured to work with Conda Forge. Mamba is a drop-in replacement for the package management functions of Conda, and so if it is unavailable can be replaced with `conda` in all the following commands.
 
 NAGL can be installed into a new Conda environment named `nagl` with the `openff-nagl` package:
 
