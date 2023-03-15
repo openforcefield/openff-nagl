@@ -145,7 +145,7 @@ class GNNModel(BaseGNNModel):
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.activation.ActivationFunction.ReLU`,
         or as a string, e.g. ``"ReLU"``.
-    postprocess_layer: Union[str, PostprocessLayerMeta]
+    postprocess_layer: Union[str, PostprocessLayer]
         The postprocess layer to use.
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
