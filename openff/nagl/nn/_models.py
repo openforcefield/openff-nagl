@@ -130,8 +130,8 @@ class GNNModel(BaseGNNModel):
     n_convolution_hidden_features: int
         The number of features in each of the hidden convolutional layers.
     n_convolution_layers: int
-        The number of hidden convolutional layers to generate. These are the 
-        layers in the convolutional module between the input layer and the 
+        The number of hidden convolutional layers to generate. These are the
+        layers in the convolutional module between the input layer and the
         pooling layer.
     n_readout_hidden_features: int
         The number of features in each of the hidden readout layers.
@@ -150,6 +150,10 @@ class GNNModel(BaseGNNModel):
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
         or as a string, e.g. ``"compute_partial_charges"``.
+    readout_name: str
+        A human-readable name for the readout module.
+    learning_rate: float
+        The learning rate for optimization.
     atom_features: Tuple[AtomFeature, ...]
         The atom features to use.
     bond_features: Tuple[BondFeature, ...]
@@ -162,8 +166,10 @@ class GNNModel(BaseGNNModel):
     readout_dropout: float
         The dropout probability to use in the readout layers.
     """
+
     @classmethod
-    def from_yaml_file(cls, *paths, **kwargs):
+    def from_yaml_file(cls, *paths, **kwargs) -> "GNNModel":
+        """Construct a ``GNNModel`` from a YAML file"""
         import yaml
 
         yaml_kwargs = {}
@@ -177,6 +183,7 @@ class GNNModel(BaseGNNModel):
 
     @property
     def n_atom_features(self) -> int:
+        """The number of features used to represent an atom"""
         lengths = [len(feature) for feature in self.atom_features]
         n_features = sum(lengths)
         return n_features
@@ -260,7 +267,7 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool
             Whether to return the result as a numpy array.
             If ``False``, the result will be a ``torch.Tensor``.
-        
+
         Returns
         -------
         result: torch.Tensor or numpy.ndarray
@@ -348,7 +355,7 @@ class GNNModel(BaseGNNModel):
         >>> model.save("model.pt")
         >>> new_model = GNNModel.load("model.pt")
 
-        Notes   
+        Notes
         -----
         This method is not compatible with normal Pytorch
         models saved with ``torch.save``, as it expects
@@ -370,7 +377,7 @@ class GNNModel(BaseGNNModel):
     def save(self, path: str):
         """
         Save this model to a file.
-        
+
         Parameters
         ----------
         path: str

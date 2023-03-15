@@ -1,4 +1,25 @@
-"Atom features for GNN models"
+"""Atom features for GNN models.
+
+An atom featurization scheme is a tuple of instances of the classes in this
+module:
+
+>>> atom_features = (
+...     AtomicElement(),
+...     AtomHybridization(),
+...     AtomConnectivity(),
+...     AtomAverageFormalCharge(),
+...     AtomGasteigerCharge(),
+...     AtomInRingOfSize(3),
+...     AtomInRingOfSize(4),
+...     AtomInRingOfSize(5),
+...     AtomInRingOfSize(6),
+...     ...
+... )
+
+The :py:class:`AtomFeature` and :py:class:`AtomFeatureMeta` classes may be used
+to implement your own features.
+
+"""
 
 import copy
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
@@ -35,15 +56,32 @@ __all__ = [
 
 
 class AtomFeatureMeta(FeatureMeta):
+    """Metaclass for registering atom features for string lookup."""
+
     registry: ClassVar[Dict[str, Type]] = {}
 
 
 class AtomFeature(Feature, metaclass=AtomFeatureMeta):
+    """Abstract base class for features of atoms."""
+
     pass
 
 
 class AtomicElement(CategoricalMixin, AtomFeature):
+    """One-hot encodings for specified elements
+
+    By default, one-hot encodings are provided for all of the elements in
+    the :py:data:`categories` field. To cover a different list of elements,
+    provide that list as an argument to the feature:
+
+    >>> atom_features = (
+    ...     AtomicElement(["C", "H", "O", "N", "P", "S"]),
+    ...     ...
+    ... )
+    """
+
     categories: List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P"]
+    """Elements to provide one-hot encodings for."""
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         try:
@@ -56,6 +94,10 @@ class AtomicElement(CategoricalMixin, AtomFeature):
 
 
 class AtomHybridization(CategoricalMixin, AtomFeature):
+    """
+    One-hot encodings for the specified atomic orbital hybridization modes.
+    """
+
     categories: List[HybridizationType] = [
         HybridizationType.OTHER,
         HybridizationType.SP,
@@ -64,6 +106,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
         HybridizationType.SP3D,
         HybridizationType.SP3D2,
     ]
+    """The supported hybridization modes."""
 
     @validator("categories", pre=True, each_item=True)
     def _validate_categories(cls, v):
@@ -86,7 +129,21 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
 
 
 class AtomConnectivity(CategoricalMixin, AtomFeature):
+    """
+    One-hot encodings for the number of other atoms this atom is connected to.
+
+    By default, one-hot encodings are provided for all of the connectivities in
+    the :py:data:`categories` field. To cover a different list of numbers,
+    provide that list as an argument to the feature:
+
+    >>> atom_features = (
+    ...     AtomConnectivity([1, 2, 3, 4, 5, 6]),
+    ...     ...
+    ... )
+    """
+
     categories: List[int] = [1, 2, 3, 4]
+    """Connectivities to provide one-hot encodings for."""
 
     def _encode(self, molecule) -> torch.Tensor:
         return torch.vstack(
@@ -98,11 +155,22 @@ class AtomConnectivity(CategoricalMixin, AtomFeature):
 
 
 class AtomIsAromatic(AtomFeature):
+    """One-hot encoding for whether the atom is aromatic or not."""
+
     def _encode(self, molecule) -> torch.Tensor:
         return torch.tensor([int(atom.is_aromatic) for atom in molecule.atoms])
 
 
 class AtomIsInRing(AtomFeature):
+    """
+    One-hot encoding for whether the atom is in a ring of any size.
+
+    See Also
+    --------
+    AtomInRingOfSize, BondIsInRingOfSize, BondIsInRing
+
+    """
+
     def _encode(self, molecule) -> torch.Tensor:
         ring_atoms = [
             index for index, in molecule.chemical_environment_matches("[*r:1]")
@@ -113,7 +181,29 @@ class AtomIsInRing(AtomFeature):
 
 
 class AtomInRingOfSize(AtomFeature):
+    """
+    One-hot encoding for whether the atom is in a ring of the given size.
+
+    The size of the ring is specified by the argument. For a ring of any size,
+    see :py:class:`AtomIsInRing`. To produce features corresponding to rings of
+    multiple sizes, provide this feature multiple times:
+
+    >>> atom_features = (
+    ...     AtomInRingOfSize(3),
+    ...     AtomInRingOfSize(4),
+    ...     AtomInRingOfSize(5),
+    ...     AtomInRingOfSize(6),
+    ...     ...
+    ... )
+
+    See Also
+    --------
+    AtomIsInRing, BondIsInRingOfSize, BondIsInRing
+
+    """
+
     ring_size: int
+    """The size of the ring that this feature describes."""
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_atoms_are_in_ring_size
@@ -126,6 +216,19 @@ class AtomInRingOfSize(AtomFeature):
 
 
 class AtomFormalCharge(CategoricalMixin, AtomFeature):
+    """
+    One-hot encoding of the formal charge on an atom.
+
+    By default, one-hot encodings are provided for all of the formal charges in
+    the :py:data:`categories` field. To cover a different list of charges,
+    provide that list as an argument to the feature:
+
+    >>> atom_features = (
+    ...     AtomFormalCharge([-4, -3, -2, -1, 0, 1, 2, 3, 4]),
+    ...     ...
+    ... )
+    """
+
     categories: List[int] = [-3, -2, -1, 0, 1, 2, 3]
 
     def _encode(self, molecule) -> torch.Tensor:
@@ -145,6 +248,13 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
 
 
 class AtomAverageFormalCharge(AtomFeature):
+    """
+    The formal charge of the atom, averaged over all resonance forms.
+
+    This feature encodes the average formal charge directly, it does not use a
+    one-hot encoding.
+    """
+
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from openff.nagl.utils.resonance import enumerate_resonance_forms
         from openff.nagl.toolkits.openff import normalize_molecule
@@ -172,6 +282,13 @@ class AtomAverageFormalCharge(AtomFeature):
 
 
 class AtomGasteigerCharge(AtomFeature):
+    """
+    The Gasteiger partial charge of the atom.
+
+    This feature encodes the Gasteiger charge directly, it does not use a
+    one-hot encoding.
+    """
+
     def _encode(self, molecule) -> torch.Tensor:
         from openff.units import unit
 

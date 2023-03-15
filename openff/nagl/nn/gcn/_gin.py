@@ -157,7 +157,9 @@ class DGLGINConv(BaseGINConv):
 
 
 class GINConvStack(BaseGCNStack[GINConv]):
-    """A wrapper around a stack of GINConv graph convolutional layers"""
+    """
+    Graph Isomorphism Network GCN for whole molecule embeddings.
+    """
 
     name = "GINConv"
     available_aggregator_types = ["sum", "max", "mean"]

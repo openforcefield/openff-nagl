@@ -14,6 +14,8 @@ __all__ = ["PostprocessLayerMeta", "PostprocessLayer", "ComputePartialCharges"]
 
 
 class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
+    """Metaclass for registering post-processing layers for string lookup."""
+
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
@@ -50,14 +52,21 @@ class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta)
 
 
 class ComputePartialCharges(PostprocessLayer):
-    """A layer which will map an NN readout containing a set of atomic electronegativity
-    and hardness parameters to a set of partial charges [1].
+    """
+    Maps a set of atomic electronegativity and hardness parameters to partial charges.
 
-    References:
-        [1] Gilson, Michael K., Hillary SR Gilson, and Michael J. Potter. "Fast
-            assignment of accurate partial atomic charges: an electronegativity
-            equalization method that accounts for alternate resonance forms." Journal of
-            chemical information and computer sciences 43.6 (2003): 1982-1997.
+    References
+    ----------
+
+    1. Gilson, Michael K.; Gilson, Hillary S.R.; Potter, Michael J. "Fast
+    assignment of accurate partial atomic charges: an electronegativity
+    equalization method that accounts for alternate resonance forms." `Journal
+    of Chemical Information and Computer Sciences
+    <https://doi.org/10.1021/ci034148o>`_ 43.6 (2003): 1982-1997.
+
+    2. Wang, Yuanqing; Fass, Josh; Stern, Chaya D.; Luo, Kun; Chodera, John
+    D. "Graph Nets for Partial Charge Prediction." `arXiv:1909.07903
+    [physics.comp-ph] <https://doi.org/10.48550/arXiv.1909.07903>`_
     """
 
     name: ClassVar[str] = "compute_partial_charges"
