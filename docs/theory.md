@@ -100,6 +100,7 @@ Molecular graphs are provided to NAGL via the [`Molecule`] class of the [OpenFF 
 [`MoleculeRecord.from_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_openff
 [`MoleculeRecord.from_precomputed_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_precomputed_openff
 
+(featurization_theory)=
 ## Featurization
 
 Before we can put a molecule through a neural network, we need a way to represent it with numerical vectors. NAGL uses the molecular graph to break the molecule into nodes and edges, and then represents each node or edge as its own vector. The numbers in these vectors each describe a particular feature of the atom or bond, and so the vectors are called **feature vectors**. The process of encoding an atom or bond as a feature vector is called **featurization**.
@@ -124,6 +125,7 @@ Feature templates for [bonds] and [atoms] are available in the [`features`] modu
 [`features`]: openff.nagl.features
 [`ResonanceEnumerator`]: openff.nagl.utils.resonance.ResonanceEnumerator
 
+(nn_theory)=
 ## Neural Networks - a quick primer
 
 NAGL makes heavy use of the workhorse of machine learning, the **neural network**. A neural network is a machine learning model inspired by the animal brain that can provide [arbitrarily accurate approximations] to a huge variety of mathematical functions. The quality of the approximation depends on the structure and size of the neural network; larger networks are capable of producing better approximations, but require more parameters to describe. Neural networks work just fine on functions that map between vector spaces, and modern computer hardware is well-equipped to compute them efficiently. 
@@ -142,6 +144,7 @@ NAGL's neural networks are hidden behind the [`GNNModel`] class, so configuring 
 
 [arbitrarily accurate approximations]: https://www.tivadardanka.com/blog/universal-approximation-theorem
 
+(convolution_theory)=
 ## The Convolution Module: Message-passing Graph Convolutional Networks
 
 NAGL's goal is to produce machine-learned models that can compute partial charges and other properties for all the atoms in a molecule. To do this, it needs a way to represent atoms to the network in their full molecular context. This representation is called an **embedding**, because it embeds all the information there is to know about a particular atom in some relatively low-dimensional space. An atom's feature vector is a simplistic, human-readable embedding, but we want something that a neural network can use to infer charges, even if that means losing simplicity and readability. That means folding in information about the surrounding atoms and their connectivity.
@@ -156,6 +159,7 @@ GraphSAGE has nothing to do with the Sage force field!
 
 [GraphSAGE]: https://snap.stanford.edu/graphsage/
 
+(readout_theory)=
 ## The Readout Module: The Charge Equilibration Method
 
 A trained convolution module takes a molecular graph and produces a representation for each atom that is custom-made for prediction of the desired property. These embeddings are then passed directly to the **Readout module** to predict the properties themselves; in fact, both modules are trained together to optimize their performance.
