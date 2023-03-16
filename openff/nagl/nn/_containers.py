@@ -6,7 +6,7 @@ import torch
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import GCNStackMeta, BaseConvModule
+from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn.postprocess import PostprocessLayer
@@ -24,7 +24,7 @@ class ConvolutionModule(torch.nn.Module):
     ):
         super().__init__()
 
-        gcn_cls = GCNStackMeta._get_class(architecture)
+        gcn_cls = _GCNStackMeta._get_class(architecture)
         self.gcn_layers = gcn_cls.with_layers(
             n_input_features=n_input_features,
             hidden_feature_sizes=hidden_feature_sizes,

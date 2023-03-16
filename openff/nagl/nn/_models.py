@@ -202,14 +202,14 @@ class GNNModel(BaseGNNModel):
         from openff.nagl.features.atoms import AtomFeature
         from openff.nagl.features.bonds import BondFeature
         from openff.nagl.nn.activation import ActivationFunction
-        from openff.nagl.nn.gcn import GCNStackMeta
+        from openff.nagl.nn.gcn import _GCNStackMeta
         from openff.nagl.nn._pooling import PoolAtomFeatures
         from openff.nagl.nn.postprocess import _PostprocessLayerMeta
         from openff.nagl.nn._sequential import SequentialLayers
 
         self.readout_name = readout_name
 
-        convolution_architecture = GCNStackMeta._get_class(convolution_architecture)
+        convolution_architecture = _GCNStackMeta._get_class(convolution_architecture)
         postprocess_layer = _PostprocessLayerMeta._get_class(postprocess_layer)
         activation_function = ActivationFunction._get_class(activation_function)
         self.atom_features = self._validate_features(atom_features, AtomFeature)
