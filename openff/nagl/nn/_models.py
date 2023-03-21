@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
     from openff.nagl.molecule._dgl.molecule import DGLMolecule
+    from openff.nagl.nn.postprocess import PostprocessLayer
+    from openff.nagl.nn.activation import ActivationFunction
+    from openff.nagl.nn.gcn._base import BaseGCNStack
 
 
 def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -113,6 +116,53 @@ class BaseGNNModel(pl.LightningModule):
 
 
 class GNNModel(BaseGNNModel):
+    """
+    A model that applies a graph convolutional step followed by
+    pooling and readout steps.
+
+    Parameters
+    ----------
+    convolution_architecture: Union[str, BaseGCNStack]
+        The graph convolution architecture.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.gcn.SAGEConvStack`
+        or as a string, e.g. ``"SAGEConv"``.
+    n_convolution_hidden_features: int
+        The number of features in each of the hidden convolutional layers.
+    n_convolution_layers: int
+        The number of hidden convolutional layers to generate. These are the
+        layers in the convolutional module between the input layer and the
+        pooling layer.
+    n_readout_hidden_features: int
+        The number of features in each of the hidden readout layers.
+    n_readout_layers: int
+        The number of hidden readout layers to generate. These are the layers
+        between the convolution module's pooling layer and the readout module's
+        output layer. The pooling layer may be considered to be both the
+        convolution module's output layer and the readout module's input layer.
+    activation_function: Union[str, ActivationFunction]
+        The activation function to use for the readout module.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.activation.ActivationFunction.ReLU`,
+        or as a string, e.g. ``"ReLU"``.
+    postprocess_layer: Union[str, PostprocessLayer]
+        The postprocess layer to use.
+        This can be given either as a class,
+        e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
+        or as a string, e.g. ``"compute_partial_charges"``.
+    atom_features: Tuple[AtomFeature, ...]
+        The atom features to use.
+    bond_features: Tuple[BondFeature, ...]
+        The bond features to use.
+    loss_function: Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
+        The loss function. This is RMSE by default, but can be any function
+        that takes a predicted and target tensor and returns a scalar loss tensor.
+    convolution_dropout: float
+        The dropout probability to use in the convolutional layers.
+    readout_dropout: float
+        The dropout probability to use in the readout layers.
+    """
+
     @classmethod
     def from_yaml_file(cls, *paths, **kwargs):
         import yaml
@@ -134,13 +184,13 @@ class GNNModel(BaseGNNModel):
 
     def __init__(
         self,
-        convolution_architecture: str,
+        convolution_architecture: Union[str, "BaseGCNStack"],
         n_convolution_hidden_features: int,
         n_convolution_layers: int,
         n_readout_hidden_features: int,
         n_readout_layers: int,
-        activation_function: str,
-        postprocess_layer: str,
+        activation_function: Union[str, "ActivationFunction"],
+        postprocess_layer: Union[str, "PostprocessLayer"],
         readout_name: str,
         learning_rate: float,
         atom_features: Tuple["AtomFeature", ...],
@@ -152,15 +202,15 @@ class GNNModel(BaseGNNModel):
         from openff.nagl.features.atoms import AtomFeature
         from openff.nagl.features.bonds import BondFeature
         from openff.nagl.nn.activation import ActivationFunction
-        from openff.nagl.nn.gcn import GCNStackMeta
+        from openff.nagl.nn.gcn import _GCNStackMeta
         from openff.nagl.nn._pooling import PoolAtomFeatures
-        from openff.nagl.nn.postprocess import PostprocessLayerMeta
+        from openff.nagl.nn.postprocess import _PostprocessLayerMeta
         from openff.nagl.nn._sequential import SequentialLayers
 
         self.readout_name = readout_name
 
-        convolution_architecture = GCNStackMeta._get_class(convolution_architecture)
-        postprocess_layer = PostprocessLayerMeta._get_class(postprocess_layer)
+        convolution_architecture = _GCNStackMeta._get_class(convolution_architecture)
+        postprocess_layer = _PostprocessLayerMeta._get_class(postprocess_layer)
         activation_function = ActivationFunction._get_class(activation_function)
         self.atom_features = self._validate_features(atom_features, AtomFeature)
         self.bond_features = self._validate_features(bond_features, BondFeature)
@@ -201,6 +251,21 @@ class GNNModel(BaseGNNModel):
     def compute_property(
         self, molecule: "Molecule", as_numpy: bool = False
     ) -> "torch.Tensor":
+        """
+        Compute the trained property for a molecule.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to compute the property for.
+        as_numpy: bool
+            Whether to return the result as a numpy array.
+            If ``False``, the result will be a ``torch.Tensor``.
+
+        Returns
+        -------
+        result: torch.Tensor or numpy.ndarray
+        """
         try:
             values = self._compute_property_dgl(molecule)
         except MissingOptionalDependencyError:
@@ -260,9 +325,37 @@ class GNNModel(BaseGNNModel):
 
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
-        import torch
+        """
+        Load a model from a file.
 
-        model_kwargs = torch.load(model)
+        Parameters
+        ----------
+        model: str
+            The path to the model to load.
+            This should be a file containing a dictionary of
+            hyperparameters and a state dictionary,
+            with the keys "hyperparameters" and "state_dict".
+            This can be created using the `save` method.
+        eval_mode: bool
+            Whether to set the model to evaluation mode.
+
+        Returns
+        -------
+        model: GNNModel
+
+        Examples
+        --------
+
+        >>> model.save("model.pt")
+        >>> new_model = GNNModel.load("model.pt")
+
+        Notes
+        -----
+        This method is not compatible with normal Pytorch
+        models saved with ``torch.save``, as it expects
+        a dictionary of hyperparameters and a state dictionary.
+        """
+        model_kwargs = torch.load(str(model))
         if isinstance(model_kwargs, dict):
             model = cls(**model_kwargs["hyperparameters"])
             model.load_state_dict(model_kwargs["state_dict"])
@@ -274,3 +367,31 @@ class GNNModel(BaseGNNModel):
             model.eval()
 
         return model
+
+    def save(self, path: str):
+        """
+        Save this model to a file.
+
+        Parameters
+        ----------
+        path: str
+            The path to save this file to.
+
+        Examples
+        --------
+
+        >>> model.save("model.pt")
+        >>> new_model = GNNModel.load("model.pt")
+
+        Notes
+        -----
+        This method writes a dictionary of the hyperparameters and the state dictionary,
+        with the keys "hyperparameters" and "state_dict".
+        """
+        torch.save(
+            {
+                "hyperparameters": self.hparams,
+                "state_dict": self.state_dict(),
+            },
+            str(path),
+        )

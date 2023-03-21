@@ -242,3 +242,11 @@ class TestGNNModel:
         desired = molecule.partial_charges.m_as(unit.elementary_charge)
         computed = model.compute_property(molecule, as_numpy=True)
         assert_allclose(computed, desired, atol=1e-5)
+
+    def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir):
+        with tmpdir.as_cwd():
+            am1bcc_model.save("model.pt")
+            model = GNNModel.load("model.pt", eval_mode=True)
+            charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
+            expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
+            assert_allclose(charges, expected, atol=1e-5)
