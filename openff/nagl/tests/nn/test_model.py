@@ -1,7 +1,11 @@
+import importlib_resources
 import numpy as np
 import pytest
 import torch
 from numpy.testing import assert_allclose
+
+from openff.toolkit import Molecule
+from openff.units import unit
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -198,15 +202,43 @@ class TestGNNModel:
         assert isinstance(model, GNNModel)
 
         assert model.atom_features == [
-            AtomicElement(categories=['C', 'O', 'H', 'N', 'S', 'F', 'Br', 'Cl', 'I', 'P']),
+            AtomicElement(
+                categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
+            ),
             AtomConnectivity(categories=[1, 2, 3, 4]),
             AtomAverageFormalCharge(),
             AtomInRingOfSize(ring_size=3),
             AtomInRingOfSize(ring_size=4),
             AtomInRingOfSize(ring_size=5),
-            AtomInRingOfSize(ring_size=6)
+            AtomInRingOfSize(ring_size=6),
         ]
 
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
+        expected = np.array([-0.111393, 0.027848, 0.027848, 0.027848, 0.027848])
         assert_allclose(charges, expected, atol=1e-5)
+
+    @pytest.mark.parametrize(
+        "smiles",
+        [
+            "CNC",
+            "CCNCO",
+            "CCO",
+            "CC(=O)O",
+            "CC(=O)([O-])",
+            "C1CC1",
+            "C1CCC1",
+            "C1CNCC1",
+            "C1CNC(=O)CC1",
+        ],
+    )
+    def test_load_and_compute(self, smiles):
+        model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
+        testdir = importlib_resources.files("openff.nagl") / "tests"
+        path = testdir / "data" / "example_am1bcc_charges" / f"{smiles}.sdf"
+        molecule = Molecule.from_file(
+            str(path), file_format="sdf", allow_undefined_stereo=True
+        )
+
+        desired = molecule.partial_charges.m_as(unit.elementary_charge)
+        computed = model.compute_property(molecule, as_numpy=True)
+        assert_allclose(computed, desired, atol=1e-5)

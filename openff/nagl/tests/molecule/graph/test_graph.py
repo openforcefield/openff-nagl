@@ -6,14 +6,23 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import torch
 
+from openff.toolkit import Molecule
+
 from openff.nagl.molecule._graph._batch import FrameDict
 from openff.nagl.molecule._graph._graph import (
     NXMolGraph,
     NXMolHomoGraph,
     NXMolHeteroGraph,
 )
-from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.atoms import (
+    AtomicElement,
+    AtomConnectivity,
+    AtomAverageFormalCharge,
+    AtomInRingOfSize,
+)
 from openff.nagl.features.bonds import BondOrder
+from openff.nagl.molecule._graph.molecule import GraphMolecule
+from openff.nagl.nn.gcn import _function as _fn
 
 
 @pytest.fixture
@@ -474,3 +483,44 @@ class TestNXMolHomoGraph:
 
         i_ = methyl_methanoate_homo_graph.in_edges(nodes, form="eid")
         assert torch.equal(i, i_)
+
+    def test_message_passing(self, openff_cnc):
+
+        atom_features = [
+            AtomicElement(
+                categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
+            ),
+            AtomConnectivity(categories=[1, 2, 3, 4]),
+            AtomAverageFormalCharge(),
+            AtomInRingOfSize(ring_size=3),
+            AtomInRingOfSize(ring_size=4),
+            AtomInRingOfSize(ring_size=5),
+            AtomInRingOfSize(ring_size=6),
+        ]
+
+        nxmol = GraphMolecule.from_openff(
+            openff_cnc,
+            atom_features=atom_features,
+        )
+        graph = nxmol.to_homogenous()
+        message_function = _fn.copy_u("h", "m")
+        reduce_function = _fn.mean("m", "neigh")
+
+        graph.srcdata["h"] = nxmol.atom_features
+        graph.update_all(message_function, reduce_function)
+        expected = np.array([
+            [0, 0, 0.75, 0.25, 0, 0, 0, 0, 0, 0, 0.75, 0, 0.25, 0, 0, 0, 0, 0, 0, ],
+            [0.6666667, 0, 0.33333334, 0, 0, 0, 0, 0, 0, 0, 0.33333334, 0, 0, 0.6666667, 0, 0, 0, 0, 0, ],
+            [0, 0, 0.75, 0.25, 0, 0, 0, 0, 0, 0, 0.75, 0, 0.25, 0, 0, 0, 0, 0, 0, ],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ], 
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, ],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ]
+        ])
+        assert_allclose(
+            graph.ndata["neigh"].detach().numpy(),
+            expected,
+        )

@@ -134,7 +134,14 @@ class NXMolGraph:
 
     def in_edges(self, nodes, form="uv"):
         u, v, i = self._all_edges()
-        mask = [x in nodes for x in v]
+        # mask = [x in nodes for x in v]
+
+        mask = []
+        for node in nodes:
+            for i_, v_ in enumerate(v):
+                if v_ == node:
+                    mask.append(i_)
+                    
         U, V, I = u[mask], v[mask], i[mask]
 
         if form == "uv":
