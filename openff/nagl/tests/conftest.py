@@ -81,3 +81,10 @@ def openff_carboxylate():
     from openff.toolkit.topology.molecule import Molecule
 
     return Molecule.from_mapped_smiles("[H:1][C:2](=[O:3])[O-:4]")
+
+
+@pytest.fixture()
+def openff_ccnco():
+    from openff.toolkit.topology.molecule import Molecule
+
+    return Molecule.from_mapped_smiles("[H:6][C:1]([H:7])([H:8])[C:2]([H:9])([H:10])[N:3]([H:11])[C:4]([H:12])([H:13])[O:5][H:14]")

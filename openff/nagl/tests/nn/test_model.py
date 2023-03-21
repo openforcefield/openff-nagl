@@ -14,6 +14,12 @@ from openff.nagl.tests.data.files import (
     MODEL_CONFIG_V7,
     EXAMPLE_AM1BCC_MODEL,
 )
+from openff.nagl.features.atoms import (
+    AtomicElement,
+    AtomConnectivity,
+    AtomAverageFormalCharge,
+    AtomInRingOfSize,
+)
 
 
 @pytest.fixture()
@@ -190,6 +196,16 @@ class TestGNNModel:
     def test_load(self, openff_methane_uncharged):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
         assert isinstance(model, GNNModel)
+
+        assert model.atom_features == [
+            AtomicElement(categories=['C', 'O', 'H', 'N', 'S', 'F', 'Br', 'Cl', 'I', 'P']),
+            AtomConnectivity(categories=[1, 2, 3, 4]),
+            AtomAverageFormalCharge(),
+            AtomInRingOfSize(ring_size=3),
+            AtomInRingOfSize(ring_size=4),
+            AtomInRingOfSize(ring_size=5),
+            AtomInRingOfSize(ring_size=6)
+        ]
 
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
         expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
