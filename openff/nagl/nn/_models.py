@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
     from openff.nagl.molecule._dgl.molecule import DGLMolecule
-    from openff.nagl.nn.postprocess import PostprocessLayerMeta
+    from openff.nagl.nn.postprocess import PostprocessLayer
     from openff.nagl.nn.activation import ActivationFunction
-    from openff.nagl.nn.gcn._base import GCNStackMeta
+    from openff.nagl.nn.gcn._base import BaseGCNStack
 
 
 def rmse_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -122,10 +122,10 @@ class GNNModel(BaseGNNModel):
 
     Parameters
     ----------
-    convolution_architecture: Union[str, GCNStackMeta]
+    convolution_architecture: Union[str, BaseGCNStack]
         The graph convolution architecture.
         This can be given either as a class,
-        e.g. :class:`~openff.nagl.nn.gcn._sage.SAGEConvStack`
+        e.g. :class:`~openff.nagl.nn.gcn.SAGEConvStack`
         or as a string, e.g. ``"SAGEConv"``.
     n_convolution_hidden_features: int
         The number of features in each of the hidden convolutional layers.
@@ -145,7 +145,7 @@ class GNNModel(BaseGNNModel):
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.activation.ActivationFunction.ReLU`,
         or as a string, e.g. ``"ReLU"``.
-    postprocess_layer: Union[str, PostprocessLayerMeta]
+    postprocess_layer: Union[str, PostprocessLayer]
         The postprocess layer to use.
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
@@ -190,13 +190,13 @@ class GNNModel(BaseGNNModel):
 
     def __init__(
         self,
-        convolution_architecture: Union[str, "GCNStackMeta"],
+        convolution_architecture: Union[str, "BaseGCNStack"],
         n_convolution_hidden_features: int,
         n_convolution_layers: int,
         n_readout_hidden_features: int,
         n_readout_layers: int,
         activation_function: Union[str, "ActivationFunction"],
-        postprocess_layer: Union[str, "PostprocessLayerMeta"],
+        postprocess_layer: Union[str, "PostprocessLayer"],
         readout_name: str,
         learning_rate: float,
         atom_features: Tuple["AtomFeature", ...],
@@ -208,15 +208,15 @@ class GNNModel(BaseGNNModel):
         from openff.nagl.features.atoms import AtomFeature
         from openff.nagl.features.bonds import BondFeature
         from openff.nagl.nn.activation import ActivationFunction
-        from openff.nagl.nn.gcn import GCNStackMeta
+        from openff.nagl.nn.gcn import _GCNStackMeta
         from openff.nagl.nn._pooling import PoolAtomFeatures
-        from openff.nagl.nn.postprocess import PostprocessLayerMeta
+        from openff.nagl.nn.postprocess import _PostprocessLayerMeta
         from openff.nagl.nn._sequential import SequentialLayers
 
         self.readout_name = readout_name
 
-        convolution_architecture = GCNStackMeta._get_class(convolution_architecture)
-        postprocess_layer = PostprocessLayerMeta._get_class(postprocess_layer)
+        convolution_architecture = _GCNStackMeta._get_class(convolution_architecture)
+        postprocess_layer = _PostprocessLayerMeta._get_class(postprocess_layer)
         activation_function = ActivationFunction._get_class(activation_function)
         self.atom_features = self._validate_features(atom_features, AtomFeature)
         self.bond_features = self._validate_features(bond_features, BondFeature)

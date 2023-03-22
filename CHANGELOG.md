@@ -22,10 +22,29 @@ The rules for this file:
 - @lilyminium
 
 ### Reviewers
-- @mattwthompson
+- 
 
 ### Added
 - `GNNModel.save` function (PR #29)
+
+### Fixed
+<!-- Bug fixes -->
+- Fix edge ordering in NXMol graph (Issue #28, PR #34)
+
+### Changed
+<!-- Changes in existing functionality -->
+- Migrate away from pkg_resources to importlib_resources (PR #35)
+
+## v0.2.1
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+
+### Reviewers
+- @mattwthompson
+
+### Added
 - `GNNModel.load` function (PR #26)
 - `convolution_dropout` and `readout_dropout` keywords to GNNModel (PR #26)
 

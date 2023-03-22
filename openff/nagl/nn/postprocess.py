@@ -10,12 +10,9 @@ import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
-__all__ = ["PostprocessLayerMeta", "PostprocessLayer", "ComputePartialCharges"]
 
-
-class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
+class _PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     """Metaclass for registering post-processing layers for string lookup."""
-
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
@@ -38,7 +35,7 @@ class PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     #         )
 
 
-class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=PostprocessLayerMeta):
+class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=_PostprocessLayerMeta):
     """A layer to apply to the final readout of a neural network."""
 
     name: ClassVar[str] = ""

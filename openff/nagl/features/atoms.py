@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 __all__ = [
-    "AtomFeatureMeta",
     "AtomFeature",
     "AtomicElement",
     "AtomConnectivity",
@@ -54,16 +53,13 @@ __all__ = [
     # "AtomMorganFingerprint"
 ]
 
-
-class AtomFeatureMeta(FeatureMeta):
+class _AtomFeatureMeta(FeatureMeta):
     """Metaclass for registering atom features for string lookup."""
-
     registry: ClassVar[Dict[str, Type]] = {}
 
 
-class AtomFeature(Feature, metaclass=AtomFeatureMeta):
+class AtomFeature(Feature, metaclass=_AtomFeatureMeta):
     """Abstract base class for features of atoms."""
-
     pass
 
 

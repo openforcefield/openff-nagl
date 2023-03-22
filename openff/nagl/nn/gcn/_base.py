@@ -43,7 +43,7 @@ class BaseConvModule(torch.nn.Module):
     pass
 
 
-class GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
+class _GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
     pass
 
 
@@ -52,7 +52,7 @@ class BaseGCNStack(
     Generic[GCNLayerType],
     ContainsLayersMixin,
     abc.ABC,
-    metaclass=GCNStackMeta,
+    metaclass=_GCNStackMeta,
 ):
     """A wrapper around a stack of GCN graph convolutional layers.
 
