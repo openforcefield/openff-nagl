@@ -1,7 +1,11 @@
+import importlib_resources
 import numpy as np
 import pytest
 import torch
 from numpy.testing import assert_allclose
+
+from openff.toolkit import Molecule
+from openff.units import unit
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -13,6 +17,12 @@ from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL_STATE_DICT,
     MODEL_CONFIG_V7,
     EXAMPLE_AM1BCC_MODEL,
+)
+from openff.nagl.features.atoms import (
+    AtomicElement,
+    AtomConnectivity,
+    AtomAverageFormalCharge,
+    AtomInRingOfSize,
 )
 
 
@@ -191,9 +201,69 @@ class TestGNNModel:
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
         assert isinstance(model, GNNModel)
 
+        assert model.atom_features == [
+            AtomicElement(
+                categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
+            ),
+            AtomConnectivity(categories=[1, 2, 3, 4]),
+            AtomAverageFormalCharge(),
+            AtomInRingOfSize(ring_size=3),
+            AtomInRingOfSize(ring_size=4),
+            AtomInRingOfSize(ring_size=5),
+            AtomInRingOfSize(ring_size=6),
+        ]
+
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.111393,  0.027848,  0.027848,  0.027848,  0.027848])
+        expected = np.array([-0.111393, 0.027848, 0.027848, 0.027848, 0.027848])
         assert_allclose(charges, expected, atol=1e-5)
+
+    @pytest.mark.parametrize(
+        "smiles",
+        [
+            "CNC",
+            "CCNCO",
+            "CCO",
+            "CC(=O)O",
+            "CC(=O)([O-])",
+            "C1CC1",
+            "C1CCC1",
+            "C1CNCC1",
+            "C1CNC(=O)CC1",
+            "FN(F)C(F)(F)N(F)C(N(F)F)(N(F)F)N(F)F",
+            "CC(C)(C)c1s[n-]c(=O)c1C[C@H]([NH3+])C(=O)O",
+            "O=C[O-]",
+            "CCCCCCOP(=O)([O-])OCC[NH2+]C",
+            "C[NH2+]CC(=O)N(C)CC(=O)[O-]",
+            "O=C(CC(O)(C(F)(F)F)C(F)(F)F)C1=CC(=S(=O)=O)CC(F)=C1",
+            "O=c1[nH]cnc2c([NH2+]CCCP(=O)([O-])[O-])c[nH]c12",
+            "CNC(=O)[C@H](C[S-])NC(=O)[C@@H](Cc1c[nH]c[nH+]1)NC(C)=O",
+            "CNC(=O)[C@H](C[S-])NC(=O)[C@@H](CCCC[NH3+])NC(C)=O",
+            "[NH3+][C@@H]1C(=C(F)F)CC[C@@H]1C(=O)[O-]",
+            "[NH3+][C@H](CCC(=O)[O-])C(=O)OC[C@H]1CCC[C@@H](CO)N1",
+            "CNC(=O)[C@@H](CCCC[NH3+])NC(=O)[C@H](C[S-])NC(C)=O",
+            "CC(C)C[C@H](NC(=O)[P@](=O)(O)[C@H]([NH3+])CC(C)C)C(=O)[O-]",
+            "Cc1nc(-c2ccc(NS(=O)(=O)C3=CSC=C=C3Cl)cc2)[nH]c2nnc(N)c1-2",
+            "C=C(C[N+](=O)[O-])N[C@@H](CCCCNc1ccc([N+](=O)[O-])cc1[NH+](O)O)C(=O)O",
+            "Fc1ncccc1[C@H]1CCC2=C(C1)C(=C1N=NN=N1)N=N2",
+            "CN1c2ccccc2[C@@H](NCCCCC(=O)O)c2ccc(Cl)cc2S1([O-])[O-]",
+            "CC1=C(N2CCN(C3=C(C)N([O-])ON3)CC2)NON1[O-]",
+            "[O-]S(O)(O)CC[NH+]1CCOCC1",
+            "O=NN([O-])[O-]",
+            "[O-]P([O-])[O-]",
+            "C#N"
+        ],
+    )
+    def test_load_and_compute(self, smiles):
+        model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
+        testdir = importlib_resources.files("openff.nagl") / "tests"
+        path = testdir / "data" / "example_am1bcc_sage_charges" / f"{smiles}.sdf"
+        molecule = Molecule.from_file(
+            str(path), file_format="sdf", allow_undefined_stereo=True
+        )
+
+        desired = molecule.partial_charges.m_as(unit.elementary_charge)
+        computed = model.compute_property(molecule, as_numpy=True)
+        assert_allclose(computed, desired, atol=1e-5)
 
     def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir):
         with tmpdir.as_cwd():
