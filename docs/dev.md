@@ -1,6 +1,6 @@
 # Dev Installation
 
-To build NAGL from source, we highly recommend using virtual environments. If possible, we strongly recommend that you use[Anaconda](https://docs.conda.io/en/latest/) as your package manager.
+To build NAGL from source, we highly recommend using virtual environments. If possible, we strongly recommend that you use [Anaconda](https://docs.conda.io/en/latest/) as your package manager.
 
 Ensure that you have [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) installed.
 
