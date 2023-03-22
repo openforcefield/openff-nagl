@@ -216,7 +216,21 @@ class SAGEConv(BaseConvModule):
 
 
 class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
-    """A wrapper around a stack of SAGEConv graph convolutional layers"""
+    """
+    GraphSAGE graph convolutional neural network for atom embeddings.
+
+    `GraphSAGE <https://snap.stanford.edu/graphsage/>`_ GCNs learn a function
+    that iteratively improves a node embedding by mixing in aggregated feature
+    vectors of progressively more distant neighborhoods. GraphSAGE is inductive,
+    scales to large graphs, and makes good use of feature-rich node embeddings.
+
+    Layers in this network use the DGL :py:class:`SAGEConv
+    <dgl.nn.pytorch.conv.SAGEConv>` class.
+
+    See Also
+    --------
+    dgl.nn.pytorch.conv.SAGEConv
+    """
 
     name = "SAGEConv"
     available_aggregator_types = ["mean", "gcn", "pool", "lstm"]

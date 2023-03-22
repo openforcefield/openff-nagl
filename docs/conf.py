@@ -13,16 +13,16 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # In case the project was not installed
-import openff.nagl
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(".."))
+import openff.nagl
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'OpenFF NAGL'
+project = "OpenFF NAGL"
 copyright = "2021+ Open Force Field Initiative"
 author = "Open Force Field Initiative"
 
@@ -50,20 +50,35 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinxcontrib.autodoc_pydantic",
     "openff_sphinx_theme",
     "myst_nb",
+    "sphinx_click",
 ]
 
-# Autodoc settings
+# API docs settings
 autosummary_generate = True
-
-autodoc_default_options = {
-    "members": True,
-    "inherited-members": True,
-    "member-order": "bysource",
+# Document imported items iff they're in __all__
+autosummary_imported_members = False
+autosummary_ignore_module_all = False
+# Autosummary template configuration
+autosummary_context = {
+    # Modules to exclude from API docs
+    "exclude_modules": [
+        "openff.nagl.tests",
+        "openff.nagl.data",
+    ],
+    "show_inheritance": True,
+    "show_inherited_members": False,
+    "show_undoc_members": True,
 }
+
 autodoc_preserve_defaults = True
+autodoc_inherit_docstrings = True
 autodoc_typehints_format = "short"
+# Fold the __init__ or __new__ methods' signature into class documentation
+autoclass_content = "class"
+autodoc_class_signature = "mixed"
 # Workaround for autodoc_typehints_format not working for attributes
 # see https://github.com/sphinx-doc/sphinx/issues/10290#issuecomment-1079740009
 python_use_unqualified_type_names = True
@@ -74,6 +89,23 @@ napoleon_attr_annotations = True
 napoleon_custom_sections = [("attributes", "params_style")]
 napoleon_use_rtype = False
 napoleon_use_param = True
+napoleon_use_ivar = True
+napoleon_preprocess_types = True
+
+autodoc_pydantic_model_member_order = "groupwise"
+autodoc_pydantic_model_signature_prefix = "model"
+autodoc_pydantic_model_show_validator_members = False
+autodoc_pydantic_model_show_validator_summary = False
+autodoc_pydantic_model_show_config_summary = False
+autodoc_pydantic_model_show_config_member = False
+autodoc_pydantic_model_show_json = False
+autodoc_pydantic_settings_signature_prefix = "settings"
+autodoc_pydantic_settings_show_validator_members = False
+autodoc_pydantic_settings_show_validator_summary = False
+autodoc_pydantic_settings_show_config_summary = False
+autodoc_pydantic_settings_show_config_member = False
+autodoc_pydantic_field_doc_policy = "both"
+autodoc_pydantic_field_list_validators = False
 
 _python_doc_base = "https://docs.python.org/3.7"
 intersphinx_mapping = {
@@ -85,14 +117,44 @@ intersphinx_mapping = {
     "rdkit": ("https://www.rdkit.org/docs", None),
     "openeye": ("https://docs.eyesopen.com/toolkits/python/", None),
     "mdtraj": ("https://www.mdtraj.org/1.9.5/", None),
+    "openff.toolkit": (
+        "https://docs.openforcefield.org/projects/toolkit/en/stable/",
+        None,
+    ),
     "openff.interchange": (
         "https://docs.openforcefield.org/projects/interchange/en/stable/",
+        None,
+    ),
+    "openff.units": (
+        "https://docs.openforcefield.org/projects/units/en/stable/",
+        None,
+    ),
+    "openff.bespokefit": (
+        "https://docs.openforcefield.org/projects/bespokefit/en/stable/",
+        None,
+    ),
+    "openff.qcsubmit": (
+        "https://docs.openforcefield.org/projects/qcsubmit/en/stable/",
         None,
     ),
     "openff.fragmenter": (
         "https://docs.openforcefield.org/projects/fragmenter/en/stable/",
         None,
     ),
+    "openff.evaluator": (
+        "https://docs.openforcefield.org/projects/evaluator/en/stable/",
+        None,
+    ),
+    "openff.recharge": (
+        "https://docs.openforcefield.org/projects/recharge/en/stable/",
+        None,
+    ),
+    "torch": ("https://pytorch.org/docs/stable/", None),
+    "pytorch_lightning": (
+        "https://pytorch-lightning.readthedocs.io/en/stable/",
+        None,
+    ),
+    "dgl": ("https://docs.dgl.ai/en/latest/", None),
 }
 myst_url_schemes = [
     "http",
@@ -101,7 +163,7 @@ myst_url_schemes = [
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # Extensions for the myst parser
 myst_enable_extensions = [
@@ -112,6 +174,31 @@ myst_enable_extensions = [
     "deflist",
 ]
 myst_heading_anchors = 3
+
+# sphinx-notfound-page
+# https://github.com/readthedocs/sphinx-notfound-page
+# Renders a 404 page with absolute links
+from importlib.util import find_spec as find_import_spec
+
+if find_import_spec("notfound"):
+    extensions.append("notfound.extension")
+
+    notfound_urls_prefix = "/projects/nagl/en/stable/"
+    notfound_context = {
+        "title": "404: File Not Found",
+        "body": f"""
+    <h1>404: File Not Found</h1>
+    <p>
+        Sorry, we couldn't find that page. This often happens as a result of
+        following an outdated link. Please check the
+        <a href="{notfound_urls_prefix}">latest stable version</a>
+        of the docs, unless you're sure you want an earlier version, and
+        try using the search box or the navigation menu on the left.
+    </p>
+    <p>
+    </p>
+    """,
+    }
 
 # Myst NB settings
 # Execute all notebooks on build
@@ -125,22 +212,22 @@ nb_execution_excludepatterns = []
 source_suffix = [".rst", ".md", ".ipynb"]
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "EN"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'default'
+pygments_style = "default"
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -172,13 +259,16 @@ html_theme_options = {
     "html_prettify": False,
     "css_minify": True,
     "master_doc": False,
+    "globaltoc_include_local": True,
+    "globaltoc_depth": 3,
 }
-
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
+
+html_css_files = ["flowchart.css"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -191,11 +281,10 @@ html_sidebars = {
 }
 
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'openff-nagldoc'
+htmlhelp_basename = "openff-nagldoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -204,15 +293,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -222,8 +308,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'openff-nagl.tex', 'OpenFF NAGL Documentation',
-     'openff-nagl', 'manual'),
+    (
+        master_doc,
+        "openff-nagl.tex",
+        "OpenFF NAGL Documentation",
+        "openff-nagl",
+        "manual",
+    ),
 ]
 
 
@@ -231,10 +322,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'openff-nagl', 'OpenFF NAGL Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, "openff-nagl", "OpenFF NAGL Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -243,9 +331,13 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'openff-nagl', 'OpenFF NAGL Documentation',
-     author, 'openff-nagl', 'A short description of the project.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        "openff-nagl",
+        "OpenFF NAGL Documentation",
+        author,
+        "openff-nagl",
+        "A short description of the project.",
+        "Miscellaneous",
+    ),
 ]
-
-

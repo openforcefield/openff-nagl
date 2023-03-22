@@ -150,6 +150,10 @@ class GNNModel(BaseGNNModel):
         This can be given either as a class,
         e.g. :class:`~openff.nagl.nn.postprocess.ComputePartialCharges`,
         or as a string, e.g. ``"compute_partial_charges"``.
+    readout_name: str
+        A human-readable name for the readout module.
+    learning_rate: float
+        The learning rate for optimization.
     atom_features: Tuple[AtomFeature, ...]
         The atom features to use.
     bond_features: Tuple[BondFeature, ...]
@@ -164,7 +168,8 @@ class GNNModel(BaseGNNModel):
     """
 
     @classmethod
-    def from_yaml_file(cls, *paths, **kwargs):
+    def from_yaml_file(cls, *paths, **kwargs) -> "GNNModel":
+        """Construct a ``GNNModel`` from a YAML file"""
         import yaml
 
         yaml_kwargs = {}
@@ -178,6 +183,7 @@ class GNNModel(BaseGNNModel):
 
     @property
     def n_atom_features(self) -> int:
+        """The number of features used to represent an atom"""
         lengths = [len(feature) for feature in self.atom_features]
         n_features = sum(lengths)
         return n_features

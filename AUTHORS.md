@@ -25,3 +25,6 @@ The rules for this file:
 - Matthew Thompson <@mattwthompson>
 - Josh Horton <@jthorton>
 - Lily Wang <@lilyminium>
+
+**2023**
+- Josh Mitchell <@yoshanuikabundi>

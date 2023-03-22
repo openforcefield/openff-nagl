@@ -1,0 +1,5 @@
+#! /bin/bash
+
+# Install the examples environment in Binder
+mamba env update -f devtools/conda-envs/examples_env.yaml -n base
+pip install -e .
