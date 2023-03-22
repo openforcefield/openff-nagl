@@ -15,9 +15,11 @@ __all__ = [
     "EXAMPLE_AM1BCC_MODEL",
 ]
 
-from pkg_resources import resource_filename
+import importlib_resources
 
-EXAMPLE_MODEL_CONFIG = resource_filename(__name__, "example_model_config.yaml")
-MODEL_CONFIG_V7 = resource_filename(__name__, "model_config_v7.yaml")
-EXAMPLE_AM1BCC_MODEL_STATE_DICT = resource_filename(__name__, "example_am1bcc_model_state_dict.pt")
-EXAMPLE_AM1BCC_MODEL = resource_filename(__name__, "example_am1bcc_model.pt")
+data_directory = importlib_resources.files("openff.nagl") / "tests" / "data"
+
+EXAMPLE_MODEL_CONFIG = data_directory / "example_model_config.yaml"
+MODEL_CONFIG_V7 = data_directory / "model_config_v7.yaml"
+EXAMPLE_AM1BCC_MODEL_STATE_DICT = data_directory / "example_am1bcc_model_state_dict.pt"
+EXAMPLE_AM1BCC_MODEL = data_directory / "example_am1bcc_model.pt"
