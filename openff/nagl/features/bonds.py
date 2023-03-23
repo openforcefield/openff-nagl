@@ -39,11 +39,17 @@ __all__ = [
 
 class _BondFeatureMeta(FeatureMeta):
     """Metaclass for registering bond features for string lookup."""
+
     registry: ClassVar[Dict[str, Type]] = {}
 
 
 class BondFeature(Feature, metaclass=_BondFeatureMeta):
-    """Abstract base class for features of bonds."""
+    """Abstract base class for features of bonds.
+
+    See :py:class:`Feature<openff.nagl.features.Feature>` for details on how to
+    implement your own bond features.
+    """
+
     pass
 
 

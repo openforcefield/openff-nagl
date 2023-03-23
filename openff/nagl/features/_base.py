@@ -42,7 +42,24 @@ class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
 
 
 class Feature(ImmutableModel, abc.ABC):
+    """
+    Abstract base class for atom and bond features.
+
+    Features with length one can simply inherit :py:class:`AtomFeature
+    <openff.nagl.features.atoms.AtomFeature>` or
+    :py:class:`BondFeature <openff.nagl.features.bonds.BondFeature>`,
+    implement :py:class:`_encode <encode>`, and define
+    :py:attr:`feature_name`. Complex features should additionally define the
+    :py:attr:`_feature_length` class attribute and set it to the length of the
+    feature.
+
+    See Also
+    ========
+    openff.nagl.features.atoms.AtomFeature, openff.nagl.features.bonds.BondFeature
+    """
+
     feature_name: ClassVar[Optional[str]] = ""
+    """Define a name for the feature"""
     _feature_length: ClassVar[int] = 1
 
     def __init__(self, *args, **kwargs):
@@ -63,6 +80,11 @@ class Feature(ImmutableModel, abc.ABC):
     def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
+
+        The output of this method must have shape :py:attr:`tensor_shape`.
+        Subclasses may instead implement a ``_encode`` method with the same
+        signature as this one. The default implementation of this method
+        will call that one and guarantee an appropriate shape.
         """
         return self._encode(molecule).reshape(self.tensor_shape)
 

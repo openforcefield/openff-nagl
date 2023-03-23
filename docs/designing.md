@@ -83,10 +83,12 @@ Here we'll go through each option, what it means, and where to find the availabl
 (model_features)=
 ## `atom_features` and `bond_features`
 
-These arguments specify the featurization scheme for the model (see [](featurization_theory). `atom_features` takes a tuple of features from the [`openff.nagl.features.atoms`] module, and `bond_features` a tuple of features from the [`openff.nagl.features.bonds`] module. Each feature is a class that must be instantiated, possibly with some arguments.
+These arguments specify the featurization scheme for the model (see [](featurization_theory)). `atom_features` takes a tuple of features from the [`openff.nagl.features.atoms`] module, and `bond_features` a tuple of features from the [`openff.nagl.features.bonds`] module. Each feature is a class that must be instantiated, possibly with some arguments. Custom features may be implemented by subclassing [`AtomFeature`] or [`BondFeature`]; both share the interface of their base class [`Feature`].
 
 [`openff.nagl.features.atoms`]: openff.nagl.features.atoms
 [`openff.nagl.features.bonds`]: openff.nagl.features.bonds
+[`AtomFeature`]: openff.nagl.features.atoms.AtomFeature
+[`BondFeature`]: openff.nagl.features.bonds.BondFeature
 [`Feature`]: openff.nagl.features.Feature
 
 ## `convolution_architecture`
