@@ -53,13 +53,20 @@ __all__ = [
     # "AtomMorganFingerprint"
 ]
 
+
 class _AtomFeatureMeta(FeatureMeta):
     """Metaclass for registering atom features for string lookup."""
+
     registry: ClassVar[Dict[str, Type]] = {}
 
 
 class AtomFeature(Feature, metaclass=_AtomFeatureMeta):
-    """Abstract base class for features of atoms."""
+    """Abstract base class for features of atoms.
+
+    See :py:class:`Feature<openff.nagl.features.Feature>` for details on how to
+    implement your own atom features.
+    """
+
     pass
 
 
