@@ -9,6 +9,8 @@ mamba create -n nagl -c conda-forge openff-nagl
 conda activate nagl
 ```
 
+If you do not have Conda or Mamba installed, see the [OpenFF installation documentation](openff.docs:install).
+
 We recommend keeping environments minimal, and only installing packages you use together. Environments can be safely discarded when you no longer need them. This avoids dependency conflicts common to large Python environments. If you prefer, NAGL may be installed into the current environment:
 
 ```shell
@@ -28,7 +30,7 @@ conda config --env --set channel_priority strict
 
 In environments with this configuration, the `-c conda-forge` switch is unnecessary. Other channels, like `psi4` and `bioconda`, can still be used in the usual way.
 
-More information on installing OpenFF packages can be found in the [OpenFF Toolkit documentation](openff.toolkit:installation).
+More information on installing OpenFF packages can be found in the [OpenFF installation documentation](openff.docs:install).
 
 [Conda Forge]: https://conda-forge.org/
 [MambaForge]: https://github.com/conda-forge/miniforge#mambaforge
