@@ -149,6 +149,10 @@ intersphinx_mapping = {
         "https://docs.openforcefield.org/projects/recharge/en/stable/",
         None,
     ),
+    "openff.docs": (
+        "https://docs.openforcefield.org/en/latest/",
+        None,
+    ),
     "torch": ("https://pytorch.org/docs/stable/", None),
     "pytorch_lightning": (
         "https://pytorch-lightning.readthedocs.io/en/stable/",
