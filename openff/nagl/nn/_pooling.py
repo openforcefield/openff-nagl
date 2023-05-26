@@ -1,10 +1,10 @@
 import abc
 import functools
-from typing import ClassVar, Dict, Union, TYPE_CHECKING
+from typing import ClassVar, Dict, Union, TYPE_CHECKING, Iterable
 
 import torch.nn
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
 from openff.nagl.nn._sequential import SequentialLayers
 
 if TYPE_CHECKING:
@@ -19,9 +19,13 @@ class PoolingLayer(torch.nn.Module, abc.ABC):
     n_feature_columns: ClassVar[int] = 0
 
     @abc.abstractmethod
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+    def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         """Returns the pooled feature vector."""
 
+    
+    @abc.abstractmethod
+    def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
+        """Returns the number of values per molecule."""
 
 class PoolAtomFeatures(PoolingLayer):
     """A convenience class for pooling the node feature vectors produced by
@@ -32,8 +36,12 @@ class PoolAtomFeatures(PoolingLayer):
 
     n_feature_columns: ClassVar[int] = 1
 
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+    def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         return molecule.graph.ndata[molecule._graph_feature_name]
+    
+
+    def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
+        return molecule.n_atoms_per_molecule
 
 
 class PoolBondFeatures(PoolingLayer):
@@ -57,7 +65,7 @@ class PoolBondFeatures(PoolingLayer):
 
     # def _directionwise_forward(
     #     self,
-    #     molecule: Union[DGLMolecule, DGLMoleculeBatch],
+    #     molecule: DGLMoleculeOrBatch,
     #     edge_type: str = "forward",
     # ):
     #     graph = molecule.graph
@@ -70,7 +78,7 @@ class PoolBondFeatures(PoolingLayer):
     #         edges = graph.edges[edge_type].data[molecule._graph_feature_name]
     #     return self.layers(edges)
 
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+    def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         graph = molecule.graph
         node = molecule._graph_feature_name
         apply_edges = functools.partial(
@@ -95,3 +103,6 @@ class PoolBondFeatures(PoolingLayer):
         #     molecule._graph_backward_edge_type,
         # )
         return self.layers(h_forward) + self.layers(h_reverse)
+
+    def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
+        return molecule.n_bonds_per_molecule

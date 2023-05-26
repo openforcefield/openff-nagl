@@ -2,6 +2,7 @@ from typing import List, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
+from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -56,7 +57,14 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         ]
         graph = NXMolHeteroGraph._batch(graphs)
 
-        return cls(graph=graph, n_representations=len(graphs))
+        with capture_toolkit_warnings():
+            mapped_smiles = molecule.to_smiles(mapped=True)
+
+        return cls(
+            graph=graph,
+            n_representations=len(graphs),
+            mapped_smiles=mapped_smiles,
+        )
 
 
 class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
@@ -78,3 +86,13 @@ class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
         return cls(
             graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms
         )
+
+    def unbatch(self) -> List[GraphMolecule]:
+
+        return [
+            GraphMolecule(g, n_repr)
+            for g, n_repr in zip(
+                self.graph.unbatch(self.n_representations_per_molecule),
+                self.n_representations_per_molecule
+            )
+        ]

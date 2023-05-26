@@ -1,4 +1,4 @@
-from typing import Dict, List, TYPE_CHECKING
+from typing import Dict, List, TYPE_CHECKING, Optional
 
 import torch
 from openff.utilities import requires_package
@@ -44,10 +44,24 @@ def openff_molecule_to_dgl_graph(
     molecule: Molecule,
     atom_features: List[AtomFeature] = tuple(),
     bond_features: List[BondFeature] = tuple(),
+    atom_feature_tensor: Optional[torch.Tensor] = None,
+    bond_feature_tensor: Optional[torch.Tensor] = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
 ) -> "dgl.DGLHeteroGraph":
     from openff.nagl.molecule._utils import _get_openff_molecule_information
+
+    if len(atom_features) and atom_feature_tensor is not None:
+        raise ValueError(
+            "Only one of `atom_features` or "
+            "`atom_feature_tensor` should be provided."
+        )
+
+    if len(bond_features) and bond_feature_tensor is not None:
+        raise ValueError(
+            "Only one of `bond_features` or "
+            "`bond_feature_tensor` should be provided."
+        )
 
     # create base undirected graph
     molecule_graph = openff_molecule_to_base_dgl_graph(
@@ -59,7 +73,8 @@ def openff_molecule_to_dgl_graph(
     # add atom features
     if len(atom_features):
         atom_featurizer = AtomFeaturizer(atom_features)
-        molecule_graph.ndata[FEATURE] = atom_featurizer.featurize(molecule)
+        atom_feature_tensor = atom_featurizer.featurize(molecule)
+    molecule_graph.ndata[FEATURE]
 
     # add additional information
     molecule_info = _get_openff_molecule_information(molecule)
@@ -71,7 +86,6 @@ def openff_molecule_to_dgl_graph(
         [bond.bond_order for bond in molecule.bonds], dtype=torch.uint8
     )
 
-    bond_feature_tensor = None
     if len(bond_features):
         bond_featurizer = BondFeaturizer(bond_features)
         bond_feature_tensor = bond_featurizer.featurize(molecule)

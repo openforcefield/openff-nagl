@@ -7,6 +7,7 @@ from openff.utilities import requires_package
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
+from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from .utils import (
     FORWARD,
     dgl_heterograph_to_homograph,
@@ -45,6 +46,8 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         molecule: OFFMolecule,
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
+        atom_feature_tensor: Optional[torch.Tensor] = None,
+        bond_feature_tensor: Optional[torch.Tensor] = None,
         enumerate_resonance_forms: bool = False,
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
@@ -52,6 +55,18 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     ):
         import dgl
         from openff.nagl.utils.resonance import ResonanceEnumerator
+
+        if len(atom_features) and atom_feature_tensor is not None:
+            raise ValueError(
+                "Only one of `atom_features` or "
+                "`atom_feature_tensor` should be provided."
+            )
+
+        if len(bond_features) and bond_feature_tensor is not None:
+            raise ValueError(
+                "Only one of `bond_features` or "
+                "`bond_feature_tensor` should be provided."
+            )
 
         offmols = [molecule]
         if enumerate_resonance_forms:
@@ -82,4 +97,11 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             }
         )
 
-        return cls(graph=graph, n_representations=len(offmols))
+        with capture_toolkit_warnings():
+            mapped_smiles = offmols[0].to_smiles(mapped=True)
+
+        return cls(
+            graph=graph,
+            n_representations=len(offmols),
+            mapped_smiles=mapped_smiles
+        )

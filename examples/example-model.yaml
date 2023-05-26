@@ -1,0 +1,35 @@
+atom_features:
+  - ...
+bond_features: []
+convolution:
+  architecture: "SageCONV"
+  layers:
+    - hidden_feature_size: 512
+      activation_function: "ReLU"
+      dropout: 0
+      aggregator_type: "mean"
+    - hidden_feature_size: 512
+      activation_function: "ReLU"
+      dropout: 0
+      aggregator_type: "mean"
+    - hidden_feature_size: 512
+      activation_function: "ReLU"
+      dropout: 0
+      aggregator_type: "mean"
+    - hidden_feature_size: 512
+      activation_function: "ReLU"
+      dropout: 0
+      aggregator_type: "mean"
+    - hidden_feature_size: 512
+      activation_function: "ReLU"
+      dropout: 0
+      aggregator_type: "mean"
+readouts:
+  charges:
+    pooling: "atoms"
+    layers:
+      - hidden_feature_size: 256
+        activation_function: "Sigmoid"
+        dropout: 0
+    postprocess: "compute_partial_charges"
+    
