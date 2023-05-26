@@ -83,7 +83,7 @@ class AtomicElement(CategoricalMixin, AtomFeature):
     ... )
     """
 
-    categories: List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P"]
+    categories: List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
     """Elements to provide one-hot encodings for."""
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:

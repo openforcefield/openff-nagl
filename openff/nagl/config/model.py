@@ -142,3 +142,10 @@ class ModelConfig(ImmutableModel):
                 v = str(v.resolve())
             new_dict[k] = v
         return new_dict
+    
+    @property
+    def n_atom_features(self) -> int:
+        """The number of features used to represent an atom"""
+        lengths = [len(feature) for feature in self.atom_features]
+        n_features = sum(lengths)
+        return n_features

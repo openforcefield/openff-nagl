@@ -1,24 +1,27 @@
 "Classes for handling featurized molecule data to train GNN models"
 
+from collections import defaultdict
 import functools
 import typing
 
 import tqdm
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
+
+from openff.toolkit import Molecule
 
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeOrBatch
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from openff.nagl.utils._parallelization import get_mapper_to_processes
 
 import pathlib
 import pyarrow as pa
 import pyarrow.parquet as pq
+import numpy as np
 
-if typing.TYPE_CHECKING:
-    from openff.toolkit import Molecule
+
 
 __all__ = [
     "DGLMoleculeDataset",
@@ -37,7 +40,7 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
     @classmethod
     def from_openff(
         cls,
-        openff_molecule: "Molecule",
+        openff_molecule: Molecule,
         labels: typing.Dict[str, typing.Any],
         atom_features: typing.List[AtomFeature],
         bond_features: typing.List[BondFeature],
@@ -56,7 +59,8 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         labels_ = {}
         for key, value in labels.items():
             if value is not None:
-                labels_[key] = torch.tensor(value)
+                value = np.asarray(value)
+                labels_[key] = torch.from_numpy(value)
         return cls(dglmol, labels_)
 
     @classmethod
@@ -183,6 +187,67 @@ class DGLMoleculeDataset(Dataset):
             return 0
 
         return self[0].molecule.atom_features.shape[1]
+
+    @classmethod
+    def from_openff(
+        cls,
+        molecules: typing.Iterable[Molecule],
+        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
+        bond_features: typing.Optional[typing.List[BondFeature]] = None,
+        atom_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
+        bond_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
+        labels: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None,
+        label_function: typing.Optional[
+            typing.Callable[[Molecule], typing.Dict[str, typing.Any]]
+        ] = None,
+    ):
+        if labels is None:
+            labels = [{} for _ in molecules]
+        else:
+            labels = [dict(label) for label in labels]
+        if len(labels) != len(molecules):
+            raise ValueError(
+                f"The number of labels ({len(labels)}) must match the number of "
+                f"molecules ({len(molecules)})."
+            )
+        if atom_feature_tensors is not None:
+            if len(atom_feature_tensors) != len(molecules):
+                raise ValueError(
+                    f"The number of atom feature tensors ({len(atom_feature_tensors)}) "
+                    f"must match the number of molecules ({len(molecules)})."
+                )
+        else:
+            atom_feature_tensors = [None] * len(molecules)
+
+        if bond_feature_tensors is not None:
+            if len(bond_feature_tensors) != len(molecules):
+                raise ValueError(
+                    f"The number of bond feature tensors ({len(bond_feature_tensors)}) "
+                    f"must match the number of molecules ({len(molecules)})."
+                )
+        else:
+            bond_feature_tensors = [None] * len(molecules)
+
+        if label_function is not None:
+            for molecule, label in zip(molecules, labels):
+                label.update(label_function(molecule))
+
+        entries = []
+        for molecule, atom_tensor, bond_tensor, label in zip(
+            molecules, atom_feature_tensors, bond_feature_tensors, labels
+        ):
+            entry = DGLMoleculeDatasetEntry.from_openff(
+                molecule,
+                label,
+                atom_features=atom_features,
+                bond_features=bond_features,
+                atom_feature_tensor=atom_tensor,
+                bond_feature_tensor=bond_tensor,
+            )
+            entries.append(entry)
+        
+        return cls(entries)
+        
 
     @classmethod
     def from_unfeaturized_pyarrow(
@@ -339,9 +404,11 @@ class DGLMoleculeDataset(Dataset):
             atom_features = None
             bond_features = None
             if dglmol.atom_features is not None:
-                atom_features = dglmol.atom_features.detach().numpy().flatten()
+                atom_features = dglmol.atom_features.detach().numpy()
+                atom_features = atom_features.astype(float).flatten()
             if dglmol.bond_features is not None:
-                bond_features = dglmol.bond_features.detach().numpy().flatten()
+                bond_features = dglmol.bond_features.detach().numpy()
+                bond_features = bond_features.astype(float).flatten()
             
             mol_label_set = set(labels.keys())
             if label_set != mol_label_set:
@@ -375,3 +442,38 @@ class DGLMoleculeDataset(Dataset):
             smiles_column=smiles_column,
         )
         pq.write_table(table, path)
+
+
+class DGLMoleculeDataLoader(DataLoader):
+    def __init__(
+        self,
+        dataset: DGLMoleculeOrBatch,
+        batch_size: typing.Optional[int] = 1,
+        **kwargs,
+    ):
+        super().__init__(
+            dataset=dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=0,
+            collate_fn=self._collate,
+            **kwargs,
+        )
+
+    @staticmethod
+    def _collate(graph_entries: typing.List[DGLMoleculeDatasetEntry]):
+        if isinstance(graph_entries[0], DGLMolecule):
+            graph_entries = [graph_entries]
+
+        molecules, labels = zip(*graph_entries)
+
+        batched_molecules = DGLMoleculeBatch.from_dgl_molecules(molecules)
+        batched_labels = defaultdict(list)
+
+        for molecule_labels in labels:
+            for label_name, label_value in molecule_labels.items():
+                batched_labels[label_name].append(label_value.reshape(-1, 1))
+
+        batched_labels = {k: torch.vstack(v) for k, v in batched_labels.items()}
+
+        return batched_molecules, batched_labels

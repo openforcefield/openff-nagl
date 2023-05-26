@@ -19,28 +19,18 @@ if TYPE_CHECKING:
     from openff.nagl.nn.gcn._base import BaseGCNStack
 
 
-class GNNModel(torch.nn.Module):
-    def __init__(self, config: ModelConfig):
-        if not isinstance(config, ModelConfig):
-            config = ModelConfig(**config)
-
-        self.config = config
-        self.save_hyperparameters({"config": config.dict()})
-
-        self.convolution_module = ConvolutionModule.from_config(
-            config.convolution,
-            n_input_features=config.n_atom_features,
-        )
-
-        self.readout_modules = {}
-        for readout_name, readout_config in config.readouts.items():
-            self.readout_modules[readout_name] = ReadoutModule.from_config(
-                readout_config,
-                n_input_features=config.convolution.layers[-1].hidden_feature_size,
-            )
+class BaseGNNModel(torch.nn.Module):
+    def __init__(
+        self,
+        convolution_module: ConvolutionModule,
+        readout_modules: ReadoutModule,
+    ):
+        super().__init__()
+        self.convolution_module = convolution_module
+        self.readout_modules = readout_modules
 
     def forward(
-        self, molecule: DGLMoleculeOrBatch
+        self, molecule: "DGLMoleculeOrBatch"
     ) -> Dict[str, torch.Tensor]:
         self.convolution_module(molecule)
 
@@ -49,12 +39,36 @@ class GNNModel(torch.nn.Module):
             for readout_type, readout_module in self.readout_modules.items()
         }
         return readouts
+
+class GNNModel(BaseGNNModel):
+    def __init__(self, config: ModelConfig):
+        if not isinstance(config, ModelConfig):
+            config = ModelConfig(**config)
+
+        convolution_module = ConvolutionModule.from_config(
+            config.convolution,
+            n_input_features=config.n_atom_features,
+        )
+
+        readout_modules = {}
+        for readout_name, readout_config in config.readouts.items():
+            readout_modules[readout_name] = ReadoutModule.from_config(
+                readout_config,
+                n_input_features=config.convolution.layers[-1].hidden_feature_size,
+            )
+
+        super().__init__(
+            convolution_module=convolution_module,
+            readout_modules=readout_modules,
+        )
+
+        self.save_hyperparameters({"config": config.dict()})
+        self.config = config
     
     @property
     def _is_dgl(self):
         return self.convolution_module._is_dgl
     
-
     def _as_nagl(self):
         copied = type(self)(self.config)
         copied.convolution_module = self.convolution_module._as_nagl(copy_weights=True)
@@ -247,7 +261,7 @@ class TrainingGNNModel(pl.LightningModule):
 
     def _default_step(
         self,
-        batch: Tuple[DGLMoleculeOrBatch, Dict[str, torch.Tensor]],
+        batch: Tuple["DGLMoleculeOrBatch", Dict[str, torch.Tensor]],
         step_type: Literal["train", "val", "test"],
     ) -> torch.Tensor:       
         molecule, labels = batch

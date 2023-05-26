@@ -20,6 +20,14 @@ class NAGLMoleculeBase:
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
+    
+    @property
+    def bond_features(self) -> Optional["torch.Tensor"]:
+        if FEATURE in self.graph.edata:
+            n = int(self.n_bonds)
+            key = ("atom", self._graph_forward_edge_type, "atom")
+            return self.graph.edata[FEATURE][key][:n].float()
+        return None
 
     @property
     def homograph(self):

@@ -45,7 +45,7 @@ class _BaseTarget(ImmutableModel, abc.ABC, metaclass=_TargetMeta):
 
     def evaluate_loss(
         self,
-        molecules: DGLMoleculeOrBatch,
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -84,7 +84,7 @@ class _BaseTarget(ImmutableModel, abc.ABC, metaclass=_TargetMeta):
     @abc.abstractmethod
     def evaluate_target(
         self,
-        molecules: DGLMoleculeOrBatch,
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -127,7 +127,7 @@ class ReadoutTarget(_BaseTarget):
 
     def evaluate_target(
         self,
-        molecule: DGLMoleculeOrBatch,
+        molecule: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -148,7 +148,7 @@ class HeavyAtomReadoutTarget(_BaseTarget):
     
     def evaluate_target(
         self,
-        molecule: DGLMoleculeOrBatch,
+        molecule: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -170,7 +170,7 @@ class SingleDipoleTarget(_BaseTarget):
 
     def evaluate_target(
         self,
-        molecules: DGLMoleculeOrBatch,
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -211,7 +211,7 @@ class MultipleDipoleTarget(_BaseTarget):
 
     def evaluate_target(
         self,
-        molecules: DGLMoleculeOrBatch,
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
@@ -261,7 +261,7 @@ class ESPTarget(_BaseTarget):
     
     def evaluate_target(
         self,
-        molecules: DGLMoleculeOrBatch,
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],

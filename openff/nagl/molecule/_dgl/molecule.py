@@ -81,8 +81,10 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         subgraphs = [
             openff_molecule_to_dgl_graph(
                 offmol,
-                atom_features,
-                bond_features,
+                atom_features=atom_features,
+                bond_features=bond_features,
+                atom_feature_tensor=atom_feature_tensor,
+                bond_feature_tensor=bond_feature_tensor,
                 forward=cls._graph_forward_edge_type,
                 reverse=cls._graph_backward_edge_type,
             )
