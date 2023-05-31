@@ -75,8 +75,9 @@ def openff_molecule_to_dgl_graph(
         atom_featurizer = AtomFeaturizer(atom_features)
         atom_feature_tensor = atom_featurizer.featurize(molecule)
     
-    if atom_feature_tensor is not None:
-        molecule_graph.ndata[FEATURE] = atom_feature_tensor.reshape(molecule.n_atoms, -1)
+    if atom_feature_tensor is None:
+        atom_feature_tensor = torch.zeros((molecule.n_atoms, 0))
+    molecule_graph.ndata[FEATURE] = atom_feature_tensor.reshape(molecule.n_atoms, -1)
 
     # add additional information
     molecule_info = _get_openff_molecule_information(molecule)
@@ -93,10 +94,12 @@ def openff_molecule_to_dgl_graph(
         bond_feature_tensor = bond_featurizer.featurize(molecule)
 
     for direction in (forward, reverse):
+        n_bonds = len(molecule.bonds)
         if bond_feature_tensor is not None:
-            n_bonds = len(molecule.bonds)
             bond_feature_tensor = bond_feature_tensor.reshape(n_bonds, -1)
-            molecule_graph.edges[direction].data[FEATURE] = bond_feature_tensor
+        else:
+            bond_feature_tensor = torch.zeros((n_bonds, 0))
+        molecule_graph.edges[direction].data[FEATURE] = bond_feature_tensor
         molecule_graph.edges[direction].data["bond_order"] = bond_orders
 
     return molecule_graph

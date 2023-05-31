@@ -7,11 +7,13 @@ from pydantic import Field, validator
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn.gcn._base import _GCNStackMeta
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.features.atoms import AtomFeature
-from openff.nagl.features.bonds import BondFeature
+from openff.nagl.features.atoms import DiscriminatedAtomFeatureType
+from openff.nagl.features.bonds import DiscriminatedBondFeatureType
+from openff.nagl.utils._types import FromYamlMixin
 
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
 PostprocessType = typing.Literal["readout", "compute_partial_charges"]
+
 
 class BaseLayer(ImmutableModel):
     """Base class for single layer in the neural network"""
@@ -65,19 +67,19 @@ class ReadoutModule(ImmutableModel):
         description="Optional post-processing layer for prediction"
     )
 
-    @validator("postprocess", pre=True)
-    def _validate_postprocess(cls, v):
-        from openff.nagl.nn.postprocess import _PostprocessLayerMeta
-        if v is None:
-            return None
-        return _PostprocessLayerMeta._get_object(v)
+    # @validator("postprocess", pre=True)
+    # def _validate_postprocess(cls, v):
+    #     from openff.nagl.nn.postprocess import _PostprocessLayerMeta
+    #     if v is None:
+    #         return None
+    #     return _PostprocessLayerMeta._get_object(v)
 
 
-class ModelConfig(ImmutableModel):
-    atom_features: typing.List[AtomFeature] = Field(
+class ModelConfig(ImmutableModel, FromYamlMixin):
+    atom_features: typing.List[DiscriminatedAtomFeatureType] = Field(
         description="Atom features to use"
     )
-    bond_features: typing.List[BondFeature] = Field(
+    bond_features: typing.List[DiscriminatedBondFeatureType] = Field(
         description=(
             "Bond features to use. "
             "Not all architectures support bond features"
@@ -90,31 +92,31 @@ class ModelConfig(ImmutableModel):
         description="Readout configs to map convolution representation to output"
     )
 
-    @validator("atom_features", "bond_features", pre=True)
-    def _validate_atom_features(cls, v, field):
-        if isinstance(v, dict):
-            v = list(v.items())
-        all_v = []
-        for item in v:
-            if isinstance(item, dict):
-                all_v.extend(list(item.items()))
-            elif isinstance(item, (str, field.type_, type(field.type_))):
-                all_v.append((item, {}))
-            else:
-                all_v.append(item)
+    # @validator("atom_features", "bond_features", pre=True)
+    # def _validate_atom_features(cls, v, field):
+    #     if isinstance(v, dict):
+    #         v = list(v.items())
+    #     all_v = []
+    #     for item in v:
+    #         if isinstance(item, dict):
+    #             all_v.extend(list(item.items()))
+    #         elif isinstance(item, (str, field.type_, type(field.type_))):
+    #             all_v.append((item, {}))
+    #         else:
+    #             all_v.append(item)
 
-        instantiated = []
-        for klass, args in all_v:
-            if isinstance(klass, (AtomFeature, BondFeature)):
-                instantiated.append(klass)
-            else:
-                klass = type(field.type_)._get_class(klass)
-                if not isinstance(args, dict):
-                    item = klass._with_args(args)
-                else:
-                    item = klass(**args)
-                instantiated.append(item)
-        return instantiated
+    #     instantiated = []
+    #     for klass, args in all_v:
+    #         if isinstance(klass, (AtomFeature, BondFeature)):
+    #             instantiated.append(klass)
+    #         else:
+    #             klass = type(field.type_)._get_class(klass)
+    #             if not isinstance(args, dict):
+    #                 item = klass._with_args(args)
+    #             else:
+    #                 item = klass(**args)
+    #             instantiated.append(item)
+    #     return instantiated
     
     def to_simple_dict(self):
         """

@@ -106,3 +106,14 @@ class PoolBondFeatures(PoolingLayer):
 
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         return molecule.n_bonds_per_molecule
+    
+
+def get_pooling_layer(layer: Union[str, PoolingLayer]) -> PoolingLayer:
+    if isinstance(layer, PoolingLayer):
+        return layer
+    if isinstance(layer, str):
+        if layer.lower() in {"atom", "atoms"}:
+            return PoolAtomFeatures()
+        if layer.lower() in {"bond", "bonds"}:
+            return PoolBondFeatures()
+    raise NotImplementedError(f"Unsupported pooling layer '{layer}'.")

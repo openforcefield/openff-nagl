@@ -1,54 +1,80 @@
-activation_function: Sigmoid
-atom_features: !!python/tuple
-- atomicelement:
-    categories:
-    - C
-    - O
-    - H
-    - N
-    - S
-    - F
-    - Br
-    - Cl
-    - I
-    - P
-- atomconnectivity:
-    categories:
-    - 1
-    - 2
-    - 3
-    - 4
-- atomhybridization:
-    categories:
-    - OTHER
-    - SP
-    - SP2
-    - SP3
-    - SP3D
-    - SP3D2
-- atominringofsize:
-    ring_size: 3
-- atominringofsize:
-    ring_size: 4
-- atominringofsize:
-    ring_size: 5
-- atominringofsize:
-    ring_size: 6
-- atomgasteigercharge: {}
-bond_features: !!python/tuple
-- bondinringofsize:
-    ring_size: 3
-- bondinringofsize:
-    ring_size: 4
-- bondinringofsize:
-    ring_size: 5
-- bondinringofsize:
-    ring_size: 6
-convolution_architecture: SAGEConv
-learning_rate: 0.001
-n_convolution_hidden_features: 512
-n_convolution_layers: 6
-n_readout_hidden_features: 128
-n_readout_layers: 1
-postprocess_layer: compute_partial_charges
-readout_name: am1bcc-charges
+atom_features:
+- categories:
+  - C
+  - O
+  - H
+  - N
+  - S
+  - F
+  - Br
+  - Cl
+  - I
+  - P
+  name: atomic_element
+- categories:
+  - 1
+  - 2
+  - 3
+  - 4
+  name: atom_connectivity
+- categories:
+  - OTHER
+  - SP
+  - SP2
+  - SP3
+  - SP3D
+  - SP3D2
+  name: atom_hybridization
+- name: atom_in_ring_of_size
+  ring_size: 3
+- name: atom_in_ring_of_size
+  ring_size: 4
+- name: atom_in_ring_of_size
+  ring_size: 5
+- name: atom_in_ring_of_size
+  ring_size: 6
+- name: atom_gasteiger_charge
+bond_features:
+- name: bond_in_ring_of_size
+  ring_size: 3
+- name: bond_in_ring_of_size
+  ring_size: 4
+- name: bond_in_ring_of_size
+  ring_size: 5
+- name: bond_in_ring_of_size
+  ring_size: 6
+convolution:
+  architecture: SAGEConv
+  layers:
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+  - activation_function: ReLU
+    aggregator_type: mean
+    dropout: 0.0
+    hidden_feature_size: 512
+readouts:
+  am1bcc-charges:
+    layers:
+    - activation_function: Sigmoid
+      dropout: 0.0
+      hidden_feature_size: 128
+    pooling: atoms
+    postprocess: compute_partial_charges

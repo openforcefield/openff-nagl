@@ -22,21 +22,23 @@ to implement your own features.
 """
 
 import copy
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
+import typing
+# from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
 import torch
-from pydantic import validator
+import pydantic
+# from pydantic import validator
 
 from openff.nagl.utils._types import HybridizationType
 from openff.units import unit
 from openff.utilities import requires_package
 
-from ._base import CategoricalMixin, Feature, FeatureMeta
+from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
 
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 __all__ = [
@@ -54,13 +56,13 @@ __all__ = [
 ]
 
 
-class _AtomFeatureMeta(FeatureMeta):
-    """Metaclass for registering atom features for string lookup."""
+# class _AtomFeatureMeta(FeatureMeta):
+#     """Metaclass for registering atom features for string lookup."""
 
-    registry: ClassVar[Dict[str, Type]] = {}
+#     registry: ClassVar[Dict[str, Type]] = {}
 
 
-class AtomFeature(Feature, metaclass=_AtomFeatureMeta):
+class AtomFeature(Feature):#, metaclass=_AtomFeatureMeta):
     """Abstract base class for features of atoms.
 
     See :py:class:`Feature<openff.nagl.features.Feature>` for details on how to
@@ -83,7 +85,8 @@ class AtomicElement(CategoricalMixin, AtomFeature):
     ... )
     """
 
-    categories: List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
+    name: typing.Literal["atomic_element"] = "atomic_element"
+    categories: typing.List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
     """Elements to provide one-hot encodings for."""
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
@@ -100,8 +103,9 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
     """
     One-hot encodings for the specified atomic orbital hybridization modes.
     """
+    name: typing.Literal["atom_hybridization"] = "atom_hybridization"
 
-    categories: List[HybridizationType] = [
+    categories: typing.List[HybridizationType] = [
         HybridizationType.OTHER,
         HybridizationType.SP,
         HybridizationType.SP2,
@@ -111,7 +115,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
     ]
     """The supported hybridization modes."""
 
-    @validator("categories", pre=True, each_item=True)
+    @pydantic.validator("categories", pre=True, each_item=True)
     def _validate_categories(cls, v):
         if isinstance(v, str):
             return HybridizationType[v.upper()]
@@ -144,8 +148,9 @@ class AtomConnectivity(CategoricalMixin, AtomFeature):
     ...     ...
     ... )
     """
+    name: typing.Literal["atom_connectivity"] = "atom_connectivity"
 
-    categories: List[int] = [1, 2, 3, 4]
+    categories: typing.List[int] = [1, 2, 3, 4]
     """Connectivities to provide one-hot encodings for."""
 
     def _encode(self, molecule) -> torch.Tensor:
@@ -160,6 +165,8 @@ class AtomConnectivity(CategoricalMixin, AtomFeature):
 class AtomIsAromatic(AtomFeature):
     """One-hot encoding for whether the atom is aromatic or not."""
 
+    name: typing.Literal["atom_is_aromatic"] = "atom_is_aromatic"
+
     def _encode(self, molecule) -> torch.Tensor:
         return torch.tensor([int(atom.is_aromatic) for atom in molecule.atoms])
 
@@ -173,6 +180,7 @@ class AtomIsInRing(AtomFeature):
     AtomInRingOfSize, BondIsInRingOfSize, BondIsInRing
 
     """
+    name: typing.Literal["atom_is_in_ring"] = "atom_is_in_ring"
 
     def _encode(self, molecule) -> torch.Tensor:
         ring_atoms = [
@@ -204,6 +212,7 @@ class AtomInRingOfSize(AtomFeature):
     AtomIsInRing, BondIsInRingOfSize, BondIsInRing
 
     """
+    name: typing.Literal["atom_in_ring_of_size"] = "atom_in_ring_of_size"
 
     ring_size: int
     """The size of the ring that this feature describes."""
@@ -232,7 +241,9 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
     ... )
     """
 
-    categories: List[int] = [-3, -2, -1, 0, 1, 2, 3]
+    name: typing.Literal["atom_formal_charge"] = "atom_formal_charge"
+
+    categories: typing.List[int] = [-3, -2, -1, 0, 1, 2, 3]
 
     def _encode(self, molecule) -> torch.Tensor:
         # from ..utils.openff import get_openff_molecule_formal_charges
@@ -257,6 +268,7 @@ class AtomAverageFormalCharge(AtomFeature):
     This feature encodes the average formal charge directly, it does not use a
     one-hot encoding.
     """
+    name: typing.Literal["atom_average_formal_charge"] = "atom_average_formal_charge"
 
     def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
         from openff.nagl.utils.resonance import enumerate_resonance_forms
@@ -291,6 +303,7 @@ class AtomGasteigerCharge(AtomFeature):
     This feature encodes the Gasteiger charge directly, it does not use a
     one-hot encoding.
     """
+    name: typing.Literal["atom_gasteiger_charge"] = "atom_gasteiger_charge"
 
     def _encode(self, molecule) -> torch.Tensor:
         from openff.units import unit
@@ -299,3 +312,21 @@ class AtomGasteigerCharge(AtomFeature):
         molecule.assign_partial_charges("gasteiger")
         charges = molecule.partial_charges.m_as(unit.elementary_charge)
         return torch.tensor(charges)
+
+
+
+AtomFeatureType = typing.Union[
+    AtomicElement,
+    AtomHybridization,
+    AtomConnectivity,
+    AtomIsAromatic,
+    AtomIsInRing,
+    AtomInRingOfSize,
+    AtomFormalCharge,
+    AtomAverageFormalCharge,
+    AtomGasteigerCharge,
+]
+
+DiscriminatedAtomFeatureType = typing.Annotated[
+    AtomFeatureType, pydantic.Field(..., discriminator="name")
+]

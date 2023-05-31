@@ -8,8 +8,8 @@ from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.nn._pooling import PoolingLayer
-from openff.nagl.nn.postprocess import PostprocessLayer
+from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 
 class ConvolutionModule(torch.nn.Module):
@@ -127,8 +127,12 @@ class ReadoutModule(torch.nn.Module):
 
         super().__init__()
 
-        self.pooling_layer = pooling_layer
+        self.pooling_layer = get_pooling_layer(pooling_layer)
         self.readout_layers = readout_layers
+
+        if postprocess_layer is not None:
+            if not isinstance(postprocess_layer, PostprocessLayer):
+                postprocess_layer = _PostprocessLayerMeta._get_object(postprocess_layer)
         self.postprocess_layer = postprocess_layer
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
@@ -164,6 +168,12 @@ class ReadoutModule(torch.nn.Module):
         layer_dropout = [
             layer.dropout for layer in readout_config.layers
         ]
+        if readout_config.postprocess is not None:
+            postprocess_layer = _PostprocessLayerMeta._get_object(readout_config.postprocess)
+            hidden_feature_sizes.append(postprocess_layer.n_features)
+            layer_activation_functions.append(ActivationFunction.Identity)
+            layer_dropout.append(0.0)
+
         readout_layers = SequentialLayers.with_layers(
             n_input_features,
             hidden_feature_sizes,
@@ -173,5 +183,5 @@ class ReadoutModule(torch.nn.Module):
         return cls(
             pooling_layer,
             readout_layers,
-            readout_config.postprocess
+            postprocess_layer
         )

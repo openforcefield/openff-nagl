@@ -14,18 +14,12 @@ from openff.units import unit
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing, BondOrder
-from openff.nagl.nn.dataset import (
+from openff.nagl.nn._dataset import (
     DGLMoleculeDatasetEntry,
     DGLMoleculeDataset,
+    DGLMoleculeDataLoader,
 )
 from openff.nagl.tests.data.files import EXAMPLE_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
-from openff.nagl.storage._store import (
-    ConformerRecord,
-    MoleculeRecord,
-    MoleculeStore,
-    PartialChargeRecord,
-    WibergBondOrderRecord,
-)
 
 pytest.importorskip("dgl")
 
@@ -61,29 +55,31 @@ def example_featurized_pyarrow_table():
 
 
 @pytest.fixture()
-def example_atom_features():
-    return [AtomicElement(), AtomConnectivity()]
-
-@pytest.fixture()
-def example_bond_features():
-    return [BondIsInRing()]
+def featurized_dataset():
+    return DGLMoleculeDataset.from_featurized_parquet(
+        EXAMPLE_FEATURIZED_PARQUET_DATASET,
+        atom_feature_column="atom_features",
+        bond_feature_column="bond_features",
+    )
 
 
 class TestDGLMoleculeDatasetEntry:
 
     def _assert_label_shapes(self, entry):
         assert isinstance(entry.labels, dict)
-        assert len(entry.labels) == 5
+        assert len(entry.labels) == 7
         for value in entry.labels.values():
             assert isinstance(value, torch.Tensor)
 
         assert entry.labels["am1bcc_charges"].shape == (15,)
-        assert entry.labels["conformers"].shape == (450,)
-        assert entry.labels["am1bcc_esps"].shape == (8789,)
-        assert entry.labels["am1bcc_dipoles"].shape == (30,)
+        assert entry.labels["conformers"].shape == (405,)
+        assert entry.labels["am1bcc_esps"].shape == (7913,)
+        assert entry.labels["am1bcc_dipoles"].shape == (27,)
+        # assert entry.labels["n_conformers"].shape == (1,)
+        assert entry.labels["esp_grid_inverse_distances"].shape == (7913 * 15,)
 
         esp_lengths = entry.labels["esp_lengths"].detach().numpy()
-        expected_lengths = [883, 885, 881, 882, 879, 884, 874, 875, 870, 876]
+        expected_lengths = [883, 885, 881, 882, 879, 884, 874, 875, 870]
         assert np.allclose(esp_lengths, expected_lengths)
 
     def example_featurized_pyarrow_table(
@@ -124,15 +120,6 @@ class TestDGLMoleculeDatasetEntry:
         
 class TestDGLMoleculeDataset:
 
-    @pytest.fixture()
-    def featurized_dataset(self):
-        return DGLMoleculeDataset.from_featurized_parquet(
-            EXAMPLE_FEATURIZED_PARQUET_DATASET,
-            atom_feature_column="atom_features",
-            bond_feature_column="bond_features",
-        )
-
-
     def test_from_unfeaturized_parquet(
         self,
         example_atom_features,
@@ -144,15 +131,21 @@ class TestDGLMoleculeDataset:
             bond_features=example_bond_features,
         )
         assert len(ds.entries) == 10
+        expected = {
+            "am1bcc_charges", "conformers", "am1bcc_esps",
+            "esp_lengths", "am1bcc_dipoles", "n_conformers",
+            "esp_grid_inverse_distances",
+        }
         for entry in ds.entries:
             assert entry.molecule.graph.ndata["feat"].shape[1] == 14
-            assert len(entry.labels) == 5
+            assert len(entry.labels) == 7
+            assert set(entry.labels.keys()) == expected
 
     def test_from_featurized_parquet(self, featurized_dataset):
         assert len(featurized_dataset.entries) == 10
         for entry in featurized_dataset.entries:
             assert entry.molecule.graph.ndata["feat"].shape[1] == 14
-            assert len(entry.labels) == 5
+            assert len(entry.labels) == 7
 
     def test_to_pyarrow(
         self,
@@ -164,7 +157,7 @@ class TestDGLMoleculeDataset:
         assert len(df.columns) == len(example.columns)
 
         for col in df.columns:
-            if col == "mapped_smiles":
+            if col in ("mapped_smiles", "n_conformers"):
                 assert np.array_equal(df[col].values, example[col].values)
             else:
                 df_ = np.concatenate(df[col].values)
@@ -177,11 +170,11 @@ class TestDGLMoleculeDataset:
         data_set = DGLMoleculeDataset.from_openff(
             [openff_methane_charged],
             label_function=label_formal_charge,
-            atom_features=[AtomConnectivity()],
+            atom_features=[AtomConnectivity(categories=[1, 4])],
             bond_features=[BondIsInRing()],
         )
         assert len(data_set) == 1
-        assert data_set.n_atom_features == 4
+        assert data_set.n_atom_features == 2
 
         dgl_molecule, labels = data_set[0]
         assert isinstance(dgl_molecule, DGLMolecule)
@@ -191,3 +184,13 @@ class TestDGLMoleculeDataset:
         label = labels["formal_charges"]
         assert label.numpy().shape == (5,)
 
+
+class TestDGLMoleculeDataLoader:
+    def test_init(self, featurized_dataset):
+        loader = DGLMoleculeDataLoader(featurized_dataset)
+        entries = [*loader]
+        assert len(entries) == 10
+
+        for dgl_molecule, labels in entries:
+            assert isinstance(dgl_molecule, DGLMoleculeBatch)
+            assert len(labels) == 7

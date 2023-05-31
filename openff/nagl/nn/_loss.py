@@ -1,12 +1,12 @@
 import abc
-import functools
 import typing
 from openff.toolkit import Molecule
 
 import pydantic
+from pydantic import Field
 from pydantic.main import ModelMetaclass
 from openff.nagl._base.metaregistry import create_registry_metaclass
-from openff.nagl.nn._metrics import MetricMeta, BaseMetric
+from openff.nagl.nn._metrics import MetricType #MetricMeta, BaseMetric
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
@@ -18,24 +18,37 @@ if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule
 
 
-class _TargetMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
-    pass
+# class _TargetMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
+#     pass
 
 
-class _BaseTarget(ImmutableModel, abc.ABC, metaclass=_TargetMeta):
-    name: typing.ClassVar[typing.Optional[str]] = None
-
-    metric: BaseMetric
+class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
+    name: typing.Literal[""]
+    metric: MetricType = Field(..., discriminator="name")
     target_label: str
-    denominator: float
-    weight: float
+    denominator: float = Field(
+        default=1.0,
+        description=(
+            "The denominator to divide the loss by. This is used to "
+            "normalize the loss across targets with different magnitudes."
+        )
+    )
+    weight: float = Field(
+        default=1.0,
+        description=(
+            "The weight to multiply the loss by. This is used to "
+            "weight the loss across targets in multi-objective training."
+        )
+    )
 
     @pydantic.validator("metric", pre=True)
     def _validate_metric(cls, v):
-        return MetricMeta.get_instance(v)
-
+        if isinstance(v, str):
+            v = {"name": v}
+        return v
+    
     @abc.abstractmethod
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         """
         Target columns used in this target.
 
@@ -76,8 +89,8 @@ class _BaseTarget(ImmutableModel, abc.ABC, metaclass=_TargetMeta):
         targets = self.evaluate_target(
             molecules, labels, predictions,
             readout_modules=readout_modules
-        )
-        reference = labels[self.target_label]
+        ).float()
+        reference = labels[self.target_label].float()
         loss = self.metric(targets, reference)
         return self.weight * loss / self.denominator
 
@@ -118,11 +131,12 @@ class _BaseTarget(ImmutableModel, abc.ABC, metaclass=_TargetMeta):
     
 class ReadoutTarget(_BaseTarget):
     """A target that is evaluated on the straightforward readout of a molecule."""
-    name: typing.ClassVar[str] = "readout"
+    # name: typing.ClassVar[str] = "readout"
+    name: typing.Literal["readout"] = "readout"
 
     prediction_label: str
 
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         return [self.target_label]
 
     def evaluate_target(
@@ -132,18 +146,19 @@ class ReadoutTarget(_BaseTarget):
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
-        return predictions[self.target_label]
+        return predictions[self.prediction_label].squeeze()
 
 
 class HeavyAtomReadoutTarget(_BaseTarget):
     """
     A target that is evaluated on the heavy atoms of the readout of a molecule,
     """
-    name: typing.ClassVar[str] = "heavy_atom_readout"
+    # name: typing.ClassVar[str] = "heavy_atom_readout"
+    name: typing.Literal["heavy_atom_readout"] = "heavy_atom_readout"
     
     prediction_label: str
 
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         return [self.target_label]
     
     def evaluate_target(
@@ -155,17 +170,18 @@ class HeavyAtomReadoutTarget(_BaseTarget):
     ) -> "torch.Tensor":        
         atomic_numbers = molecule.graph.ndata["atomic_number"]
         heavy_atom_mask = atomic_numbers != 1
-        return predictions[self.target_label][heavy_atom_mask]
+        return predictions[self.prediction_label].squeeze()[heavy_atom_mask]
     
 
 class SingleDipoleTarget(_BaseTarget):
     """A target that is evaluated on the dipole of a molecule."""
-    name: typing.ClassVar[str] = "single_dipole"
+    # name: typing.ClassVar[str] = "single_dipole"
+    name: typing.Literal["single_dipole"] = "single_dipole"
 
     charge_label: str
     conformation_column: str
 
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         return [self.target_label, self.conformation_column]
 
     def evaluate_target(
@@ -176,19 +192,12 @@ class SingleDipoleTarget(_BaseTarget):
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
-        from openff.nagl.molecule._base import BatchMixin
 
-
-        conformations = labels[self.conformation_column].reshape(-1, 3)
-        all_confs = torch.split(
-            conformations,
-            molecules.n_atoms_per_molecule
-        )
-        charges = predictions[self.charge_label].squeeze()
-        all_charges = torch.split(
-            charges,
-            molecules.n_atoms_per_molecule
-        )
+        conformations = labels[self.conformation_column].reshape(-1, 3).float()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+        all_confs = torch.split(conformations, all_n_atoms)
+        charges = predictions[self.charge_label].squeeze().float()
+        all_charges = torch.split(charges, all_n_atoms)
         dipoles = []
 
         for mol_charge, mol_conformation in zip(all_charges, all_confs):
@@ -200,13 +209,14 @@ class SingleDipoleTarget(_BaseTarget):
 
 class MultipleDipoleTarget(_BaseTarget):
     """A target that is evaluated on the dipole of a molecule."""
-    name: typing.ClassVar[str] = "multi_dipole"
+    # name: typing.ClassVar[str] = "multi_dipole"
+    name: typing.Literal["multi_dipole"] = "multi_dipole"
 
     charge_label: str
     conformation_column: str
     n_conformation_column: str
 
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         return [self.target_label, self.conformation_column, self.n_conformation_column]
 
     def evaluate_target(
@@ -217,27 +227,22 @@ class MultipleDipoleTarget(_BaseTarget):
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
-        from openff.nagl.molecule._base import BatchMixin
 
-
-        conformations = labels[self.conformation_column].reshape(-1, 3)
-        n_conformations = labels[self.n_conformation_column].reshape(-1)
-        n_atoms_per_molecule = molecules.n_atoms_per_molecule
+        conformations = labels[self.conformation_column].reshape(-1, 3).float()
+        n_conformations = labels[self.n_conformation_column].reshape(-1).int()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
         charges = predictions[self.charge_label].squeeze()
-        all_charges = torch.split(
-            charges,
-            molecules.n_atoms_per_molecule
-        )
+        all_charges = torch.split(charges, all_n_atoms)
         dipoles = []
 
         counter = 0
         for i, n_conf in enumerate(n_conformations):
             mol_charge = all_charges[i]
-            n_atoms = n_atoms_per_molecule[i]
+            n_atoms = all_n_atoms[i]
             for _ in range(n_conf):
                 mol_conformation = conformations[counter:counter+n_atoms]
                 mol_dipole = torch.matmul(mol_charge, mol_conformation)
-                dipoles.append(mol_dipole)
+                dipoles.extend(mol_dipole)
 
                 counter += n_atoms
 
@@ -246,16 +251,19 @@ class MultipleDipoleTarget(_BaseTarget):
 
 class ESPTarget(_BaseTarget):
     """A target that is evaluated on the electrostatic potential of a molecule."""
-    name: typing.ClassVar[str] = "esp"
+    # name: typing.ClassVar[str] = "esp"
+    name: typing.Literal["esp"] = "esp"
 
     charge_label: str
     inverse_distance_matrix_column: str
+    esp_length_column: str
     n_esp_column: str
 
-    def required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> typing.List[str]:
         return [
             self.target_label,
             self.inverse_distance_matrix_column,
+            self.esp_length_column,
             self.n_esp_column
         ]
     
@@ -268,26 +276,42 @@ class ESPTarget(_BaseTarget):
     ) -> "torch.Tensor":
         import torch
         
-        inverse_distance_matrix = labels[self.inverse_distance_matrix_column].squeeze()
-        n_grid_points = labels[self.n_esp_column]
-        charges = predictions[self.charge_label].squeeze()
-        all_charges = torch.split(
-            charges,
-            molecules.n_atoms_per_molecule
-        )
+        inverse_distance_matrix = labels[self.inverse_distance_matrix_column]
+        inverse_distance_matrix = inverse_distance_matrix.squeeze().float()
+        n_grid_points = labels[self.esp_length_column].int()
+        all_n_esps = labels[self.n_esp_column].int()
+        charges = predictions[self.charge_label].squeeze().float()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+        all_charges = torch.split(charges, all_n_atoms)
 
         esps = []
-        counter = 0
-        for n_atoms, n_grid, mol_charge in zip(
-            molecules.n_atoms_per_molecule,
-            n_grid_points,
+        n_esp_counter = 0
+        n_grid_counter = 0
+        for n_atoms, n_esps, mol_charge in zip(
+            all_n_atoms,
+            all_n_esps,
             all_charges,
         ):
-            increment = n_atoms * n_grid
-            inv_dist = inverse_distance_matrix[counter:counter+increment]
-            inv_dist = inv_dist.reshape(n_grid, n_atoms)
-            esp = torch.matmul(inv_dist, mol_charge)
-            esps.extend(esp)
+            for i in range(n_esps):
+                n_grid = n_grid_points[n_esp_counter] * n_atoms
+                grid_start = n_grid_counter
+                grid_end = grid_start + n_grid
+                inv_dist = inverse_distance_matrix[grid_start:grid_end]
+                inv_dist = inv_dist.reshape((-1, n_atoms))
+                esp = torch.matmul(inv_dist, mol_charge)
+                esps.extend(esp)
+                n_esp_counter += 1
+                n_grid_counter += n_grid
 
         return torch.tensor(esps).squeeze()
 
+
+
+
+TargetType = typing.Union[
+    MultipleDipoleTarget,
+    ReadoutTarget,
+    HeavyAtomReadoutTarget,
+    SingleDipoleTarget,
+    ESPTarget,
+]

@@ -1,14 +1,5 @@
 import abc
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Dict,
-    List,
-    Optional,
-    Type,
-    Union,
-)
+import typing
 
 from pydantic import validator
 from pydantic.main import ModelMetaclass
@@ -17,28 +8,28 @@ from openff.nagl._base.metaregistry import create_registry_metaclass
 
 from .._base.base import ImmutableModel
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     import torch
     from openff.toolkit.topology import Molecule as OFFMolecule
 
 
-class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
-    registry: ClassVar[Dict[str, Type]] = {}
+# class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
+#     registry: ClassVar[Dict[str, Type]] = {}
 
-    def __init__(cls, name, bases, namespace, **kwargs):
-        super().__init__(name, bases, namespace, **kwargs)
-        try:
-            key = namespace.get(cls._key_attribute)
-        except AttributeError:
-            key = None
-        else:
-            if not key:
-                key = name
+#     def __init__(cls, name, bases, namespace, **kwargs):
+#         super().__init__(name, bases, namespace, **kwargs)
+#         try:
+#             key = namespace.get(cls._key_attribute)
+#         except AttributeError:
+#             key = None
+#         else:
+#             if not key:
+#                 key = name
 
-        if key is not None:
-            key = cls._key_transform(key)
-            cls.registry[key] = cls
-        setattr(cls, cls._key_attribute, key)
+#         if key is not None:
+#             key = cls._key_transform(key)
+#             cls.registry[key] = cls
+#         setattr(cls, cls._key_attribute, key)
 
 
 class Feature(ImmutableModel, abc.ABC):
@@ -49,7 +40,7 @@ class Feature(ImmutableModel, abc.ABC):
     <openff.nagl.features.atoms.AtomFeature>` or
     :py:class:`BondFeature <openff.nagl.features.bonds.BondFeature>`,
     implement :py:class:`_encode <encode>`, and define
-    :py:attr:`feature_name`. Complex features should additionally define the
+    :py:attr:`name`. Complex features should additionally define the
     :py:attr:`_feature_length` class attribute and set it to the length of the
     feature.
 
@@ -58,9 +49,9 @@ class Feature(ImmutableModel, abc.ABC):
     openff.nagl.features.atoms.AtomFeature, openff.nagl.features.bonds.BondFeature
     """
 
-    feature_name: ClassVar[Optional[str]] = ""
+    name: typing.Literal[""]
     """Define a name for the feature"""
-    _feature_length: ClassVar[int] = 1
+    _feature_length: typing.ClassVar[int] = 1
 
     def __init__(self, *args, **kwargs):
         if not kwargs and args:
@@ -116,7 +107,7 @@ class CategoricalMixin:
     Mixin class for categorical features.
     """
 
-    categories: List[Any]
+    categories: typing.List[typing.Any]
 
     @property
     def _default_categories(self):

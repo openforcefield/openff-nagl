@@ -7,7 +7,8 @@ import numpy as np
 import pytest
 
 from openff.nagl.molecule._dgl.molecule import DGLMolecule
-from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+from openff.nagl.features.atoms import AtomConnectivity, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing
 
 
@@ -64,7 +65,6 @@ def dgl_methane(openff_methane_uncharged):
         bond_features=[BondIsInRing()],
     )
 
-
 @pytest.fixture()
 def nx_methane(openff_methane_uncharged):
     from openff.nagl.molecule._graph.molecule import GraphMolecule
@@ -95,3 +95,38 @@ def openff_cnc():
     from openff.toolkit.topology.molecule import Molecule
 
     return Molecule.from_mapped_smiles("[H:4][C:1]([H:5])([H:6])[N:2]([H:7])[C:3]([H:8])([H:9])[H:10]")
+
+
+@pytest.fixture()
+def example_atom_features():
+    return [AtomicElement(), AtomConnectivity()]
+
+@pytest.fixture()
+def example_bond_features():
+    return [BondIsInRing()]
+
+@pytest.fixture()
+def dgl_carboxylate(openff_carboxylate):
+    pytest.importorskip("dgl")
+    return DGLMolecule.from_openff(
+        openff_carboxylate,
+        atom_features=[AtomConnectivity()],
+        bond_features=[BondIsInRing()],
+    )
+
+@pytest.fixture()
+def dgl_ccnco(openff_ccnco):
+    pytest.importorskip("dgl")
+    return DGLMolecule.from_openff(
+        openff_ccnco,
+        atom_features=[AtomConnectivity()],
+        bond_features=[BondIsInRing()],
+    )
+
+
+@pytest.fixture()
+def dgl_batch(dgl_methane, dgl_carboxylate, dgl_ccnco):
+    pytest.importorskip("dgl")
+    return DGLMoleculeBatch.from_dgl_molecules(
+        [dgl_methane, dgl_carboxylate, dgl_ccnco]
+    )
