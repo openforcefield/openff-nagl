@@ -5,7 +5,7 @@ import shutil
 import torch
 import numpy as np
 
-from openff.nagl.nn.training import DGLMoleculeDataModule, DataHash, TrainingGNNModel
+from openff.nagl.training.training import DGLMoleculeDataModule, DataHash, TrainingGNNModel
 from openff.nagl.nn._models import GNNModel
 from openff.nagl.nn._dataset import DGLMoleculeDataLoader
 from openff.nagl.config.training import TrainingConfig

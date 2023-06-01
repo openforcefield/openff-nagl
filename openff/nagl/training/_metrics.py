@@ -1,5 +1,4 @@
 import abc
-import functools
 import typing
 from pydantic.main import ModelMetaclass
 
@@ -57,3 +56,17 @@ class MAEMetric(BaseMetric):
 
 
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
+
+METRICS = {
+    "rmse": RMSEMetric,
+    "mse": MSEMetric,
+    "mae": MAEMetric
+}
+
+
+def get_metric_type(metric):
+    if isinstance(metric, BaseMetric):
+        return metric
+    elif isinstance(metric, str):
+        metric = metric.lower()
+        return METRICS[metric]()

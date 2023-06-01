@@ -1,12 +1,15 @@
 import abc
+import pathlib
 import typing
 from openff.toolkit import Molecule
 
 import pydantic
 from pydantic import Field
 from pydantic.main import ModelMetaclass
+import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass
-from openff.nagl.nn._metrics import MetricType #MetricMeta, BaseMetric
+from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
+from openff.nagl.training._metrics import MetricType #MetricMeta, BaseMetric
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
@@ -56,7 +59,7 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         from the parquet datasets.
         """
 
-    def evaluate_loss(
+    def _evaluate_loss(
         self,
         molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
@@ -92,6 +95,41 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         ).float()
         reference = labels[self.target_label].float()
         loss = self.metric(targets, reference)
+        return loss
+    
+    def evaluate_loss(
+        self,
+        molecules: "DGLMoleculeOrBatch",
+        labels: typing.Dict[str, "torch.Tensor"],
+        predictions: typing.Dict[str, "torch.Tensor"],
+        readout_modules: typing.Dict[str, ReadoutModule],
+    ):
+        """
+        Evaluate the target loss for a molecule or batch of molecules.
+        This accounts for the denominator and weight of the target and
+        calls `evaluate_target`.
+
+        Parameters
+        ----------
+        molecules: Union[DGLMolecule, DGLMoleculeBatch]
+            The molecule(s) to evaluate the target for.
+        labels: Dict[str, torch.Tensor]
+            The labels for the molecule(s). If `molecules` is a batch,
+            the values of these will be contiguous arrays, which
+            should be split for molecular-based errors
+        predictions: Dict[str, torch.Tensor]
+            The predictions for the molecule(s). If `molecules` is a batch,
+            the values of these will be contiguous arrays, which
+            should be split for molecular-based errors
+
+        Returns
+        -------
+        torch.Tensor
+            The loss for the molecule(s).
+        """
+        loss = self._evaluate_loss(
+            molecules, labels, predictions, readout_modules
+        )
         return self.weight * loss / self.denominator
 
     @abc.abstractmethod
@@ -129,6 +167,44 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
     def compute_reference(self, molecule: "Molecule"):
         raise NotImplementedError
     
+    def report_artifact(
+        self,
+        molecules: "DGLMoleculeOrBatch",
+        labels: typing.Dict[str, "torch.Tensor"],
+        predictions: typing.Dict[str, "torch.Tensor"],
+        output_directory: pathlib.Path,
+        top_n_entries: int = 100,
+        bottom_n_entries: int = 100,
+    ) -> pathlib.Path:
+        """
+        Create a report of artifacts for this target for an MLFlowLogger.
+
+        Parameters
+        ----------
+        molecules: DGLMolecule or DGLMoleculeBatch
+            The molecule(s) to evaluate the target for.
+        labels: Dict[str, torch.Tensor]
+            The labels for the molecule(s). If `molecules` is a batch,
+            the values of these will be contiguous arrays, which
+            should be split for molecular-based errors
+        predictions: Dict[str, torch.Tensor]
+            The predictions for the molecule(s). If `molecules` is a batch,
+            the values of these will be contiguous arrays, which
+            should be split for molecular-based errors
+        output_directory: pathlib.Path
+            The directory to output the report to.
+        top_n_entries: int, optional
+            The number of top-ranked entries to include in the report.
+        bottom_n_entries: int, optional
+            The number of bottom-ranked entries to include in the report.
+
+        Returns
+        -------
+        pathlib.Path
+            The path to the report.
+        """
+        raise NotImplementedError
+    
 class ReadoutTarget(_BaseTarget):
     """A target that is evaluated on the straightforward readout of a molecule."""
     # name: typing.ClassVar[str] = "readout"
@@ -141,12 +217,55 @@ class ReadoutTarget(_BaseTarget):
 
     def evaluate_target(
         self,
-        molecule: "DGLMoleculeOrBatch",
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         return predictions[self.prediction_label].squeeze()
+    
+
+    def report_artifact(
+        self,
+        molecules: DGLMoleculeOrBatch,
+        labels: typing.Dict[str, torch.Tensor],
+        predictions: typing.Dict[str, torch.Tensor],
+        output_directory: pathlib.Path,
+        top_n_entries: int = 100,
+        bottom_n_entries: int = 100,
+    ) -> pathlib.Path:
+        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+        from openff.nagl.training.reporting import create_atom_label_report
+
+        n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+
+        if isinstance(molecules, DGLMoleculeBatch):
+            molecules = molecules.unbatch()
+        else:
+            molecules = [molecules]
+
+        predictions = predictions[self.prediction_label].squeeze()
+        predictions = torch.split(predictions, n_atoms)
+        labels = labels[self.target_label].squeeze()
+        labels = torch.split(labels, n_atoms)
+
+        report_path = output_directory / f"{self.target_label}.html"
+        create_atom_label_report(
+            molecules=molecules,
+            predicted_labels=predictions,
+            reference_labels=labels,
+            metrics=[self.metric],
+            rank_by=self.metric,
+            output_path=report_path,
+            top_n_entries=top_n_entries,
+            bottom_n_entries=bottom_n_entries,
+            highlight_outliers=True,
+            outlier_threshold=0.5,
+        )
+        return report_path
+        
+        
+
 
 
 class HeavyAtomReadoutTarget(_BaseTarget):
@@ -163,12 +282,12 @@ class HeavyAtomReadoutTarget(_BaseTarget):
     
     def evaluate_target(
         self,
-        molecule: "DGLMoleculeOrBatch",
+        molecules: "DGLMoleculeOrBatch",
         labels: typing.Dict[str, "torch.Tensor"],
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":        
-        atomic_numbers = molecule.graph.ndata["atomic_number"]
+        atomic_numbers = molecules.graph.ndata["atomic_number"]
         heavy_atom_mask = atomic_numbers != 1
         return predictions[self.prediction_label].squeeze()[heavy_atom_mask]
     
@@ -218,7 +337,22 @@ class MultipleDipoleTarget(_BaseTarget):
 
     def get_required_columns(self) -> typing.List[str]:
         return [self.target_label, self.conformation_column, self.n_conformation_column]
+    
+    def _prepare_inputs(
+        self,
+        molecules: "DGLMoleculeOrBatch",
+        labels: typing.Dict[str, "torch.Tensor"],
+        predictions: typing.Dict[str, "torch.Tensor"],
+    ):
+        import torch
 
+        conformations = labels[self.conformation_column].reshape(-1, 3).float()
+        n_conformations = labels[self.n_conformation_column].reshape(-1).int()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+        charges = predictions[self.charge_label].squeeze()
+        all_charges = torch.split(charges, all_n_atoms)
+        return conformations, n_conformations, all_n_atoms, all_charges
+    
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
@@ -228,13 +362,10 @@ class MultipleDipoleTarget(_BaseTarget):
     ) -> "torch.Tensor":
         import torch
 
-        conformations = labels[self.conformation_column].reshape(-1, 3).float()
-        n_conformations = labels[self.n_conformation_column].reshape(-1).int()
-        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
-        charges = predictions[self.charge_label].squeeze()
-        all_charges = torch.split(charges, all_n_atoms)
+        conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(
+            molecules, labels, predictions
+        )
         dipoles = []
-
         counter = 0
         for i, n_conf in enumerate(n_conformations):
             mol_charge = all_charges[i]
@@ -247,6 +378,72 @@ class MultipleDipoleTarget(_BaseTarget):
                 counter += n_atoms
 
         return torch.stack(dipoles).squeeze()
+    
+    def report_artifact(
+        self,
+        molecules: DGLMoleculeOrBatch,
+        labels: typing.Dict[str, torch.Tensor],
+        predictions: typing.Dict[str, torch.Tensor],
+        output_directory: pathlib.Path,
+        top_n_entries: int = 100,
+        bottom_n_entries: int = 100,
+    ) -> pathlib.Path:
+        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+        from openff.nagl.training.reporting import create_molecule_label_report
+
+        if isinstance(molecules, DGLMoleculeBatch):
+            molecules = molecules.unbatch()
+        else:
+            molecules = [molecules]
+
+        conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(
+            molecules, labels, predictions
+        )
+        ref = labels[self.target_label].squeeze()
+
+        losses = []
+        counter = 0
+        dipole_counter = 0
+        for i, n_conf in enumerate(n_conformations):
+            mol_charge = all_charges[i]
+            n_atoms = all_n_atoms[i]
+
+            atom_increment = n_conf * n_atoms
+            mol_conformation = conformations[counter:counter+atom_increment]
+
+            mol_predictions = {
+                self.charge_label: mol_charge,
+            }
+
+            dipole_increment = n_conf * 3
+            mol_ref = ref[dipole_counter:dipole_counter+dipole_increment]
+            mol_labels = {
+                self.conformation_column: mol_conformation,
+                self.n_conformation_column: torch.tensor([n_conf]),
+                self.target_label: mol_ref
+            }
+            loss = self._evaluate_loss(
+                molecules[i],
+                mol_labels,
+                mol_predictions,
+                {}
+            )
+            losses.append(loss)
+
+            counter += atom_increment
+            dipole_counter += dipole_increment
+
+
+        report_path = output_directory / f"{self.target_label}.html"
+        create_molecule_label_report(
+            molecules=molecules,
+            losses=torch.tensor(losses),
+            metric_name=self.metric.name,
+            output_path=report_path,
+            top_n_entries=top_n_entries,
+            bottom_n_entries=bottom_n_entries,
+        )
+        return report_path
     
 
 class ESPTarget(_BaseTarget):
@@ -267,6 +464,25 @@ class ESPTarget(_BaseTarget):
             self.n_esp_column
         ]
     
+    def _prepare_inputs(
+        self,
+        molecules: "DGLMoleculeOrBatch",
+        labels: typing.Dict[str, "torch.Tensor"],
+        predictions: typing.Dict[str, "torch.Tensor"],
+    ):
+        import torch
+
+        inverse_distance_matrix = labels[self.inverse_distance_matrix_column]
+        inverse_distance_matrix = inverse_distance_matrix.squeeze().float()
+        n_grid_points = labels[self.esp_length_column].int()
+        all_n_esps = labels[self.n_esp_column].int()
+        charges = predictions[self.charge_label].squeeze().float()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+        all_charges = torch.split(charges, all_n_atoms)
+
+        return all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix
+        
+    
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
@@ -275,14 +491,11 @@ class ESPTarget(_BaseTarget):
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
+
+        all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = self._prepare_inputs(
+            molecules, labels, predictions
+        )
         
-        inverse_distance_matrix = labels[self.inverse_distance_matrix_column]
-        inverse_distance_matrix = inverse_distance_matrix.squeeze().float()
-        n_grid_points = labels[self.esp_length_column].int()
-        all_n_esps = labels[self.n_esp_column].int()
-        charges = predictions[self.charge_label].squeeze().float()
-        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
-        all_charges = torch.split(charges, all_n_atoms)
 
         esps = []
         n_esp_counter = 0
@@ -304,6 +517,74 @@ class ESPTarget(_BaseTarget):
                 n_grid_counter += n_grid
 
         return torch.tensor(esps).squeeze()
+    
+    def report_artifact(
+        self,
+        molecules: DGLMoleculeOrBatch,
+        labels: typing.Dict[str, torch.Tensor],
+        predictions: typing.Dict[str, torch.Tensor],
+        output_directory: pathlib.Path,
+        top_n_entries: int = 100,
+        bottom_n_entries: int = 100,
+    ) -> pathlib.Path:
+        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+        from openff.nagl.training.reporting import create_molecule_label_report
+
+        if isinstance(molecules, DGLMoleculeBatch):
+            molecules = molecules.unbatch()
+        else:
+            molecules = [molecules]
+
+        all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = self._prepare_inputs(
+            molecules, labels, predictions
+        )
+        ref = labels[self.target_label].flatten().squeeze()
+        
+        losses = []
+        for molecule, n_atoms, n_esps, mol_charge in zip(
+            molecules, all_n_atoms, all_n_esps, all_charges
+        ):
+            mol_n_grid_points = n_grid_points[:n_esps]
+            n_grid_total = sum(mol_n_grid_points)
+            inv_increment = n_grid_total * n_atoms
+            mol_inv_dist = inverse_distance_matrix[:inv_increment]
+
+            mol_labels = {
+                self.inverse_distance_matrix_column: mol_inv_dist,
+                self.esp_length_column: mol_n_grid_points,
+                self.n_esp_column: torch.tensor([n_esps]),
+                self.target_label: ref[:n_grid_total]
+
+            }
+
+            mol_predictions = {
+                self.charge_label: mol_charge,
+            }
+
+            loss = self._evaluate_loss(
+                molecule,
+                mol_labels,
+                mol_predictions,
+                {}
+            )
+
+            losses.append(loss)
+
+            ref = ref[n_grid_total:]
+            n_grid_points = n_grid_points[n_esps:]
+            inverse_distance_matrix = inverse_distance_matrix[inv_increment:]
+
+        report_path = output_directory / f"{self.target_label}.html"
+        create_molecule_label_report(
+            molecules=molecules,
+            losses=torch.tensor(losses),
+            metric_name=self.metric.name,
+            output_path=report_path,
+            top_n_entries=top_n_entries,
+            bottom_n_entries=bottom_n_entries,
+        )
+        return report_path
+        
 
 
 
