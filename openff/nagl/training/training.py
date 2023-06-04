@@ -1,5 +1,6 @@
 from collections import defaultdict
 import functools
+import glob
 import hashlib
 import logging
 import pathlib
@@ -14,7 +15,7 @@ from openff.nagl.nn._models import GNNModel
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.nn._dataset import DGLMoleculeDataset
+from openff.nagl.nn._dataset import DGLMoleculeDataset, LazyCachedFeaturizedDGLMoleculeDataset
 
 if typing.TYPE_CHECKING:
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
@@ -46,8 +47,10 @@ class DataHash(ImmutableModel):
         bond_features: typing.List[BondFeature],
     ):
         path = pathlib.Path(path)
-        path_hash = file_digest(path)
+        # path_hash = file_digest(path)
+        path_hash = str(path.resolve())
         return cls(
+            # path_hash=path_hash,
             path_hash=path_hash,
             columns=columns,
             atom_features=atom_features,
@@ -56,7 +59,8 @@ class DataHash(ImmutableModel):
     
     def to_hash(self):
         json_str = self.json().encode("utf-8")
-        return hashlib.sha256(json_str).hexdigest()
+        hashed = hashlib.sha256(json_str).hexdigest()
+        return hashed
 
 
 class TrainingGNNModel(pl.LightningModule):
@@ -74,6 +78,10 @@ class TrainingGNNModel(pl.LightningModule):
             "val": self.config.data.validation,
             "test": self.config.data.test,
         }
+
+    def forward(self, molecule: "DGLMoleculeOrBatch") -> typing.Dict[str, torch.Tensor]:
+        outputs = self.model.forward(molecule)
+        return outputs
 
     @classmethod
     def from_yaml(cls, filename):
@@ -101,7 +109,7 @@ class TrainingGNNModel(pl.LightningModule):
                 readout_modules=self.model.readout_modules,
             )
             step_name = (
-                f"{step_type}/{target.target_label}/{target.name}//"
+                f"{step_type}/{target.target_label}/{target.name}/"
                 f"{target.metric.name}/{target.weight}/{target.denominator}"
             )
             self.log(step_name, target_loss)
@@ -113,7 +121,7 @@ class TrainingGNNModel(pl.LightningModule):
     
     def training_step(self, train_batch, batch_idx):
         loss = self._default_step(train_batch, "train")
-        return {"training_loss": loss}
+        return {"loss": loss}
 
     def validation_step(self, val_batch, batch_idx):
         loss = self._default_step(val_batch, "val")
@@ -160,6 +168,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         }
         self._datasets = {}
         self._file_hashes = defaultdict(list)
+        self._prefixes = defaultdict(list)
 
         for stage, config in self._dataset_configs.items():
             if config is None or not config.sources:
@@ -187,7 +196,6 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
     def prepare_data(self):
         for stage, config in self._dataset_configs.items():
             if config is None or not config.sources:
-
                 continue
 
             cache_dir = pathlib.Path(config.cache_directory)
@@ -196,38 +204,66 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
 
             if config.cache_directory is not None and config.use_cached_data:
                 cache_dir.mkdir(exist_ok=True, parents=True)
+                datasets = []
                 for path in config.sources:
                     file_hash = self._hash_file(path, columns)
-                    filename = f"{file_hash}.parquet"
-                    cached_path = cache_dir / filename
-                    self._file_hashes[stage].append(filename)
-                    if cached_path.is_file():
-                        logger.info(f"Found cached data at {cached_path}")
-                    else:
+                    prefix = str((cache_dir / file_hash).resolve())
+                    self._prefixes[stage].append(prefix)
 
-                        ds = DGLMoleculeDataset.from_unfeaturized_parquet(
-                            [path],
-                            columns=columns,
-                            atom_features=self.config.model.atom_features,
-                            bond_features=self.config.model.bond_features,
-                            n_processes=self.n_processes,
-                            verbose=self.verbose,
-                        )
-                        ds.to_parquet(cached_path)
-                        logger.info(f"Wrote cached data to {cached_path}")
-
-            else:
-                ds = DGLMoleculeDataset.from_unfeaturized_parquet(
-                    config.sources,
-                    columns=columns,
-                    atom_features=self.config.model.atom_features,
-                    bond_features=self.config.model.bond_features,
-                    n_processes=self.n_processes,
-                    verbose=self.verbose,
-                )
-                self._datasets[stage] = ds
+                    matches = glob.glob(f"{prefix}*.pkl")
+                    n_entries = len(matches)
+                    ds = LazyCachedFeaturizedDGLMoleculeDataset(
+                        prefix=prefix,
+                        n_entries=n_entries,
+                    )
+                    datasets.append(ds)
+                self._datasets[stage] = torch.utils.data.ConcatDataset(datasets)
         
-            
+
+    # def prepare_data(self):
+    #     for stage, config in self._dataset_configs.items():
+    #         if config is None or not config.sources:
+
+    #             continue
+
+    #         cache_dir = pathlib.Path(config.cache_directory)
+
+    #         columns = config.get_required_target_columns()
+
+    #         if config.cache_directory is not None and config.use_cached_data:
+    #             cache_dir.mkdir(exist_ok=True, parents=True)
+    #             for path in config.sources:
+    #                 file_hash = self._hash_file(path, columns)
+    #                 filename = f"{file_hash}.parquet"
+    #                 cached_path = cache_dir / filename
+    #                 self._file_hashes[stage].append(str(cached_path.resolve()))
+    #                 if cached_path.is_file():
+    #                     logger.info(f"Found cached data at {cached_path}")
+    #                 else:
+
+    #                     ds = DGLMoleculeDataset.from_unfeaturized_parquet(
+    #                         [path],
+    #                         columns=columns,
+    #                         atom_features=self.config.model.atom_features,
+    #                         bond_features=self.config.model.bond_features,
+    #                         n_processes=self.n_processes,
+    #                         verbose=self.verbose,
+    #                     )
+    #                     ds.to_parquet(cached_path)
+    #                     logger.info(f"Wrote cached data to {cached_path}")
+
+    #         else:
+    #             ds = DGLMoleculeDataset.from_unfeaturized_parquet(
+    #                 config.sources,
+    #                 columns=columns,
+    #                 atom_features=self.config.model.atom_features,
+    #                 bond_features=self.config.model.bond_features,
+    #                 n_processes=self.n_processes,
+    #                 verbose=self.verbose,
+    #             )
+    #             self._datasets[stage] = ds
+
+
     def setup(self, **kwargs):
         for stage, config in self._dataset_configs.items():
             if stage in self._datasets:

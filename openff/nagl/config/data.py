@@ -37,7 +37,7 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
         columns = set()
         for target in self.targets:
             columns |= set(target.get_required_columns())
-        return list(columns)
+        return sorted(columns)
 
 
 class DataConfig(ImmutableModel, FromYamlMixin):
@@ -58,4 +58,4 @@ class DataConfig(ImmutableModel, FromYamlMixin):
             columns |= set(self.validation.get_required_target_columns())
         if self.test is not None:
             columns |= set(self.test.get_required_target_columns())
-        return list(columns)
+        return sorted(columns)

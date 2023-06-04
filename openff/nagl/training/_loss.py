@@ -92,8 +92,8 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         targets = self.evaluate_target(
             molecules, labels, predictions,
             readout_modules=readout_modules
-        ).float()
-        reference = labels[self.target_label].float()
+        ).float().squeeze()
+        reference = labels[self.target_label].float().squeeze()
         loss = self.metric(targets, reference)
         return loss
     
@@ -222,7 +222,7 @@ class ReadoutTarget(_BaseTarget):
         predictions: typing.Dict[str, "torch.Tensor"],
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
-        return predictions[self.prediction_label].squeeze()
+        return predictions[self.prediction_label]
     
 
     def report_artifact(
@@ -377,7 +377,7 @@ class MultipleDipoleTarget(_BaseTarget):
 
                 counter += n_atoms
 
-        return torch.stack(dipoles).squeeze()
+        return torch.stack(dipoles)
     
     def report_artifact(
         self,
@@ -399,7 +399,7 @@ class MultipleDipoleTarget(_BaseTarget):
         conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(
             molecules, labels, predictions
         )
-        ref = labels[self.target_label].squeeze()
+        ref = labels[self.target_label]
 
         losses = []
         counter = 0
@@ -500,6 +500,8 @@ class ESPTarget(_BaseTarget):
         esps = []
         n_esp_counter = 0
         n_grid_counter = 0
+
+        device = list(predictions.values())[0].device
         for n_atoms, n_esps, mol_charge in zip(
             all_n_atoms,
             all_n_esps,
@@ -516,7 +518,7 @@ class ESPTarget(_BaseTarget):
                 n_esp_counter += 1
                 n_grid_counter += n_grid
 
-        return torch.tensor(esps).squeeze()
+        return torch.tensor(esps).to(device)
     
     def report_artifact(
         self,

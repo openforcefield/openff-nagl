@@ -221,6 +221,6 @@ class TestTrainingGNNModel:
         expected_loss = mse_esps + mae_dipoles + rmse_readout
 
         loss = mock_training_model.training_step((dgl_methane, labels), 0)
-        loss = loss["training_loss"]
+        loss = loss["loss"]
         assert torch.isclose(loss, torch.tensor([expected_loss], dtype=torch.float32))
         assert torch.isclose(loss, torch.tensor([123.534743]))

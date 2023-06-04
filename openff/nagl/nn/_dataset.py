@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 import functools
+import glob
+import pickle
 import typing
 
 import tqdm
@@ -63,6 +65,12 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
                 value = np.asarray(value)
                 labels_[key] = torch.from_numpy(value)
         return cls(dglmol, labels_)
+
+    def to(self, device: str):
+        return type(self)(
+            self.molecule.to(device),
+            {k: v.to(device) for k, v in self.labels.items()},
+        )
 
     @classmethod
     def from_mapped_smiles(
@@ -170,6 +178,103 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             atom_feature_tensor=atom_features,
             bond_feature_tensor=bond_features,
         )
+
+class LazyFeaturizedDGLMoleculeDataset(Dataset):
+
+    def __len__(self):
+        return self.n_entries
+
+    def __getitem__(self, index):
+        rows = self.table.slice(index, length=1).to_pylist()
+        return DGLMoleculeDatasetEntry._from_featurized_pyarrow_row(
+            rows[0],
+            atom_feature_column="atom_features",
+            bond_feature_column="bond_features",
+            smiles_column="mapped_smiles",
+        )
+
+    def __init__(self, source):
+        self.source = source
+
+        with pa.memory_map(source, "rb") as src:
+            reader = pa.ipc.open_file(src)
+            table = reader.read_all()
+        self.table = table
+        self.n_entries = self.table.num_rows
+
+
+class LazyCachedFeaturizedDGLMoleculeDataset(Dataset):
+
+    def __len__(self):
+        return self.n_entries
+
+    def __getitem__(self, index):
+        filename = f"{self.prefix}_{index}.pkl"
+        with open(filename, "rb") as f:
+            entry = pickle.load(f)
+        return entry
+    
+    def __init__(
+        self,
+        prefix: str,
+        n_entries: int
+    ):
+        self.prefix = str(prefix)
+        self.n_entries = n_entries
+
+    
+    @classmethod
+    def from_unfeaturized_pyarrow(
+        cls,
+        source: pathlib.Path,
+        atom_features: typing.List[AtomFeature],
+        bond_features: typing.List[BondFeature],
+        smiles_column: str = "mapped_smiles",
+        verbose: bool = False,
+        n_processes: int = 0,
+        columns=None,
+        cache_directory=None,
+    ):
+        from openff.nagl.training.training import DataHash
+        if columns is None:
+            columns = []
+        if smiles_column not in columns:
+            columns = [smiles_column] + columns
+
+        if cache_directory is None:
+            cache_directory = "."
+        else:
+            cache_directory = pathlib.Path(cache_directory)
+        
+        hashed_file = DataHash.from_file(
+            source,
+            columns=sorted(columns),
+            atom_features=atom_features,
+            bond_features=bond_features,
+        ).to_hash()
+        prefix = str((cache_directory / hashed_file).resolve())
+        print(prefix)
+        glob_pattern = f"{prefix}_*.pkl"
+        matches = list(glob.glob(glob_pattern))
+
+        with pa.memory_map(source, "rb") as src:
+            reader = pa.ipc.open_file(src)
+            table = reader.read_all(columns=columns)
+        n_rows = table.num_rows
+        if len(matches) != n_rows:
+            raise ValueError(
+                "Could not find correct number of featurized entries. "
+                f"Expected {n_rows}, found {len(matches)}."
+            )
+        return cls(prefix, n_rows)
+
+        
+
+
+        
+
+
+
 
 
 class DGLMoleculeDataset(Dataset):
@@ -448,7 +553,7 @@ class DGLMoleculeDataset(Dataset):
 class DGLMoleculeDataLoader(DataLoader):
     def __init__(
         self,
-        dataset: typing.Union[DGLMoleculeDataset, ConcatDataset],
+        dataset: typing.Union[DGLMoleculeDataset, LazyCachedFeaturizedDGLMoleculeDataset, ConcatDataset],
         batch_size: typing.Optional[int] = 1,
         **kwargs,
     ):
