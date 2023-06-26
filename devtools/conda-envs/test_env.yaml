@@ -22,8 +22,7 @@ dependencies:
   - openeye-toolkits
 
   # database
-  - sqlalchemy
-  - sqlite
+  - pyarrow
 
   # gcn
   - dglteam::dgl >=1.0
