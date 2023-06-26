@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - sqlite-to-pyarrow
   pull_request:
     branches:
       - main
