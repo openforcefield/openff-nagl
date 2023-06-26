@@ -38,6 +38,7 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - codecov
+  - sqlalchemy <2.0
 
   # Pip-only installs
   - pip:

@@ -11,11 +11,11 @@ import typing
 
 import tqdm
 import torch
-from pydantic import ImmutableModel
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 from openff.toolkit import Molecule
 
+from openff.nagl._base.base import ImmutableModel
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
@@ -56,7 +56,7 @@ class DataHash(ImmutableModel):
     @classmethod
     def from_file(
         cls,
-        paths: typing.Union[str, pathlib.Path],
+        *paths: typing.Union[str, pathlib.Path],
         columns: typing.Optional[typing.List[str]] = None,
         atom_features: typing.Optional[typing.List[AtomFeature]] = None,
         bond_features: typing.Optional[typing.List[BondFeature]] = None,
@@ -65,7 +65,14 @@ class DataHash(ImmutableModel):
 
         for path in paths:
             path = pathlib.Path(path)
-            path_hash += file_digest(path)
+            if path.is_dir():
+                for file in path.glob("**/*"):
+                    if file.is_file():
+                        path_hash += file_digest(file)
+            elif path.is_file():
+                path_hash += file_digest(path)
+            else:
+                path_hash += str(path.resolve())
 
         if columns is None:
             columns = []
@@ -260,156 +267,10 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             bond_feature_tensor=bond_features,
         )
 
-class LazyFeaturizedDGLMoleculeDataset(Dataset):
-
-    def __len__(self):
-        return self.n_entries
-
-    def __getitem__(self, index):
-        rows = self.table.slice(index, length=1).to_pylist()
-        return DGLMoleculeDatasetEntry._from_featurized_pyarrow_row(
-            rows[0],
-            atom_feature_column="atom_features",
-            bond_feature_column="bond_features",
-            smiles_column="mapped_smiles",
-        )
-
-    def __init__(self, source):
-        self.source = source
-
-        with pa.memory_map(source, "rb") as src:
-            reader = pa.ipc.open_file(src)
-            table = reader.read_all()
-        self.table = table
-        self.n_entries = self.table.num_rows
-
-
-class LazyCachedFeaturizedDGLMoleculeDataset(Dataset):
-
-    def __len__(self):
-        return self.n_entries
-
-    def __getitem__(self, index):
-        filename = f"{self.prefix}_{index}.pkl"
-        with open(filename, "rb") as f:
-            entry = pickle.load(f)
-        return entry
-    
-    def __init__(
-        self,
-        prefix: str,
-        n_entries: int
-    ):
-        self.prefix = str(prefix)
-        self.n_entries = n_entries
-
-    
-    @classmethod
-    def from_unfeaturized_pyarrow(
-        cls,
-        source: pathlib.Path,
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
-        smiles_column: str = "mapped_smiles",
-        verbose: bool = False,
-        n_processes: int = 0,
-        columns=None,
-        cache_directory=None,
-    ):
-        from openff.nagl.training.training import DataHash
-        if columns is None:
-            columns = []
-        if smiles_column not in columns:
-            columns = [smiles_column] + columns
-
-        if cache_directory is None:
-            cache_directory = "."
-        else:
-            cache_directory = pathlib.Path(cache_directory)
-        
-        hashed_file = DataHash.from_file(
-            source,
-            columns=sorted(columns),
-            atom_features=atom_features,
-            bond_features=bond_features,
-        ).to_hash()
-        prefix = str((cache_directory / hashed_file).resolve())
-        glob_pattern = f"{prefix}_*.pkl"
-        matches = list(glob.glob(glob_pattern))
-
-        with pa.memory_map(source, "rb") as src:
-            reader = pa.ipc.open_file(src)
-            table = reader.read_all(columns=columns)
-        n_rows = table.num_rows
-        if len(matches) != n_rows:
-            raise ValueError(
-                "Could not find correct number of featurized entries. "
-                f"Expected {n_rows}, found {len(matches)}."
-            )
-        return cls(prefix, n_rows)
-
-        
-class LazyCachedFeaturizedDGLMoleculeDataset2(Dataset):
-
-    def __len__(self):
-        return self.n_entries
-
-    def __getitem__(self, index):
-        row = self.table.slice(index, length=1).to_pylist()[0]
-        data = next(iter(row.values()))
-        entry = pickle.loads(data)
-        return entry
-    
-    def __init__(
-        self,
-        source: str,
-    ):
-        self.source = str(source)
-        with pa.memory_map(source, "rb") as src:
-            reader = pa.ipc.open_file(src)
-            self.table = reader.read_all()
-        self.n_entries = self.table.num_rows
-
-    
-    @classmethod
-    def from_unfeaturized_pyarrow(
-        cls,
-        source: pathlib.Path,
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
-        smiles_column: str = "mapped_smiles",
-        verbose: bool = False,
-        n_processes: int = 0,
-        columns=None,
-        cache_directory=None,
-    ):
-        from openff.nagl.training.training import DataHash
-        if columns is None:
-            columns = []
-        if smiles_column not in columns:
-            columns = [smiles_column] + columns
-
-        if cache_directory is None:
-            cache_directory = "."
-        else:
-            cache_directory = pathlib.Path(cache_directory)
-        
-        hashed_file = DataHash.from_file(
-            source,
-            columns=sorted(columns),
-            atom_features=atom_features,
-            bond_features=bond_features,
-        ).to_hash()
-        prefix = str((cache_directory / hashed_file).resolve())
-        filename = f"{prefix}.arrow"
-
-        return cls(filename)
-
-
 
 class _LazyDGLMoleculeDataset(Dataset):
     version = 0.1
-    schema: pa.schema([pa.field("pickled", pa.binary())])
+    schema = pa.schema([pa.field("pickled", pa.binary())])
 
     def __len__(self):
         return self.n_entries
@@ -437,6 +298,8 @@ class _LazyDGLMoleculeDataset(Dataset):
         format: str = "parquet",
         atom_features: typing.Optional[typing.List[AtomFeature]] = None,
         bond_features: typing.Optional[typing.List[BondFeature]] = None,
+        atom_feature_column: typing.Optional[str] = None,
+        bond_feature_column: typing.Optional[str] = None,
         smiles_column: str = "mapped_smiles",
         columns: typing.Optional[typing.List[str]] = None,
         cache_directory: typing.Optional[pathlib.Path] = None,
@@ -466,18 +329,34 @@ class _LazyDGLMoleculeDataset(Dataset):
             tempdir = tempfile.TemporaryDirectory()
             output_path = pathlib.Path(tempdir.name) / file_path
 
+        if columns is not None:
+            columns = list(columns)
+            if smiles_column not in columns:
+                columns.append(smiles_column)
+
+        if atom_feature_column is None and bond_feature_column is None:
         # set featurizer function
-        converter = functools.partial(
-            cls._pickle_entry_from_row,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            smiles_column=smiles_column,
-            columns=columns,
-        )
+            converter = functools.partial(
+                cls._pickle_entry_from_unfeaturized_row,
+                atom_features=atom_features,
+                bond_features=bond_features,
+                smiles_column=smiles_column,
+            )
+        else:
+            converter = functools.partial(
+                cls._pickle_entry_from_featurized_row,
+                atom_feature_column=atom_feature_column,
+                bond_feature_column=bond_feature_column,
+                smiles_column=smiles_column,
+            )
+            if columns is not None and atom_feature_column not in columns:
+                columns.append(atom_feature_column)
+            if columns is not None and bond_feature_column not in columns:
+                columns.append(bond_feature_column)
 
         input_dataset = ds.dataset(path, format=format)
         
-        for i, input_batch in enumerate(input_dataset.to_batches()):
+        for i, input_batch in enumerate(input_dataset.to_batches(columns=columns)):
             with get_mapper_to_processes(n_processes=n_processes) as mapper:
                 pickled = list(mapper(converter, input_batch.to_pylist()))
 
@@ -489,7 +368,7 @@ class _LazyDGLMoleculeDataset(Dataset):
 
             ds.write_dataset(
                 output_batch,
-                output_path / "batch_{:05d}",
+                output_path / f"batch_{i:05d}",
                 format=format,
                 max_rows_per_group=batch_size,
                 max_rows_per_file=batch_size,
@@ -497,25 +376,39 @@ class _LazyDGLMoleculeDataset(Dataset):
         return cls(output_path)
 
     @staticmethod
-    def _pickle_entry_from_row(
+    def _pickle_entry_from_unfeaturized_row(
         row,
         atom_features=None,
         bond_features=None,
         smiles_column="mapped_smiles",
-        columns=None,
     ):
         entry = DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row(
             row,
             atom_features=atom_features,
             bond_features=bond_features,
             smiles_column=smiles_column,
-            columns=columns,
+        )
+        f = io.BytesIO()
+        pickle.dump(entry, f)
+        return f.getvalue()
+
+    @staticmethod
+    def _pickle_entry_from_featurized_row(
+        row,
+        atom_feature_column: str = "atom_features",
+        bond_feature_column: str = "bond_features",
+        smiles_column: str = "mapped_smiles",
+    ):
+        entry = DGLMoleculeDatasetEntry._from_featurized_pyarrow_row(
+            row,
+            atom_feature_column=atom_feature_column,
+            bond_feature_column=bond_feature_column,
+            smiles_column=smiles_column,
         )
         f = io.BytesIO()
         pickle.dump(entry, f)
         return f.getvalue()
         
-
 
 
 class DGLMoleculeDataset(Dataset):
@@ -542,21 +435,42 @@ class DGLMoleculeDataset(Dataset):
         format: str = "parquet",
         atom_features: typing.Optional[typing.List[AtomFeature]] = None,
         bond_features: typing.Optional[typing.List[BondFeature]] = None,
+        atom_feature_column: typing.Optional[str] = None,
+        bond_feature_column: typing.Optional[str] = None,
         smiles_column: str = "mapped_smiles",
         columns: typing.Optional[typing.List[str]] = None,
         n_processes: int = 0,
     ):
-        converter = functools.partial(
-            DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            smiles_column=smiles_column,
-            columns=columns,
-        )
+        if columns is not None:
+            columns = list(columns)
+            if smiles_column not in columns:
+                columns.append(smiles_column)
+
+        if atom_feature_column is None and bond_feature_column is None:
+            converter = functools.partial(
+                DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row,
+                atom_features=atom_features,
+                bond_features=bond_features,
+                smiles_column=smiles_column,
+            )
+        else:
+            converter = functools.partial(
+                DGLMoleculeDatasetEntry._from_featurized_pyarrow_row,
+                atom_feature_column=atom_feature_column,
+                bond_feature_column=bond_feature_column,
+                smiles_column=smiles_column,
+            )
+            if columns is not None and atom_feature_column not in columns:
+                columns.append(atom_feature_column)
+            if columns is not None and bond_feature_column not in columns:
+                columns.append(bond_feature_column)
+
+        
+
         input_dataset = ds.dataset(path, format=format)
         entries = []
 
-        for input_batch in input_dataset.to_batches():
+        for input_batch in input_dataset.to_batches(columns=columns):
             with get_mapper_to_processes(n_processes=n_processes) as mapper:
                 row_entries = list(mapper(converter, input_batch.to_pylist()))
                 entries.extend(row_entries)
@@ -623,95 +537,6 @@ class DGLMoleculeDataset(Dataset):
 
         return cls(entries)
 
-    @classmethod
-    def from_featurized_pyarrow(
-        cls,
-        table: pa.Table,
-        atom_feature_column: str = "atom_features",
-        bond_feature_column: str = "bond_features",
-        smiles_column: str = "mapped_smiles",
-        verbose: bool = False,
-        n_processes: int = 0,
-    ):
-        entry_labels = table.to_pylist()
-
-        if verbose:
-            entry_labels = tqdm.tqdm(entry_labels, desc="Featurizing entries")
-        
-        featurizer = functools.partial(
-            DGLMoleculeDatasetEntry._from_featurized_pyarrow_row,
-            atom_feature_column=atom_feature_column,
-            bond_feature_column=bond_feature_column,
-            smiles_column=smiles_column,
-        )
-        with get_mapper_to_processes(n_processes=n_processes) as mapper:
-            entries = list(mapper(featurizer, entry_labels))
-        return cls(entries)
-        
-        
-    @classmethod
-    def from_unfeaturized_parquet(
-        cls,
-        paths: typing.Union[pathlib.Path, typing.Iterable[pathlib.Path]],
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
-        columns: typing.Optional[typing.List[str]] = None,
-        smiles_column: str = "mapped_smiles",
-        verbose: bool = False,
-        n_processes: int = 0,
-    ):
-        from openff.nagl.utils._utils import as_iterable
-
-        paths = as_iterable(paths)
-        paths = [pathlib.Path(path) for path in paths]
-
-        if columns is not None:
-            columns = list(as_iterable(columns))
-            if smiles_column not in columns:
-                columns = [smiles_column] + columns
-
-        table = pq.read_table(paths, columns=columns)
-        return cls.from_unfeaturized_pyarrow(
-            table,
-            atom_features,
-            bond_features,
-            smiles_column=smiles_column,
-            verbose=verbose,
-            n_processes=n_processes,
-        )
-    
-
-    @classmethod
-    def from_featurized_parquet(
-        cls,
-        paths: typing.Union[pathlib.Path, typing.Iterable[pathlib.Path]],
-        atom_feature_column: str = "atom_features",
-        bond_feature_column: str = "bond_features",
-        columns: typing.Optional[typing.List[str]] = None,
-        smiles_column: str = "mapped_smiles",
-        verbose: bool = False,
-        n_processes: int = 0,
-    ):
-        from openff.nagl.utils._utils import as_iterable
-
-        paths = as_iterable(paths)
-        paths = [pathlib.Path(path) for path in paths]
-
-        if columns is not None:
-            columns = list(as_iterable(columns))
-            required = [smiles_column, atom_feature_column, bond_feature_column]
-            columns = [x for x in columns if x not in required]
-            columns = required + columns
-
-        table = pq.read_table(paths, columns=columns)
-        return cls.from_featurized_pyarrow(
-            table,
-            atom_feature_column=atom_feature_column,
-            bond_feature_column=bond_feature_column,
-            smiles_column=smiles_column,
-            verbose=verbose,
-            n_processes=n_processes,
-        )
     
     def to_pyarrow(
         self,
@@ -778,29 +603,13 @@ class DGLMoleculeDataset(Dataset):
         )
         return table
     
-    # def to_parquet(
-    #     self,
-    #     path: pathlib.Path,
-    #     atom_feature_column: str = "atom_features",
-    #     bond_feature_column: str = "bond_features",
-    #     smiles_column: str = "mapped_smiles",
-    # ):
-    #     table = self.to_pyarrow(
-    #         atom_feature_column=atom_feature_column,
-    #         bond_feature_column=bond_feature_column,
-    #         smiles_column=smiles_column,
-    #     )
-    #     pq.write_table(table, path)
-
-
-    
 
 
 
 class DGLMoleculeDataLoader(DataLoader):
     def __init__(
         self,
-        dataset: typing.Union[DGLMoleculeDataset, LazyCachedFeaturizedDGLMoleculeDataset, ConcatDataset],
+        dataset: typing.Union[DGLMoleculeDataset, _LazyDGLMoleculeDataset, ConcatDataset],
         batch_size: typing.Optional[int] = 1,
         **kwargs,
     ):
