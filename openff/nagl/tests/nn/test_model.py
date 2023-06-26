@@ -14,8 +14,8 @@ from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.tests.data.files import (
-    EXAMPLE_AM1BCC_MODEL_STATE_DICT,
-    MODEL_CONFIG_V7,
+    # EXAMPLE_AM1BCC_MODEL_STATE_DICT,
+    # MODEL_CONFIG_V7,
     EXAMPLE_AM1BCC_MODEL,
 )
 from openff.nagl.features.atoms import (
@@ -106,11 +106,16 @@ class TestBaseGNNModel:
 class TestGNNModel:
     @pytest.fixture()
     def am1bcc_model(self):
-        model = GNNModel.from_yaml(MODEL_CONFIG_V7)
-        model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
-        model.eval()
+        model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
+        # model = GNNModel.from_yaml(MODEL_CONFIG_V7)
+        # model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
+        # model.eval()
 
         return model
+
+    @pytest.fixture()
+    def expected_methane_charges(self):
+        return np.array([-0.087334,  0.021833,  0.021833,  0.021833,  0.021833],)
 
     def test_init(self):
         from openff.nagl.features import atoms, bonds
@@ -178,43 +183,38 @@ class TestGNNModel:
         for key in original_state_dict.keys():
             assert torch.allclose(original_state_dict[key], new_state_dict[key])
 
-    def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
         pytest.importorskip("dgl")
         charges = am1bcc_model._compute_properties_dgl(openff_methane_uncharged)
-        charges = charges["am1bcc-charges"].detach().numpy().flatten()
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
-        assert_allclose(charges, expected, atol=1e-5)
+        charges = charges["am1bcc_charges"].detach().numpy().flatten()
+        assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
         charges = am1bcc_model._compute_properties_nagl(openff_methane_uncharged)
-        charges = charges["am1bcc-charges"].detach().numpy().flatten()
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
-        assert_allclose(charges, expected, atol=1e-5)
+        charges = charges["am1bcc_charges"].detach().numpy().flatten()
+        assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_assumed(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_property_assumed(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
         charges = am1bcc_model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
-        assert_allclose(charges, expected, atol=1e-5)
+        assert_allclose(charges, expected_methane_charges, atol=1e-5)
     
-    def test_compute_property_specified(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_property_specified(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
         charges = am1bcc_model.compute_property(
             openff_methane_uncharged,
             as_numpy=True,
-            readout_name="am1bcc-charges"
+            readout_name="am1bcc_charges"
         )
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
-        assert_allclose(charges, expected, atol=1e-5)
+        assert_allclose(charges, expected_methane_charges, atol=1e-5)
     
-    def test_compute_properties(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_properties(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
         charges = am1bcc_model.compute_properties(
             openff_methane_uncharged,
             as_numpy=True,
         )
-        expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
         assert len(charges) == 1
-        assert_allclose(charges["am1bcc-charges"], expected, atol=1e-5)
+        assert_allclose(charges["am1bcc_charges"], expected_methane_charges, atol=1e-5)
 
-    def test_load(self, openff_methane_uncharged):
+    def test_load(self, openff_methane_uncharged, expected_methane_charges):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
         assert isinstance(model, GNNModel)
 
@@ -222,7 +222,7 @@ class TestGNNModel:
             AtomicElement(
                 categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
             ),
-            AtomConnectivity(categories=[1, 2, 3, 4]),
+            AtomConnectivity(categories=[1, 2, 3, 4, 5, 6]),
             AtomAverageFormalCharge(),
             AtomInRingOfSize(ring_size=3),
             AtomInRingOfSize(ring_size=4),
@@ -231,8 +231,7 @@ class TestGNNModel:
         ]
 
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        expected = np.array([-0.111393, 0.027848, 0.027848, 0.027848, 0.027848])
-        assert_allclose(charges, expected, atol=1e-5)
+        assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
     @pytest.mark.parametrize(
         "smiles",
@@ -280,12 +279,12 @@ class TestGNNModel:
 
         desired = molecule.partial_charges.m_as(unit.elementary_charge)
         computed = model.compute_property(molecule, as_numpy=True)
+
         assert_allclose(computed, desired, atol=1e-5)
 
-    def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir):
+    def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir, expected_methane_charges):
         with tmpdir.as_cwd():
             am1bcc_model.save("model.pt")
             model = GNNModel.load("model.pt", eval_mode=True)
             charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-            expected = np.array([-0.143774, 0.035943, 0.035943, 0.035943, 0.035943])
-            assert_allclose(charges, expected, atol=1e-5)
+            assert_allclose(charges, expected_methane_charges, atol=1e-5)
