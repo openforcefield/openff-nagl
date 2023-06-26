@@ -38,21 +38,27 @@ class RMSEMetric(BaseMetric):
     name: typing.Literal["rmse"] = "rmse"
 
     def compute(self, predicted_values, expected_values):
-        return torch.sqrt(torch.mean((predicted_values - expected_values) ** 2))
+        loss = torch.nn.MSELoss()
+        return torch.sqrt(loss(predicted_values, expected_values))
+        # return torch.sqrt(torch.mean((predicted_values - expected_values) ** 2))
 
 
 class MSEMetric(BaseMetric):
     name: typing.Literal["mse"] = "mse"
 
     def compute(self, predicted_values, expected_values):
-        return torch.mean((predicted_values - expected_values) ** 2)
+        loss = torch.nn.MSELoss()
+        return loss(predicted_values, expected_values)
+        # return torch.mean((predicted_values - expected_values) ** 2)
 
 
 class MAEMetric(BaseMetric):
     name: typing.Literal["mae"] = "mae"
 
     def compute(self, predicted_values, expected_values):
-        return torch.mean(torch.abs(predicted_values - expected_values))
+        loss = torch.nn.L1Loss()
+        return loss(predicted_values, expected_values)
+        # return torch.mean(torch.abs(predicted_values - expected_values))
 
 
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]

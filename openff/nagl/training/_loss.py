@@ -346,7 +346,7 @@ class MultipleDipoleTarget(_BaseTarget):
     ):
         import torch
 
-        conformations = labels[self.conformation_column].reshape(-1, 3).float()
+        conformations = labels[self.conformation_column].reshape(-1, 3)
         n_conformations = labels[self.n_conformation_column].reshape(-1).int()
         all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
         charges = predictions[self.charge_label].squeeze()
@@ -366,18 +366,13 @@ class MultipleDipoleTarget(_BaseTarget):
             molecules, labels, predictions
         )
         dipoles = []
-        counter = 0
-        for i, n_conf in enumerate(n_conformations):
-            mol_charge = all_charges[i]
-            n_atoms = all_n_atoms[i]
-            for _ in range(n_conf):
-                mol_conformation = conformations[counter:counter+n_atoms]
-                mol_dipole = torch.matmul(mol_charge, mol_conformation)
-                dipoles.extend(mol_dipole)
+        for mol_charge, n_atoms, n_conf in zip(all_charges, all_n_atoms, n_conformations):
+            conformer_increment = n_atoms * n_conf
+            mol_conformations = conformations[:conformer_increment].reshape(n_conf, n_atoms, 3)
+            dipoles.append(torch.matmul(mol_charge, mol_conformations).reshape(-1))
+            conformations = conformations[conformer_increment:]
 
-                counter += n_atoms
-
-        return torch.stack(dipoles)
+        return torch.cat(dipoles)
     
     def report_artifact(
         self,
@@ -473,10 +468,10 @@ class ESPTarget(_BaseTarget):
         import torch
 
         inverse_distance_matrix = labels[self.inverse_distance_matrix_column]
-        inverse_distance_matrix = inverse_distance_matrix.squeeze().float()
+        inverse_distance_matrix = inverse_distance_matrix.squeeze()
         n_grid_points = labels[self.esp_length_column].int()
         all_n_esps = labels[self.n_esp_column].int()
-        charges = predictions[self.charge_label].squeeze().float()
+        charges = predictions[self.charge_label].squeeze().to(inverse_distance_matrix.dtype)
         all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
         all_charges = torch.split(charges, all_n_atoms)
 
@@ -494,31 +489,29 @@ class ESPTarget(_BaseTarget):
 
         all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = self._prepare_inputs(
             molecules, labels, predictions
-        )
-        
+        )       
 
         esps = []
+        esp_counter = 0
         n_esp_counter = 0
-        n_grid_counter = 0
 
-        device = list(predictions.values())[0].device
         for n_atoms, n_esps, mol_charge in zip(
             all_n_atoms,
             all_n_esps,
-            all_charges,
+            all_charges
         ):
+            # mol_charge = all_charges[atom_counter:atom_counter+n_atoms]
             for i in range(n_esps):
-                n_grid = n_grid_points[n_esp_counter] * n_atoms
-                grid_start = n_grid_counter
-                grid_end = grid_start + n_grid
-                inv_dist = inverse_distance_matrix[grid_start:grid_end]
-                inv_dist = inv_dist.reshape((-1, n_atoms))
-                esp = torch.matmul(inv_dist, mol_charge)
-                esps.extend(esp)
+                n_grid = n_grid_points[n_esp_counter]
+                grid_increment = n_grid * n_atoms
+                inv_dist = inverse_distance_matrix[:grid_increment]
+                inv_dist = inv_dist.reshape((n_grid, n_atoms))
+                esps.append(torch.matmul(inv_dist, mol_charge).reshape(-1))
                 n_esp_counter += 1
-                n_grid_counter += n_grid
+                inverse_distance_matrix = inverse_distance_matrix[grid_increment:]
+                esp_counter += n_grid
 
-        return torch.tensor(esps).to(device)
+        return torch.cat(esps)
     
     def report_artifact(
         self,

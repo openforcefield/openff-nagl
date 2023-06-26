@@ -32,6 +32,14 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
         default=None,
         description="Directory to read cached data from, or cache data in",
     )
+    lazy_loading: bool = Field(
+        default=False,
+        description="Whether to lazily load data",
+    )
+    n_processes: int = Field(
+        default=0,
+        description="Number of processes to use for loading data",
+    )
 
     def get_required_target_columns(self):
         columns = set()

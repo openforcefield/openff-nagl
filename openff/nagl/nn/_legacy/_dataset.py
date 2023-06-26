@@ -3,15 +3,11 @@
 from collections import defaultdict
 import functools
 import glob
-import hashlib
-import io
 import pickle
-import tempfile
 import typing
 
 import tqdm
 import torch
-from pydantic import ImmutableModel
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 from openff.toolkit import Molecule
@@ -26,88 +22,14 @@ from openff.nagl.utils._parallelization import get_mapper_to_processes
 import pathlib
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pyarrow.dataset as ds
 import numpy as np
 
 
 
 __all__ = [
-    "DataHash",
     "DGLMoleculeDataset",
     "DGLMoleculeDatasetEntry",
 ]
-
-def file_digest(file):
-    h = hashlib.sha256()
-    with open(file, "rb") as f:
-        while True:
-            chunk = f.read(65536)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
-
-class DataHash(ImmutableModel):
-    path_hash: str
-    columns: typing.List[str]
-    atom_features: typing.List[AtomFeature]
-    bond_features: typing.List[BondFeature]
-
-    @classmethod
-    def from_file(
-        cls,
-        paths: typing.Union[str, pathlib.Path],
-        columns: typing.Optional[typing.List[str]] = None,
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-    ):
-        path_hash = ""
-
-        for path in paths:
-            path = pathlib.Path(path)
-            path_hash += file_digest(path)
-
-        if columns is None:
-            columns = []
-        columns = sorted(columns)
-
-        if atom_features is None:
-            atom_features = []
-        if bond_features is None:
-            bond_features = []
-
-        return cls(
-            path_hash=path_hash,
-            columns=columns,
-            atom_features=atom_features,
-            bond_features=bond_features,
-        )
-    
-    def to_hash(self):
-        json_str = self.json().encode("utf-8")
-        hashed = hashlib.sha256(json_str).hexdigest()
-        return hashed
-
-
-def _get_hashed_arrow_dataset_path(
-    path: pathlib.Path,
-    atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-    bond_features: typing.Optional[typing.List[BondFeature]] = None,
-    columns: typing.Optional[typing.List[str]] = None,
-    directory: typing.Optional[pathlib.Path] = None
-) -> pathlib.Path:
-    hash_value = DataHash.from_file(
-        path,
-        columns=columns,
-        atom_features=atom_features,
-        bond_features=bond_features,
-    ).to_hash()
-    file_path = f"{hash_value}"
-    if directory is not None:
-        directory = pathlib.Path(directory)
-        return directory / file_path
-    return pathlib.Path(file_path)
-
 
 
 class DGLMoleculeDatasetEntry(typing.NamedTuple):
@@ -406,115 +328,9 @@ class LazyCachedFeaturizedDGLMoleculeDataset2(Dataset):
         return cls(filename)
 
 
-
-class _LazyDGLMoleculeDataset(Dataset):
-    version = 0.1
-    schema: pa.schema([pa.field("pickled", pa.binary())])
-
-    def __len__(self):
-        return self.n_entries
-
-    def __getitem__(self, index):
-        row = self.dataset.take([index]).to_pylist()[0]
-        data = next(iter(row.values()))
-        entry = pickle.loads(data)
-        return entry
-    
-    def __init__(
-        self,
-        source: str,
-        format: str = "parquet"
-    ):
-        self.source = str(source)
-        self.dataset = ds.dataset(source, format=format)
-        self.n_entries = self.dataset.count_rows()
-    
-
-    @classmethod
-    def from_arrow_dataset(
-        cls,
-        path: pathlib.Path,
-        format: str = "parquet",
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-        smiles_column: str = "mapped_smiles",
-        columns: typing.Optional[typing.List[str]] = None,
-        cache_directory: typing.Optional[pathlib.Path] = None,
-        use_cached_data: bool = True,
-        batch_size: typing.Optional[int] = None,
-        n_processes: int = 0,
-    ):
-        import pyarrow.dataset as ds
-
-        file_path = _get_hashed_arrow_dataset_path(
-            path,
-            atom_features,
-            bond_features,
-            columns,
-        )
-        if cache_directory is not None:
-            cache_directory = pathlib.Path(cache_directory)
-            output_path = cache_directory / file_path
-        else:
-            output_path = file_path
-
-        if use_cached_data:
-            if output_path.exists() and list(output_path.glob("*")):
-                return cls(output_path)
-            
-        else:
-            tempdir = tempfile.TemporaryDirectory()
-            output_path = pathlib.Path(tempdir.name) / file_path
-
-        # set featurizer function
-        converter = functools.partial(
-            cls._pickle_entry_from_row,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            smiles_column=smiles_column,
-            columns=columns,
-        )
-
-        input_dataset = ds.dataset(path, format=format)
         
-        for i, input_batch in enumerate(input_dataset.to_batches()):
-            with get_mapper_to_processes(n_processes=n_processes) as mapper:
-                pickled = list(mapper(converter, input_batch.to_pylist()))
 
-            output_batch = pa.RecordBatch.from_arrays(
-                [pa.array(pickled)],
-                schema=cls.schema
-            )
-            batch_size = batch_size or len(pickled)
 
-            ds.write_dataset(
-                output_batch,
-                output_path / "batch_{:05d}",
-                format=format,
-                max_rows_per_group=batch_size,
-                max_rows_per_file=batch_size,
-            )
-        return cls(output_path)
-
-    @staticmethod
-    def _pickle_entry_from_row(
-        row,
-        atom_features=None,
-        bond_features=None,
-        smiles_column="mapped_smiles",
-        columns=None,
-    ):
-        entry = DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row(
-            row,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            smiles_column=smiles_column,
-            columns=columns,
-        )
-        f = io.BytesIO()
-        pickle.dump(entry, f)
-        return f.getvalue()
-        
 
 
 
@@ -526,7 +342,7 @@ class DGLMoleculeDataset(Dataset):
         return self.entries[index_or_slice]
 
     def __init__(self, entries: typing.Tuple[DGLMoleculeDatasetEntry, ...] = tuple()):
-        self.entries = entries
+        self.entries = list(entries)
 
     @property
     def n_atom_features(self) -> int:
@@ -534,34 +350,6 @@ class DGLMoleculeDataset(Dataset):
             return 0
 
         return self[0].molecule.atom_features.shape[1]
-
-    @classmethod
-    def from_arrow_dataset(
-        cls,
-        path: pathlib.Path,
-        format: str = "parquet",
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-        smiles_column: str = "mapped_smiles",
-        columns: typing.Optional[typing.List[str]] = None,
-        n_processes: int = 0,
-    ):
-        converter = functools.partial(
-            DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            smiles_column=smiles_column,
-            columns=columns,
-        )
-        input_dataset = ds.dataset(path, format=format)
-        entries = []
-
-        for input_batch in input_dataset.to_batches():
-            with get_mapper_to_processes(n_processes=n_processes) as mapper:
-                row_entries = list(mapper(converter, input_batch.to_pylist()))
-                entries.extend(row_entries)
-        return cls(entries)
-        
 
     @classmethod
     def from_openff(
@@ -607,8 +395,11 @@ class DGLMoleculeDataset(Dataset):
             for molecule, label in zip(molecules, labels):
                 label.update(label_function(molecule))
 
-        entries = [
-            DGLMoleculeDatasetEntry.from_openff(
+        entries = []
+        for molecule, atom_tensor, bond_tensor, label in zip(
+            molecules, atom_feature_tensors, bond_feature_tensors, labels
+        ):
+            entry = DGLMoleculeDatasetEntry.from_openff(
                 molecule,
                 label,
                 atom_features=atom_features,
@@ -616,13 +407,36 @@ class DGLMoleculeDataset(Dataset):
                 atom_feature_tensor=atom_tensor,
                 bond_feature_tensor=bond_tensor,
             )
-            for molecule, atom_tensor, bond_tensor, label in zip(
-                molecules, atom_feature_tensors, bond_feature_tensors, labels
-            )
-        ]
-
+            entries.append(entry)
+        
         return cls(entries)
+        
 
+    @classmethod
+    def from_unfeaturized_pyarrow(
+        cls,
+        table: pa.Table,
+        atom_features: typing.List[AtomFeature],
+        bond_features: typing.List[BondFeature],
+        smiles_column: str = "mapped_smiles",
+        verbose: bool = False,
+        n_processes: int = 0,
+    ):
+        entry_labels = table.to_pylist()
+
+        if verbose:
+            entry_labels = tqdm.tqdm(entry_labels, desc="Featurizing entries")
+        
+        featurizer = functools.partial(
+            DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row,
+            atom_features=atom_features,
+            bond_features=bond_features,
+            smiles_column=smiles_column,
+        )
+        with get_mapper_to_processes(n_processes=n_processes) as mapper:
+            entries = list(mapper(featurizer, entry_labels))
+        return cls(entries)
+    
     @classmethod
     def from_featurized_pyarrow(
         cls,
@@ -778,23 +592,19 @@ class DGLMoleculeDataset(Dataset):
         )
         return table
     
-    # def to_parquet(
-    #     self,
-    #     path: pathlib.Path,
-    #     atom_feature_column: str = "atom_features",
-    #     bond_feature_column: str = "bond_features",
-    #     smiles_column: str = "mapped_smiles",
-    # ):
-    #     table = self.to_pyarrow(
-    #         atom_feature_column=atom_feature_column,
-    #         bond_feature_column=bond_feature_column,
-    #         smiles_column=smiles_column,
-    #     )
-    #     pq.write_table(table, path)
-
-
-    
-
+    def to_parquet(
+        self,
+        path: pathlib.Path,
+        atom_feature_column: str = "atom_features",
+        bond_feature_column: str = "bond_features",
+        smiles_column: str = "mapped_smiles",
+    ):
+        table = self.to_pyarrow(
+            atom_feature_column=atom_feature_column,
+            bond_feature_column=bond_feature_column,
+            smiles_column=smiles_column,
+        )
+        pq.write_table(table, path)
 
 
 class DGLMoleculeDataLoader(DataLoader):

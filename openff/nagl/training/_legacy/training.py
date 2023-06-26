@@ -4,7 +4,6 @@ import glob
 import hashlib
 import logging
 import pathlib
-import pickle
 import typing
 
 import torch
@@ -16,17 +15,52 @@ from openff.nagl.nn._models import GNNModel
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.nn._dataset import (
-    DGLMoleculeDataset, DataHash,
-    _LazyDGLMoleculeDataset
-)
+from openff.nagl.nn._dataset import DGLMoleculeDataset, LazyCachedFeaturizedDGLMoleculeDataset, LazyCachedFeaturizedDGLMoleculeDataset2
 
 if typing.TYPE_CHECKING:
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 
 logger = logging.getLogger(__name__)
 
+def file_digest(file):
+    h = hashlib.sha256()
+    with open(file, "rb") as f:
+        while True:
+            chunk = f.read(65536)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
 
+class DataHash(ImmutableModel):
+    path_hash: str
+    columns: typing.List[str]
+    atom_features: typing.List[AtomFeature]
+    bond_features: typing.List[BondFeature]
+
+    @classmethod
+    def from_file(
+        cls,
+        path: typing.Union[str, pathlib.Path],
+        columns: typing.List[str],
+        atom_features: typing.List[AtomFeature],
+        bond_features: typing.List[BondFeature],
+    ):
+        path = pathlib.Path(path)
+        # path_hash = file_digest(path)
+        path_hash = str(path.resolve())
+        return cls(
+            # path_hash=path_hash,
+            path_hash=path_hash,
+            columns=columns,
+            atom_features=atom_features,
+            bond_features=bond_features,
+        )
+    
+    def to_hash(self):
+        json_str = self.json().encode("utf-8")
+        hashed = hashlib.sha256(json_str).hexdigest()
+        return hashed
 
 
 class TrainingGNNModel(pl.LightningModule):
@@ -165,80 +199,101 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
             if config is None or not config.sources:
                 continue
 
-            if config.cache_directory is None:
-                cache_dir = pathlib.Path(".")
-            else:
-                cache_dir = pathlib.Path(config.cache_directory)
+            cache_dir = pathlib.Path(config.cache_directory)
+
             columns = config.get_required_target_columns()
 
-            pickle_hash = self._get_hash_file(
-                paths=config.sources,
-                columns=columns,
-                cache_directory=cache_dir,
-            )
-            if pickle_hash.exists():
-                if not config.use_cached_data:
-                    raise ValueError(
-                        "Cached data found but use_cached_data is False: "
-                        f"{pickle_hash}"
-                    )
-                else:
-                    continue
+            if config.cache_directory is not None and config.use_cached_data:
+                cache_dir.mkdir(exist_ok=True, parents=True)
+                datasets = []
+                for path in config.sources:
+                    file_hash = self._hash_file(path, columns)
+                    prefix = str((cache_dir / file_hash).resolve())
+                    self._prefixes[stage].append(prefix)
 
-            datasets = []
-            for path in config.sources:
-                ds = _LazyDGLMoleculeDataset.from_arrow_dataset(
-                    path,
-                    format="parquet",
-                    atom_features=self.config.model.atom_features,
-                    bond_features=self.config.model.bond_features,
-                    columns=columns,
-                    cache_directory=cache_dir,
-                    use_cached_data=config.use_cached_data,
-                    batch_size=config.batch_size,
-                )
-                datasets.append(ds)
-            dataset = torch.utils.data.ConcatDataset(datasets)
-            with open(pickle_hash, "wb") as f:
-                pickle.dump(dataset, f)
+                    matches = glob.glob(f"{prefix}*.pkl")
+                    n_entries = len(matches)
+                    # ds = LazyCachedFeaturizedDGLMoleculeDataset2(
+                    #     prefix=prefix,
+                    #     n_entries=n_entries,
+                    # )
+                    ds = LazyCachedFeaturizedDGLMoleculeDataset2(
+                        source=f"{prefix}.arrow"
+                    )
+                    datasets.append(ds)
+                self._datasets[stage] = torch.utils.data.ConcatDataset(datasets)
+        
+
+    # def prepare_data(self):
+    #     for stage, config in self._dataset_configs.items():
+    #         if config is None or not config.sources:
+
+    #             continue
+
+    #         cache_dir = pathlib.Path(config.cache_directory)
+
+    #         columns = config.get_required_target_columns()
+
+    #         if config.cache_directory is not None and config.use_cached_data:
+    #             cache_dir.mkdir(exist_ok=True, parents=True)
+    #             for path in config.sources:
+    #                 file_hash = self._hash_file(path, columns)
+    #                 filename = f"{file_hash}.parquet"
+    #                 cached_path = cache_dir / filename
+    #                 self._file_hashes[stage].append(str(cached_path.resolve()))
+    #                 if cached_path.is_file():
+    #                     logger.info(f"Found cached data at {cached_path}")
+    #                 else:
+
+    #                     ds = DGLMoleculeDataset.from_unfeaturized_parquet(
+    #                         [path],
+    #                         columns=columns,
+    #                         atom_features=self.config.model.atom_features,
+    #                         bond_features=self.config.model.bond_features,
+    #                         n_processes=self.n_processes,
+    #                         verbose=self.verbose,
+    #                     )
+    #                     ds.to_parquet(cached_path)
+    #                     logger.info(f"Wrote cached data to {cached_path}")
+
+    #         else:
+    #             ds = DGLMoleculeDataset.from_unfeaturized_parquet(
+    #                 config.sources,
+    #                 columns=columns,
+    #                 atom_features=self.config.model.atom_features,
+    #                 bond_features=self.config.model.bond_features,
+    #                 n_processes=self.n_processes,
+    #                 verbose=self.verbose,
+    #             )
+    #             self._datasets[stage] = ds
 
 
     def setup(self, **kwargs):
         for stage, config in self._dataset_configs.items():
+            if stage in self._datasets:
+                continue
             if config is None or not config.sources:
                 self._datasets[stage] = None
                 continue
-
-            cache_dir = config.cache_directory if config.cache_directory else "."
-            columns = config.get_required_target_columns()
-            pickle_hash = self._get_hash_file(
-                paths=config.sources,
-                columns=columns,
-                cache_directory=cache_dir,
+            ds = DGLMoleculeDataset.from_featurized_parquet(
+                self._file_hashes[stage],
+                columns=config.get_required_target_columns(),
+                n_processes=self.n_processes,
+                verbose=self.verbose,
             )
-            if not pickle_hash.exists():
-                raise FileNotFoundError(
-                    f"Data not found for stage {stage}: {pickle_hash}"
-                )
-
-            with open(pickle_hash, "rb") as f:
-                ds = pickle.load(f)
             self._datasets[stage] = ds
             
 
     
-    def _get_hash_file(
+    def _hash_file(
         self,
-        paths: typing.Tuple[typing.Union[str, pathlib.Path], ...] = tuple(),
-        columns: typing.Tuple[str, ...] = tuple(),
-        cache_directory: typing.Union[pathlib.Path, str] = ".",
-    ) -> pathlib.Path:
+        path: typing.Union[str, pathlib.Path],
+        columns,
+    ) -> str:
         dhash = DataHash.from_file(
-            paths=paths,
+            path=path,
             columns=columns,
             atom_features=self.config.model.atom_features,
             bond_features=self.config.model.bond_features,
         )
-        cache_directory = pathlib.Path(cache_directory)
-
-        return cache_directory / f"{dhash.to_hash()}.pkl"
+        return dhash.to_hash()
