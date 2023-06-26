@@ -185,10 +185,9 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 else:
                     continue
 
-            datasets = []
-            for path in config.sources:
-                ds = _LazyDGLMoleculeDataset.from_arrow_dataset(
-                    path,
+            if config.lazy_loading:
+                loader = functools.partial(
+                    _LazyDGLMoleculeDataset.from_arrow_dataset,
                     format="parquet",
                     atom_features=self.config.model.atom_features,
                     bond_features=self.config.model.bond_features,
@@ -196,7 +195,21 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                     cache_directory=cache_dir,
                     use_cached_data=config.use_cached_data,
                     batch_size=config.batch_size,
+                    n_processes=self.n_processes,
                 )
+            else:
+                loader = functools.partial(
+                    DGLMoleculeDataset.from_arrow_dataset,
+                    format="parquet",
+                    atom_features=self.config.model.atom_features,
+                    bond_features=self.config.model.bond_features,
+                    columns=columns,
+                    n_processes=self.n_processes,
+                )
+
+            datasets = []
+            for path in config.sources:
+                ds = loader(path)
                 datasets.append(ds)
             dataset = torch.utils.data.ConcatDataset(datasets)
             with open(pickle_hash, "wb") as f:
@@ -234,7 +247,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         cache_directory: typing.Union[pathlib.Path, str] = ".",
     ) -> pathlib.Path:
         dhash = DataHash.from_file(
-            paths=paths,
+            *paths,
             columns=columns,
             atom_features=self.config.model.atom_features,
             bond_features=self.config.model.bond_features,

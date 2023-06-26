@@ -54,8 +54,8 @@ model:
 data:
   training:
     sources:
-      - example-data.parquet
-      - example-data-short.parquet
+      - example-data-labelled-unfeaturized
+      - example-data-labelled-unfeaturized-short
     batch_size: 5
     targets:
       - name: esp
@@ -82,7 +82,7 @@ data:
         weight: 1
   validation:
     sources:
-      - example-data-short.parquet
+      - example-data-labelled-unfeaturized-short
     batch_size: 2
     targets:
       - name: readout

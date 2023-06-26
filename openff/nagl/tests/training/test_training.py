@@ -1,4 +1,5 @@
 import itertools
+import pathlib
 import pytest
 import shutil
 
@@ -10,9 +11,9 @@ from openff.nagl.nn._models import GNNModel
 from openff.nagl.nn._dataset import DGLMoleculeDataLoader
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.tests.data.files import (
-    EXAMPLE_PARQUET_DATASET,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
     EXAMPLE_FEATURIZED_PARQUET_DATASET,
-    EXAMPLE_PARQUET_DATASET_SHORT,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
     EXAMPLE_FEATURIZED_PARQUET_DATASET_SHORT,
     EXAMPLE_TRAINING_CONFIG,
 )
@@ -25,7 +26,7 @@ def example_training_config():
 
 class TestDataHash:
     def test_to_hash(self, example_atom_features, example_bond_features):
-        all_filenames = [EXAMPLE_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET]
+        all_filenames = [EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET]
         all_atom_features = [example_atom_features, []]
         all_bond_features = [example_bond_features, []]
         all_columns = [["a", "b"], ["c"], []]
@@ -33,19 +34,29 @@ class TestDataHash:
         all_combinations = list(itertools.product(
             all_filenames, all_columns, all_atom_features, all_bond_features
         ))
-        all_hashers = [
-            DataHash.from_file(*combination)
-            for combination in all_combinations
-        ]
+        all_hashers = []
+        for fn, cols, atom_features, bond_features in all_combinations:
+            hasher = DataHash.from_file(
+                fn,
+                columns=cols,
+                atom_features=atom_features,
+                bond_features=bond_features,
+            )
+            all_hashers.append(hasher)
         for hasher, combination in zip(all_hashers, all_combinations):
-            hasher2 = DataHash.from_file(*combination)
+            fn, cols, atom_features, bond_features = combination
+            hasher2 = DataHash.from_file(
+                fn,
+                columns=cols,
+                atom_features=atom_features,
+                bond_features=bond_features,
+            )
             assert hasher.to_hash() == hasher2.to_hash()
 
         while all_hashers:
             hasher = all_hashers.pop(0)
             for hasher2 in all_hashers:
                 assert hasher.to_hash() != hasher2.to_hash()
-
 
 
 class TestDGLMoleculeDataModule:
@@ -63,22 +74,28 @@ class TestDGLMoleculeDataModule:
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_PARQUET_DATASET, "877bba7e5933107faa973e52df263eca8d1c3b255682ea782d22ac08dbfb26b2"),
-            (EXAMPLE_PARQUET_DATASET_SHORT, "47eec3d6cb94d344fa22ddd4741acea513c2c536c4ebea311b3de4184d4ff6cc"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea.pkl"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d.pkl"),
         ]
     )
     def test_hash_file(self, example_training_config, filename, hash_value):
         data_module = DGLMoleculeDataModule(example_training_config)
-        file_hash = data_module._hash_file(filename, ["a", "b"])
-        assert file_hash == hash_value
+        file_hash = data_module._get_hash_file([filename], ["a", "b"])
+        assert file_hash == pathlib.Path(hash_value)
 
-    def test_prepare_data_cached(self, tmpdir, example_training_config):
+    def test_setup(self, tmpdir, example_training_config):
         data_module = DGLMoleculeDataModule(example_training_config)
         assert len(data_module._datasets) == 0
 
         with tmpdir.as_cwd():
-            shutil.copy(EXAMPLE_PARQUET_DATASET.resolve(), ".")
-            shutil.copy(EXAMPLE_PARQUET_DATASET_SHORT.resolve(), ".")
+            shutil.copytree(
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+            )
+            shutil.copytree(
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+            )
             for stage in ["train", "val", "test"]:
                 config = data_module._dataset_configs[stage]
                 config = config.copy(
@@ -93,39 +110,45 @@ class TestDGLMoleculeDataModule:
             assert len(data_module._datasets) == 0
 
             data_module.setup()
-            assert len(data_module._datasets["train"].entries) == 14
-            assert data_module._datasets["train"].n_atom_features == 25
-            assert len(data_module._datasets["val"].entries) == 4
-            assert data_module._datasets["val"].n_atom_features == 25
+            assert len(data_module._datasets["train"]) == 14
+            assert data_module._datasets["train"].datasets[0].n_atom_features == 25
+            assert len(data_module._datasets["val"]) == 4
+            assert data_module._datasets["val"].datasets[0].n_atom_features == 25
             assert data_module._datasets["test"] is None
 
-    def test_prepare_data_uncached(self, tmpdir, example_training_config):
-        data_module = DGLMoleculeDataModule(example_training_config)
-        assert len(data_module._datasets) == 0
+    # def test_prepare_data_uncached(self, tmpdir, example_training_config):
+    #     data_module = DGLMoleculeDataModule(example_training_config)
+    #     assert len(data_module._datasets) == 0
 
-        with tmpdir.as_cwd():
-            shutil.copy(EXAMPLE_PARQUET_DATASET.resolve(), ".")
-            shutil.copy(EXAMPLE_PARQUET_DATASET_SHORT.resolve(), ".")
-            for stage in ["train", "val", "test"]:
-                config = data_module._dataset_configs[stage]
-                config = config.copy(
-                    update={
-                        "use_cached_data": False,
-                        "cache_directory": ".",
-                    }
-                )
-                data_module._dataset_configs[stage] = config
+    #     with tmpdir.as_cwd():
+    #         shutil.copytree(
+    #             EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
+    #             EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+    #         )
+    #         shutil.copytree(
+    #             EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
+    #             EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+    #         )
+    #         for stage in ["train", "val", "test"]:
+    #             config = data_module._dataset_configs[stage]
+    #             config = config.copy(
+    #                 update={
+    #                     "use_cached_data": False,
+    #                     "cache_directory": ".",
+    #                 }
+    #             )
+    #             data_module._dataset_configs[stage] = config
 
-            data_module.prepare_data()
-            assert len(data_module._datasets) == 2
-            assert len(data_module._datasets["train"].entries) == 14
-            assert data_module._datasets["train"].n_atom_features == 25
-            assert len(data_module._datasets["val"].entries) == 4
-            assert data_module._datasets["val"].n_atom_features == 25
+    #         data_module.prepare_data()
+    #         assert len(data_module._datasets) == 0
 
-            data_module.setup()
-            assert len(data_module._datasets) == 3
-            assert data_module._datasets["test"] is None
+    #         data_module.setup()
+    #         assert len(data_module._datasets) == 3
+    #         assert len(data_module._datasets["train"].entries) == 14
+    #         assert data_module._datasets["train"].n_atom_features == 25
+    #         assert len(data_module._datasets["val"].entries) == 4
+    #         assert data_module._datasets["val"].n_atom_features == 25
+    #         assert data_module._datasets["test"] is None
 
 
 

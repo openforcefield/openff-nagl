@@ -15,6 +15,9 @@ __all__ = [
     "EXAMPLE_AM1BCC_MODEL",
     "EXAMPLE_UNFEATURIZED_PARQUET_DATASET",
     "EXAMPLE_FEATURIZED_PARQUET_DATASET",
+    "EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT",
+    "EXAMPLE_FEATURIZED_PARQUET_DATASET_SHORT",
+    "EXAMPLE_TRAINING_CONFIG"
 ]
 
 import importlib_resources
@@ -27,6 +30,10 @@ EXAMPLE_AM1BCC_MODEL_STATE_DICT = data_directory / "example_am1bcc_model_state_d
 EXAMPLE_AM1BCC_MODEL = data_directory / "example_am1bcc_model.pt"
 EXAMPLE_UNFEATURIZED_PARQUET_DATASET = data_directory / "example-data-labelled-unfeaturized"
 EXAMPLE_FEATURIZED_PARQUET_DATASET = data_directory / "example-data-labelled-featurized"
+EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT = data_directory / "example-data-labelled-unfeaturized-short"
+EXAMPLE_FEATURIZED_PARQUET_DATASET_SHORT = data_directory / "example-data-labelled-featurized-short"
+EXAMPLE_TRAINING_CONFIG = data_directory / "example_training_config.yaml"
+
 # EXAMPLE_FEATURIZED_PARQUET_DATASET = data_directory / "example-data-featurized.parquet"
 # EXAMPLE_PARQUET_DATASET_SHORT = data_directory / "example-data-short.parquet"
 # EXAMPLE_FEATURIZED_PARQUET_DATASET_SHORT = data_directory / "example-data-short-featurized.parquet"
