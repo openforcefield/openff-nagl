@@ -4,4 +4,4 @@ include AUTHORS.md CHANGELOG.md CODE_OF_CONDUCT.md README.md
 include versioneer.py
 
 graft openff
-global-exclude *.py[cod] __pycache__ *.so
+global-exclude *.py[cod] __pycache__ *.soinclude openff/nagl/_version.py
