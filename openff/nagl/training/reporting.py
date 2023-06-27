@@ -6,8 +6,8 @@ import jinja2
 import torch
 import numpy as np
 from openff.toolkit import Molecule
-from rdkit.Chem import Draw
 
+from openff.utilities import requires_package
 import openff.nagl.training
 
 if typing.TYPE_CHECKING:
@@ -20,6 +20,7 @@ def _encode_image(image):
     image_src = f"data:image/svg+xml;base64,{image_encoded}"
     return image_src
 
+@requires_package("rdkit")
 def _draw_molecule_with_atom_labels(
     molecule: Molecule,
     predicted_labels: torch.Tensor,
@@ -50,6 +51,7 @@ def _draw_molecule_with_atom_labels(
         The SVG image of the molecule, as text
     """
     from openff.nagl.molecule._dgl import DGLMolecule
+    from rdkit.Chem import Draw
 
     if isinstance(molecule, DGLMolecule):
         molecule = molecule.to_openff()
@@ -87,6 +89,7 @@ def _draw_molecule_with_atom_labels(
     return image
 
 
+@requires_package("rdkit")
 def _draw_molecule(
     molecule: typing.Union[Molecule, "DGLMolecule"],
 ) -> str:
@@ -103,6 +106,8 @@ def _draw_molecule(
     str
         The SVG image of the molecule, as text
     """
+    from rdkit.Chem import Draw
+
     from openff.nagl.molecule._dgl import DGLMolecule
 
     if isinstance(molecule, DGLMolecule):

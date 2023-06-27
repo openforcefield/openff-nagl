@@ -15,6 +15,7 @@ from openff.nagl.training.reporting import (
 )
 
 pytest.importorskip("dgl")
+pytest.importorskip("rdkit")
 
 @pytest.fixture()
 def hbr():
