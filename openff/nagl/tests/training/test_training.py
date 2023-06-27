@@ -18,6 +18,8 @@ from openff.nagl.tests.data.files import (
     EXAMPLE_TRAINING_CONFIG,
 )
 
+dgl = pytest.importorskip("dgl")
+
 @pytest.fixture
 def example_training_config():
     config = TrainingConfig.from_yaml(EXAMPLE_TRAINING_CONFIG)

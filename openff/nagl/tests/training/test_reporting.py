@@ -18,7 +18,7 @@ pytest.importorskip("dgl")
 
 @pytest.fixture()
 def hbr():
-    return Molecule.from_smiles("HBr")
+    return Molecule.from_smiles("Br")
 
 @pytest.fixture()
 def dgl_hbr(hbr):
