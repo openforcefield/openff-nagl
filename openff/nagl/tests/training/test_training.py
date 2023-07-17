@@ -8,14 +8,20 @@ import numpy as np
 
 from openff.nagl.training.training import DGLMoleculeDataModule, DataHash, TrainingGNNModel
 from openff.nagl.nn._models import GNNModel
-from openff.nagl.nn._dataset import DGLMoleculeDataLoader
+from openff.nagl.nn._dataset import (
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    _LazyDGLMoleculeDataset
+)
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.tests.data.files import (
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
     EXAMPLE_FEATURIZED_PARQUET_DATASET,
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
-    EXAMPLE_FEATURIZED_PARQUET_DATASET_SHORT,
     EXAMPLE_TRAINING_CONFIG,
+    EXAMPLE_TRAINING_CONFIG_LAZY,
+    EXAMPLE_FEATURIZED_LAZY_DATA,
+    EXAMPLE_FEATURIZED_LAZY_DATA_SHORT,
 )
 
 dgl = pytest.importorskip("dgl")
@@ -76,8 +82,8 @@ class TestDGLMoleculeDataModule:
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea.pkl"),
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d.pkl"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "49c04061641904268886ebb5b5ceb66027c4c859c6d6cba642558f37f2dcec50"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "1afcea930b8cbf4c573bb8f2101b50506a7d5f7766cf7a234eade5c4f8fc9bb7"),
         ]
     )
     def test_hash_file(self, example_training_config, filename, hash_value):
@@ -112,11 +118,90 @@ class TestDGLMoleculeDataModule:
             assert len(data_module._datasets) == 0
 
             data_module.setup()
-            assert len(data_module._datasets["train"]) == 14
-            assert data_module._datasets["train"].datasets[0].n_atom_features == 25
-            assert len(data_module._datasets["val"]) == 4
-            assert data_module._datasets["val"].datasets[0].n_atom_features == 25
+            training_set = data_module._datasets["train"]
+            assert len(training_set) == 14
+            assert len(training_set.datasets) == 2
+            assert isinstance(training_set.datasets[0], DGLMoleculeDataset)
+            assert isinstance(training_set.datasets[1], DGLMoleculeDataset)
+            assert training_set.datasets[0].n_atom_features == 25
+
+            validation_set = data_module._datasets["val"]
+            assert len(validation_set) == 4
+            assert len(validation_set.datasets) == 1
+            assert isinstance(validation_set.datasets[0], DGLMoleculeDataset)
+            assert validation_set.datasets[0].n_atom_features == 25
             assert data_module._datasets["test"] is None
+
+            train_dataloader = data_module.train_dataloader()
+            assert train_dataloader.batch_size == 5
+            assert len(train_dataloader) == 3  # 3 batches of 5 (total 14)
+            val_dataloader = data_module.val_dataloader()
+            assert val_dataloader.batch_size == 2
+            assert len(val_dataloader) == 2  # 2 batches of 2 (total 4)
+
+    def test_setup_lazy(self, tmpdir):
+        example_training_config = TrainingConfig.from_yaml(
+            EXAMPLE_TRAINING_CONFIG_LAZY
+        )
+        data_module = DGLMoleculeDataModule(example_training_config)
+        assert len(data_module._datasets) == 0
+
+        with tmpdir.as_cwd():
+            shutil.copy(
+                EXAMPLE_FEATURIZED_LAZY_DATA.resolve(),
+                "."
+            )
+            shutil.copy(
+                EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(),
+                "."
+            )
+            shutil.copytree(
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+            )
+            shutil.copytree(
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+            )
+            for stage in ["train", "val", "test"]:
+                config = data_module._dataset_configs[stage]
+                config = config.copy(
+                    update={
+                        "use_cached_data": True,
+                        "cache_directory": ".",
+                    }
+                )
+                data_module._dataset_configs[stage] = config
+
+            data_module.prepare_data()
+            assert len(data_module._datasets) == 0
+
+            data_module.setup()
+            training_set = data_module._datasets["train"]
+            assert len(training_set) == 14
+            assert len(training_set.datasets) == 2
+            assert isinstance(training_set.datasets[0], _LazyDGLMoleculeDataset)
+            assert isinstance(training_set.datasets[1], _LazyDGLMoleculeDataset)
+            assert training_set.datasets[0].n_atom_features == 25
+
+            validation_set = data_module._datasets["val"]
+            assert len(validation_set) == 4
+            assert len(validation_set.datasets) == 1
+            assert isinstance(validation_set.datasets[0], DGLMoleculeDataset)
+            assert validation_set.datasets[0].n_atom_features == 25
+            assert data_module._datasets["test"] is None
+
+            train_dataloader = data_module.train_dataloader()
+            assert train_dataloader.batch_size == 5
+            assert len(train_dataloader) == 3  # 3 batches of 5 (total 14)
+            val_dataloader = data_module.val_dataloader()
+            assert val_dataloader.batch_size == 2
+            assert len(val_dataloader) == 2  # 2 batches of 2 (total 4)
+
+
+
+
+
 
     # def test_prepare_data_uncached(self, tmpdir, example_training_config):
     #     data_module = DGLMoleculeDataModule(example_training_config)

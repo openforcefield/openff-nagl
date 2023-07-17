@@ -281,7 +281,7 @@ class AtomAverageFormalCharge(AtomFeature):
             include_all_transfer_pathways=False,
             as_dicts=True,
         )
-        formal_charges: List[float] = []
+        formal_charges: typing.List[float] = []
         for index in range(molecule.n_atoms):
             charges = [
                 graph["atoms"][index]["formal_charge"] for graph in resonance_forms
@@ -313,6 +313,131 @@ class AtomGasteigerCharge(AtomFeature):
         charges = molecule.partial_charges.m_as(unit.elementary_charge)
         return torch.tensor(charges)
 
+class AtomElementPeriod(CategoricalMixin, AtomFeature):
+    name: typing.Literal["atom_element_period"] = "atom_element_period"
+
+    categories: typing.List[int] = [1, 2, 3, 4, 5]
+
+    def _encode(self, molecule) -> torch.Tensor:
+        PERIODS = {
+            "H": 1,
+            "He": 1,
+            "C": 2,
+            "N": 2,
+            "O": 2,
+            "F": 2,
+            "Si": 3,
+            "P": 3,
+            "S": 3,
+            "Cl": 3,
+            "Br": 4,
+            "I": 5
+        }
+
+        try:
+            elements = [atom.element for atom in molecule.atoms]
+        except AttributeError:
+            elements = [atom.symbol for atom in molecule.atoms]
+        if not all(isinstance(el, str) for el in elements):
+            elements = [el.symbol for el in elements]
+
+        periods = [PERIODS[x] for x in elements]
+        return torch.vstack(
+            [
+                one_hot_encode(p, self.categories)
+                for p in periods
+            ]
+        )
+
+
+class AtomElementGroup(CategoricalMixin, AtomFeature):
+    name: typing.Literal["atom_element_group"] = "atom_element_group"
+
+    categories: typing.List[int] = [1, 14, 15, 16, 17]
+
+    def _encode(self, molecule) -> torch.Tensor:
+        GROUPS = {
+            "H": 1,
+            "C": 14,
+            "N": 15,
+            "O": 16,
+            "F": 17,
+            "Si": 14,
+            "P": 15,
+            "S": 16,
+            "Cl": 17,
+            "Br": 17,
+            "I":17
+        }
+
+        try:
+            elements = [atom.element for atom in molecule.atoms]
+        except AttributeError:
+            elements = [atom.symbol for atom in molecule.atoms]
+        if not all(isinstance(el, str) for el in elements):
+            elements = [el.symbol for el in elements]
+
+        groups = [GROUPS[x] for x in elements]
+        return torch.vstack(
+            [
+                one_hot_encode(p, self.categories)
+                for p in groups
+            ]
+        )
+
+
+class AtomTotalBondOrder(AtomFeature):
+    name: typing.Literal["atom_total_bond_order"] = "atom_total_bond_order"
+
+    def _encode(self, molecule) -> torch.Tensor:
+
+        bond_orders = [
+            sum(bond.bond_order for bond in atom.bonds)
+            for atom in molecule.atoms
+        ]
+
+        return torch.tensor(bond_orders)
+
+
+
+
+class AtomElectronegativityAllredRochow(AtomFeature):
+    name: typing.Literal["atom_electronegativity_allred_rochow"] = "atom_electronegativity_allred_rochow"
+
+    def _encode(self, molecule) -> torch.Tensor:
+        from ._data import ALLRED_ROCHOW_ELECTRONEGATIVITY
+
+        electronegativities = [
+            ALLRED_ROCHOW_ELECTRONEGATIVITY[atom.atomic_number]
+            for atom in molecule.atoms
+        ]
+
+        return torch.tensor(electronegativities)
+
+
+class AtomElectronAffinity(AtomFeature):
+    name: typing.Literal["atom_electron_affinity"] = "atom_electron_affinity"
+
+    def _encode(self, molecule) -> torch.Tensor:
+        from ._data import ELECTRON_AFFINITY
+
+        affinities = [
+            ELECTRON_AFFINITY[atom.atomic_number] for atom in molecule.atoms
+        ]
+
+        return torch.tensor(affinities)
+
+class AtomElectrophilicity(AtomFeature):
+    name: typing.Literal["atom_electrophilicity"] = "atom_electrophilicity"
+
+    def _encode(self, molecule) -> torch.Tensor:
+        from ._data import ELECTROPHILICITIES
+
+        affinities = [
+            ELECTROPHILICITIES[atom.atomic_number] for atom in molecule.atoms
+        ]
+
+        return torch.tensor(affinities)
 
 
 AtomFeatureType = typing.Union[
@@ -325,6 +450,12 @@ AtomFeatureType = typing.Union[
     AtomFormalCharge,
     AtomAverageFormalCharge,
     AtomGasteigerCharge,
+    AtomElementPeriod,
+    AtomElementGroup,
+    AtomTotalBondOrder,
+    AtomElectronAffinity,
+    AtomElectrophilicity,
+    AtomElectronegativityAllredRochow
 ]
 
 DiscriminatedAtomFeatureType = typing.Annotated[

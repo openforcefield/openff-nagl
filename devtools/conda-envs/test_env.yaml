@@ -1,6 +1,6 @@
-name: openff-nagl-test
+name: openff-nagl-pyarrow
 channels:
-  - dglteam
+  - dglteam/label/cu117
   - openeye
   - conda-forge
   - defaults
@@ -15,7 +15,7 @@ dependencies:
   - tqdm
 
   # chemistry
-  - openff-toolkit-base ==0.11.1
+  - openff-toolkit-base >=0.11.1
   - openff-units
   - pydantic
   - rdkit
@@ -25,7 +25,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - dglteam::dgl >=1.0
+  - dgl >=1.0
   - pytorch
   - pytorch-lightning
 
@@ -42,4 +42,4 @@ dependencies:
   # Pip-only installs
   - pip:
     - rich
-
+    - mlflow

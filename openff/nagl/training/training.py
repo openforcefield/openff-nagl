@@ -175,7 +175,9 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 paths=config.sources,
                 columns=columns,
                 cache_directory=cache_dir,
+                extension=".pkl",
             )
+
             if pickle_hash.exists():
                 if not config.use_cached_data:
                     raise ValueError(
@@ -183,6 +185,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                         f"{pickle_hash}"
                     )
                 else:
+                    logger.info(f"Loading cached data from {pickle_hash}")
                     continue
 
             if config.lazy_loading:
@@ -194,7 +197,6 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                     columns=columns,
                     cache_directory=cache_dir,
                     use_cached_data=config.use_cached_data,
-                    batch_size=config.batch_size,
                     n_processes=self.n_processes,
                 )
             else:
@@ -211,32 +213,73 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
             for path in config.sources:
                 ds = loader(path)
                 datasets.append(ds)
-            dataset = torch.utils.data.ConcatDataset(datasets)
-            with open(pickle_hash, "wb") as f:
-                pickle.dump(dataset, f)
 
+            if not config.lazy_loading:
+                dataset = torch.utils.data.ConcatDataset(datasets)
+                with open(pickle_hash, "wb") as f:
+                    pickle.dump(dataset, f)
+
+    def _setup_stage(self, config, stage: str):
+        if config is None or not config.sources:
+            return None
+
+        cache_dir = config.cache_directory if config.cache_directory else "."
+        columns = config.get_required_target_columns()
+        pickle_hash = self._get_hash_file(
+            paths=config.sources,
+            columns=columns,
+            cache_directory=cache_dir,
+            extension=".pkl"
+        )
+        if pickle_hash.exists():
+            with open(pickle_hash, "rb") as f:
+                ds = pickle.load(f)
+                return ds
+        if not config.lazy_loading:
+            raise FileNotFoundError(
+                f"Data not found for stage {stage}: {pickle_hash}"
+            )
+        loader = functools.partial(
+            _LazyDGLMoleculeDataset.from_arrow_dataset,
+            format="parquet",
+            atom_features=self.config.model.atom_features,
+            bond_features=self.config.model.bond_features,
+            columns=columns,
+            cache_directory=cache_dir,
+            use_cached_data=config.use_cached_data,
+            n_processes=self.n_processes,
+        )
+        datasets = []
+        for path in config.sources:
+            ds = loader(path)
+            datasets.append(ds)
+        dataset = torch.utils.data.ConcatDataset(datasets)
+        return dataset
+        
+        
 
     def setup(self, **kwargs):
         for stage, config in self._dataset_configs.items():
-            if config is None or not config.sources:
-                self._datasets[stage] = None
-                continue
+            dataset = self._setup_stage(config, stage)
+            # if config is None or not config.sources:
+            #     self._datasets[stage] = None
+            #     continue
 
-            cache_dir = config.cache_directory if config.cache_directory else "."
-            columns = config.get_required_target_columns()
-            pickle_hash = self._get_hash_file(
-                paths=config.sources,
-                columns=columns,
-                cache_directory=cache_dir,
-            )
-            if not pickle_hash.exists():
-                raise FileNotFoundError(
-                    f"Data not found for stage {stage}: {pickle_hash}"
-                )
+            # cache_dir = config.cache_directory if config.cache_directory else "."
+            # columns = config.get_required_target_columns()
+            # pickle_hash = self._get_hash_file(
+            #     paths=config.sources,
+            #     columns=columns,
+            #     cache_directory=cache_dir,
+            # )
+            # if not pickle_hash.exists():
+            #     raise FileNotFoundError(
+            #         f"Data not found for stage {stage}: {pickle_hash}"
+            #     )
 
-            with open(pickle_hash, "rb") as f:
-                ds = pickle.load(f)
-            self._datasets[stage] = ds
+            # with open(pickle_hash, "rb") as f:
+            #     ds = pickle.load(f)
+            self._datasets[stage] = dataset
             
 
     
@@ -245,6 +288,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         paths: typing.Tuple[typing.Union[str, pathlib.Path], ...] = tuple(),
         columns: typing.Tuple[str, ...] = tuple(),
         cache_directory: typing.Union[pathlib.Path, str] = ".",
+        extension: str = ""
     ) -> pathlib.Path:
         dhash = DataHash.from_file(
             *paths,
@@ -254,4 +298,4 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         )
         cache_directory = pathlib.Path(cache_directory)
 
-        return cache_directory / f"{dhash.to_hash()}.pkl"
+        return cache_directory / f"{dhash.to_hash()}{extension}"

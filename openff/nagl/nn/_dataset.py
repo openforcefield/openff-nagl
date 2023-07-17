@@ -5,6 +5,7 @@ import functools
 import glob
 import hashlib
 import io
+import logging
 import pickle
 import tempfile
 import typing
@@ -37,15 +38,59 @@ __all__ = [
     "DGLMoleculeDatasetEntry",
 ]
 
-def file_digest(file):
-    h = hashlib.sha256()
+logger = logging.getLogger(__name__)
+
+def file_digest(fileobj, digest, _bufsize=2**18):
+    """Hash the contents of a file-like object. Returns a digest object.
+
+    *fileobj* must be a file-like object opened for reading in binary mode.
+    It accepts file objects from open(), io.BytesIO(), and SocketIO objects.
+    The function may bypass Python's I/O and use the file descriptor *fileno*
+    directly.
+
+    *digest* must either be a hash algorithm name as a *str*, a hash
+    constructor, or a callable that returns a hash object.
+    """
+    # On Linux we could use AF_ALG sockets and sendfile() to archive zero-copy
+    # hashing with hardware acceleration.
+    digestobj = digest()
+
+    if hasattr(fileobj, "getbuffer"):
+        # io.BytesIO object, use zero-copy buffer
+        digestobj.update(fileobj.getbuffer())
+        return digestobj
+
+    # Only binary files implement readinto().
+    if not (
+        hasattr(fileobj, "readinto")
+        and hasattr(fileobj, "readable")
+        and fileobj.readable()
+    ):
+        raise ValueError(
+            f"'{fileobj!r}' is not a file-like object in binary reading mode."
+        )
+
+    # binary file, socket.SocketIO object
+    # Note: socket I/O uses different syscalls than file I/O.
+    buf = bytearray(_bufsize)  # Reusable buffer to reduce allocations.
+    view = memoryview(buf)
+    while True:
+        size = fileobj.readinto(buf)
+        if size == 0:
+            break  # EOF
+        digestobj.update(view[:size])
+
+    return digestobj
+
+
+def digest_file(file):
     with open(file, "rb") as f:
-        while True:
-            chunk = f.read(65536)
-            if not chunk:
-                break
-            h.update(chunk)
+        try:
+            h = hashlib.file_digest(f, "sha256")
+        except AttributeError:
+            h = file_digest(f, hashlib.sha256)
     return h.hexdigest()
+
 
 class DataHash(ImmutableModel):
     path_hash: str
@@ -65,14 +110,14 @@ class DataHash(ImmutableModel):
 
         for path in paths:
             path = pathlib.Path(path)
-            if path.is_dir():
-                for file in path.glob("**/*"):
-                    if file.is_file():
-                        path_hash += file_digest(file)
-            elif path.is_file():
-                path_hash += file_digest(path)
-            else:
-                path_hash += str(path.resolve())
+            # if path.is_dir():
+            #     for file in path.glob("**/*"):
+            #         if file.is_file():
+            #             path_hash += digest_file(file)
+            # elif path.is_file():
+            #     path_hash += digest_file(path)
+            # else:
+            path_hash += str(path.resolve())
 
         if columns is None:
             columns = []
@@ -276,19 +321,24 @@ class _LazyDGLMoleculeDataset(Dataset):
         return self.n_entries
 
     def __getitem__(self, index):
-        row = self.dataset.take([index]).to_pylist()[0]
-        data = next(iter(row.values()))
-        entry = pickle.loads(data)
+        row = self.table.slice(index, length=1).to_pydict()["pickled"][0]
+        entry = pickle.loads(row)
         return entry
     
     def __init__(
         self,
         source: str,
-        format: str = "parquet"
     ):
         self.source = str(source)
-        self.dataset = ds.dataset(source, format=format)
-        self.n_entries = self.dataset.count_rows()
+        with pa.memory_map(self.source, "rb") as src:
+            reader = pa.ipc.open_file(src)
+            self.table = reader.read_all()
+        self.n_entries = self.table.num_rows
+        self.n_atom_features = (
+            self[0].molecule.atom_features.shape[1]
+            if len(self)
+            else 0
+        )
     
 
     @classmethod
@@ -304,17 +354,22 @@ class _LazyDGLMoleculeDataset(Dataset):
         columns: typing.Optional[typing.List[str]] = None,
         cache_directory: typing.Optional[pathlib.Path] = None,
         use_cached_data: bool = True,
-        batch_size: typing.Optional[int] = None,
         n_processes: int = 0,
     ):
         import pyarrow.dataset as ds
+
+        if columns is not None:
+            columns = list(columns)
+            if smiles_column not in columns:
+                columns.append(smiles_column)
 
         file_path = _get_hashed_arrow_dataset_path(
             path,
             atom_features,
             bond_features,
             columns,
-        )
+        ).with_suffix(".arrow")
+
         if cache_directory is not None:
             cache_directory = pathlib.Path(cache_directory)
             output_path = cache_directory / file_path
@@ -322,17 +377,15 @@ class _LazyDGLMoleculeDataset(Dataset):
             output_path = file_path
 
         if use_cached_data:
-            if output_path.exists() and list(output_path.glob("*")):
+            if output_path.exists():
                 return cls(output_path)
             
         else:
             tempdir = tempfile.TemporaryDirectory()
             output_path = pathlib.Path(tempdir.name) / file_path
 
-        if columns is not None:
-            columns = list(columns)
-            if smiles_column not in columns:
-                columns.append(smiles_column)
+        logger.info(f"Featurizing dataset to {output_path}")
+        
 
         if atom_feature_column is None and bond_feature_column is None:
         # set featurizer function
@@ -355,24 +408,20 @@ class _LazyDGLMoleculeDataset(Dataset):
                 columns.append(bond_feature_column)
 
         input_dataset = ds.dataset(path, format=format)
-        
-        for i, input_batch in enumerate(input_dataset.to_batches(columns=columns)):
-            with get_mapper_to_processes(n_processes=n_processes) as mapper:
-                pickled = list(mapper(converter, input_batch.to_pylist()))
 
-            output_batch = pa.RecordBatch.from_arrays(
-                [pa.array(pickled)],
-                schema=cls.schema
-            )
-            batch_size = batch_size or len(pickled)
+        with pa.OSFile(str(output_path), "wb") as sink:
+            with pa.ipc.new_file(sink, cls.schema) as writer:
+                input_batches = input_dataset.to_batches(columns=columns)
+                for input_batch in input_batches:
+                    with get_mapper_to_processes(n_processes=n_processes) as mapper:
+                        pickled = list(mapper(converter, input_batch.to_pylist()))
 
-            ds.write_dataset(
-                output_batch,
-                output_path / f"batch_{i:05d}",
-                format=format,
-                max_rows_per_group=batch_size,
-                max_rows_per_file=batch_size,
-            )
+                    output_batch = pa.RecordBatch.from_arrays(
+                        [pa.array(pickled)],
+                        schema=cls.schema
+                    )
+                    writer.write_batch(output_batch)
+                    
         return cls(output_path)
 
     @staticmethod
