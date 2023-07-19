@@ -56,6 +56,11 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         import dgl
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
+        if atom_features is None:
+            atom_features = tuple()
+        if bond_features is None:
+            bond_features = tuple()
+
         if len(atom_features) and atom_feature_tensor is not None:
             raise ValueError(
                 "Only one of `atom_features` or "
