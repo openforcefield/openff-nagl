@@ -1,6 +1,6 @@
-name: openff-nagl-test
+name: openff-nagl-pyarrow
 channels:
-  - dglteam
+  - dglteam/label/cu117
   - openeye
   - conda-forge
   - defaults
