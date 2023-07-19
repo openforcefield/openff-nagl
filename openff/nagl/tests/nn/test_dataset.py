@@ -54,13 +54,12 @@ class TestDataHash:
     def test_from_file(self):
         hasher = DataHash.from_file(
             "/path/to/file.parquet",
-            "new_hash.parquet",
             columns=["multiple", "columns"],
             atom_features=None,
             bond_features=None,
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "173e18c79e441f330007d1727da9dd096a0121691f10f0d6fd74a40b9cc40a21"
+        assert hash_value == "ce6af226f485d344156d135a51e2ce79282a457a78565999574224bb6469cbf0"
 
 
 def test_get_hashed_arrow_dataset_path():
