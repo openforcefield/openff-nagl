@@ -51,7 +51,7 @@ setup(
         "tqdm",
         "openff-toolkit",
         "openff-units",
-        "pydantic",
+        "pydantic<2.0",
         "rdkit",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data

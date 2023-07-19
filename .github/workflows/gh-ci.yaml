@@ -98,15 +98,16 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest -n 4 -v --cov=openff-nagl --cov-report=xml --color=yes openff/nagl/tests/
+        python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: coverage.xml
-        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        file: ./coverage.xml
         verbose: True
+        # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+        
 
 
   pylint_check:
