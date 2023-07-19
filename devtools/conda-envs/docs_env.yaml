@@ -18,7 +18,7 @@ dependencies:
   # chemistry
   - openff-toolkit-base ==0.11.1
   - openff-units
-  - pydantic
+  - pydantic <2.0
   - rdkit
   - openeye-toolkits
 

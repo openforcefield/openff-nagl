@@ -20,6 +20,7 @@ The rules for this file:
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @lilyminium
+- @yoshanuikabundi
 
 ### Reviewers
 - 
@@ -34,6 +35,7 @@ The rules for this file:
 ### Changed
 <!-- Changes in existing functionality -->
 - Migrate away from pkg_resources to importlib_resources (PR #35)
+- Update examples for central examples page (PR #40)
 
 ## v0.2.1
 
