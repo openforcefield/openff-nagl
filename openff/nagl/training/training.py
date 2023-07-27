@@ -218,6 +218,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 dataset = torch.utils.data.ConcatDataset(datasets)
                 with open(pickle_hash, "wb") as f:
                     pickle.dump(dataset, f)
+                logger.info(f"Saved data to {pickle_hash}")
 
     def _setup_stage(self, config, stage: str):
         if config is None or not config.sources:

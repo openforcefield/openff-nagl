@@ -1,3 +1,4 @@
+import abc
 import functools
 import logging
 import pathlib
@@ -12,6 +13,7 @@ import pyarrow.dataset as ds
 from openff.toolkit import Molecule
 from openff.units import unit
 
+from openff.nagl._base.base import ImmutableModel
 from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
@@ -22,6 +24,150 @@ ChargeMethodType = typing.Literal[
     "mmff94", "am1bccnosymspt", "am1elf10", "am1bccelf10"
 ]
 
+def _append_column_to_table(
+    table: pa.Table,
+    key: typing.Union[pa.Field, str],
+    values: typing.Iterable[typing.Any],
+    exist_ok: bool = False
+):
+    if isinstance(key, pa.Field):
+        k_name = key.name
+    else:
+        k_name = key
+    if k_name in table.column_names:
+        if exist_ok:
+            logger.warning(
+                f"Column {k_name} already exists in table. "
+                "Overwriting."
+            )
+            table = table.drop_columns(k_name)
+        else:
+            raise ValueError(f"Column {k_name} already exists in table")
+
+    table = table.append_column(key, [values])
+    return table
+
+class _BaseLabel(ImmutableModel, abc.ABC):
+    name: typing.Literal[""]
+    exist_ok: bool = False
+    smiles_column: str = "mapped_smiles"
+    verbose: bool = False
+
+    def _append_column(
+        self,
+        table: pa.Table,
+        key: typing.Union[pa.Field, str],
+        values: typing.Iterable[typing.Any],
+    ) -> pa.Table:
+        return _append_column_to_table(
+            table,
+            key,
+            values,
+            exist_ok=self.exist_ok,
+        )
+        
+
+    @abc.abstractmethod
+    def apply(
+        self,
+        table: pa.Table,
+        verbose: bool = False,
+    ) -> pa.Table:
+        raise NotImplementedError()
+
+class LabelConformers(_BaseLabel):
+    name: typing.Literal["conformer_generation"] = "conformer_generation"
+    conformer_column: str = "conformers"
+    n_conformer_column: str = "n_conformers"
+    n_conformer_pool: int = 500
+    n_conformers: int = 10
+    rms_cutoff: float = 0.05
+
+    def apply(
+        self,
+        table: pa.Table,
+        verbose: bool = False,
+    ):
+        rms_cutoff = self.rms_cutoff
+        if not isinstance(rms_cutoff, unit.Quantity):
+            rms_cutoff = rms_cutoff * unit.angstrom
+
+        batch_smiles = table.to_pydict()[self.smiles_column]
+        if verbose:
+            batch_smiles = tqdm.tqdm(
+                batch_smiles,
+                desc="Generating conformers",
+            )
+
+        data = {
+            self.conformer_column: [],
+            self.n_conformer_column: [],
+        }
+
+        with capture_toolkit_warnings():
+            for smiles in batch_smiles:
+                mol = Molecule.from_mapped_smiles(
+                    smiles,
+                    allow_undefined_stereo=True
+                )
+                mol.generate_conformers(
+                    n_conformers=self.n_conformer_pool,
+                    rms_cutoff=rms_cutoff, 
+                )
+                mol.apply_elf_conformer_selection(
+                    limit=self.n_conformers,
+                )
+                conformers = np.ravel([
+                    conformer.m_as(unit.angstrom)
+                    for conformer in mol.conformers
+                ])
+                data[self.conformer_column].append(conformers)
+                data[self.n_conformer_column].append(len(mol.conformers))
+        
+        conformer_field = pa.field(
+            self.conformer_column, pa.list_(pa.float64())
+        )
+        n_conformer_field = pa.field(
+            self.n_conformer_column, pa.int64()
+        )
+
+        table = self._append_column(
+            table,
+            conformer_field,
+            data[self.conformer_column],
+        )
+
+        table = self._append_column(
+            table,
+            n_conformer_field,
+            data[self.n_conformer_column],
+        )
+        return table
+
+def apply_labellers(
+    table: pa.Table,
+    labellers: typing.Iterable[_BaseLabel],
+    verbose: bool = False,
+):
+    labellers = list(labellers)
+    for labeller in labellers:
+        table = labeller.apply(table, verbose=verbose)
+    return table
+
+
+def apply_labellers_to_batch_file(
+    source: pathlib.Path,
+    labellers: typing.Iterable[_BaseLabel] = tuple(),
+    verbose: bool = False,
+):
+    if not labellers:
+        return
+    source = pathlib.Path(source)
+    dataset = ds.dataset(source, format="parquet")
+    table = dataset.to_table()
+    table = apply_labellers(table, labellers, verbose=verbose)
+    with source.open("wb") as f:
+        pq.write_table(table, f)
 
 
 class LabelledDataset:
@@ -32,8 +178,11 @@ class LabelledDataset:
             smiles_column: str = "mapped_smiles",
         ):
         self.source = source
-        self.dataset = ds.dataset(source, format="parquet")
         self.smiles_column = smiles_column
+        self._reload()
+
+    def _reload(self):
+        self.dataset = ds.dataset(self.source, format="parquet")
 
     @classmethod
     def from_smiles(
@@ -78,95 +227,70 @@ class LabelledDataset:
         )
         return cls(dataset_path, smiles_column=smiles_column)
         
-            
 
-    @staticmethod
-    def _append_columns_to_batch(
-        filename: pathlib.Path,
+    def _append_columns(
+        self,
         columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
-        dataset = ds.dataset(filename)
-        table = dataset.to_table()
-        for k, v in columns.items():
-            if isinstance(k, pa.Field):
-                k_name = k.name
-            else:
-                k_name = k
-            if k_name in table.column_names:
-                if exist_ok:
-                    logger.warning(
-                        f"Column {k_name} already exists in {filename}. "
-                        "Overwriting."
-                    )
-                    table = table.drop_columns(k_name)
-                else:
-                    raise ValueError(f"Column {k_name} already exists in {filename}")
-            table = table.append_column(k, v)
-        with open(filename, "wb") as f:
-            pq.write_table(table, f)
-        
-    
-    def generate_conformers(
-        self,
-        conformer_column: str = "conformers",
-        n_conformer_column: str = "n_conformers",
-        n_conformer_pool: int = 500,
-        n_conformers: int = 10,
-        rms_cutoff: float = 0.05,
-        verbose: bool = False,
-        exist_ok: bool = False,
-    ):
-        if not isinstance(rms_cutoff, unit.Quantity):
-            rms_cutoff = rms_cutoff * unit.angstrom
-
+        n_all_rows = self.dataset.count_rows()
+        all_lengths = {k: len(v) for k, v in columns.items()}
+        if not all(n_all_rows == v for v in all_lengths.values()):
+            raise ValueError(
+                "All columns must have the same number of rows "
+                "as the dataset. Given columns have lengths: "
+                f"{', '.join(f'{k}: {v}' for k, v in all_lengths.items())}"
+            )
         for filename in self.dataset.files:
             batch_dataset = ds.dataset(filename)
-
-            table = batch_dataset.to_table(columns=[self.smiles_column])
-            batch_smiles = table.to_pydict()[self.smiles_column]
-            if verbose:
-                batch_smiles = tqdm.tqdm(
-                    batch_smiles,
-                    desc="Generating conformers",
-                )
-
-            data = {
-                conformer_column: [],
-                n_conformer_column: [],
+            n_rows = batch_dataset.count_rows()
+            batch_columns = {
+                k: v[:n_rows]
+                for k, v in columns.items()
             }
 
-            with capture_toolkit_warnings():
-                for smiles in batch_smiles:
-                    mol = Molecule.from_mapped_smiles(
-                        smiles,
-                        allow_undefined_stereo=True
-                    )
-                    mol.generate_conformers(
-                        n_conformers=n_conformer_pool,
-                        rms_cutoff=rms_cutoff, 
-                    )
-                    mol.apply_elf_conformer_selection(
-                        limit=n_conformers,
-                    )
-                    conformers = np.ravel([
-                        conformer.m_as(unit.angstrom)
-                        for conformer in mol.conformers
-                    ])
-                    data[conformer_column].append(conformers)
-                    data[n_conformer_column].append(len(mol.conformers))
-            
-            conformer_field = pa.field(conformer_column, pa.list_(pa.float32()))
-            n_conformer_field = pa.field(n_conformer_column, pa.int32())
+            batch_table = batch_dataset.to_table()
+            for k, v in batch_columns.items():
+                batch_table = _append_column_to_table(
+                    batch_table,
+                    k,
+                    v,
+                    exist_ok=exist_ok,
+                )
+            with open(filename, "wb") as f:
+                pq.write_table(batch_table, f)
 
-            self._append_columns_to_batch(
-                {
-                    conformer_field: data[conformer_column],
-                    n_conformer_field: data[n_conformer_column],
-                },
-                exist_ok=exist_ok,
-            )
-
+            columns = {
+                k: v[n_rows:]
+                for k, v in columns.items()
+            }
+        assert all(len(v) == 0 for v in columns.values())
+        self._reload()
+        
+    
+    def apply_labellers(
+        self,
+        labellers: typing.Iterable[_BaseLabel],
+        verbose: bool = False,
+        n_processes: int = 0,
+    ):
+        files = self.dataset.files
+        label_func = functools.partial(
+            apply_labellers_to_batch_file,
+            labellers=labellers,
+            verbose=verbose,
+        )
+        with get_mapper_to_processes(n_processes) as mapper:
+            results = mapper(label_func, files)
+            if verbose:
+                results = tqdm.tqdm(
+                    results,
+                    desc="Applying labellers to batches",
+                )
+            list(results)
+        self._reload()
+        
+    
     @staticmethod
     def _assign_charges_single(
         row,

@@ -137,7 +137,7 @@ def batch_distributed(
             cores=1,
             memory=f"{memory * 1e9}B",
             walltime=f"{walltime}:00",
-            env_extra=env_extra,
+            job_script_prologue=env_extra,
         )
         cluster.scale(n=n_workers)
     

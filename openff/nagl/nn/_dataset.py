@@ -469,10 +469,16 @@ class DGLMoleculeDataset(Dataset):
         input_dataset = ds.dataset(path, format=format)
         entries = []
 
-        for input_batch in input_dataset.to_batches(columns=columns):
-            with get_mapper_to_processes(n_processes=n_processes) as mapper:
-                row_entries = list(mapper(converter, input_batch.to_pylist()))
-                entries.extend(row_entries)
+        for input_batch in tqdm.tqdm(
+            input_dataset.to_batches(columns=columns),
+            desc="Featurizing dataset",
+        ):
+            with capture_toolkit_warnings():
+                for row in tqdm.tqdm(input_batch.to_pylist(), desc="Featurizing batch"):
+                    entries.append(converter(row))
+            # with get_mapper_to_processes(n_processes=n_processes) as mapper:
+            #     row_entries = list(mapper(converter, input_batch.to_pylist()))
+            #     entries.extend(row_entries)
         return cls(entries)
         
 
@@ -605,6 +611,7 @@ class DGLMoleculeDataset(Dataset):
 
 
 
+
 class DGLMoleculeDataLoader(DataLoader):
     def __init__(
         self,
@@ -615,10 +622,9 @@ class DGLMoleculeDataLoader(DataLoader):
         super().__init__(
             dataset=dataset,
             batch_size=batch_size,
-            shuffle=False,
-            num_workers=0,  # otherwise shared memory issues
+            num_workers=1,  # otherwise shared memory issues
             collate_fn=self._collate,
-            pin_memory=True,
+            # pin_memory=True,
             **kwargs,
         )
 
