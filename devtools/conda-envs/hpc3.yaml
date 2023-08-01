@@ -15,8 +15,15 @@ dependencies:
   - tqdm
 
   # chemistry
-  - openff-toolkit-base >=0.11.1
-  - openff-units
+  - openff-toolkit-base ==0.13.1
+  - openff-evaluator ==0.4.3
+  - openff-units ==0.2.0
+  - openff-utilities ==0.1.8
+  - openmm ==8.0.0
+  - openmmforcefields ==0.11.2
+  - openmmtools ==0.23.1
+  - openmoltools ==0.8.8
+
   - pydantic
   - rdkit
   - openeye-toolkits

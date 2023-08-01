@@ -38,7 +38,8 @@ class LabelledDataset:
         validate_smiles: bool = False,
         mapped: bool = False,
         batch_size: int = 500,
-        verbose: bool = False
+        verbose: bool = False,
+        overwrite_existing: bool = False,
     ):
         loader = functools.partial(
             Molecule.from_smiles,
@@ -63,12 +64,17 @@ class LabelledDataset:
             smiles_column: [converter(smi) for smi in smiles]
         }
         table = pa.Table.from_pydict(data, schema=pa.schema([field]))
+        if overwrite_existing:
+            existing_data_behavior = "overwrite_or_ignore"
+        else:
+            existing_data_behavior = "error"
         ds.write_dataset(
             table,
             base_dir=dataset_path,
             format="parquet",
             max_rows_per_file=batch_size,
-            max_rows_per_group=batch_size
+            max_rows_per_group=batch_size,
+            existing_data_behavior=existing_data_behavior,
         )
         return cls(dataset_path, smiles_column=smiles_column)
         
