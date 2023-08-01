@@ -1,4 +1,5 @@
 import abc
+from collections import defaultdict
 import functools
 import logging
 import pathlib
@@ -191,12 +192,210 @@ class LabelCharges(_BaseLabel):
         table = self._append_column(table, charge_field, all_charges)
         return table
 
-        
+
+
+class LabelMultipleDipoles(_BaseLabel):
+    name: typing.Literal["multiple_dipoles"] = "multiple_dipoles"
+    conformer_column: str = "conformers"
+    n_conformer_column: str = "n_conformers"
+    charge_column: str = "charges"
+    dipole_column: str = "dipoles"
+
+    @staticmethod
+    def _calculate_dipoles(
+        conformers: np.ndarray,
+        n_conformers: int,
+        charges: np.ndarray,
+        flatten: bool = True,
+    ) -> np.ndarray:
+        conformers = np.asarray(conformers)
+        conformers = conformers.reshape((n_conformers, -1, 3))
+        n_atoms = conformers.shape[1]
+        charges = np.asarray(charges).reshape(-1, n_atoms).mean(axis=0)
+        dipoles = np.matmul(charges, conformers)
+        if flatten:
+            dipoles = dipoles.reshape(-1)
+        return dipoles
+
+
+    def apply(
+        self,
+        table: pa.Table,
+        verbose: bool = False,
+    ):
+        rows = table.to_pylist()
+        if verbose:
+            rows = tqdm.tqdm(rows, desc="Calculating dipoles")
+        all_dipoles = []
+        for row in rows:
+            dipoles = self._calculate_dipoles(
+                row[self.conformer_column],
+                row[self.n_conformer_column],
+                row[self.charge_column],
+                flatten=True,
+            )
+            all_dipoles.append(dipoles)
+
+        dipole_field = pa.field(self.dipole_column, pa.list_(pa.float64()))
+        table = self._append_column(table, dipole_field, all_dipoles)
+        return table
+
+
+class LabelMultipleESPs(_BaseLabel):
+    name: typing.Literal["multiple_esps"] = "multiple_esps"
+    conformer_column: str = "conformers"
+    n_conformer_column: str = "n_conformers"
+    charge_column: str = "charges"
+    inverse_distance_matrix_column: str = "grid_inverse_distances"
+    grid_length_column: str = "esp_lengths"
+    use_existing_inverse_distances: bool = False
+    esp_column: str = "esps"
+
+    @staticmethod
+    def _calculate_inverse_distance_grid(
+        mapped_smiles: str,
+        conformers: np.ndarray,
+        n_conformers: int,
+    ) -> typing.List[np.ndarray]:
+        from openff.recharge.grids import GridGenerator, MSKGridSettings
+        with capture_toolkit_warnings():
+            mol = Molecule.from_mapped_smiles(
+                mapped_smiles,
+                allow_undefined_stereo=True
+            )
+
+        settings = MSKGridSettings()
+
+        conformers = np.asarray(conformers) * unit.angstrom
+        conformers = conformers.reshape((n_conformers, -1, 3))
+
+        all_inv_distances = []
+        for conf in conformers:
+            grid = GridGenerator.generate(mol, conf, settings)
+            displacement = grid[:, None, :] - conf[None, :, :]
+            distance = (displacement ** 2).sum(axis=-1) ** 0.5
+            distance = distance.m_as(unit.bohr)
+            inv_distance = 1 / distance
+            all_inv_distances.append(inv_distance)
+        return all_inv_distances
+
+
+    @staticmethod
+    def _split_inverse_distance_grid(
+        grid_lengths: typing.List[int],
+        inverse_distance_matrix: typing.List[float],
+        charges: typing.List[float],
+    ) -> typing.List[np.ndarray]:
+        charges = np.asarray(charges).flatten()
+        n_atoms = len(charges)
+        total_grid_length = sum(grid_lengths)
+        n_total_inv_distances = len(inverse_distance_matrix)
+        if total_grid_length * n_atoms != n_total_inv_distances:
+            raise ValueError(
+                f"Grid length ({total_grid_length}) x n_atoms ({n_atoms}) "
+                "must equal length of inverse distances "
+                f"({n_total_inv_distances})"
+            )
+        all_inv_distances = []
+        inverse_distance_matrix = np.asarray(inverse_distance_matrix)
+        shape = (-1, n_atoms)
+        inverse_distance_matrix = inverse_distance_matrix.reshape(shape)
+        for n_grid in grid_lengths:
+            all_inv_distances.append(inverse_distance_matrix[:n_grid])
+            inverse_distance_matrix = inverse_distance_matrix[n_grid:]
+        return all_inv_distances
+
+    @staticmethod
+    def _calculate_esp(
+        inv_distances: np.ndarray,
+        charges: np.ndarray,
+    ) -> np.ndarray:
+        charges = np.asarray(charges).flatten()
+        n_atoms = len(charges)
+        inv_distances = np.asarray(inv_distances).reshape(-1, n_atoms)
+        esp = inv_distances @ charges
+        return esp.flatten()
+
+
+    def apply(
+        self,
+        table: pa.Table,
+        verbose: bool = False,
+    ):
+        rows = table.to_pylist()
+        if verbose:
+            rows = tqdm.tqdm(rows, desc="Calculating ESPs")
+        data = defaultdict(list)
+        for row in rows:
+            if self.use_existing_inverse_distances:
+                all_inv_distances = self._split_inverse_distance_grid(
+                    row[self.grid_length_column],
+                    row[self.inverse_distance_matrix_column],
+                    row[self.charge_column]
+                )
+            else:
+                all_inv_distances = self._calculate_inverse_distance_grid(
+                    row[self.smiles_column],
+                    row[self.conformer_column],
+                    row[self.n_conformer_column],
+                )
+            esps = []
+            for inv_distances in all_inv_distances:
+                esp = self._calculate_esp(
+                    inv_distances,
+                    row[self.charge_column],
+                )
+                esps.extend(esp)
+
+            flat_inverse_distances = []
+            grid_lengths = []
+            for inv_distances in all_inv_distances:
+                flat_inverse_distances.extend(inv_distances.flatten())
+                grid_lengths.append(len(inv_distances))
+            data[self.grid_length_column].append(grid_lengths)
+            data[self.inverse_distance_matrix_column].append(
+                flat_inverse_distances
+            )
+            data[self.esp_column].append(esps)
+
+        if not self.use_existing_inverse_distances:
+            grid_length_field = pa.field(
+                self.grid_length_column,
+                pa.list_(pa.int64())
+            )
+            inverse_distance_field = pa.field(
+                self.inverse_distance_matrix_column,
+                pa.list_(pa.float64())
+            )
+            table = self._append_column(
+                table,
+                grid_length_field,
+                data[self.grid_length_column]
+            )
+            table = self._append_column(
+                table,
+                inverse_distance_field,
+                data[self.inverse_distance_matrix_column]
+            )
+
+        esp_field = pa.field(
+            self.esp_column,
+            pa.list_(pa.float64())
+        )
+        table = self._append_column(
+            table,
+            esp_field,
+            data[self.esp_column]
+        )
+        return table
+
 
 
 LabellerType = typing.Union[
     LabelConformers,
     LabelCharges,
+    LabelMultipleDipoles,
+    LabelMultipleESPs,
 ]
 
 def apply_labellers(
