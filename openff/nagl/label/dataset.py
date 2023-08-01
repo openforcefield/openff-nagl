@@ -26,6 +26,9 @@ class LabelledDataset:
         self.smiles_column = smiles_column
         self._reload()
 
+    def to_pandas(self, columns=None):
+        return self.dataset.to_table(columns=columns).to_pandas()
+
     def _reload(self):
         self.dataset = ds.dataset(self.source, format="parquet")
 
@@ -77,6 +80,13 @@ class LabelledDataset:
             existing_data_behavior=existing_data_behavior,
         )
         return cls(dataset_path, smiles_column=smiles_column)
+    
+    def append_columns(
+        self,
+        columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
+        exist_ok: bool = False,
+    ):
+        self._append_columns(columns, exist_ok=exist_ok)
         
     def _append_columns(
         self,
