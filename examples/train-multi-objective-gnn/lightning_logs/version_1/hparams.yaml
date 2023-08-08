@@ -1,0 +1,211 @@
+config:
+  data:
+    test:
+      batch_size: 1000
+      cache_directory: null
+      lazy_loading: false
+      n_processes: 0
+      sources:
+      - my_first_test_dataset
+      targets:
+      - denominator: 1.0
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1-charges
+        target_label: target-am1-charges
+        weight: 1.0
+      - denominator: 0.001
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1bcc-charges
+        target_label: target-am1bcc-charges
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        conformation_column: conformers
+        denominator: 0.01
+        metric:
+          name: rmse
+        n_conformation_column: n_conformers
+        name: multi_dipole
+        target_label: target-am1bcc-dipoles
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        denominator: 0.001
+        esp_length_column: esp_lengths
+        inverse_distance_matrix_column: grid_inverse_distances
+        metric:
+          name: rmse
+        n_esp_column: n_conformers
+        name: esp
+        target_label: esps
+        weight: 1.0
+      use_cached_data: false
+    training:
+      batch_size: 1000
+      cache_directory: null
+      lazy_loading: false
+      n_processes: 0
+      sources:
+      - training_data
+      targets:
+      - denominator: 1.0
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1-charges
+        target_label: target-am1-charges
+        weight: 1.0
+      - denominator: 0.001
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1bcc-charges
+        target_label: target-am1bcc-charges
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        conformation_column: conformers
+        denominator: 0.01
+        metric:
+          name: rmse
+        n_conformation_column: n_conformers
+        name: multi_dipole
+        target_label: target-am1bcc-dipoles
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        denominator: 0.001
+        esp_length_column: esp_lengths
+        inverse_distance_matrix_column: grid_inverse_distances
+        metric:
+          name: rmse
+        n_esp_column: n_conformers
+        name: esp
+        target_label: esps
+        weight: 1.0
+      use_cached_data: false
+    validation:
+      batch_size: 1000
+      cache_directory: null
+      lazy_loading: false
+      n_processes: 0
+      sources:
+      - my_first_test_dataset
+      targets:
+      - denominator: 1.0
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1-charges
+        target_label: target-am1-charges
+        weight: 1.0
+      - denominator: 0.001
+        metric:
+          name: rmse
+        name: readout
+        prediction_label: predicted-am1bcc-charges
+        target_label: target-am1bcc-charges
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        conformation_column: conformers
+        denominator: 0.01
+        metric:
+          name: rmse
+        n_conformation_column: n_conformers
+        name: multi_dipole
+        target_label: target-am1bcc-dipoles
+        weight: 1.0
+      - charge_label: predicted-am1bcc-charges
+        denominator: 0.001
+        esp_length_column: esp_lengths
+        inverse_distance_matrix_column: grid_inverse_distances
+        metric:
+          name: rmse
+        n_esp_column: n_conformers
+        name: esp
+        target_label: esps
+        weight: 1.0
+      use_cached_data: false
+  model:
+    atom_features:
+    - categories:
+      - C
+      - H
+      name: atomic_element
+    - categories:
+      - 1
+      - 2
+      - 3
+      - 4
+      name: atom_connectivity
+    - name: atom_average_formal_charge
+    - categories:
+      - OTHER
+      - SP
+      - SP2
+      - SP3
+      - SP3D
+      - SP3D2
+      name: atom_hybridization
+    - name: atom_in_ring_of_size
+      ring_size: 3
+    - name: atom_in_ring_of_size
+      ring_size: 4
+    - name: atom_in_ring_of_size
+      ring_size: 5
+    - name: atom_in_ring_of_size
+      ring_size: 6
+    bond_features: []
+    convolution:
+      architecture: SAGEConv
+      layers:
+      - activation_function: &id001 !!python/object/apply:builtins.getattr
+        - !!python/name:openff.nagl.nn.activation.ActivationFunction ''
+        - ReLU
+        aggregator_type: mean
+        dropout: 0.0
+        hidden_feature_size: 128
+      - activation_function: *id001
+        aggregator_type: mean
+        dropout: 0.0
+        hidden_feature_size: 128
+      - activation_function: *id001
+        aggregator_type: mean
+        dropout: 0.0
+        hidden_feature_size: 128
+    readouts:
+      predicted-am1-charges:
+        layers:
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        pooling: atoms
+        postprocess: regularized_compute_partial_charges
+      predicted-am1bcc-charges:
+        layers:
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        - activation_function: *id001
+          dropout: 0.0
+          hidden_feature_size: 128
+        pooling: atoms
+        postprocess: compute_partial_charges
+  optimizer:
+    learning_rate: 0.001
+    optimizer: Adam
