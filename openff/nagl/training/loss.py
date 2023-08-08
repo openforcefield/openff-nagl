@@ -9,7 +9,7 @@ from pydantic.main import ModelMetaclass
 import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
-from openff.nagl.training._metrics import MetricType #MetricMeta, BaseMetric
+from openff.nagl.training.metrics import MetricType #MetricMeta, BaseMetric
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule

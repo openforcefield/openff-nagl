@@ -3,7 +3,7 @@ import typing
 
 from pydantic import Field
 
-from openff.nagl.training._loss import (
+from openff.nagl.training.loss import (
     TargetType,
 
 )

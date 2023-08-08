@@ -12,7 +12,7 @@ import openff.nagl.training
 
 if typing.TYPE_CHECKING:
     from openff.nagl.molecule._dgl import DGLMolecule
-    from openff.nagl.training._metrics import MetricType
+    from openff.nagl.training.metrics import MetricType
 
 
 def _encode_image(image):
@@ -128,7 +128,7 @@ def _generate_jinja_dicts_per_atom(
     highlight_outliers: bool = False,
     outlier_threshold: float = 1.0,
 ) -> typing.List[typing.Dict[str, str]]:
-    from openff.nagl.training._metrics import get_metric_type
+    from openff.nagl.training.metrics import get_metric_type
 
     metrics = [get_metric_type(metric) for metric in metrics]
     jinja_dicts = []
@@ -217,7 +217,7 @@ def create_atom_label_report(
     highlight_outliers: bool = False,
     outlier_threshold: float = 1.0,
 ):
-    from openff.nagl.training._metrics import get_metric_type
+    from openff.nagl.training.metrics import get_metric_type
 
     ranker = get_metric_type(rank_by)
     metrics = [get_metric_type(metric) for metric in metrics]

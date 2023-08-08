@@ -1,7 +1,7 @@
 import pytest
 import torch
 import numpy as np
-from openff.nagl.training._loss import (
+from openff.nagl.training.loss import (
     MultipleDipoleTarget,
     SingleDipoleTarget,
     HeavyAtomReadoutTarget,

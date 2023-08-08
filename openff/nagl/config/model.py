@@ -28,7 +28,7 @@ class BaseLayer(ImmutableModel):
         description="The activation function to apply for each layer"
     )
     dropout: float = Field(
-        default=None,
+        default=0.0,
         description="The dropout to apply after each layer"
     )
 

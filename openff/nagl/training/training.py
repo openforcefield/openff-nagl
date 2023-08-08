@@ -160,6 +160,40 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
 
         setattr(self, f"{stage}_dataloader", dataloader)
 
+    def _get_dgl_molecule_dataset(
+        self,
+        config,
+        cache_dir,
+        columns,
+    ):
+        if config.lazy_loading:
+            loader = functools.partial(
+                _LazyDGLMoleculeDataset.from_arrow_dataset,
+                format="parquet",
+                atom_features=self.config.model.atom_features,
+                bond_features=self.config.model.bond_features,
+                columns=columns,
+                cache_directory=cache_dir,
+                use_cached_data=config.use_cached_data,
+                n_processes=self.n_processes,
+            )
+        else:
+            loader = functools.partial(
+                DGLMoleculeDataset.from_arrow_dataset,
+                format="parquet",
+                atom_features=self.config.model.atom_features,
+                bond_features=self.config.model.bond_features,
+                columns=columns,
+                n_processes=self.n_processes,
+            )
+
+        datasets = []
+        for path in config.sources:
+            ds = loader(path)
+            datasets.append(ds)
+        dataset = torch.utils.data.ConcatDataset(datasets)
+        return dataset
+
     def prepare_data(self):
         for stage, config in self._dataset_configs.items():
             if config is None or not config.sources:
@@ -188,34 +222,13 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                     logger.info(f"Loading cached data from {pickle_hash}")
                     continue
 
-            if config.lazy_loading:
-                loader = functools.partial(
-                    _LazyDGLMoleculeDataset.from_arrow_dataset,
-                    format="parquet",
-                    atom_features=self.config.model.atom_features,
-                    bond_features=self.config.model.bond_features,
-                    columns=columns,
-                    cache_directory=cache_dir,
-                    use_cached_data=config.use_cached_data,
-                    n_processes=self.n_processes,
-                )
-            else:
-                loader = functools.partial(
-                    DGLMoleculeDataset.from_arrow_dataset,
-                    format="parquet",
-                    atom_features=self.config.model.atom_features,
-                    bond_features=self.config.model.bond_features,
-                    columns=columns,
-                    n_processes=self.n_processes,
-                )
+            dataset = self._get_dgl_molecule_dataset(
+                config=config,
+                cache_dir=cache_dir,
+                columns=columns,
+            )
 
-            datasets = []
-            for path in config.sources:
-                ds = loader(path)
-                datasets.append(ds)
-
-            if not config.lazy_loading:
-                dataset = torch.utils.data.ConcatDataset(datasets)
+            if not config.lazy_loading and config.use_cached_data:
                 with open(pickle_hash, "wb") as f:
                     pickle.dump(dataset, f)
                 logger.info(f"Saved data to {pickle_hash}")
@@ -226,39 +239,27 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
 
         cache_dir = config.cache_directory if config.cache_directory else "."
         columns = config.get_required_target_columns()
-        pickle_hash = self._get_hash_file(
-            paths=config.sources,
-            columns=columns,
-            cache_directory=cache_dir,
-            extension=".pkl"
-        )
-        if pickle_hash.exists():
-            with open(pickle_hash, "rb") as f:
-                ds = pickle.load(f)
-                return ds
-        if not config.lazy_loading:
-            raise FileNotFoundError(
-                f"Data not found for stage {stage}: {pickle_hash}"
+        if config.use_cached_data or config.lazy_loading:
+            pickle_hash = self._get_hash_file(
+                paths=config.sources,
+                columns=columns,
+                cache_directory=cache_dir,
+                extension=".pkl"
             )
-        loader = functools.partial(
-            _LazyDGLMoleculeDataset.from_arrow_dataset,
-            format="parquet",
-            atom_features=self.config.model.atom_features,
-            bond_features=self.config.model.bond_features,
-            columns=columns,
-            cache_directory=cache_dir,
-            use_cached_data=config.use_cached_data,
-            n_processes=self.n_processes,
-        )
-        datasets = []
-        for path in config.sources:
-            ds = loader(path)
-            datasets.append(ds)
-        dataset = torch.utils.data.ConcatDataset(datasets)
-        return dataset
-        
-        
 
+            if pickle_hash.exists():
+                with open(pickle_hash, "rb") as f:
+                    ds = pickle.load(f)
+                    return ds
+        
+        dataset = self._get_dgl_molecule_dataset(
+            config=config,
+            cache_dir=cache_dir,
+            columns=columns,
+        )
+        return dataset
+
+        
     def setup(self, **kwargs):
         for stage, config in self._dataset_configs.items():
             dataset = self._setup_stage(config, stage)
