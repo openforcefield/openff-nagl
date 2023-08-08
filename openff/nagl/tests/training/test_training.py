@@ -82,8 +82,8 @@ class TestDGLMoleculeDataModule:
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "e09f10f85463b93bc8470596890cfb200a128c81e3f5e7a84ce3bc2e9dd23be3"),
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "99048a608990d2795bd71dda36d04b3c175ec99a5e053aae484443a0b4bf3a42"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d"),
         ]
     )
     def test_hash_file(self, example_training_config, filename, hash_value):

@@ -144,6 +144,8 @@ class TestLabelMultipleDipoles:
 class TestLabelMultipleESPs:
     
     def test_apply_label(self, dataset_with_conformers_and_charges):
+        pytest.importorskip("openff.recharge")
+
         columns = [
             "mapped_smiles", "conformers", "n_conformers", "charges",
         ]

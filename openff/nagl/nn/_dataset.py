@@ -60,14 +60,14 @@ class DataHash(ImmutableModel):
 
         for path in paths:
             path = pathlib.Path(path)
-            # if path.is_dir():
-            #     for file in path.glob("**/*"):
-            #         if file.is_file():
-            #             path_hash += digest_file(file)
-            # elif path.is_file():
-            #     path_hash += digest_file(path)
-            # else:
-            path_hash += str(path.resolve())
+            if path.is_dir():
+                for file in path.glob("**/*"):
+                    if file.is_file():
+                        path_hash += digest_file(file)
+            elif path.is_file():
+                path_hash += digest_file(path)
+            else:
+                path_hash += str(path.resolve())
 
         if columns is None:
             columns = []

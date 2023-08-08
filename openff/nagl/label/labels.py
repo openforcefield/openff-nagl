@@ -16,6 +16,7 @@ from openff.units import unit
 
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
+from openff.utilities import requires_package
 
 ChargeMethodType = typing.Literal[
     "am1bcc", "am1-mulliken", "gasteiger", "formal_charge",
@@ -252,6 +253,7 @@ class LabelMultipleESPs(_BaseLabel):
     esp_column: str = "esps"
 
     @staticmethod
+    @requires_package("openff.recharge")
     def _calculate_inverse_distance_grid(
         mapped_smiles: str,
         conformers: np.ndarray,
