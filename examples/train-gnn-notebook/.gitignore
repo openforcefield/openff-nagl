@@ -1,1 +1,3 @@
-lightning_logs
+lightning_logs/
+trained_alkane_model.pt
+my_first_test_dataset/
