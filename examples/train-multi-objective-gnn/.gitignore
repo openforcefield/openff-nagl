@@ -1,1 +1,4 @@
-lightning_logs
+lightning_logs/
+my_first_test_dataset/
+training_data/
+*.pt
