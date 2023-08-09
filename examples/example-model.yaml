@@ -32,4 +32,3 @@ readouts:
         activation_function: "Sigmoid"
         dropout: 0
     postprocess: "compute_partial_charges"
-    
