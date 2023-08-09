@@ -37,3 +37,22 @@ class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
             layers.extend([linear, activation, dropout])
 
         return cls(*layers)
+
+    def copy(self, copy_weights: bool = False):
+        layers = []
+        for layer in self:
+            if isinstance(layer, torch.nn.Linear):
+                layers.append(torch.nn.Linear(layer.in_features, layer.out_features))
+            elif isinstance(layer, ActivationFunction):
+                layers.append(layer)
+            elif isinstance(layer, torch.nn.Dropout):
+                layers.append(torch.nn.Dropout(p=layer.p))
+            else:
+                raise NotImplementedError()
+        
+        assert len(layers) == len(self)
+        copied = type(self)(*layers)
+
+        if copy_weights:
+            copied.load_state_dict(self.state_dict())
+        return copied

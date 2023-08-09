@@ -1,0 +1,30 @@
+training:
+  sources:
+    - n04-training.parquet
+  targets:
+    - readout:
+        target_label: am1bcc-charges
+        prediction_label: am1bcc-charges
+        metric: rmse
+        weight: 1
+        denominator: 0.02
+    - heavy_atom_readout:
+        target_label: am1bcc-charges
+        prediction_label: am1bcc-charges
+        metric: rmse
+        weight: 1
+        denominator: 0.02
+    - dipole:
+        target_label: am1bcc-dipole
+        charge_label: am1bcc-charges
+        conformation_column: conformers
+        metric: rmse
+        weight: 1
+        denominator: 0.5
+    - esp:
+        target_label: am1bcc-esp
+        charge_label: am1bcc-charges
+        inverse_distance_matrix_column: inverse_distances
+        metric: rmse
+        weight: 1
+        denominator: 0.001

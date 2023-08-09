@@ -1,8 +1,8 @@
-from typing import Any, Iterable, List, Optional, Union
+import typing
 
 import numpy as np
 
-FloatArrayLike = Union[List, np.ndarray, float]
+FloatArrayLike = typing.Union[typing.List, np.ndarray, float]
 
 
 def round_floats(
@@ -28,14 +28,14 @@ def assert_same_lengths(*values):
     assert len(set(lengths)) == 1, err
 
 
-def is_iterable(obj: Any) -> bool:
+def is_iterable(obj: typing.Any) -> bool:
     """Check if an object is iterable."""
     from collections.abc import Iterable
 
     return isinstance(obj, Iterable) and not isinstance(obj, str)
 
 
-def as_iterable(obj: Any) -> Iterable:
+def as_iterable(obj: typing.Any) -> typing.Iterable:
     """Convert an object to an iterable if it isn't one already."""
     if not is_iterable(obj):
         return [obj]
@@ -45,8 +45,8 @@ def as_iterable(obj: Any) -> Iterable:
 def transform_coordinates(
     coordinates: np.ndarray,
     scale: float = 1.0,
-    translate: Optional[float] = 0.0,
-    rotate: Optional[float] = 0.0,
+    translate: typing.Optional[float] = 0.0,
+    rotate: typing.Optional[float] = 0.0,
 ) -> np.ndarray:
     """
     Transform the coordinates by a scale, translation, and rotation.

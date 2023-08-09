@@ -5,7 +5,7 @@ Components for constructing and processing GNN models
 
 from .activation import ActivationFunction
 from ._containers import ConvolutionModule, ReadoutModule
-from .dataset import DGLMoleculeDataLoader, DGLMoleculeDataset
+from ._dataset import DGLMoleculeDataLoader, DGLMoleculeDataset
 from .label import (
     ComputeAndLabelMolecule,
     EmptyLabeller,

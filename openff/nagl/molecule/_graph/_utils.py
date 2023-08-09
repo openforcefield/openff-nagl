@@ -1,7 +1,8 @@
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, Iterable
 
 import torch
+import networkx as nx
 
 
 def nonzero_1d(values):
@@ -87,3 +88,41 @@ def _batch_nx_graphs(graphs):
                 tensors.append(graph.graph[key][feature_key])
             joined_graph.graph[key][feature_key] = torch.cat(tensors, dim=0)
     return joined_graph
+
+
+def _unbatch_nx_graphs(
+    graph: nx.Graph,
+    n_representations_per_molecule: Iterable[int],
+) -> List[nx.Graph]:
+    import networkx as nx
+    from openff.nagl.molecule._graph._batch import FrameDict
+
+    unbatched_graphs = []
+    start = 0
+    for n_representations in n_representations_per_molecule:
+        end = start + n_representations
+        subgraph = nx.subgraph(graph, range(start, end))
+
+        for data_name in ["node_data", "graph_data"]:
+            if data_name in graph.graph:
+                node_data = FrameDict()
+                for k, v in graph.graph[data_name].items():
+                    node_data[k] = v[start:end]
+                subgraph.graph[data_name] = node_data
+
+        if "edge_data" in graph.graph:
+            old_edge_data = graph.graph["edge_data"]
+            if isinstance(old_edge_data, defaultdict):
+                edge_data = defaultdict(FrameDict)
+                for direction in old_edge_data.keys():
+                    for k, v in old_edge_data[direction].items():
+                        edge_data[direction][k] = v[start:end]
+            else:
+                edge_data = FrameDict()
+                for k, v in old_edge_data.items():
+                    edge_data[k] = v[start:end]
+            subgraph.graph["edge_data"] = edge_data
+
+        unbatched_graphs.append(subgraph)
+        start = end
+    return unbatched_graphs

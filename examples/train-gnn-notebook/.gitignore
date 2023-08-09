@@ -1,5 +1,3 @@
-output/
-data/
-my_first_test_dataset.sqlite
 lightning_logs/
 trained_alkane_model.pt
+my_first_test_dataset/

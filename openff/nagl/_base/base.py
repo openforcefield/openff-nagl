@@ -2,6 +2,8 @@ import enum
 import hashlib
 import inspect
 import pathlib
+import json
+import yaml
 from typing import Any, ClassVar, Dict, List, Optional, Type, no_type_check
 
 import numpy as np
@@ -92,8 +94,8 @@ class MutableModel(BaseModel):
             self._hash_str = mash.hexdigest()
         return self._hash_str
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
+    # def __eq__(self, other):
+    #     return hash(self) == hash(other)
 
     def hash_dict(self) -> Dict[str, Any]:
         """Create dictionary from hash fields and sort alphabetically"""
@@ -171,6 +173,16 @@ class MutableModel(BaseModel):
         if current_value in mapping_values:
             self._set_attr(attr_name, mapping_values[current_value])
 
+    def to_yaml(self, filename):
+        data = json.loads(self.json())
+        with open(filename, "w") as f:
+            yaml.dump(data, f)
+
+    @classmethod
+    def from_yaml(cls, filename):
+        with open(filename, "r") as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        return cls(**data)
 
 class ImmutableModel(MutableModel):
     class Config(MutableModel.Config):

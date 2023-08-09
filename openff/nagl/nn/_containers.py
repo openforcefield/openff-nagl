@@ -1,5 +1,5 @@
 import copy
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple, Callable
 
 import torch
 
@@ -8,8 +8,8 @@ from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.nn._pooling import PoolingLayer
-from openff.nagl.nn.postprocess import PostprocessLayer
+from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 
 class ConvolutionModule(torch.nn.Module):
@@ -23,6 +23,12 @@ class ConvolutionModule(torch.nn.Module):
         layer_aggregator_types: Optional[List[str]] = None,
     ):
         super().__init__()
+        self.n_input_features = n_input_features
+        self.hidden_feature_sizes = hidden_feature_sizes
+        self.architecture = architecture
+        self.layer_activation_functions = layer_activation_functions
+        self.layer_dropout = layer_dropout
+        self.layer_aggregator_types = layer_aggregator_types
 
         gcn_cls = _GCNStackMeta._get_class(architecture)
         self.gcn_layers = gcn_cls.with_layers(
@@ -32,6 +38,19 @@ class ConvolutionModule(torch.nn.Module):
             layer_dropout=layer_dropout,
             layer_aggregator_types=layer_aggregator_types,
         )
+
+    def copy(self, copy_weights: bool = False):
+        copied = type(self)(
+            self.n_input_features,
+            self.hidden_feature_sizes,
+            copy.deepcopy(self.architecture),
+            self.layer_activation_functions,
+            self.layer_dropout,
+            self.layer_aggregator_types,
+        )
+        if copy_weights:
+            copied.load_state_dict(self.state_dict())
+        return copied
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]):
         # The input graph will be heterogeneous - the edges are split into forward
@@ -48,10 +67,37 @@ class ConvolutionModule(torch.nn.Module):
         return self.gcn_layers._is_dgl
 
     def _as_nagl(self, copy_weights: bool = False):
-        copied = copy.deepcopy(self)
+        copied = self.copy()
         if self._is_dgl:
             copied.gcn_layers = copied.gcn_layers._as_nagl(copy_weights=copy_weights)
         return copied
+    
+    @classmethod
+    def from_config(
+        cls,
+        convolution_config,
+        n_input_features: int
+    ):
+        hidden_feature_sizes = [
+            layer.hidden_feature_size for layer in convolution_config.layers
+        ]
+        layer_activation_functions = [
+            layer.activation_function for layer in convolution_config.layers
+        ]
+        layer_dropout = [
+            layer.dropout for layer in convolution_config.layers
+        ]
+        layer_aggregator_types = [
+            layer.aggregator_type for layer in convolution_config.layers
+        ]
+        return cls(
+            n_input_features,
+            hidden_feature_sizes,
+            architecture=convolution_config.architecture,
+            layer_activation_functions=layer_activation_functions,
+            layer_dropout=layer_dropout,
+            layer_aggregator_types=layer_aggregator_types,
+        )
 
 
 class ReadoutModule(torch.nn.Module):
@@ -81,8 +127,12 @@ class ReadoutModule(torch.nn.Module):
 
         super().__init__()
 
-        self.pooling_layer = pooling_layer
+        self.pooling_layer = get_pooling_layer(pooling_layer)
         self.readout_layers = readout_layers
+
+        if postprocess_layer is not None:
+            if not isinstance(postprocess_layer, PostprocessLayer):
+                postprocess_layer = _PostprocessLayerMeta._get_object(postprocess_layer)
         self.postprocess_layer = postprocess_layer
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
@@ -92,3 +142,46 @@ class ReadoutModule(torch.nn.Module):
             x = self.postprocess_layer.forward(molecule, x)
 
         return x
+    
+    def copy(self, copy_weights: bool = False):
+        pooling = type(self.pooling_layer)()
+        readout = self.readout_layers.copy(copy_weights=copy_weights)
+        postprocess = type(self.postprocess_layer)()
+        copied = type(self)(pooling, readout, postprocess)
+        if copy_weights:
+            copied.load_state_dict(self.state_dict())
+        return copied
+    
+    @classmethod
+    def from_config(
+        cls,
+        readout_config,
+        n_input_features: int
+    ):
+        pooling_layer = readout_config.pooling
+        hidden_feature_sizes = [
+            layer.hidden_feature_size for layer in readout_config.layers
+        ]
+        layer_activation_functions = [
+            layer.activation_function for layer in readout_config.layers
+        ]
+        layer_dropout = [
+            layer.dropout for layer in readout_config.layers
+        ]
+        if readout_config.postprocess is not None:
+            postprocess_layer = _PostprocessLayerMeta._get_object(readout_config.postprocess)
+            hidden_feature_sizes.append(postprocess_layer.n_features)
+            layer_activation_functions.append(ActivationFunction.Identity)
+            layer_dropout.append(0.0)
+
+        readout_layers = SequentialLayers.with_layers(
+            n_input_features,
+            hidden_feature_sizes,
+            layer_activation_functions,
+            layer_dropout,
+        )
+        return cls(
+            pooling_layer,
+            readout_layers,
+            postprocess_layer
+        )

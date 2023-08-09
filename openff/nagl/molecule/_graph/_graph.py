@@ -213,6 +213,15 @@ class NXMolGraph:
 
     def num_src_nodes(self):
         return len(self.srcnodes())
+    
+    def _unbatch(self, n_representations_per_molecule) -> List["NXMolGraph"]:
+        from openff.nagl.molecule._graph._utils import _unbatch_nx_graphs
+
+        return [
+            type(self)(g)
+            for g in _unbatch_nx_graphs(self.graph, n_representations_per_molecule)
+        ]
+        
 
 
 class NXMolHomoGraph(NXMolGraph):

@@ -15,18 +15,18 @@ dependencies:
   - tqdm
 
   # chemistry
-  - openff-toolkit ==0.11.1
+  - openff-recharge
+  - openff-toolkit-base >=0.11.1
   - openff-units
-  - pydantic
+  - pydantic <2.0
   - rdkit
   - openeye-toolkits
 
   # database
-  - sqlalchemy
-  - sqlite
+  - pyarrow
 
   # gcn
-  - dglteam::dgl >=1.0
+  - dgl >=1.0
   - pytorch
   - pytorch-lightning
 
@@ -38,8 +38,9 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - codecov
+  - sqlalchemy <2.0
 
   # Pip-only installs
   - pip:
     - rich
-
+    - mlflow

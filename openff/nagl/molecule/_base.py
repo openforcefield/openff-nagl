@@ -1,6 +1,7 @@
 from typing import ClassVar, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._utils import FEATURE
+from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     import torch
@@ -19,6 +20,14 @@ class NAGLMoleculeBase:
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
+    
+    @property
+    def bond_features(self) -> Optional["torch.Tensor"]:
+        if FEATURE in self.graph.edata:
+            n = int(self.n_bonds)
+            key = ("atom", self._graph_forward_edge_type, "atom")
+            return self.graph.edata[FEATURE][key][:n].float()
+        return None
 
     @property
     def homograph(self):
@@ -26,9 +35,15 @@ class NAGLMoleculeBase:
 
 
 class MoleculeMixin:
-    def __init__(self, graph, n_representations: int = 1):
+    def __init__(
+            self,
+            graph,
+            n_representations: int = 1,
+            mapped_smiles: str = "",
+        ):
         self.graph = graph
         self.n_representations = n_representations
+        self.mapped_smiles = mapped_smiles
 
     @property
     def n_atoms(self):
@@ -73,6 +88,17 @@ class MoleculeMixin:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
+    
+    def to_openff(self):
+        from openff.toolkit.topology import Molecule
+
+        with capture_toolkit_warnings():
+            molecule = Molecule.from_mapped_smiles(
+                self.mapped_smiles,
+                allow_undefined_stereo=True,
+            )
+        
+        return molecule
 
 
 class BatchMixin:
