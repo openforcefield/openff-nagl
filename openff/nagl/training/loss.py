@@ -3,9 +3,6 @@ import pathlib
 import typing
 from openff.toolkit import Molecule
 
-import pydantic
-from pydantic import Field
-from pydantic.main import ModelMetaclass
 import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
@@ -14,6 +11,12 @@ from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
 
+try:
+    from pydantic.v1 import Field, validator
+    from pydantic.v1.main import ModelMetaclass
+except ImportError:
+    from pydantic import Field, validator
+    from pydantic.main import ModelMetaclass
 
 if typing.TYPE_CHECKING:
     import torch
@@ -44,7 +47,7 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         )
     )
 
-    @pydantic.validator("metric", pre=True)
+    @validator("metric", pre=True)
     def _validate_metric(cls, v):
         if isinstance(v, str):
             v = {"name": v}

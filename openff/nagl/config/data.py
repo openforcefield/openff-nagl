@@ -1,14 +1,17 @@
 import pathlib
 import typing
 
-from pydantic import Field
-
 from openff.nagl.training.loss import (
     TargetType,
 
 )
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.utils._types import FromYamlMixin
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 DiscriminatedTargetType = typing.Annotated[TargetType, Field(discriminator="name")]
 

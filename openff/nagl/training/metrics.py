@@ -1,11 +1,15 @@
 import abc
 import typing
-from pydantic.main import ModelMetaclass
 
 import torch
 
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl._base.base import ImmutableModel
+
+try:
+    from pydantic.v1.main import ModelMetaclass
+except ImportError:
+    from pydantic.main import ModelMetaclass
 
 if typing.TYPE_CHECKING:
     import torch

@@ -21,13 +21,17 @@ to implement your own features.
 # from typing import ClassVar, Dict, Type
 import typing
 
-import pydantic
 import torch
 
 from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
 from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
+
+try:
+    from pydantic.v1 import Field
+except ImportError:
+    from pydantic import Field
 
 __all__ = [
     "BondFeature",
@@ -167,5 +171,5 @@ BondFeatureType = typing.Union[
 ]
 
 DiscriminatedBondFeatureType = typing.Annotated[
-    BondFeatureType, pydantic.Field(..., discriminator="name")
+    BondFeatureType, Field(..., discriminator="name")
 ]
