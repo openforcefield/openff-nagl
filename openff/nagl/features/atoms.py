@@ -27,8 +27,6 @@ import typing
 
 import numpy as np
 import torch
-import pydantic
-# from pydantic import validator
 
 from openff.nagl.utils._types import HybridizationType
 from openff.units import unit
@@ -37,6 +35,10 @@ from openff.utilities import requires_package
 from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
 
+try:
+    from pydantic.v1 import validator, Field
+except ImportError:
+    from pydantic import validator, Field
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule as OFFMolecule
@@ -115,7 +117,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
     ]
     """The supported hybridization modes."""
 
-    @pydantic.validator("categories", pre=True, each_item=True)
+    @validator("categories", pre=True, each_item=True)
     def _validate_categories(cls, v):
         if isinstance(v, str):
             return HybridizationType[v.upper()]
@@ -459,5 +461,5 @@ AtomFeatureType = typing.Union[
 ]
 
 DiscriminatedAtomFeatureType = typing.Annotated[
-    AtomFeatureType, pydantic.Field(..., discriminator="name")
+    AtomFeatureType, Field(..., discriminator="name")
 ]

@@ -22,13 +22,14 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.9", "3.10"]
+          python-version: ["3.9", "3.10", "3.11"]
+          pydantic-version: ["1", "2"]
           include-rdkit: [true, false]
           include-openeye: [true, false]
           include-dgl: [true, false]
@@ -53,11 +54,12 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/provision-with-micromamba@main
+      uses: mamba-org/setup-micromamba@v1
       with:
         environment-file: devtools/conda-envs/test_env.yaml
-        extra-specs: |
+        create-args: >-
           python=${{ matrix.python-version }}
+          pydantic=${{ matrix.pydantic-version }}
 
     - name: Install package
       run: |

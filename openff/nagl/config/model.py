@@ -2,8 +2,6 @@
 import pathlib
 import typing
 
-from pydantic import Field, validator
-
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn.gcn._base import _GCNStackMeta
 from openff.nagl.nn.activation import ActivationFunction
@@ -14,6 +12,10 @@ from openff.nagl.utils._types import FromYamlMixin
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
 PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
 
+try:
+    from pydantic.v1 import Field, validator
+except ImportError:
+    from pydantic import Field, validator
 
 class BaseLayer(ImmutableModel):
     """Base class for single layer in the neural network"""
