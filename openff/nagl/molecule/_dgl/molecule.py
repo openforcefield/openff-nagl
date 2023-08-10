@@ -1,7 +1,7 @@
 from typing import ClassVar, Optional, Tuple
 
 import torch
-from openff.toolkit.topology.molecule import Molecule as OFFMolecule
+from openff.toolkit.topology.molecule import Molecule
 from openff.utilities import requires_package
 
 from openff.nagl.features.atoms import AtomFeature
@@ -43,7 +43,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     @requires_package("dgl")
     def from_openff(
         cls,
-        molecule: OFFMolecule,
+        molecule: Molecule,
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
         atom_feature_tensor: Optional[torch.Tensor] = None,
