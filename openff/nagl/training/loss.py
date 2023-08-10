@@ -590,5 +590,5 @@ TargetType = typing.Union[
     ReadoutTarget,
     HeavyAtomReadoutTarget,
     SingleDipoleTarget,
-    ESPTarget,
+    MultipleESPTarget,
 ]
