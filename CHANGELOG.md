@@ -20,13 +20,61 @@ The rules for this file:
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @lilyminium
+- @mattwthompson
+
+### Reviewers
+- @lilyminium
+
+### Added
+- Codecov coverage (PR #43)
+- Multiple target objectives and configuratin files (PR #45)
+- Support for pydantic v2 (PR #46)
+
+
+### Fixed
+<!-- Bug fixes -->
+- pytest runs (PR #44)
+
+### Changed
+<!-- Changes in existing functionality -->
+- Major refactor to move to using Arrow databases (PR #45)
+
+## v0.2.3
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
 - @yoshanuikabundi
 
 ### Reviewers
-- 
+- @lilyminium
 
 ### Added
+- Link to OpenFF install guide (PR #37)
+
+### Fixed
+<!-- Bug fixes -->
+- Versioneer version prefix (PR #42)
+
+### Changed
+<!-- Changes in existing functionality -->
+- Update examples for central examples page (PR #40)
+
+## v0.2.2
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+- @yoshanuikabundi
+
+### Reviewers
+- @lilyminium
+
+### Added
+- `GNNModel.load` (PR #26)
 - `GNNModel.save` function (PR #29)
+- General documentation (PR #21, PR #33)
+- Documentation of creation of custom features (PR #36)
 
 ### Fixed
 <!-- Bug fixes -->
@@ -35,6 +83,7 @@ The rules for this file:
 ### Changed
 <!-- Changes in existing functionality -->
 - Migrate away from pkg_resources to importlib_resources (PR #35)
+- Expose base classes and hide metaclasses (PR #32)
 - Update examples for central examples page (PR #40)
 
 ## v0.2.1
