@@ -37,7 +37,7 @@ The rules for this file:
 
 ### Changed
 <!-- Changes in existing functionality -->
-- Major refactor to move to using Arrow databases (PR #45)
+- Major refactor to move to using Arrow databases (PR #45, PR #48)
 
 ## v0.2.3
 
