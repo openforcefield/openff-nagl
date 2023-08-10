@@ -123,7 +123,10 @@ class ComputePartialCharges(PostprocessLayer):
 
 class RegularizedComputePartialCharges(PostprocessLayer):
     """
-    Maps a set of atomic electronegativity and hardness parameters to partial charges.
+    Maps a set of initial charges, atomic electronegativity,
+    and hardness parameters to partial charges.
+
+    This is a modification of the :class:`ComputePartialCharges`.
 
     References
     ----------
