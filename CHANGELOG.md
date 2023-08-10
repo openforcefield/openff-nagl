@@ -39,6 +39,10 @@ The rules for this file:
 <!-- Changes in existing functionality -->
 - Major refactor to move to using Arrow databases (PR #45, PR #48)
 
+### Removed
+- Old `_app` and `_cli` utilities that were not well tested
+  are not supported in refactor (PR #49)
+
 ## v0.2.3
 
 ### Authors

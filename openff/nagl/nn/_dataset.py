@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataHash(ImmutableModel):
+    """A class for computing the hash of a dataset."""
     path_hash: str
     columns: typing.List[str]
     atom_features: typing.List[AtomFeature]

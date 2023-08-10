@@ -5,25 +5,29 @@ Components for constructing and processing GNN models
 
 from .activation import ActivationFunction
 from ._containers import ConvolutionModule, ReadoutModule
-from ._dataset import DGLMoleculeDataLoader, DGLMoleculeDataset
-from .label import (
-    ComputeAndLabelMolecule,
-    EmptyLabeller,
-    LabelFunction,
-    LabelPrecomputedMolecule,
+from ._dataset import (
+    DGLMoleculeDatasetEntry,
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
 )
+from ._pooling import PoolAtomFeatures, PoolBondFeatures
 from ._sequential import SequentialLayers
+from .postprocess import (
+    ComputePartialCharges,
+    RegularizedComputePartialCharges
+)
 
 
 __all__ = [
     "ActivationFunction",
+    "ComputePartialCharges",
     "ConvolutionModule",
+    "DGLMoleculeDatasetEntry",
     "DGLMoleculeDataLoader",
     "DGLMoleculeDataset",
-    "EmptyLabeller",
-    "LabelFunction",
-    "LabelPrecomputedMolecule",
+    "PoolAtomFeatures",
+    "PoolBondFeatures",
     "ReadoutModule",
+    "RegularizedComputePartialCharges",
     "SequentialLayers",
-    "ComputeAndLabelMolecule",
 ]
