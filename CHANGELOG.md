@@ -38,6 +38,7 @@ The rules for this file:
 ### Changed
 <!-- Changes in existing functionality -->
 - Major refactor to move to using Arrow databases (PR #45, PR #48)
+- Removed importing `OFFMolecule` in favour of `Molecule` (PR #50, Issue #13)
 
 ### Removed
 - Old `_app` and `_cli` utilities that were not well tested

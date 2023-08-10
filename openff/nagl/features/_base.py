@@ -15,7 +15,7 @@ except ImportError:
     
 if typing.TYPE_CHECKING:
     import torch
-    from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.toolkit.topology import Molecule
 
 
 # class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
@@ -73,7 +73,7 @@ class Feature(ImmutableModel, abc.ABC):
         kwargs = dict(zip(cls.__fields__, args))
         return cls(**kwargs)
 
-    def encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
+    def encode(self, molecule: "Molecule") -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
 
@@ -85,7 +85,7 @@ class Feature(ImmutableModel, abc.ABC):
         return self._encode(molecule).reshape(self.tensor_shape)
 
     @abc.abstractmethod
-    def _encode(self, molecule: "OFFMolecule") -> "torch.Tensor":
+    def _encode(self, molecule: "Molecule") -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
         """

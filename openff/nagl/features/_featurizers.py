@@ -7,7 +7,7 @@ from ._base import Feature
 from .bonds import BondFeature
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.toolkit.topology import Molecule
 
 T = TypeVar("T", bound=Feature)
 
@@ -22,7 +22,7 @@ class Featurizer(Generic[T]):
                 feature = feature()
             self.features.append(feature)
 
-    def featurize(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def featurize(self, molecule: "Molecule") -> torch.Tensor:
         encoded = [feature.encode(molecule) for feature in self.features]
         features = torch.hstack(encoded)
         return features

@@ -41,7 +41,7 @@ except ImportError:
     from pydantic import validator, Field
 
 if typing.TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule as OFFMolecule
+    from openff.toolkit.topology import Molecule
 
 __all__ = [
     "AtomFeature",
@@ -91,7 +91,7 @@ class AtomicElement(CategoricalMixin, AtomFeature):
     categories: typing.List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
     """Elements to provide one-hot encodings for."""
 
-    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def _encode(self, molecule: "Molecule") -> torch.Tensor:
         try:
             elements = [atom.element for atom in molecule.atoms]
         except AttributeError:
@@ -219,7 +219,7 @@ class AtomInRingOfSize(AtomFeature):
     ring_size: int
     """The size of the ring that this feature describes."""
 
-    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def _encode(self, molecule: "Molecule") -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_atoms_are_in_ring_size
 
         in_ring_size = get_atoms_are_in_ring_size(molecule, self.ring_size)
@@ -272,7 +272,7 @@ class AtomAverageFormalCharge(AtomFeature):
     """
     name: typing.Literal["atom_average_formal_charge"] = "atom_average_formal_charge"
 
-    def _encode(self, molecule: "OFFMolecule") -> torch.Tensor:
+    def _encode(self, molecule: "Molecule") -> torch.Tensor:
         from openff.nagl.utils.resonance import enumerate_resonance_forms
         from openff.nagl.toolkits.openff import normalize_molecule
 
