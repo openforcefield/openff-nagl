@@ -60,7 +60,7 @@ data:
       - example-data-labelled-unfeaturized-short
     batch_size: 5
     targets:
-      - name: esp
+      - name: multiple_esps
         metric:
           name: mse
         target_label: am1bcc_esps
@@ -68,7 +68,7 @@ data:
         inverse_distance_matrix_column: esp_grid_inverse_distances
         esp_length_column: esp_lengths
         n_esp_column: n_conformers
-      - name: multi_dipole
+      - name: multiple_dipoles
         metric:
           name: mae
         target_label: am1bcc_dipoles

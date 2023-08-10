@@ -331,8 +331,7 @@ class SingleDipoleTarget(_BaseTarget):
 
 class MultipleDipoleTarget(_BaseTarget):
     """A target that is evaluated on the dipole of a molecule."""
-    # name: typing.ClassVar[str] = "multi_dipole"
-    name: typing.Literal["multi_dipole"] = "multi_dipole"
+    name: typing.Literal["multiple_dipoles"] = "multiple_dipoles"
 
     charge_label: str
     conformation_column: str
@@ -444,10 +443,9 @@ class MultipleDipoleTarget(_BaseTarget):
         return report_path
     
 
-class ESPTarget(_BaseTarget):
+class MultipleESPTarget(_BaseTarget):
     """A target that is evaluated on the electrostatic potential of a molecule."""
-    # name: typing.ClassVar[str] = "esp"
-    name: typing.Literal["esp"] = "esp"
+    name: typing.Literal["multiple_esps"] = "multiple_esps"
 
     charge_label: str
     inverse_distance_matrix_column: str
@@ -592,5 +590,5 @@ TargetType = typing.Union[
     ReadoutTarget,
     HeavyAtomReadoutTarget,
     SingleDipoleTarget,
-    ESPTarget,
+    MultipleESPTarget,
 ]

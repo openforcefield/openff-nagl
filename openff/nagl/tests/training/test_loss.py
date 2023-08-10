@@ -6,7 +6,7 @@ from openff.nagl.training.loss import (
     SingleDipoleTarget,
     HeavyAtomReadoutTarget,
     ReadoutTarget,
-    ESPTarget
+    MultipleESPTarget
 )
 
 class TestReadoutTarget:
@@ -154,7 +154,7 @@ class TestMultipleDipoleTarget:
         assert torch.isclose(loss, torch.tensor([222.5]))
 
 
-class TestESPTarget:
+class TestMultipleESPTarget:
     def test_single_molecule(self, dgl_methane):
         predictions = {
             "am1bcc_charges": torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0]]),
@@ -181,7 +181,7 @@ class TestESPTarget:
             "n_conformers": n_conformers,
         }
 
-        target = ESPTarget(
+        target = MultipleESPTarget(
             metric="mae",
             charge_label="am1bcc_charges",
             target_label="am1bcc_esps",
