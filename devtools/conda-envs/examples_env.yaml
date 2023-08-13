@@ -21,18 +21,17 @@ dependencies:
   - rich
 
   # chemistry
-  - openff-toolkit ==0.11.1
+  - openff-toolkit >=0.11.1
   - openff-units
-  - pydantic
+  - pydantic <3
   - rdkit
   - openeye-toolkits
 
   # database
-  - sqlalchemy
-  - sqlite
+  - pyarrow
 
   # gcn
-  - dglteam::dgl >=0.7
+  - dglteam::dgl >=1.0
   - pytorch
   - pytorch-lightning
   - tensorboard
