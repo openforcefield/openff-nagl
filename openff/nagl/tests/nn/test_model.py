@@ -141,7 +141,7 @@ class TestGNNModel:
         ]
 
         model = GNNModel(
-            {
+            {   "version": "0.1",
                 "atom_features": atom_features,
                 "bond_features": bond_features,
                 "convolution": {
