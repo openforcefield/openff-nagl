@@ -15,11 +15,11 @@ class ChemicalDomain(ImmutableModel):
     """
     allowed_elements: typing.Tuple[int, ...] = Field(
         description="The atomic numbers of the elements allowed in the domain",
-        default=tuple()
+        default_factory=tuple
     )
     forbidden_patterns: typing.Tuple[str, ...] = Field(
         description="The SMARTS patterns which are forbidden in the domain",
-        default=tuple()
+        default_factory=tuple
     )
 
     def check_molecule(
