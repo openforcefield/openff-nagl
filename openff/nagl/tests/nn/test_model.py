@@ -13,9 +13,8 @@ from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.domains import ChemicalDomain
 from openff.nagl.tests.data.files import (
-    # EXAMPLE_AM1BCC_MODEL_STATE_DICT,
-    # MODEL_CONFIG_V7,
     EXAMPLE_AM1BCC_MODEL,
 )
 from openff.nagl.features.atoms import (
@@ -107,6 +106,9 @@ class TestGNNModel:
     @pytest.fixture()
     def am1bcc_model(self):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
+        model.chemical_domain = ChemicalDomain(
+            allowed_elements=(1, 6)
+        )
         # model = GNNModel.from_yaml(MODEL_CONFIG_V7)
         # model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
         # model.eval()
@@ -139,7 +141,7 @@ class TestGNNModel:
         ]
 
         model = GNNModel(
-            {
+            {   "version": "0.1",
                 "atom_features": atom_features,
                 "bond_features": bond_features,
                 "convolution": {
@@ -213,6 +215,30 @@ class TestGNNModel:
         )
         assert len(charges) == 1
         assert_allclose(charges["am1bcc_charges"], expected_methane_charges, atol=1e-5)
+
+    def test_compute_properties_check_domains(self, am1bcc_model, openff_methane_uncharged):
+        am1bcc_model.compute_properties(
+            openff_methane_uncharged,
+            check_domains=True,
+            error_if_unsupported=True,
+        )
+        
+    def test_compute_properties_warning_domains(self, am1bcc_model, openff_methyl_methanoate):
+        with pytest.warns(UserWarning):
+            am1bcc_model.compute_properties(
+                openff_methyl_methanoate,
+                check_domains=True,
+                error_if_unsupported=False,
+            )
+    
+    def test_compute_properties_error_domains(self, am1bcc_model, openff_methyl_methanoate):
+        with pytest.raises(ValueError):
+            am1bcc_model.compute_properties(
+                openff_methyl_methanoate,
+                check_domains=True,
+                error_if_unsupported=True,
+            )
+
 
     def test_load(self, openff_methane_uncharged, expected_methane_charges):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
