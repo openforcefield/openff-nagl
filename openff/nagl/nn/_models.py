@@ -46,7 +46,10 @@ class GNNModel(BaseGNNModel):
             config = ModelConfig(**config)
 
         if chemical_domain is None:
-            chemical_domain = ChemicalDomain()
+            chemical_domain = ChemicalDomain(
+                allowed_elements=tuple(),
+                forbidden_patterns=tuple(),
+            )
         elif not isinstance(chemical_domain, ChemicalDomain):
             chemical_domain = ChemicalDomain(**chemical_domain)
 
