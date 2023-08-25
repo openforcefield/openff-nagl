@@ -1,5 +1,6 @@
 import copy
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optional
+import warnings
 
 import torch
 import pytorch_lightning as pl
@@ -7,16 +8,11 @@ import pytorch_lightning as pl
 from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.config.model import ModelConfig
-
+from openff.nagl.domains import ChemicalDomain
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
-    from openff.nagl.features.atoms import AtomFeature
-    from openff.nagl.features.bonds import BondFeature
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
-    from openff.nagl.nn.postprocess import PostprocessLayer
-    from openff.nagl.nn.activation import ActivationFunction
-    from openff.nagl.nn.gcn._base import BaseGCNStack
 
 
 class BaseGNNModel(pl.LightningModule):
@@ -41,9 +37,18 @@ class BaseGNNModel(pl.LightningModule):
         return readouts
 
 class GNNModel(BaseGNNModel):
-    def __init__(self, config: ModelConfig):
+    def __init__(
+        self,
+        config: ModelConfig,
+        chemical_domain: Optional[ChemicalDomain] = None,
+    ):
         if not isinstance(config, ModelConfig):
             config = ModelConfig(**config)
+
+        if chemical_domain is None:
+            chemical_domain = ChemicalDomain()
+        elif not isinstance(chemical_domain, ChemicalDomain):
+            chemical_domain = ChemicalDomain(**chemical_domain)
 
         convolution_module = ConvolutionModule.from_config(
             config.convolution,
@@ -62,8 +67,13 @@ class GNNModel(BaseGNNModel):
             readout_modules=readout_modules,
         )
 
-        self.save_hyperparameters({"config": config.dict()})
+        self.save_hyperparameters({
+            "config": config.dict(),
+            "chemical_domain": chemical_domain.dict(),
+        })
         self.config = config
+        self.chemical_domain = chemical_domain
+        
 
     @classmethod
     def from_yaml(cls, filename):
@@ -84,6 +94,8 @@ class GNNModel(BaseGNNModel):
         self,
         molecule: "Molecule",
         as_numpy: bool = True,
+        check_domains: bool = False,
+        error_if_unsupported: bool = True,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -95,11 +107,29 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool
             Whether to return the result as a numpy array.
             If ``False``, the result will be a ``torch.Tensor``.
+        check_domains: bool
+            Whether to check if the molecule is similar
+            to the training data.
+        error_if_unsupported: bool
+            Whether to raise an error if the molecule
+            is not represented in the training data.
+            This is only used if ``check_domains`` is ``True``.
+            If ``False``, a warning will be raised instead.
 
         Returns
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
+        if check_domains:
+            is_supported, error = self.chemical_domain.check_molecule(
+                molecule, return_error_message=True
+            )
+            if not is_supported:
+                if error_if_unsupported:
+                    raise ValueError(error)
+                else:
+                    warnings.warn(error)
+
         try:
             values = self._compute_properties_dgl(molecule)
         except (MissingOptionalDependencyError, TypeError):
@@ -113,6 +143,8 @@ class GNNModel(BaseGNNModel):
         molecule: "Molecule",
         readout_name: Optional[str] = None,
         as_numpy: bool = True,
+        check_domains: bool = False,
+        error_if_unsupported: bool = True,
     ):
         """
         Compute the trained property for a molecule.
@@ -128,6 +160,14 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool
             Whether to return the result as a numpy array.
             If ``False``, the result will be a ``torch.Tensor``.
+        check_domains: bool
+            Whether to check if the molecule is similar
+            to the training data.
+        error_if_unsupported: bool
+            Whether to raise an error if the molecule
+            is not represented in the training data.
+            This is only used if ``check_domains`` is ``True``.
+            If ``False``, a warning will be raised instead.
 
         Returns
         -------
@@ -136,6 +176,8 @@ class GNNModel(BaseGNNModel):
         properties = self.compute_properties(
             molecule=molecule,
             as_numpy=as_numpy,
+            check_domains=check_domains,
+            error_if_unsupported=error_if_unsupported,
         )
         if readout_name is None:
             if len(properties) == 1:
