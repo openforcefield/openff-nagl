@@ -1,6 +1,5 @@
 name: openff-nagl-test
 channels:
-  - dglteam
   - openeye
   - conda-forge
   - defaults
