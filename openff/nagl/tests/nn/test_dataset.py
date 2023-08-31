@@ -1,31 +1,27 @@
-import os
-import pathlib
-import pickle
-
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.dataset as ds
 import numpy as np
+import pyarrow.dataset as ds
 import pytest
 import torch
-from torch.utils.data import ConcatDataset
 from openff.toolkit.topology.molecule import Molecule
 from openff.units import unit
 
+from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.bonds import BondIsInRing
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
-from openff.nagl.features.bonds import BondIsInRing, BondOrder
 from openff.nagl.nn._dataset import (
-    DGLMoleculeDatasetEntry,
-    DGLMoleculeDataset,
-    _LazyDGLMoleculeDataset,
-    DGLMoleculeDataLoader,
     DataHash,
-    _get_hashed_arrow_dataset_path
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    DGLMoleculeDatasetEntry,
+    _LazyDGLMoleculeDataset,
 )
-from openff.nagl.tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
+from openff.nagl.tests.data.files import (
+    EXAMPLE_FEATURIZED_PARQUET_DATASET,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
+)
 
 pytest.importorskip("dgl")
+
 
 def label_formal_charge(molecule: Molecule):
     return {
@@ -48,7 +44,10 @@ class TestDataHash:
             bond_features=[BondIsInRing()],
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "0c25874901b9b5fe2e16434749c9aef01ff4d53c7f04d2318052d77a70ad98bc"
+        assert (
+            hash_value
+            == "0c25874901b9b5fe2e16434749c9aef01ff4d53c7f04d2318052d77a70ad98bc"
+        )
 
     def test_from_file(self, tmpdir):
         hasher = DataHash.from_file(
@@ -58,38 +57,10 @@ class TestDataHash:
             bond_features=None,
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "87780f0271b3179063105b061725bf9f0ff809a0cbb3c37bb539a4a29db19769"
-
-
-# def test_get_hashed_arrow_dataset_path():
-#     path = _get_hashed_arrow_dataset_path(
-#         "/path/to/file.parquet",
-#         columns=["multiple", "columns"],
-#         atom_features=None,
-#         bond_features=None,
-#         directory="test"
-#     )
-#     expected_path = pathlib.Path("test") / "ce6af226f485d344156d135a51e2ce79282a457a78565999574224bb6469cbf0"
-#     assert path == expected_path
-
-
-# @pytest.fixture()
-# def example_pyarrow_table():
-#     columns = [
-#         'mapped_smiles', 'am1bcc_charges',
-#         'conformers', 'am1bcc_esps',
-#         'esp_lengths', 'am1bcc_dipoles'
-#     ]
-#     table = pq.read_table(
-#         EXAMPLE_FEATURIZED_PARQUET_DATASET,
-#         columns=columns
-#     )
-#     return table
-
-# @pytest.fixture()
-# def example_featurized_pyarrow_table():
-#     table = pq.read_table(EXAMPLE_FEATURIZED_PARQUET_DATASET)
-#     return table
+        assert (
+            hash_value
+            == "87780f0271b3179063105b061725bf9f0ff809a0cbb3c37bb539a4a29db19769"
+        )
 
 
 @pytest.fixture()
@@ -102,7 +73,6 @@ def featurized_dataset():
 
 
 class TestDGLMoleculeDatasetEntry:
-
     def test_from_openff(self, openff_methyl_methanoate):
         entry = DGLMoleculeDatasetEntry.from_openff(
             openff_methyl_methanoate,
@@ -147,7 +117,7 @@ class TestDGLMoleculeDatasetEntry:
         assert entry.molecule.n_atoms == 15
         assert entry.molecule.graph.ndata["feat"].shape == (15, 14)
         self._assert_label_shapes(entry)
-    
+
     # def test_from_featurized_row(
     #     self,
     #     example_featurized_pyarrow_table
@@ -163,11 +133,9 @@ class TestDGLMoleculeDatasetEntry:
     #     assert entry.molecule.n_atoms == 15
     #     assert entry.molecule.graph.ndata["feat"].shape == (15, 14)
     #     self._assert_label_shapes(entry)
-    
 
-        
+
 class TestDGLMoleculeDataset:
-
     def test_from_featurized_parquet(self, featurized_dataset):
         assert len(featurized_dataset) == 10
         for entry in featurized_dataset.entries:
@@ -187,15 +155,18 @@ class TestDGLMoleculeDataset:
 
         assert len(ds) == 10
         expected = {
-            "am1bcc_charges", "conformers", "am1bcc_esps",
-            "esp_lengths", "am1bcc_dipoles", "n_conformers",
+            "am1bcc_charges",
+            "conformers",
+            "am1bcc_esps",
+            "esp_lengths",
+            "am1bcc_dipoles",
+            "n_conformers",
             "esp_grid_inverse_distances",
         }
         for entry in ds:
             assert entry.molecule.graph.ndata["feat"].shape[1] == 14
             assert len(entry.labels) == 7
             assert set(entry.labels.keys()) == expected
-
 
     def test_to_pyarrow(
         self,
@@ -236,9 +207,7 @@ class TestDGLMoleculeDataset:
         assert label.numpy().shape == (5,)
 
 
-
 class TestLazyDGLMoleculeDataset:
-
     def test_from_featurized_parquet(self, tmpdir):
         with tmpdir.as_cwd():
             featurized_dataset = _LazyDGLMoleculeDataset.from_arrow_dataset(
@@ -252,10 +221,7 @@ class TestLazyDGLMoleculeDataset:
                 assert len(entry.labels) == 7
 
     def test_from_arrow_dataset(
-        self,
-        example_atom_features,
-        example_bond_features,
-        tmpdir
+        self, example_atom_features, example_bond_features, tmpdir
     ):
         with tmpdir.as_cwd():
             ds = _LazyDGLMoleculeDataset.from_arrow_dataset(
@@ -266,8 +232,12 @@ class TestLazyDGLMoleculeDataset:
 
             assert len(ds) == 10
             expected = {
-                "am1bcc_charges", "conformers", "am1bcc_esps",
-                "esp_lengths", "am1bcc_dipoles", "n_conformers",
+                "am1bcc_charges",
+                "conformers",
+                "am1bcc_esps",
+                "esp_lengths",
+                "am1bcc_dipoles",
+                "n_conformers",
                 "esp_grid_inverse_distances",
             }
             for entry in ds:
@@ -285,5 +255,3 @@ class TestDGLMoleculeDataLoader:
         for dgl_molecule, labels in entries:
             assert isinstance(dgl_molecule, DGLMoleculeBatch)
             assert len(labels) == 7
-
-

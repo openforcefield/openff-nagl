@@ -1,11 +1,8 @@
 import pathlib
 import typing
 
-from openff.nagl.training.loss import (
-    TargetType,
-
-)
 from openff.nagl._base.base import ImmutableModel
+from openff.nagl.training.loss import TargetType
 from openff.nagl.utils._types import FromYamlMixin
 
 try:
@@ -15,18 +12,15 @@ except ImportError:
 
 DiscriminatedTargetType = typing.Annotated[TargetType, Field(discriminator="name")]
 
+
 class DatasetConfig(ImmutableModel, FromYamlMixin):
     sources: typing.Optional[typing.List[str]] = Field(
-        None,
-        description="Paths to data"
+        None, description="Paths to data"
     )
     targets: typing.List[DiscriminatedTargetType] = Field(
         description="Targets to train or evaluate against",
     )
-    batch_size: typing.Optional[int] = Field(
-        None,
-        description="Batch size to use"
-    )
+    batch_size: typing.Optional[int] = Field(None, description="Batch size to use")
     use_cached_data: bool = Field(
         default=False,
         description="Whether to use cached data",
@@ -61,7 +55,7 @@ class DataConfig(ImmutableModel, FromYamlMixin):
         default=None,
         description="Test dataset",
     )
-    
+
     def get_required_target_columns(self):
         columns = set()
         columns |= set(self.training.get_required_target_columns())

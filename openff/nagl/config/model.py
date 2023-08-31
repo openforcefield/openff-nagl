@@ -1,24 +1,26 @@
-
 import pathlib
 import typing
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.nn.gcn._base import _GCNStackMeta
-from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.features.atoms import DiscriminatedAtomFeatureType
 from openff.nagl.features.bonds import DiscriminatedBondFeatureType
+from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.utils._types import FromYamlMixin
 
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
-PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
+PostprocessType = typing.Literal[
+    "readout", "compute_partial_charges", "regularized_compute_partial_charges"
+]
 
 try:
     from pydantic.v1 import Field, validator
 except ImportError:
     from pydantic import Field, validator
 
+
 class BaseLayer(ImmutableModel):
     """Base class for single layer in the neural network"""
+
     hidden_feature_size: int = Field(
         description=(
             "The feature sizes to use for each hidden layer. "
@@ -30,8 +32,7 @@ class BaseLayer(ImmutableModel):
         description="The activation function to apply for each layer"
     )
     dropout: float = Field(
-        default=0.0,
-        description="The dropout to apply after each layer"
+        default=0.0, description="The dropout to apply after each layer"
     )
 
     @validator("activation_function", pre=True)
@@ -41,9 +42,10 @@ class BaseLayer(ImmutableModel):
 
 class ConvolutionLayer(BaseLayer):
     """Configuration for a single convolution layer"""
+
     aggregator_type: AggregatorType = Field(
         default=None,
-        description="The aggregator function to apply after each convolution"
+        description="The aggregator function to apply after each convolution",
     )
 
 
@@ -52,7 +54,7 @@ class ForwardLayer(BaseLayer):
 
 
 class ConvolutionModule(ImmutableModel):
-    architecture:typing.Literal["SAGEConv", "GINConv"] = Field(
+    architecture: typing.Literal["SAGEConv", "GINConv"] = Field(
         description="GCN architecture to use"
     )
     layers: typing.List[ConvolutionLayer] = Field(
@@ -84,8 +86,7 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
     )
     bond_features: typing.List[DiscriminatedBondFeatureType] = Field(
         description=(
-            "Bond features to use. "
-            "Not all architectures support bond features"
+            "Bond features to use. " "Not all architectures support bond features"
         )
     )
     convolution: ConvolutionModule = Field(
@@ -120,7 +121,7 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
     #                 item = klass(**args)
     #             instantiated.append(item)
     #     return instantiated
-    
+
     def to_simple_dict(self):
         """
         Create a simple dictionary representation of the model config
@@ -147,7 +148,7 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
                 v = str(v.resolve())
             new_dict[k] = v
         return new_dict
-    
+
     @property
     def n_atom_features(self) -> int:
         """The number of features used to represent an atom"""

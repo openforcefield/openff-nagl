@@ -1,8 +1,8 @@
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology.molecule import Molecule
     import torch
+    from openff.toolkit.topology.molecule import Molecule
 
 FORWARD = "forward"
 REVERSE = "reverse"
@@ -12,8 +12,8 @@ FEATURE = "feat"
 def _get_openff_molecule_information(
     molecule: "Molecule",
 ) -> Dict[str, "torch.Tensor"]:
-    from openff.units import unit
     import torch
+    from openff.units import unit
 
     charges = [
         atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms

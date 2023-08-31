@@ -2,8 +2,8 @@ from typing import ClassVar, List, Optional
 
 import torch.nn
 
-from .activation import ActivationFunction
 from ._base import ContainsLayersMixin
+from .activation import ActivationFunction
 
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
@@ -49,7 +49,7 @@ class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
                 layers.append(torch.nn.Dropout(p=layer.p))
             else:
                 raise NotImplementedError()
-        
+
         assert len(layers) == len(self)
         copied = type(self)(*layers)
 

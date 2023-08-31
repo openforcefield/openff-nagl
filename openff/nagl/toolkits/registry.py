@@ -2,12 +2,11 @@ from typing import List, Optional
 
 from openff.toolkit.utils.toolkit_registry import (
     ToolkitRegistry as _ToolkitRegistry,
-    ToolkitUnavailableException,
 )
+from openff.toolkit.utils.toolkit_registry import ToolkitUnavailableException
 
 from openff.nagl.toolkits._base import (
     NAGLToolkitWrapperMeta,
-    NAGLToolkitWrapperBase,
     ToolkitWrapperType,
 )
 
@@ -65,7 +64,7 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
         toolkits_to_remove = []
 
         for toolkit in self._toolkits:
-            if type(toolkit) == toolkit_wrapper:
+            if type(toolkit) is toolkit_wrapper:
                 toolkits_to_remove.append(toolkit)
 
         if not toolkits_to_remove:

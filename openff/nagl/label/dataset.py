@@ -1,27 +1,22 @@
 import functools
 import pathlib
-import tqdm
 import typing
 
-import numpy as np
 import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
+import tqdm
 
-from openff.toolkit import Molecule
-from openff.units import unit
-
-from openff.nagl.utils._parallelization import get_mapper_to_processes
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from openff.nagl.label.labels import LabellerType
+from openff.nagl.utils._parallelization import get_mapper_to_processes
+
 
 class LabelledDataset:
-
     def __init__(
-            self,
-            source,
-            smiles_column: str = "mapped_smiles",
-        ):
+        self,
+        source,
+        smiles_column: str = "mapped_smiles",
+    ):
         self.source = source
         self.smiles_column = smiles_column
         self._reload()
@@ -44,13 +39,11 @@ class LabelledDataset:
         verbose: bool = False,
         overwrite_existing: bool = False,
     ):
-        loader = functools.partial(
-            Molecule.from_smiles,
-            allow_undefined_stereo=True
-        )
+        from openff.toolkit import Molecule
+
+        loader = functools.partial(Molecule.from_smiles, allow_undefined_stereo=True)
         mapped_loader = functools.partial(
-            Molecule.from_mapped_smiles,
-            allow_undefined_stereo=True
+            Molecule.from_mapped_smiles, allow_undefined_stereo=True
         )
         if not mapped:
             converter = lambda x: loader(x).to_smiles(mapped=True)
@@ -63,9 +56,7 @@ class LabelledDataset:
             smiles = tqdm.tqdm(smiles, ncols=80, desc="Iterating through SMILES")
 
         field = pa.field(smiles_column, pa.string())
-        data = {
-            smiles_column: [converter(smi) for smi in smiles]
-        }
+        data = {smiles_column: [converter(smi) for smi in smiles]}
         table = pa.Table.from_pydict(data, schema=pa.schema([field]))
         if overwrite_existing:
             existing_data_behavior = "overwrite_or_ignore"
@@ -80,14 +71,14 @@ class LabelledDataset:
             existing_data_behavior=existing_data_behavior,
         )
         return cls(dataset_path, smiles_column=smiles_column)
-    
+
     def append_columns(
         self,
         columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
         self._append_columns(columns, exist_ok=exist_ok)
-        
+
     def _append_columns(
         self,
         columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
@@ -106,10 +97,7 @@ class LabelledDataset:
         for filename in self.dataset.files:
             batch_dataset = ds.dataset(filename)
             n_rows = batch_dataset.count_rows()
-            batch_columns = {
-                k: v[:n_rows]
-                for k, v in columns.items()
-            }
+            batch_columns = {k: v[:n_rows] for k, v in columns.items()}
 
             batch_table = batch_dataset.to_table()
             for k, v in batch_columns.items():
@@ -122,13 +110,10 @@ class LabelledDataset:
             with open(filename, "wb") as f:
                 pq.write_table(batch_table, f)
 
-            columns = {
-                k: v[n_rows:]
-                for k, v in columns.items()
-            }
+            columns = {k: v[n_rows:] for k, v in columns.items()}
         assert all(len(v) == 0 for v in columns.values())
         self._reload()
-         
+
     def apply_labellers(
         self,
         labellers: typing.Iterable[LabellerType],
@@ -152,4 +137,3 @@ class LabelledDataset:
                 )
             list(results)
         self._reload()
-        

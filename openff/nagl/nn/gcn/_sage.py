@@ -1,14 +1,13 @@
 import copy
-from typing import Optional, Literal, Dict, TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Union
 
 import torch
-
-from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
-from openff.nagl.nn.gcn import _function as _fn
-
-# import dgl.function as fn
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
+
+from openff.nagl.nn.gcn import _function as _fn
+
+from ._base import ActivationFunction, BaseConvModule, BaseGCNStack
 
 if TYPE_CHECKING:
     import dgl

@@ -85,7 +85,7 @@ trainer = Trainer(max_epochs=200)
 trainer.checkpoint_callback.monitor = "val_loss"
 
 trainer.fit(
-    model, 
+    model,
     datamodule=data_module,
 )
 

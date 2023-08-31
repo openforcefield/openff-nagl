@@ -1,6 +1,6 @@
 # Examples Using OpenFF NAGL
 
-The following examples are available in [the OpenFF NAGL repository](https://github.com/openforcefield/openff-nagl/tree/main/examples). Each can be run interactively in the browser with [binder](https://mybinder.org/v2/gh/openforcefield/openff-nagl/main?filepath=%2Fexamples%2F), without installing anything on your computer. 
+The following examples are available in [the OpenFF NAGL repository](https://github.com/openforcefield/openff-nagl/tree/main/examples). Each can be run interactively in the browser with [binder](https://mybinder.org/v2/gh/openforcefield/openff-nagl/main?filepath=%2Fexamples%2F), without installing anything on your computer.
 
 ## Index of provided examples
 

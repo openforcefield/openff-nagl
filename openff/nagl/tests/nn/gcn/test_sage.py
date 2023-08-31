@@ -1,9 +1,8 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_almost_equal
 import pytest
 import torch
+from numpy.testing import assert_allclose, assert_array_almost_equal
 
-from openff.utilities import requires_package
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn import SAGEConvStack
 from openff.nagl.nn.gcn._sage import SAGEConv
@@ -140,23 +139,6 @@ class TestSageConv:
         results = sageconv_layer.forward(
             dgl_methane.homograph, dgl_methane.atom_features
         )
-        results = results.detach().numpy()
-        assert results.shape == (5, 3)
-        assert_array_almost_equal(results, 0.952574)
-
-    def test_forward_values_dgl(self, sageconv_layer, nx_methane):
-        expected_features = np.array(
-            [
-                [0, 0, 0, 1],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0],
-                [1, 0, 0, 0],
-            ]
-        )
-        assert_allclose(nx_methane.atom_features.detach().numpy(), expected_features)
-
-        results = sageconv_layer.forward(nx_methane.homograph, nx_methane.atom_features)
         results = results.detach().numpy()
         assert results.shape == (5, 3)
         assert_array_almost_equal(results, 0.952574)

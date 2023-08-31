@@ -1,40 +1,11 @@
 import abc
 import typing
 
-
-from openff.nagl._base.metaregistry import create_registry_metaclass
-
 from .._base.base import ImmutableModel
 
-try:
-    from pydantic.v1 import validator
-    from pydantic.v1.main import ModelMetaclass
-except ImportError:
-    from pydantic import validator
-    from pydantic.main import ModelMetaclass
-    
 if typing.TYPE_CHECKING:
     import torch
     from openff.toolkit.topology import Molecule
-
-
-# class FeatureMeta(ModelMetaclass, create_registry_metaclass("feature_name")):
-#     registry: ClassVar[Dict[str, Type]] = {}
-
-#     def __init__(cls, name, bases, namespace, **kwargs):
-#         super().__init__(name, bases, namespace, **kwargs)
-#         try:
-#             key = namespace.get(cls._key_attribute)
-#         except AttributeError:
-#             key = None
-#         else:
-#             if not key:
-#                 key = name
-
-#         if key is not None:
-#             key = cls._key_transform(key)
-#             cls.registry[key] = cls
-#         setattr(cls, cls._key_attribute, key)
 
 
 class Feature(ImmutableModel, abc.ABC):

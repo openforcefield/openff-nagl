@@ -1,6 +1,6 @@
 import enum
 import pathlib
-from typing import Union, Tuple, NamedTuple, Dict, Literal
+from typing import Literal, NamedTuple, Tuple, Union
 
 Pathlike = Union[str, pathlib.Path]
 

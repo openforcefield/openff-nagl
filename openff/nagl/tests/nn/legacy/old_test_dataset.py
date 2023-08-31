@@ -5,13 +5,17 @@ import pickle
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import ConcatDataset
 from openff.toolkit.topology.molecule import Molecule
 from openff.toolkit.topology.molecule import unit as off_unit
+from torch.utils.data import ConcatDataset
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
+from openff.nagl.features.atoms import (
+    AtomConnectivity,
+    AtomFormalCharge,
+    AtomicElement,
+)
 from openff.nagl.features.bonds import BondIsInRing, BondOrder
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.dataset import (
     DGLMoleculeDataLoader,
     DGLMoleculeDataset,
@@ -185,6 +189,7 @@ class TestDGLMoleculeLightningDataModule:
 
     def test_without_cache(self, tmpdir, mock_data_store):
         from pytorch_lightning import Trainer
+
         from openff.nagl import GNNModel
 
         atoms = [AtomicElement(categories=["Cl", "H"])]

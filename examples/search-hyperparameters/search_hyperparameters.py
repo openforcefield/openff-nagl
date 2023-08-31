@@ -1,10 +1,11 @@
+import math
 import os
 import pathlib
-import math
 import pickle
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 
 import click
+
 
 def train_model(
     config: Dict[str, Any] = {},
@@ -14,8 +15,9 @@ def train_model(
     model_config_files: Tuple[str, ...] = tuple(),
     runtime_kwargs: Dict[str, Any] = {},
 ):
-    from openff.nagl.app.trainer import Trainer
     from ray.tune.integration.pytorch_lightning import TuneReportCallback
+
+    from openff.nagl.app.trainer import Trainer
 
     tune_report = TuneReportCallback(metrics, on="validation_end")
     callbacks = [tune_report]
@@ -29,17 +31,13 @@ def train_model(
 
     trainer_hash = trainer.to_simple_hash()
     print(f"Trainer hash: {trainer_hash}")
-    
-    log_config_file = os.path.join(
-        output_directory,
-        f"config-{trainer_hash}.yaml"
-    )
+
+    log_config_file = os.path.join(output_directory, f"config-{trainer_hash}.yaml")
 
     trainer.to_yaml_file(log_config_file)
     print(f"Wrote configuration values to {log_config_file}")
 
     trainer.train(callbacks=callbacks, logger_name=trainer_hash)
-
 
 
 @click.command()
@@ -163,13 +161,11 @@ def tune_model(
     model_name: str = "graph",
     model_config_files: Tuple[str, ...] = tuple(),
     partial_charge_method: str = "am1",
-    postprocess_layer: str = "compute_partial_charges"
+    postprocess_layer: str = "compute_partial_charges",
 ):
-    import yaml
-
     import ray
-    from ray import air
-    from ray import tune
+    import yaml
+    from ray import air, tune
     from ray.tune import CLIReporter
     from ray.tune.schedulers import ASHAScheduler
 
@@ -184,21 +180,19 @@ def tune_model(
         "n_readout_hidden_features": (n_readout_hidden_features, int),
         "learning_rate": (learning_rate, float),
         "activation_function": (activation_function, str),
-        "convolution_architecture": (convolution_architecture, str)
+        "convolution_architecture": (convolution_architecture, str),
     }
 
     config = {
         k: tune.choice(list(map(type_, input_.split())))
-        for k, (input_, type_)
-        in CONFIG_TYPES.items()
+        for k, (input_, type_) in CONFIG_TYPES.items()
     }
 
     print("--- Evaluating hyperparameters ---")
     print(config)
 
     n = math.prod([len(v[0].split()) for v in CONFIG_TYPES.values()])
-    print(f"Total potential combinations: {n_total_trials}/{n}" )
-
+    print(f"Total potential combinations: {n_total_trials}/{n}")
 
     ray.init(num_cpus=1)
 
@@ -210,17 +204,14 @@ def tune_model(
 
     reporter = CLIReporter(
         parameter_columns=list(config.keys()),
-        metric_columns=list(metrics.keys()) + ["training_iteration"]
+        metric_columns=list(metrics.keys()) + ["training_iteration"],
     )
 
     output_directory = pathlib.Path(output_directory)
     training_output_directory = output_directory / model_name
     training_output_directory.mkdir(exist_ok=True, parents=True)
 
-    model_config_files = [
-        str(pathlib.Path(x).resolve())
-        for x in model_config_files
-    ]
+    model_config_files = [str(pathlib.Path(x).resolve()) for x in model_config_files]
 
     training_function = tune.with_parameters(
         train_model,
@@ -235,7 +226,7 @@ def tune_model(
             use_cached_data=True,
             postprocess_layer=postprocess_layer,
         ),
-        model_config_files=model_config_files
+        model_config_files=model_config_files,
     )
 
     tune_config = tune.TuneConfig(
@@ -244,7 +235,7 @@ def tune_model(
         scheduler=scheduler,
         num_samples=n_total_trials,
     )
-    
+
     run_config = air.RunConfig(
         name=f"tune_{model_name}_model_hyperparameters",
         progress_reporter=reporter,
@@ -252,13 +243,10 @@ def tune_model(
     )
 
     tuner = tune.Tuner(
-        tune.with_resources(
-            training_function,
-            resources=dict(cpu=1, gpu=n_gpus)
-        ),
+        tune.with_resources(training_function, resources=dict(cpu=1, gpu=n_gpus)),
         tune_config=tune_config,
         run_config=run_config,
-        param_space=config
+        param_space=config,
     )
     results = tuner.fit()
     results_file = str(training_output_directory / "search-results.pkl")
@@ -267,7 +255,6 @@ def tune_model(
     print(f"Saved results to {results_file}")
 
     print("# results: ", len(results))
-
 
     best = results.get_best_result()
     print("Best hyperparameters: ", best.config)

@@ -1,16 +1,16 @@
 import copy
 import functools
-from typing import Tuple, TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 import numpy as np
-
+from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.units import unit
 
-
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
-from openff.toolkit.topology import Molecule
+
+if TYPE_CHECKING:
+    from openff.toolkit import Molecule
 
 
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
@@ -18,7 +18,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
     @staticmethod
     def _run_normalization_reactions(
-        molecule,
+        molecule: "Molecule",
         normalization_reactions: Tuple[str, ...] = tuple(),
         max_iter: int = 200,
     ):
@@ -130,6 +130,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         return hybridizations
 
     def to_rdkit(self, molecule: "Molecule"):
+        from openff.toolkit import Molecule
+
         from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         try:
@@ -228,6 +230,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         molecules: Generator[openff.toolkit.topology.Molecule or str]
 
         """
+        from openff.toolkit import Molecule
         from rdkit import Chem
 
         if as_smiles:
@@ -503,7 +506,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             The Dice similarity between the two molecules.
 
         """
-        from rdkit import Chem
         from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
         from rdkit.DataStructs import DiceSimilarity
 

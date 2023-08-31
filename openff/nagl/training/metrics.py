@@ -3,37 +3,20 @@ import typing
 
 import torch
 
-from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl._base.base import ImmutableModel
 
-try:
-    from pydantic.v1.main import ModelMetaclass
-except ImportError:
-    from pydantic.main import ModelMetaclass
-
-if typing.TYPE_CHECKING:
-    import torch
-    from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
-    from openff.nagl.molecule._dgl.molecule import DGLMolecule
-
-
-# class MetricMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
-#     pass
 
 class BaseMetric(ImmutableModel, abc.ABC):
     name: typing.Literal[""]
+
     def __call__(
-        self,
-        predicted_values: "torch.Tensor",
-        expected_values: "torch.Tensor"
+        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
     ) -> "torch.Tensor":
         return self.compute(predicted_values, expected_values)
 
     @abc.abstractmethod
     def compute(
-        self,
-        predicted_values: "torch.Tensor",
-        expected_values: "torch.Tensor"
+        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
     ) -> "torch.Tensor":
         raise NotImplementedError
 
@@ -67,11 +50,7 @@ class MAEMetric(BaseMetric):
 
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
 
-METRICS = {
-    "rmse": RMSEMetric,
-    "mse": MSEMetric,
-    "mae": MAEMetric
-}
+METRICS = {"rmse": RMSEMetric, "mse": MSEMetric, "mae": MAEMetric}
 
 
 def get_metric_type(metric):

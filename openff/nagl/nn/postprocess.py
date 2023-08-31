@@ -13,6 +13,7 @@ from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 
 class _PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     """Metaclass for registering post-processing layers for string lookup."""
+
     registry: ClassVar[Dict[str, Type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
@@ -121,6 +122,7 @@ class ComputePartialCharges(PostprocessLayer):
 
         return torch.vstack(all_charges)
 
+
 class RegularizedComputePartialCharges(PostprocessLayer):
     """
     Maps a set of initial charges, atomic electronegativity,
@@ -199,7 +201,5 @@ class RegularizedComputePartialCharges(PostprocessLayer):
             mean_charges = torch.stack(representation_charges)
             mean_charges = mean_charges.mean(dim=0)
             all_charges.append(mean_charges)
-
-
 
         return torch.vstack(all_charges)

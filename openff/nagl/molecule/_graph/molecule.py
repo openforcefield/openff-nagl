@@ -1,11 +1,16 @@
-from typing import List, TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
-from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
+from openff.nagl.molecule._base import (
+    BatchMixin,
+    MoleculeMixin,
+    NAGLMoleculeBase,
+)
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
 
@@ -88,11 +93,10 @@ class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
         )
 
     def unbatch(self) -> List[GraphMolecule]:
-
         return [
             GraphMolecule(g, n_repr)
             for g, n_repr in zip(
                 self.graph.unbatch(self.n_representations_per_molecule),
-                self.n_representations_per_molecule
+                self.n_representations_per_molecule,
             )
         ]

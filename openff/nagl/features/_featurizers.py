@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, Generic, List, TypeVar
 
 import torch
 
-from .atoms import AtomFeature
 from ._base import Feature
+from .atoms import AtomFeature
 from .bonds import BondFeature
 
 if TYPE_CHECKING:

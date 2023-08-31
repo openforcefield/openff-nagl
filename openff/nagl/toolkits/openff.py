@@ -1,19 +1,18 @@
 import contextlib
 import copy
 import functools
-from typing import TYPE_CHECKING, Tuple, List, Union, Dict
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import numpy as np
-
 from openff.units import unit
-
 from openff.utilities import requires_package
-from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
-from openff.toolkit.topology import Molecule
+from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 
 if TYPE_CHECKING:
+    from openff.toolkit.topology import Molecule
+
     from openff.nagl.utils._types import HybridizationType
 
 
@@ -33,12 +32,13 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     **kwargs:
         The keyword arguments to pass to the function.
     """
-    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
-    from openff.nagl.toolkits._base import (
-        NAGLToolkitWrapperMeta,
-        NAGLToolkitWrapperBase,
-    )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
+
+    from openff.nagl.toolkits._base import (
+        NAGLToolkitWrapperBase,
+        NAGLToolkitWrapperMeta,
+    )
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
         toolkit_registry = toolkit_registry()
@@ -290,7 +290,7 @@ def calculate_circular_fingerprint_similarity(
 
 
 def is_conformer_identical(
-    molecule: Molecule,
+    molecule: "Molecule",
     reference_conformer: Union[np.ndarray, unit.Quantity],
     target_conformer: Union[np.ndarray, unit.Quantity],
     atol: float = 1.0e-3,
@@ -429,8 +429,6 @@ def enumerate_stereoisomers(
     -------
         A list of stereoisomers.
     """
-    from openff.toolkit.topology import Molecule
-
     stereoisomers = molecule.enumerate_stereoisomers(
         undefined_only=undefined_only,
         max_isomers=max_isomers,
@@ -537,7 +535,7 @@ def stream_molecules_from_smiles_file(
     -------
         A generator of openff.toolkit.topology.Molecule objects or SMILES strings
     """
-    from openff.toolkit.topology.molecule import SmilesParsingError
+    from openff.toolkit.topology.molecule import Molecule, SmilesParsingError
 
     with open(file, "r") as f:
         smiles = [x.strip() for x in f.readlines()]
@@ -629,8 +627,7 @@ def smiles_to_inchi_key(smiles: str) -> str:
     inchi_key
         The InChI key corresponding to the SMILES string.
     """
-
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
 
     with capture_toolkit_warnings():
         offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
@@ -673,7 +670,7 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
     atom_map
         A dictionary in the form of {reference_atom_index: target_atom_index}
     """
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
 
     with capture_toolkit_warnings():
         reference_molecule = Molecule.from_mapped_smiles(
@@ -692,6 +689,8 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
 
 
 def molecule_from_networkx(graph):
+    from openff.toolkit import Molecule
+
     molecule = Molecule()
 
     for _, info in graph.nodes(data=True):

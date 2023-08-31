@@ -1,9 +1,10 @@
 from typing import List, Tuple
 
-
 from openff.utilities import requires_package
-from .molecule import DGLBase, DGLMolecule
+
 from openff.nagl.molecule._base import BatchMixin
+
+from .molecule import DGLBase, DGLMolecule
 
 
 class DGLMoleculeBatch(BatchMixin, DGLBase):

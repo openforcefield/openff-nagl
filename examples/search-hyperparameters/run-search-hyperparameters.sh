@@ -36,4 +36,4 @@ python search_hyperparameters.py                                            \
     --n-gpus                    1                                           \
     --partial-charge-method     "am1bcc"                                    \
     --data-cache-directory      "../00_cached-data"                         \
-    --output-config-file        "best_hyperparameters.yaml"                 
+    --output-config-file        "best_hyperparameters.yaml"

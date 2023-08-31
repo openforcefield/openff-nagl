@@ -1,12 +1,12 @@
 import enum
 import hashlib
 import inspect
-import pathlib
 import json
-import yaml
+import pathlib
 from typing import Any, ClassVar, Dict, List, Optional, Type, no_type_check
 
 import numpy as np
+import yaml
 from openff.units import unit
 
 from ..utils._utils import round_floats
@@ -17,6 +17,7 @@ try:
 except ImportError:
     from pydantic import BaseModel
     from pydantic.errors import DictError
+
 
 class MutableModel(BaseModel):
     """
@@ -187,6 +188,7 @@ class MutableModel(BaseModel):
         with open(filename, "r") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
         return cls(**data)
+
 
 class ImmutableModel(MutableModel):
     class Config(MutableModel.Config):

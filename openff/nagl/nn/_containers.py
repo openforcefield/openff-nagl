@@ -1,14 +1,13 @@
 import copy
-from typing import List, Optional, Union, Tuple, Callable
+from typing import List, Optional, Union
 
 import torch
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-
-from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
-from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.nn.activation import ActivationFunction
+from openff.nagl.nn.gcn._base import _GCNStackMeta
 from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 
@@ -71,22 +70,16 @@ class ConvolutionModule(torch.nn.Module):
         if self._is_dgl:
             copied.gcn_layers = copied.gcn_layers._as_nagl(copy_weights=copy_weights)
         return copied
-    
+
     @classmethod
-    def from_config(
-        cls,
-        convolution_config,
-        n_input_features: int
-    ):
+    def from_config(cls, convolution_config, n_input_features: int):
         hidden_feature_sizes = [
             layer.hidden_feature_size for layer in convolution_config.layers
         ]
         layer_activation_functions = [
             layer.activation_function for layer in convolution_config.layers
         ]
-        layer_dropout = [
-            layer.dropout for layer in convolution_config.layers
-        ]
+        layer_dropout = [layer.dropout for layer in convolution_config.layers]
         layer_aggregator_types = [
             layer.aggregator_type for layer in convolution_config.layers
         ]
@@ -142,7 +135,7 @@ class ReadoutModule(torch.nn.Module):
             x = self.postprocess_layer.forward(molecule, x)
 
         return x
-    
+
     def copy(self, copy_weights: bool = False):
         pooling = type(self.pooling_layer)()
         readout = self.readout_layers.copy(copy_weights=copy_weights)
@@ -151,13 +144,9 @@ class ReadoutModule(torch.nn.Module):
         if copy_weights:
             copied.load_state_dict(self.state_dict())
         return copied
-    
+
     @classmethod
-    def from_config(
-        cls,
-        readout_config,
-        n_input_features: int
-    ):
+    def from_config(cls, readout_config, n_input_features: int):
         pooling_layer = readout_config.pooling
         hidden_feature_sizes = [
             layer.hidden_feature_size for layer in readout_config.layers
@@ -165,11 +154,11 @@ class ReadoutModule(torch.nn.Module):
         layer_activation_functions = [
             layer.activation_function for layer in readout_config.layers
         ]
-        layer_dropout = [
-            layer.dropout for layer in readout_config.layers
-        ]
+        layer_dropout = [layer.dropout for layer in readout_config.layers]
         if readout_config.postprocess is not None:
-            postprocess_layer = _PostprocessLayerMeta._get_object(readout_config.postprocess)
+            postprocess_layer = _PostprocessLayerMeta._get_object(
+                readout_config.postprocess
+            )
             hidden_feature_sizes.append(postprocess_layer.n_features)
             layer_activation_functions.append(ActivationFunction.Identity)
             layer_dropout.append(0.0)
@@ -180,8 +169,4 @@ class ReadoutModule(torch.nn.Module):
             layer_activation_functions,
             layer_dropout,
         )
-        return cls(
-            pooling_layer,
-            readout_layers,
-            postprocess_layer
-        )
+        return cls(pooling_layer, readout_layers, postprocess_layer)

@@ -1,34 +1,37 @@
 import abc
-import functools
 import logging
 import pathlib
-import tqdm
 import typing
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-
-from openff.toolkit import Molecule
+import pyarrow.parquet as pq
+import tqdm
 from openff.units import unit
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 logger = logging.getLogger(__name__)
 
 ChargeMethodType = typing.Literal[
-    "am1bcc", "am1-mulliken", "gasteiger", "formal_charges",
-    "mmff94", "am1bccnosymspt", "am1elf10", "am1bccelf10"
+    "am1bcc",
+    "am1-mulliken",
+    "gasteiger",
+    "formal_charges",
+    "mmff94",
+    "am1bccnosymspt",
+    "am1elf10",
+    "am1bccelf10",
 ]
+
 
 def _append_column_to_table(
     table: pa.Table,
     key: typing.Union[pa.Field, str],
     values: typing.Iterable[typing.Any],
-    exist_ok: bool = False
+    exist_ok: bool = False,
 ):
     if isinstance(key, pa.Field):
         k_name = key.name
@@ -36,16 +39,14 @@ def _append_column_to_table(
         k_name = key
     if k_name in table.column_names:
         if exist_ok:
-            logger.warning(
-                f"Column {k_name} already exists in table. "
-                "Overwriting."
-            )
+            logger.warning(f"Column {k_name} already exists in table. " "Overwriting.")
             table = table.drop_columns(k_name)
         else:
             raise ValueError(f"Column {k_name} already exists in table")
 
     table = table.append_column(key, [values])
     return table
+
 
 class _BaseLabel(ImmutableModel, abc.ABC):
     name: typing.Literal[""]
@@ -65,7 +66,6 @@ class _BaseLabel(ImmutableModel, abc.ABC):
             values,
             exist_ok=self.exist_ok,
         )
-        
 
     @abc.abstractmethod
     def apply(
@@ -74,6 +74,7 @@ class _BaseLabel(ImmutableModel, abc.ABC):
         verbose: bool = False,
     ) -> pa.Table:
         raise NotImplementedError()
+
 
 class LabelConformers(_BaseLabel):
     name: typing.Literal["conformer_generation"] = "conformer_generation"
@@ -88,6 +89,8 @@ class LabelConformers(_BaseLabel):
         table: pa.Table,
         verbose: bool = False,
     ):
+        from openff.toolkit import Molecule
+
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
             rms_cutoff = rms_cutoff * unit.angstrom
@@ -106,30 +109,22 @@ class LabelConformers(_BaseLabel):
 
         with capture_toolkit_warnings():
             for smiles in batch_smiles:
-                mol = Molecule.from_mapped_smiles(
-                    smiles,
-                    allow_undefined_stereo=True
-                )
+                mol = Molecule.from_mapped_smiles(smiles, allow_undefined_stereo=True)
                 mol.generate_conformers(
                     n_conformers=self.n_conformer_pool,
-                    rms_cutoff=rms_cutoff, 
+                    rms_cutoff=rms_cutoff,
                 )
                 mol.apply_elf_conformer_selection(
                     limit=self.n_conformers,
                 )
-                conformers = np.ravel([
-                    conformer.m_as(unit.angstrom)
-                    for conformer in mol.conformers
-                ])
+                conformers = np.ravel(
+                    [conformer.m_as(unit.angstrom) for conformer in mol.conformers]
+                )
                 data[self.conformer_column].append(conformers)
                 data[self.n_conformer_column].append(len(mol.conformers))
-        
-        conformer_field = pa.field(
-            self.conformer_column, pa.list_(pa.float64())
-        )
-        n_conformer_field = pa.field(
-            self.n_conformer_column, pa.int64()
-        )
+
+        conformer_field = pa.field(self.conformer_column, pa.list_(pa.float64()))
+        n_conformer_field = pa.field(self.n_conformer_column, pa.int64())
 
         table = self._append_column(
             table,
@@ -143,6 +138,7 @@ class LabelConformers(_BaseLabel):
             data[self.n_conformer_column],
         )
         return table
+
 
 def apply_labellers(
     table: pa.Table,
@@ -168,4 +164,3 @@ def apply_labellers_to_batch_file(
     table = apply_labellers(table, labellers, verbose=verbose)
     with source.open("wb") as f:
         pq.write_table(table, f)
-

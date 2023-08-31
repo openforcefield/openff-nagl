@@ -2,17 +2,17 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology.molecule import Molecule
-from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
 from openff.units import unit
 
 from openff.nagl.toolkits.openff import (
+    calculate_circular_fingerprint_similarity,
     get_best_rmsd,
     get_openff_molecule_bond_indices,
     is_conformer_identical,
     map_indexed_smiles,
     normalize_molecule,
     smiles_to_inchi_key,
-    calculate_circular_fingerprint_similarity,
 )
 from openff.nagl.utils._utils import transform_coordinates
 

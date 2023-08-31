@@ -3,26 +3,23 @@ import numpy as np
 import pytest
 import torch
 from numpy.testing import assert_allclose
-
 from openff.toolkit import Molecule
 from openff.units import unit
 
-from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.domains import ChemicalDomain
+from openff.nagl.features.atoms import (
+    AtomAverageFormalCharge,
+    AtomConnectivity,
+    AtomicElement,
+    AtomInRingOfSize,
+)
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
-from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.domains import ChemicalDomain
-from openff.nagl.tests.data.files import (
-    EXAMPLE_AM1BCC_MODEL,
-)
-from openff.nagl.features.atoms import (
-    AtomicElement,
-    AtomConnectivity,
-    AtomAverageFormalCharge,
-    AtomInRingOfSize,
-)
+from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.nn.postprocess import ComputePartialCharges
+from openff.nagl.tests.data.files import EXAMPLE_AM1BCC_MODEL
 
 
 @pytest.fixture()
@@ -94,21 +91,17 @@ class TestBaseGNNModel:
         assert isinstance(readouts["atom"].pooling_layer, PoolAtomFeatures)
         assert isinstance(readouts["bond"].pooling_layer, PoolBondFeatures)
 
-
     def test_forward(self, mock_atom_model, dgl_methane):
         output = mock_atom_model.forward(dgl_methane)
         assert "atom" in output
         assert output["atom"].shape == (5, 1)
 
-    
 
 class TestGNNModel:
     @pytest.fixture()
     def am1bcc_model(self):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
-        model.chemical_domain = ChemicalDomain(
-            allowed_elements=(1, 6)
-        )
+        model.chemical_domain = ChemicalDomain(allowed_elements=(1, 6))
         # model = GNNModel.from_yaml(MODEL_CONFIG_V7)
         # model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
         # model.eval()
@@ -117,7 +110,9 @@ class TestGNNModel:
 
     @pytest.fixture()
     def expected_methane_charges(self):
-        return np.array([-0.087334,  0.021833,  0.021833,  0.021833,  0.021833],)
+        return np.array(
+            [-0.087334, 0.021833, 0.021833, 0.021833, 0.021833],
+        )
 
     def test_init(self):
         from openff.nagl.features import atoms, bonds
@@ -141,7 +136,8 @@ class TestGNNModel:
         ]
 
         model = GNNModel(
-            {   "version": "0.1",
+            {
+                "version": "0.1",
                 "atom_features": atom_features,
                 "bond_features": bond_features,
                 "convolution": {
@@ -153,7 +149,8 @@ class TestGNNModel:
                             "dropout": 0.0,
                             "aggregator_type": "mean",
                         }
-                    ] * 3
+                    ]
+                    * 3,
                 },
                 "readouts": {
                     "am1bcc-charges": {
@@ -165,9 +162,10 @@ class TestGNNModel:
                                 "activation_function": "ReLU",
                                 "dropout": 0.0,
                             }
-                        ] * 4
+                        ]
+                        * 4,
                     }
-                }
+                },
             }
         )
 
@@ -185,30 +183,38 @@ class TestGNNModel:
         for key in original_state_dict.keys():
             assert torch.allclose(original_state_dict[key], new_state_dict[key])
 
-    def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_dgl(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         pytest.importorskip("dgl")
         charges = am1bcc_model._compute_properties_dgl(openff_methane_uncharged)
         charges = charges["am1bcc_charges"].detach().numpy().flatten()
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_networkx(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model._compute_properties_nagl(openff_methane_uncharged)
         charges = charges["am1bcc_charges"].detach().numpy().flatten()
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_assumed(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_assumed(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_property(openff_methane_uncharged, as_numpy=True)
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
-    
-    def test_compute_property_specified(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+
+    def test_compute_property_specified(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_property(
-            openff_methane_uncharged,
-            as_numpy=True,
-            readout_name="am1bcc_charges"
+            openff_methane_uncharged, as_numpy=True, readout_name="am1bcc_charges"
         )
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
-    
-    def test_compute_properties(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+
+    def test_compute_properties(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_properties(
             openff_methane_uncharged,
             as_numpy=True,
@@ -216,29 +222,34 @@ class TestGNNModel:
         assert len(charges) == 1
         assert_allclose(charges["am1bcc_charges"], expected_methane_charges, atol=1e-5)
 
-    def test_compute_properties_check_domains(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_properties_check_domains(
+        self, am1bcc_model, openff_methane_uncharged
+    ):
         am1bcc_model.compute_properties(
             openff_methane_uncharged,
             check_domains=True,
             error_if_unsupported=True,
         )
-        
-    def test_compute_properties_warning_domains(self, am1bcc_model, openff_methyl_methanoate):
+
+    def test_compute_properties_warning_domains(
+        self, am1bcc_model, openff_methyl_methanoate
+    ):
         with pytest.warns(UserWarning):
             am1bcc_model.compute_properties(
                 openff_methyl_methanoate,
                 check_domains=True,
                 error_if_unsupported=False,
             )
-    
-    def test_compute_properties_error_domains(self, am1bcc_model, openff_methyl_methanoate):
+
+    def test_compute_properties_error_domains(
+        self, am1bcc_model, openff_methyl_methanoate
+    ):
         with pytest.raises(ValueError):
             am1bcc_model.compute_properties(
                 openff_methyl_methanoate,
                 check_domains=True,
                 error_if_unsupported=True,
             )
-
 
     def test_load(self, openff_methane_uncharged, expected_methane_charges):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
@@ -292,7 +303,7 @@ class TestGNNModel:
             "[O-]S(O)(O)CC[NH+]1CCOCC1",
             "O=NN([O-])[O-]",
             "[O-]P([O-])[O-]",
-            "C#N"
+            "C#N",
         ],
     )
     def test_load_and_compute(self, smiles):
@@ -308,7 +319,9 @@ class TestGNNModel:
 
         assert_allclose(computed, desired, atol=1e-5)
 
-    def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir, expected_methane_charges):
+    def test_save(
+        self, am1bcc_model, openff_methane_uncharged, tmpdir, expected_methane_charges
+    ):
         with tmpdir.as_cwd():
             am1bcc_model.save("model.pt")
             model = GNNModel.load("model.pt", eval_mode=True)

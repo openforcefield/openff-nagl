@@ -1,18 +1,21 @@
-from typing import ClassVar, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import torch
-from openff.toolkit.topology.molecule import Molecule
 from openff.utilities import requires_package
 
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
+from openff.nagl.molecule._base import MoleculeMixin, NAGLMoleculeBase
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
 from .utils import (
     FORWARD,
     dgl_heterograph_to_homograph,
     openff_molecule_to_dgl_graph,
 )
+
+if TYPE_CHECKING:
+    from openff.toolkit import Molecule
 
 
 class DGLBase(NAGLMoleculeBase):
@@ -43,7 +46,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     @requires_package("dgl")
     def from_openff(
         cls,
-        molecule: Molecule,
+        molecule: "Molecule",
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
         atom_feature_tensor: Optional[torch.Tensor] = None,
@@ -54,6 +57,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         include_all_transfer_pathways: bool = False,
     ):
         import dgl
+
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
         if atom_features is None:
@@ -108,7 +112,5 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             mapped_smiles = offmols[0].to_smiles(mapped=True)
 
         return cls(
-            graph=graph,
-            n_representations=len(offmols),
-            mapped_smiles=mapped_smiles
+            graph=graph, n_representations=len(offmols), mapped_smiles=mapped_smiles
         )

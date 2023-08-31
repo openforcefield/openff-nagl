@@ -3,26 +3,36 @@
 import copy
 import itertools
 import json
-from typing import Dict, Optional, List, Generator, Tuple, Any, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 import numpy as np
-
 from openff.units import unit
-from openff.toolkit.topology import Molecule
 
-from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
+from openff.nagl.utils._types import ResonanceAtomType, ResonanceType
+
+if TYPE_CHECKING:
+    from openff.toolkit import Molecule
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 
 
 def enumerate_resonance_forms(
-    molecule: Molecule,
+    molecule: "Molecule",
     lowest_energy_only: bool = True,
     max_path_length: Optional[int] = None,
     include_all_transfer_pathways: bool = False,
     as_dicts: bool = False,
-) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
+) -> List[Union["Molecule", Dict[str, Dict[str, Any]]]]:
     """
     Recursively attempts to find all resonance structures of an input molecule
     according to a modified version of the algorithm proposed by Gilson et al [1].
@@ -117,7 +127,7 @@ class ResonanceEnumerator:
 
     """
 
-    def __init__(self, molecule: Molecule):
+    def __init__(self, molecule: "Molecule"):
         self.molecule = molecule
         self.graph = self._convert_molecule_to_graph(molecule)
         self.reduced_graph = self._reduce_graph(self.graph, inplace=False)
@@ -128,7 +138,7 @@ class ResonanceEnumerator:
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
         as_dicts: bool = False,
-    ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
+    ) -> List[Union["Molecule", Dict[str, Dict[str, Any]]]]:
         """
         Recursively attempts to find all resonance structures of an input molecule
         according to a modified version of the algorithm proposed by Gilson et al [1].
@@ -328,7 +338,7 @@ class ResonanceEnumerator:
             target.edges[i, j].update(source.edges[i, j])
 
     @staticmethod
-    def _convert_molecule_to_graph(molecule):
+    def _convert_molecule_to_graph(molecule: "Molecule"):
         """
         Convert a molecule to a ``networkx`` graph
         where each node has ``bond_orders`` information

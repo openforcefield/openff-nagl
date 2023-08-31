@@ -1,12 +1,12 @@
 import abc
-from typing import ClassVar, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 import torch.nn
 import torch.nn.functional
 
 from openff.nagl._base.metaregistry import create_registry_metaclass
-from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn._base import ContainsLayersMixin
+from openff.nagl.nn.activation import ActivationFunction
 
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 

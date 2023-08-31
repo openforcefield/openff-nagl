@@ -1,11 +1,11 @@
-import pytest
 import numpy as np
+import pytest
 import torch
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.postprocess import (
     ComputePartialCharges,
-    RegularizedComputePartialCharges
+    RegularizedComputePartialCharges,
 )
 
 # @pytest.fixture
@@ -31,13 +31,13 @@ def test_calculate_partial_charges_neutral():
     [
         (
             [0.0, 0.0, 0.0, 0.0, 0.0],
-            [-0.03509676, 0.00877419, 0.00877419, 0.00877419, 0.00877419]
+            [-0.03509676, 0.00877419, 0.00877419, 0.00877419, 0.00877419],
         ),
         (
             [-0.04, 0.01, 0.01, 0.01, 0.01],
-            [-0.07509676, 0.01877419, 0.01877419, 0.01877419, 0.01877419]
-        )
-    ]
+            [-0.07509676, 0.01877419, 0.01877419, 0.01877419, 0.01877419],
+        ),
+    ],
 )
 def test_regularized_calculate_partial_charges_neutral(q0, qi):
     charges = RegularizedComputePartialCharges._calculate_partial_charges(
@@ -48,6 +48,7 @@ def test_regularized_calculate_partial_charges_neutral(q0, qi):
     ).numpy()
     expected = np.array(qi).reshape((-1, 1))
     assert np.allclose(charges, expected)
+
 
 def test_calculate_partial_charges_charged():
     charges = ComputePartialCharges._calculate_partial_charges(
@@ -62,18 +63,19 @@ def test_calculate_partial_charges_charged():
     ).reshape((-1, 1))
     assert np.allclose(charges, expected)
 
+
 @pytest.mark.parametrize(
     "q0, qi",
     [
         (
             [0.0, 0.0, 0.0, 0.0, 0.0],
-            [-0.22580644, -0.1935484, -0.1935484, -0.1935484, -0.1935484]
+            [-0.22580644, -0.1935484, -0.1935484, -0.1935484, -0.1935484],
         ),
         (
             [-0.04, 0.01, 0.01, 0.01, 0.01],
-            [-0.26580644, -0.1835484, -0.1835484, -0.1835484, -0.1835484]
-        )
-    ]
+            [-0.26580644, -0.1835484, -0.1835484, -0.1835484, -0.1835484],
+        ),
+    ],
 )
 def test_regularized_calculate_partial_charges_charged(q0, qi):
     charges = RegularizedComputePartialCharges._calculate_partial_charges(
@@ -84,6 +86,7 @@ def test_regularized_calculate_partial_charges_charged(q0, qi):
     ).numpy()
     expected = np.array(qi).reshape((-1, 1))
     assert np.allclose(charges, expected)
+
 
 def test_compute_charges_forward(dgl_methane):
     inputs = torch.tensor(

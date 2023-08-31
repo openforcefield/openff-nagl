@@ -77,7 +77,7 @@ jobs:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
 
-      
+
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
       run: conda remove --force openeye --yes || echo "openeye not installed"
@@ -108,7 +108,7 @@ jobs:
         file: ./coverage.xml
         verbose: True
         # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-        
+
 
 
   pylint_check:
@@ -160,7 +160,7 @@ jobs:
         test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff-nagl-*.tar.gz found"; exit 1; }
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
-  
+
   install_from_source_conda:
     runs-on: ubuntu-latest
     strategy:
@@ -188,7 +188,7 @@ jobs:
         conda create --name openff-nagl
         conda activate openff-nagl
         conda list
-    
+
         mamba env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
         mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version

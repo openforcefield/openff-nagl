@@ -11,7 +11,7 @@ A playground for applying graph convolutional networks to molecules, with a focu
 
 **Note:** This project is still in development and liable to substantial API and other changes.
 
-This framework is mostly based upon the [*End-to-End Differentiable Molecular Mechanics Force Field Construction*](https://arxiv.org/abs/2010.01196) 
+This framework is mostly based upon the [*End-to-End Differentiable Molecular Mechanics Force Field Construction*](https://arxiv.org/abs/2010.01196)
 preprint by Wang, Fass and Chodera.
 
 NAGL is bound by a [Code of Conduct](https://github.com/openforcefield/openff-nagl/blob/main/CODE_OF_CONDUCT.md).

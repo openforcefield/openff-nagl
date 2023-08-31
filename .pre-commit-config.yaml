@@ -5,17 +5,26 @@
 #   pre-commit install-hooks
 exclude: '^(\.tox|ci/templates|\.bumpversion\.cfg)(/|$)'
 repos:
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        files: ^openff|^examples
+      - id: black-jupyter
+        files: ^examples
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: master
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
+        exclude: '\.(sdf)$'
       - id: end-of-file-fixer
       - id: debug-statements
-  - repo: https://github.com/timothycrosley/isort
-    rev: master
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
     hooks:
       - id: isort
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: master
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
     hooks:
       - id: flake8
+        files: ^openff|^examples

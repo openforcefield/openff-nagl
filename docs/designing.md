@@ -78,7 +78,7 @@ model = GNNModel.from_yaml_file("model.yml")
 Here we'll go through each option, what it means, and where to find the available choices.
 
 [`GNNModel`]: openff.nagl.GNNModel
-[`GNNModel.from_yaml_file()`]: openff.nagl.GNNModel.from_yaml_file 
+[`GNNModel.from_yaml_file()`]: openff.nagl.GNNModel.from_yaml_file
 
 (model_features)=
 ## `atom_features` and `bond_features`
@@ -93,7 +93,7 @@ These arguments specify the featurization scheme for the model (see [](featuriza
 
 ## `convolution_architecture`
 
-The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.nn.gcn`] module. 
+The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.nn.gcn`] module.
 
 [`openff.nagl.nn.gcn`]: openff.nagl.nn.gcn
 

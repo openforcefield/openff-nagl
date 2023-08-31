@@ -1,26 +1,24 @@
-import pytest
-
 from collections import defaultdict
+
 import networkx as nx
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
+import pytest
 import torch
+from numpy.testing import assert_allclose, assert_equal
 
-from openff.toolkit import Molecule
-
-from openff.nagl.molecule._graph._batch import FrameDict
-from openff.nagl.molecule._graph._graph import (
-    NXMolGraph,
-    NXMolHomoGraph,
-    NXMolHeteroGraph,
-)
 from openff.nagl.features.atoms import (
-    AtomicElement,
-    AtomConnectivity,
     AtomAverageFormalCharge,
+    AtomConnectivity,
+    AtomicElement,
     AtomInRingOfSize,
 )
 from openff.nagl.features.bonds import BondOrder
+from openff.nagl.molecule._graph._batch import FrameDict
+from openff.nagl.molecule._graph._graph import (
+    NXMolGraph,
+    NXMolHeteroGraph,
+    NXMolHomoGraph,
+)
 from openff.nagl.molecule._graph.molecule import GraphMolecule
 from openff.nagl.nn.gcn import _function as _fn
 
@@ -485,7 +483,6 @@ class TestNXMolHomoGraph:
         assert torch.equal(i, i_)
 
     def test_message_passing(self, openff_cnc):
-
         atom_features = [
             AtomicElement(
                 categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
@@ -508,18 +505,220 @@ class TestNXMolHomoGraph:
 
         graph.srcdata["h"] = nxmol.atom_features
         graph.update_all(message_function, reduce_function)
-        expected = np.array([
-            [0, 0, 0.75, 0.25, 0, 0, 0, 0, 0, 0, 0.75, 0, 0.25, 0, 0, 0, 0, 0, 0, ],
-            [0.6666667, 0, 0.33333334, 0, 0, 0, 0, 0, 0, 0, 0.33333334, 0, 0, 0.6666667, 0, 0, 0, 0, 0, ],
-            [0, 0, 0.75, 0.25, 0, 0, 0, 0, 0, 0, 0.75, 0, 0.25, 0, 0, 0, 0, 0, 0, ],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ], 
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, ],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, ]
-        ])
+        expected = np.array(
+            [
+                [
+                    0,
+                    0,
+                    0.75,
+                    0.25,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.75,
+                    0,
+                    0.25,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    0.6666667,
+                    0,
+                    0.33333334,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.33333334,
+                    0,
+                    0,
+                    0.6666667,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    0,
+                    0,
+                    0.75,
+                    0.25,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0.75,
+                    0,
+                    0.25,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                [
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+            ]
+        )
         assert_allclose(
             graph.ndata["neigh"].detach().numpy(),
             expected,

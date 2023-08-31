@@ -3,26 +3,25 @@ import numpy as np
 import pytest
 import torch
 from numpy.testing import assert_allclose
-
 from openff.toolkit import Molecule
 from openff.units import unit
 
-from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.features.atoms import (
+    AtomAverageFormalCharge,
+    AtomConnectivity,
+    AtomicElement,
+    AtomInRingOfSize,
+)
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
-from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.tests.data.files import (
+    EXAMPLE_AM1BCC_MODEL,
     EXAMPLE_AM1BCC_MODEL_STATE_DICT,
     MODEL_CONFIG_V7,
-    EXAMPLE_AM1BCC_MODEL,
-)
-from openff.nagl.features.atoms import (
-    AtomicElement,
-    AtomConnectivity,
-    AtomAverageFormalCharge,
-    AtomInRingOfSize,
 )
 
 
@@ -154,7 +153,7 @@ class TestGNNModel:
             bonds.BondInRingOfSize(6),
         )
 
-        model = GNNModel(
+        GNNModel(
             convolution_architecture="SAGEConv",
             n_convolution_hidden_features=128,
             n_convolution_layers=3,
@@ -162,7 +161,7 @@ class TestGNNModel:
             n_readout_layers=4,
             activation_function="ReLU",
             postprocess_layer="compute_partial_charges",
-            readout_name=f"am1bcc-charges",
+            readout_name="am1bcc-charges",
             learning_rate=0.001,
             atom_features=atom_features,
             bond_features=bond_features,
@@ -250,7 +249,7 @@ class TestGNNModel:
             "[O-]S(O)(O)CC[NH+]1CCOCC1",
             "O=NN([O-])[O-]",
             "[O-]P([O-])[O-]",
-            "C#N"
+            "C#N",
         ],
     )
     def test_load_and_compute(self, smiles):

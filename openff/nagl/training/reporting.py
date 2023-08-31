@@ -3,14 +3,13 @@ import pathlib
 import typing
 
 import jinja2
-import torch
 import numpy as np
-from openff.toolkit import Molecule
-
+import torch
 from openff.utilities import requires_package
-import openff.nagl.training
 
 if typing.TYPE_CHECKING:
+    from openff.toolkit import Molecule
+
     from openff.nagl.molecule._dgl import DGLMolecule
     from openff.nagl.training.metrics import MetricType
 
@@ -20,9 +19,10 @@ def _encode_image(image):
     image_src = f"data:image/svg+xml;base64,{image_encoded}"
     return image_src
 
+
 @requires_package("rdkit")
 def _draw_molecule_with_atom_labels(
-    molecule: Molecule,
+    molecule: "Molecule",
     predicted_labels: torch.Tensor,
     reference_labels: torch.Tensor,
     highlight_outliers: bool = False,
@@ -44,14 +44,15 @@ def _draw_molecule_with_atom_labels(
         ``outlier_threshold`` away from the reference labels.
     outlier_threshold : float, optional
         The threshold for highlighting outliers.
-    
+
     Returns
     -------
     str
         The SVG image of the molecule, as text
     """
-    from openff.nagl.molecule._dgl import DGLMolecule
     from rdkit.Chem import Draw
+
+    from openff.nagl.molecule._dgl import DGLMolecule
 
     if isinstance(molecule, DGLMolecule):
         molecule = molecule.to_openff()
@@ -62,15 +63,15 @@ def _draw_molecule_with_atom_labels(
     if highlight_outliers:
         diff = np.abs(predicted_labels - reference_labels)
         highlight_atoms = list(np.where(diff > outlier_threshold)[0])
-    
+
     predicted_molecule = molecule.to_rdkit()
     for atom, label in zip(predicted_molecule.GetAtoms(), predicted_labels):
         atom.SetProp("atomNote", f"{float(label):.3f}")
-    
+
     reference_molecule = molecule.to_rdkit()
     for atom, label in zip(reference_molecule.GetAtoms(), reference_labels):
         atom.SetProp("atomNote", f"{float(label):.3f}")
-    
+
     Draw.PrepareMolForDrawing(predicted_molecule)
     Draw.PrepareMolForDrawing(reference_molecule)
 
@@ -91,14 +92,14 @@ def _draw_molecule_with_atom_labels(
 
 @requires_package("rdkit")
 def _draw_molecule(
-    molecule: typing.Union[Molecule, "DGLMolecule"],
+    molecule: typing.Union["Molecule", "DGLMolecule"],
 ) -> str:
     """
     Draw a molecule without labels.
 
     Parameters
     ----------
-    molecule : typing.Union[Molecule, "DGLMolecule"]
+    molecule : typing.Union["Molecule", "DGLMolecule"]
         The molecule to draw.
 
     Returns
@@ -112,7 +113,7 @@ def _draw_molecule(
 
     if isinstance(molecule, DGLMolecule):
         molecule = molecule.to_openff()
-    
+
     rdmol = molecule.to_rdkit()
     drawer = Draw.rdMolDraw2D.MolDraw2DSVG(400, 400)
     Draw.PrepareAndDrawMolecule(drawer, rdmol)
@@ -121,7 +122,7 @@ def _draw_molecule(
 
 
 def _generate_jinja_dicts_per_atom(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     predicted_labels: typing.List[torch.Tensor],
     reference_labels: typing.List[torch.Tensor],
     metrics: typing.List["MetricType"],
@@ -135,14 +136,10 @@ def _generate_jinja_dicts_per_atom(
 
     n_molecules = len(molecules)
     if n_molecules != len(predicted_labels):
-        raise ValueError(
-            "The number of molecules and predicted labels must match."
-        )
+        raise ValueError("The number of molecules and predicted labels must match.")
     if n_molecules != len(reference_labels):
-        raise ValueError(
-            "The number of molecules and reference labels must match."
-        )
-    
+        raise ValueError("The number of molecules and reference labels must match.")
+
     for molecule, predicted, reference in zip(
         molecules, predicted_labels, reference_labels
     ):
@@ -167,9 +164,9 @@ def _generate_jinja_dicts_per_atom(
 
 
 def _generate_jinja_dicts_per_molecule(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     metrics: typing.List[torch.Tensor],
-    metric_name: str
+    metric_name: str,
 ) -> typing.List[typing.Dict[str, str]]:
     assert len(metrics) == len(molecules)
 
@@ -178,13 +175,11 @@ def _generate_jinja_dicts_per_molecule(
         image = _draw_molecule(molecule)
         data = {
             "img": _encode_image(image),
-            "metrics": {
-                metric_name.upper(): f"{float(metric):.4f}"
-            }
+            "metrics": {metric_name.upper(): f"{float(metric):.4f}"},
         }
         jinja_dicts.append(data)
     return jinja_dicts
-    
+
 
 def _write_jinja_report(
     output_path: pathlib.Path,
@@ -204,9 +199,8 @@ def _write_jinja_report(
     output_path.write_text(rendered)
 
 
-
 def create_atom_label_report(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     predicted_labels: typing.List[torch.Tensor],
     reference_labels: typing.List[torch.Tensor],
     metrics: typing.List["MetricType"],
@@ -221,16 +215,12 @@ def create_atom_label_report(
 
     ranker = get_metric_type(rank_by)
     metrics = [get_metric_type(metric) for metric in metrics]
-    
+
     n_molecules = len(molecules)
     if n_molecules != len(predicted_labels):
-        raise ValueError(
-            "The number of molecules and predicted labels must match."
-        )
+        raise ValueError("The number of molecules and predicted labels must match.")
     if n_molecules != len(reference_labels):
-        raise ValueError(
-            "The number of molecules and reference labels must match."
-        )
+        raise ValueError("The number of molecules and reference labels must match.")
 
     entries_and_ranks = []
     for molecule, predicted, reference in zip(
@@ -238,12 +228,9 @@ def create_atom_label_report(
     ):
         diff = ranker.compute(predicted, reference)
         entries_and_ranks.append((molecule, predicted, reference, diff))
-    
-    entries_and_ranks.sort(key=lambda x: x[-1], reverse=True)
-    top_molecules, top_predicted, top_reference, _ = zip(
-        *entries_and_ranks
-    )
 
+    entries_and_ranks.sort(key=lambda x: x[-1], reverse=True)
+    top_molecules, top_predicted, top_reference, _ = zip(*entries_and_ranks)
 
     top_jinja_dicts = _generate_jinja_dicts_per_atom(
         top_molecules[:top_n_entries],
@@ -269,11 +256,9 @@ def create_atom_label_report(
         bottom_jinja_dicts,
     )
 
-    
-
 
 def create_molecule_label_report(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     losses: typing.List[torch.Tensor],
     metric_name: str,
     output_path: pathlib.Path,

@@ -1,28 +1,31 @@
 import abc
-from collections import defaultdict
-import functools
-import logging
 import pathlib
-import tqdm
 import typing
+from collections import defaultdict
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.parquet as pq
 import pyarrow.dataset as ds
-
-from openff.toolkit import Molecule
+import pyarrow.parquet as pq
+import tqdm
 from openff.units import unit
+from openff.utilities import requires_package
 
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
-from openff.utilities import requires_package
 
 ChargeMethodType = typing.Literal[
-    "am1bcc", "am1-mulliken", "gasteiger", "formal_charge",
-    "mmff94", "am1bccnosymspt", "am1elf10", "am1bccelf10",
-    "zeros"
+    "am1bcc",
+    "am1-mulliken",
+    "gasteiger",
+    "formal_charge",
+    "mmff94",
+    "am1bccnosymspt",
+    "am1elf10",
+    "am1bccelf10",
+    "zeros",
 ]
+
 
 class _BaseLabel(ImmutableModel, abc.ABC):
     name: typing.Literal[""]
@@ -37,13 +40,13 @@ class _BaseLabel(ImmutableModel, abc.ABC):
         values: typing.Iterable[typing.Any],
     ) -> pa.Table:
         from .utils import _append_column_to_table
+
         return _append_column_to_table(
             table,
             key,
             values,
             exist_ok=self.exist_ok,
         )
-        
 
     @abc.abstractmethod
     def apply(
@@ -67,6 +70,8 @@ class LabelConformers(_BaseLabel):
         table: pa.Table,
         verbose: bool = False,
     ):
+        from openff.toolkit import Molecule
+
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
             rms_cutoff = rms_cutoff * unit.angstrom
@@ -85,30 +90,22 @@ class LabelConformers(_BaseLabel):
 
         with capture_toolkit_warnings():
             for smiles in batch_smiles:
-                mol = Molecule.from_mapped_smiles(
-                    smiles,
-                    allow_undefined_stereo=True
-                )
+                mol = Molecule.from_mapped_smiles(smiles, allow_undefined_stereo=True)
                 mol.generate_conformers(
                     n_conformers=self.n_conformer_pool,
-                    rms_cutoff=rms_cutoff, 
+                    rms_cutoff=rms_cutoff,
                 )
                 mol.apply_elf_conformer_selection(
                     limit=self.n_conformers,
                 )
-                conformers = np.ravel([
-                    conformer.m_as(unit.angstrom)
-                    for conformer in mol.conformers
-                ])
+                conformers = np.ravel(
+                    [conformer.m_as(unit.angstrom) for conformer in mol.conformers]
+                )
                 data[self.conformer_column].append(conformers)
                 data[self.n_conformer_column].append(len(mol.conformers))
-        
-        conformer_field = pa.field(
-            self.conformer_column, pa.list_(pa.float64())
-        )
-        n_conformer_field = pa.field(
-            self.n_conformer_column, pa.int64()
-        )
+
+        conformer_field = pa.field(self.conformer_column, pa.list_(pa.float64()))
+        n_conformer_field = pa.field(self.n_conformer_column, pa.int64())
 
         table = self._append_column(
             table,
@@ -138,10 +135,11 @@ class LabelCharges(_BaseLabel):
         conformers: typing.Optional[unit.Quantity] = None,
         use_existing_conformers: bool = False,
     ) -> np.ndarray:
+        from openff.toolkit import Molecule
+
         with capture_toolkit_warnings():
             mol = Molecule.from_mapped_smiles(
-                mapped_smiles,
-                allow_undefined_stereo=True
+                mapped_smiles, allow_undefined_stereo=True
             )
             shape = (-1, mol.n_atoms, 3)
             if use_existing_conformers:
@@ -160,14 +158,12 @@ class LabelCharges(_BaseLabel):
                         charge_method,
                         use_conformers=[conformer],
                     )
-                    charges.append(
-                        mol.partial_charges.m_as(unit.elementary_charge)
-                    )
+                    charges.append(mol.partial_charges.m_as(unit.elementary_charge))
                 return np.mean(charges, axis=0)
             else:
                 mol.assign_partial_charges(charge_method)
                 return mol.partial_charges.m_as(unit.elementary_charge)
-            
+
     def apply(
         self,
         table: pa.Table,
@@ -194,7 +190,6 @@ class LabelCharges(_BaseLabel):
         return table
 
 
-
 class LabelMultipleDipoles(_BaseLabel):
     name: typing.Literal["multiple_dipoles"] = "multiple_dipoles"
     conformer_column: str = "conformers"
@@ -217,7 +212,6 @@ class LabelMultipleDipoles(_BaseLabel):
         if flatten:
             dipoles = dipoles.reshape(-1)
         return dipoles
-
 
     def apply(
         self,
@@ -260,10 +254,11 @@ class LabelMultipleESPs(_BaseLabel):
         n_conformers: int,
     ) -> typing.List[np.ndarray]:
         from openff.recharge.grids import GridGenerator, MSKGridSettings
+        from openff.toolkit import Molecule
+
         with capture_toolkit_warnings():
             mol = Molecule.from_mapped_smiles(
-                mapped_smiles,
-                allow_undefined_stereo=True
+                mapped_smiles, allow_undefined_stereo=True
             )
 
         settings = MSKGridSettings()
@@ -275,12 +270,11 @@ class LabelMultipleESPs(_BaseLabel):
         for conf in conformers:
             grid = GridGenerator.generate(mol, conf, settings)
             displacement = grid[:, None, :] - conf[None, :, :]
-            distance = (displacement ** 2).sum(axis=-1) ** 0.5
+            distance = (displacement**2).sum(axis=-1) ** 0.5
             distance = distance.m_as(unit.bohr)
             inv_distance = 1 / distance
             all_inv_distances.append(inv_distance)
         return all_inv_distances
-
 
     @staticmethod
     def _split_inverse_distance_grid(
@@ -318,7 +312,6 @@ class LabelMultipleESPs(_BaseLabel):
         esp = inv_distances @ charges
         return esp.flatten()
 
-
     def apply(
         self,
         table: pa.Table,
@@ -333,7 +326,7 @@ class LabelMultipleESPs(_BaseLabel):
                 all_inv_distances = self._split_inverse_distance_grid(
                     row[self.grid_length_column],
                     row[self.inverse_distance_matrix_column],
-                    row[self.charge_column]
+                    row[self.charge_column],
                 )
             else:
                 all_inv_distances = self._calculate_inverse_distance_grid(
@@ -355,42 +348,24 @@ class LabelMultipleESPs(_BaseLabel):
                 flat_inverse_distances.extend(inv_distances.flatten())
                 grid_lengths.append(len(inv_distances))
             data[self.grid_length_column].append(grid_lengths)
-            data[self.inverse_distance_matrix_column].append(
-                flat_inverse_distances
-            )
+            data[self.inverse_distance_matrix_column].append(flat_inverse_distances)
             data[self.esp_column].append(esps)
 
         if not self.use_existing_inverse_distances:
-            grid_length_field = pa.field(
-                self.grid_length_column,
-                pa.list_(pa.int64())
-            )
+            grid_length_field = pa.field(self.grid_length_column, pa.list_(pa.int64()))
             inverse_distance_field = pa.field(
-                self.inverse_distance_matrix_column,
-                pa.list_(pa.float64())
+                self.inverse_distance_matrix_column, pa.list_(pa.float64())
             )
             table = self._append_column(
-                table,
-                grid_length_field,
-                data[self.grid_length_column]
+                table, grid_length_field, data[self.grid_length_column]
             )
             table = self._append_column(
-                table,
-                inverse_distance_field,
-                data[self.inverse_distance_matrix_column]
+                table, inverse_distance_field, data[self.inverse_distance_matrix_column]
             )
 
-        esp_field = pa.field(
-            self.esp_column,
-            pa.list_(pa.float64())
-        )
-        table = self._append_column(
-            table,
-            esp_field,
-            data[self.esp_column]
-        )
+        esp_field = pa.field(self.esp_column, pa.list_(pa.float64()))
+        table = self._append_column(table, esp_field, data[self.esp_column])
         return table
-
 
 
 LabellerType = typing.Union[
@@ -399,6 +374,7 @@ LabellerType = typing.Union[
     LabelMultipleDipoles,
     LabelMultipleESPs,
 ]
+
 
 def apply_labellers(
     table: pa.Table,
@@ -424,4 +400,3 @@ def apply_labellers_to_batch_file(
     table = apply_labellers(table, labellers, verbose=verbose)
     with source.open("wb") as f:
         pq.write_table(table, f)
-

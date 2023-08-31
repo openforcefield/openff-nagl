@@ -8,19 +8,15 @@ from openff.nagl.features.atoms import (
     AtomConnectivity,
     AtomFormalCharge,
     AtomHybridization,
-    AtomicElement,
-    AtomInRingOfSize,
     AtomIsAromatic,
     AtomIsInRing,
 )
 from openff.nagl.features.bonds import (
-    BondInRingOfSize,
     BondIsAromatic,
     BondIsInRing,
     BondOrder,
     WibergBondOrder,
 )
-from openff.nagl.utils._types import HybridizationType
 
 
 @pytest.fixture()

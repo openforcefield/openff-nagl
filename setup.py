@@ -3,7 +3,9 @@ OpenFF NAGL
 A playground for applying graph convolutional networks to molecules.
 """
 import sys
-from setuptools import setup, find_namespace_packages
+
+from setuptools import find_namespace_packages, setup
+
 import versioneer
 
 short_description = "A playground for applying graph convolutional networks to molecules.".strip().split("\n")[0]

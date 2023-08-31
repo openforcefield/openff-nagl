@@ -29,4 +29,4 @@ python train_gnn.py                                                         \
     --n-epochs                  5000                                        \
     --n-gpus                    1                                           \
     --partial-charge-method     "am1"                                       \
-    --data-cache-directory      "cached-data"                               
+    --data-cache-directory      "cached-data"

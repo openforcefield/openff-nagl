@@ -51,7 +51,7 @@ model:
         - hidden_feature_size: 128
           activation_function: Sigmoid
           dropout: 0
-      
+
 data:
   training:
     cache_directory: "."
@@ -105,7 +105,7 @@ data:
         target_label: am1bcc_charges
         prediction_label: am1bcc_charges
         weight: 1
-    
+
 optimizer:
   optimizer: Adam
   learning_rate: 0.001

@@ -1,10 +1,11 @@
-from typing import ClassVar, TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional, Tuple
 
 from openff.nagl.molecule._utils import FEATURE
 from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     import torch
+
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
 
@@ -20,7 +21,7 @@ class NAGLMoleculeBase:
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
-    
+
     @property
     def bond_features(self) -> Optional["torch.Tensor"]:
         if FEATURE in self.graph.edata:
@@ -36,11 +37,11 @@ class NAGLMoleculeBase:
 
 class MoleculeMixin:
     def __init__(
-            self,
-            graph,
-            n_representations: int = 1,
-            mapped_smiles: str = "",
-        ):
+        self,
+        graph,
+        n_representations: int = 1,
+        mapped_smiles: str = "",
+    ):
         self.graph = graph
         self.n_representations = n_representations
         self.mapped_smiles = mapped_smiles
@@ -88,7 +89,7 @@ class MoleculeMixin:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
-    
+
     def to_openff(self):
         from openff.toolkit.topology import Molecule
 
@@ -97,7 +98,7 @@ class MoleculeMixin:
                 self.mapped_smiles,
                 allow_undefined_stereo=True,
             )
-        
+
         return molecule
 
 

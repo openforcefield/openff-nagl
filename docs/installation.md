@@ -25,7 +25,7 @@ For this reason, we recommend installing Conda via [MambaForge], which uses Cond
 # Remove the --env switch to apply these settings globally
 conda activate nagl
 conda config --env --add channels conda-forge
-conda config --env --set channel_priority strict 
+conda config --env --set channel_priority strict
 ```
 
 In environments with this configuration, the `-c conda-forge` switch is unnecessary. Other channels, like `psi4` and `bioconda`, can still be used in the usual way.
@@ -34,5 +34,3 @@ More information on installing OpenFF packages can be found in the [OpenFF insta
 
 [Conda Forge]: https://conda-forge.org/
 [MambaForge]: https://github.com/conda-forge/miniforge#mambaforge
-
-

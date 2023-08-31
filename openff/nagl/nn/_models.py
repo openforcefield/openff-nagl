@@ -1,17 +1,17 @@
-import copy
-from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optional
 import warnings
+from typing import TYPE_CHECKING, Dict, Optional
 
-import torch
 import pytorch_lightning as pl
-
+import torch
 from openff.utilities.exceptions import MissingOptionalDependencyError
-from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
+
 from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
+from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 
 
@@ -25,9 +25,7 @@ class BaseGNNModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
 
-    def forward(
-        self, molecule: "DGLMoleculeOrBatch"
-    ) -> Dict[str, torch.Tensor]:
+    def forward(self, molecule: "DGLMoleculeOrBatch") -> Dict[str, torch.Tensor]:
         self.convolution_module(molecule)
 
         readouts: Dict[str, torch.Tensor] = {
@@ -35,6 +33,7 @@ class BaseGNNModel(pl.LightningModule):
             for readout_type, readout_module in self.readout_modules.items()
         }
         return readouts
+
 
 class GNNModel(BaseGNNModel):
     def __init__(
@@ -70,29 +69,30 @@ class GNNModel(BaseGNNModel):
             readout_modules=readout_modules,
         )
 
-        self.save_hyperparameters({
-            "config": config.dict(),
-            "chemical_domain": chemical_domain.dict(),
-        })
+        self.save_hyperparameters(
+            {
+                "config": config.dict(),
+                "chemical_domain": chemical_domain.dict(),
+            }
+        )
         self.config = config
         self.chemical_domain = chemical_domain
-        
 
     @classmethod
     def from_yaml(cls, filename):
         config = ModelConfig.from_yaml(filename)
         return cls(config)
-    
+
     @property
     def _is_dgl(self):
         return self.convolution_module._is_dgl
-    
+
     def _as_nagl(self):
         copied = type(self)(self.config)
         copied.convolution_module = self.convolution_module._as_nagl(copy_weights=True)
         copied.load_state_dict(self.state_dict())
         return copied
-    
+
     def compute_properties(
         self,
         molecule: "Molecule",
@@ -140,7 +140,7 @@ class GNNModel(BaseGNNModel):
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
-    
+
     def compute_property(
         self,
         molecule: "Molecule",
@@ -209,7 +209,7 @@ class GNNModel(BaseGNNModel):
         if not self._is_dgl:
             raise TypeError(
                 "This model is not a DGL-based model "
-                 "and cannot be used to compute properties with the DGL backend"
+                "and cannot be used to compute properties with the DGL backend"
             )
 
         dglmol = DGLMolecule.from_openff(
@@ -218,7 +218,7 @@ class GNNModel(BaseGNNModel):
             bond_features=self.config.bond_features,
         )
         return self.forward(dglmol)
-    
+
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
         """
@@ -291,5 +291,3 @@ class GNNModel(BaseGNNModel):
             },
             str(path),
         )
-
-
