@@ -10,12 +10,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 
-from openff.toolkit import Molecule
 from openff.units import unit
 
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.utils._parallelization import get_mapper_to_processes
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +86,9 @@ class LabelConformers(_BaseLabel):
         table: pa.Table,
         verbose: bool = False,
     ):
+        from openff.toolkit import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
             rms_cutoff = rms_cutoff * unit.angstrom

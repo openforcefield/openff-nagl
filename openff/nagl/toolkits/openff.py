@@ -11,9 +11,8 @@ from openff.utilities import requires_package
 from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
-from openff.toolkit.topology import Molecule
-
 if TYPE_CHECKING:
+    from openff.toolkit.topology import Molecule
     from openff.nagl.utils._types import HybridizationType
 
 
@@ -290,7 +289,7 @@ def calculate_circular_fingerprint_similarity(
 
 
 def is_conformer_identical(
-    molecule: Molecule,
+    molecule: "Molecule",
     reference_conformer: Union[np.ndarray, unit.Quantity],
     target_conformer: Union[np.ndarray, unit.Quantity],
     atol: float = 1.0e-3,
@@ -504,6 +503,8 @@ def stream_molecules_from_sdf_file(
 
 
 def validate_smiles(smiles: str, toolkit_registry=NAGL_TOOLKIT_REGISTRY):
+    from openff.toolkit.topology import Molecule
+
     offmol = Molecule.from_smiles(smiles, toolkit_registry=toolkit_registry)
     return offmol.to_smiles(
         mapped=False, isomeric=True, toolkit_registry=toolkit_registry
@@ -538,6 +539,7 @@ def stream_molecules_from_smiles_file(
         A generator of openff.toolkit.topology.Molecule objects or SMILES strings
     """
     from openff.toolkit.topology.molecule import SmilesParsingError
+    from openff.toolkit.topology import Molecule
 
     with open(file, "r") as f:
         smiles = [x.strip() for x in f.readlines()]
@@ -692,6 +694,8 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
 
 
 def molecule_from_networkx(graph):
+    from openff.toolkit.topology import Molecule
+    
     molecule = Molecule()
 
     for _, info in graph.nodes(data=True):

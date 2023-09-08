@@ -8,11 +8,9 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
-from openff.toolkit import Molecule
 from openff.units import unit
 
 from openff.nagl.utils._parallelization import get_mapper_to_processes
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from openff.nagl.label.labels import LabellerType
 
 class LabelledDataset:
@@ -44,6 +42,9 @@ class LabelledDataset:
         verbose: bool = False,
         overwrite_existing: bool = False,
     ):
+        from openff.toolkit import Molecule
+
+
         loader = functools.partial(
             Molecule.from_smiles,
             allow_undefined_stereo=True

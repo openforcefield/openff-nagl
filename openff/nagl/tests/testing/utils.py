@@ -1,8 +1,7 @@
-from openff.toolkit.topology.molecule import Molecule
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
 
 def rdkit_molecule_to_smiles(rdkit_molecule):
+    from openff.toolkit.topology.molecule import Molecule
+
     smiles = Molecule.from_rdkit(
         rdkit_molecule,
         allow_undefined_stereo=True,
@@ -11,6 +10,10 @@ def rdkit_molecule_to_smiles(rdkit_molecule):
 
 
 def clean_smiles(smiles, mapped=False):
+    from openff.toolkit.topology.molecule import Molecule
+    from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
+
     with capture_toolkit_warnings():
         if mapped:
             func = Molecule.from_mapped_smiles

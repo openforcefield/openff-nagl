@@ -1,9 +1,8 @@
 import contextlib
 import copy
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 
-from openff.toolkit import Molecule
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
@@ -13,6 +12,9 @@ import torch
 from ._batch import FrameDict
 
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
+if TYPE_CHECKING:
+    from openff.toolkit import Molecule
+
 
 __all__ = [
     "NXMolHeteroGraph",
@@ -21,7 +23,7 @@ __all__ = [
 
 
 def openff_molecule_to_base_nx_graph(
-    molecule: Molecule,
+    molecule: "Molecule",
     forward: str = FORWARD,
     reverse: str = REVERSE,
 ):
@@ -304,7 +306,7 @@ class NXMolHeteroGraph(NXMolGraph):
     @classmethod
     def from_openff(
         cls,
-        molecule: Molecule,
+        molecule: "Molecule",
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
     ):

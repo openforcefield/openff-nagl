@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from openff.toolkit.topology.molecule import Molecule
-from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
 from openff.units import unit
 
 from openff.nagl.toolkits.openff import (
@@ -43,6 +42,7 @@ def test_smiles_to_inchi_key(smiles, expected):
     ],
 )
 def test_normalize_molecule(expected_smiles, given_smiles):
+    from openff.toolkit.topology.molecule import Molecule
     expected_molecule = Molecule.from_smiles(expected_smiles)
 
     molecule = Molecule.from_smiles(given_smiles)
@@ -73,6 +73,8 @@ def test_map_indexed_smiles(smiles_a, smiles_b, expected):
     ],
 )
 def test_is_conformer_identical_generated(smiles):
+    from openff.toolkit.topology.molecule import Molecule
+
     offmol = Molecule.from_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
     ordered_conf = offmol.conformers[0].m_as(unit.angstrom)
@@ -100,6 +102,8 @@ def test_is_conformer_identical_generated(smiles):
 
 
 def test_is_conformer_identical_linear():
+    from openff.toolkit.topology.molecule import Molecule
+
     offmol = Molecule.from_smiles("CCC")
     c_coords = np.array(
         [
@@ -123,6 +127,8 @@ def test_is_conformer_identical_linear():
 
 
 def test_not_is_conformer_identical():
+    from openff.toolkit.topology.molecule import Molecule
+
     smiles = "[C:1]([H:4])([H:5])([H:6])[C:2]([Cl:7])=[O:3]"
     offmol = Molecule.from_mapped_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
@@ -150,6 +156,8 @@ def test_not_is_conformer_identical():
 def test_calculate_circular_fingerprint_similarity(
     smiles1, smiles2, radius, similarity
 ):
+    from openff.toolkit.topology.molecule import Molecule
+
     mol1 = Molecule.from_smiles(smiles1)
     mol2 = Molecule.from_smiles(smiles2)
 
@@ -160,6 +168,7 @@ def test_calculate_circular_fingerprint_similarity(
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_best_rmsd():
     from rdkit.Chem import rdMolAlign
+    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles("CCC")
     offmol._conformers = [

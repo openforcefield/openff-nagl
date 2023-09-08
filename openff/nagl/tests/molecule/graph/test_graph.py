@@ -6,8 +6,6 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 import torch
 
-from openff.toolkit import Molecule
-
 from openff.nagl.molecule._graph._batch import FrameDict
 from openff.nagl.molecule._graph._graph import (
     NXMolGraph,

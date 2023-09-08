@@ -2,7 +2,6 @@ from typing import List, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -36,6 +35,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
     ):
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
         offmols = [molecule]

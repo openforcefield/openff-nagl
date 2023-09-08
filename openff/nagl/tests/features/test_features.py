@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_equal
-from openff.toolkit.topology.molecule import Molecule
 
 from openff.nagl.features.atoms import (
     AtomAverageFormalCharge,
@@ -25,6 +24,7 @@ from openff.nagl.utils._types import HybridizationType
 
 @pytest.fixture()
 def openff_benzene():
+    from openff.toolkit.topology.molecule import Molecule
     return Molecule.from_smiles("c1ccccc1")
 
 
@@ -36,6 +36,8 @@ def openff_benzene():
     ],
 )
 def test_atom_connectivity(smiles, connectivity):
+    from openff.toolkit.topology.molecule import Molecule
+
     feature = AtomConnectivity()
     assert len(feature) == 4
 
@@ -55,6 +57,8 @@ def test_atom_connectivity(smiles, connectivity):
     ],
 )
 def test_atom_hybridization(smiles, hybridization):
+    from openff.toolkit.topology.molecule import Molecule
+
     feature = AtomHybridization(categories=["other", "sp", "sp2", "sp3"])
     assert len(feature) == 4
 
@@ -70,6 +74,8 @@ def test_atom_hybridization(smiles, hybridization):
     ],
 )
 def test_atom_formal_charge(smiles, charge):
+    from openff.toolkit.topology.molecule import Molecule
+
     feature = AtomFormalCharge(categories=[0, -1, 1])
     assert len(feature) == 3
 
@@ -78,6 +84,8 @@ def test_atom_formal_charge(smiles, charge):
 
 
 def test_atom_average_formal_charge():
+    from openff.toolkit.topology.molecule import Molecule
+
     smiles = "[C:1](=[O:4])([O-:5])[C:2]([H:8])([H:9])[C:3](=[O:6])([O-:7])"
     offmol = Molecule.from_mapped_smiles(smiles)
     feature = AtomAverageFormalCharge()
@@ -102,6 +110,8 @@ def test_is_aromatic_and_is_in_ring(openff_benzene, feature_class):
 
 
 def test_bond_order():
+    from openff.toolkit.topology.molecule import Molecule
+
     feature = BondOrder(categories=[2, 1])
     assert len(feature) == 2
 

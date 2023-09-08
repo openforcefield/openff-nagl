@@ -11,11 +11,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 
-from openff.toolkit import Molecule
 from openff.units import unit
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from openff.utilities import requires_package
 
 ChargeMethodType = typing.Literal[
@@ -67,6 +65,9 @@ class LabelConformers(_BaseLabel):
         table: pa.Table,
         verbose: bool = False,
     ):
+        from openff.toolkit import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
             rms_cutoff = rms_cutoff * unit.angstrom
@@ -138,6 +139,9 @@ class LabelCharges(_BaseLabel):
         conformers: typing.Optional[unit.Quantity] = None,
         use_existing_conformers: bool = False,
     ) -> np.ndarray:
+        from openff.toolkit import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         with capture_toolkit_warnings():
             mol = Molecule.from_mapped_smiles(
                 mapped_smiles,
@@ -259,7 +263,10 @@ class LabelMultipleESPs(_BaseLabel):
         conformers: np.ndarray,
         n_conformers: int,
     ) -> typing.List[np.ndarray]:
+        from openff.toolkit import Molecule
         from openff.recharge.grids import GridGenerator, MSKGridSettings
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         with capture_toolkit_warnings():
             mol = Molecule.from_mapped_smiles(
                 mapped_smiles,

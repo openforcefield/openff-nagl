@@ -2,7 +2,6 @@ import pathlib
 import pytest
 
 import torch
-from openff.toolkit import Molecule
 
 from openff.nagl.molecule._dgl.molecule import DGLMolecule
 from openff.nagl.training.reporting import (
@@ -19,6 +18,7 @@ pytest.importorskip("rdkit")
 
 @pytest.fixture()
 def hbr():
+    from openff.toolkit import Molecule
     return Molecule.from_smiles("Br")
 
 @pytest.fixture()
@@ -30,6 +30,8 @@ def dgl_hbr(hbr):
     )
 
 def test_draw_molecule_with_atom_labels():
+    from openff.toolkit import Molecule
+
     mol = Molecule.from_smiles("[Cl-]")
     svg = _draw_molecule_with_atom_labels(
         mol, torch.tensor([1.0]), torch.tensor([0.0])

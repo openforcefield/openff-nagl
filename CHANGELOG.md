@@ -14,8 +14,26 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-
 ## [Unreleased]
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+
+### Reviewers
+
+### Added
+
+### Fixed
+<!-- Bug fixes -->
+
+### Changed
+<!-- Changes in existing functionality -->
+- Guarded openff.toolkit imports (PR #61, Issue #56)
+
+### Removed
+
+## v0.3.0
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
@@ -29,11 +47,13 @@ The rules for this file:
 - Codecov coverage (PR #43)
 - Multiple target objectives and configuratin files (PR #45)
 - Support for pydantic v2 (PR #46)
+- Added `ChemicalDomain` and model versioning (PR #54)
 
 
 ### Fixed
 <!-- Bug fixes -->
 - pytest runs (PR #44)
+- documentation badge and links (PR #51, #52)
 
 ### Changed
 <!-- Changes in existing functionality -->

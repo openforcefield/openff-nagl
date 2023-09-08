@@ -1,7 +1,6 @@
 from typing import ClassVar, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._utils import FEATURE
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
 if TYPE_CHECKING:
     import torch
@@ -91,6 +90,7 @@ class MoleculeMixin:
     
     def to_openff(self):
         from openff.toolkit.topology import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         with capture_toolkit_warnings():
             molecule = Molecule.from_mapped_smiles(

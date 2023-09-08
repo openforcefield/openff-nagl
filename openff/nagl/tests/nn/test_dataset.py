@@ -1,6 +1,7 @@
 import os
 import pathlib
 import pickle
+import typing
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -9,7 +10,6 @@ import numpy as np
 import pytest
 import torch
 from torch.utils.data import ConcatDataset
-from openff.toolkit.topology.molecule import Molecule
 from openff.units import unit
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
@@ -27,7 +27,10 @@ from openff.nagl.tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, E
 
 pytest.importorskip("dgl")
 
-def label_formal_charge(molecule: Molecule):
+if typing.TYPE_CHECKING:
+    from openff.toolkit.topology.molecule import Molecule
+
+def label_formal_charge(molecule: "Molecule"):
     return {
         "formal_charges": torch.tensor(
             [

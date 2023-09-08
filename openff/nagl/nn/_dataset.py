@@ -14,14 +14,11 @@ import tqdm
 import torch
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
-from openff.toolkit import Molecule
-
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
-from openff.nagl.toolkits.openff import capture_toolkit_warnings
 from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.utils._hash import digest_file
 
@@ -31,6 +28,8 @@ import pyarrow.parquet as pq
 import pyarrow.dataset as ds
 import numpy as np
 
+if typing.TYPE_CHECKING:
+    from openff.toolkit import Molecule
 
 
 __all__ = [
@@ -124,7 +123,7 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
     @classmethod
     def from_openff(
         cls,
-        openff_molecule: Molecule,
+        openff_molecule: "Molecule",
         labels: typing.Dict[str, typing.Any],
         atom_features: typing.List[AtomFeature],
         bond_features: typing.List[BondFeature],
@@ -195,6 +194,9 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             If this is provided, bond_features should not
             be provided as it will be ignored.
         """
+        from openff.toolkit import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         with capture_toolkit_warnings():
             molecule = Molecule.from_mapped_smiles(
                 mapped_smiles,
@@ -234,6 +236,9 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         bond_feature_column: str,
         smiles_column: str = "mapped_smiles",
     ):
+        from openff.toolkit import Molecule
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         labels = dict(row)
         mapped_smiles = labels.pop(smiles_column)
         atom_features = labels.pop(atom_feature_column)
@@ -441,6 +446,8 @@ class DGLMoleculeDataset(Dataset):
         columns: typing.Optional[typing.List[str]] = None,
         n_processes: int = 0,
     ):
+        from openff.nagl.toolkits.openff import capture_toolkit_warnings
+
         if columns is not None:
             columns = list(columns)
             if smiles_column not in columns:
@@ -486,14 +493,14 @@ class DGLMoleculeDataset(Dataset):
     @classmethod
     def from_openff(
         cls,
-        molecules: typing.Iterable[Molecule],
+        molecules: typing.Iterable["Molecule"],
         atom_features: typing.Optional[typing.List[AtomFeature]] = None,
         bond_features: typing.Optional[typing.List[BondFeature]] = None,
         atom_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
         bond_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
         labels: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None,
         label_function: typing.Optional[
-            typing.Callable[[Molecule], typing.Dict[str, typing.Any]]
+            typing.Callable[["Molecule"], typing.Dict[str, typing.Any]]
         ] = None,
     ):
         if labels is None:

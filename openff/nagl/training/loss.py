@@ -1,7 +1,6 @@
 import abc
 import pathlib
 import typing
-from openff.toolkit import Molecule
 
 import torch
 from openff.nagl._base.metaregistry import create_registry_metaclass

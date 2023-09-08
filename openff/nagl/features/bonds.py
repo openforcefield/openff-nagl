@@ -23,7 +23,6 @@ import typing
 
 import torch
 
-from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
 from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
@@ -79,6 +78,8 @@ class BondIsInRing(BondFeature):
     name: typing.Literal["bond_is_in_ring"] = "bond_is_in_ring"
 
     def _encode(self, molecule) -> torch.Tensor:
+        from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
+
         ring_bonds = {
             tuple(sorted(match))
             for match in molecule.chemical_environment_matches("[*:1]@[*:2]")
