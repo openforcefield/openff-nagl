@@ -18,7 +18,8 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.nn._dataset import (
     DGLMoleculeDataset, DataHash,
-    _LazyDGLMoleculeDataset
+    _LazyDGLMoleculeDataset,
+    _LazyBatchedMoleculeDataset
 )
 
 if typing.TYPE_CHECKING:
@@ -165,26 +166,35 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         config,
         cache_dir,
         columns,
+        batched: bool = True
     ):
+        kwargs = {
+            "format": "parquet",
+            "atom_features": self.config.model.atom_features,
+            "bond_features": self.config.model.bond_features,
+            "columns": columns,
+            "n_processes": self.n_processes,
+        }
         if config.lazy_loading:
-            loader = functools.partial(
-                _LazyDGLMoleculeDataset.from_arrow_dataset,
-                format="parquet",
-                atom_features=self.config.model.atom_features,
-                bond_features=self.config.model.bond_features,
-                columns=columns,
-                cache_directory=cache_dir,
-                use_cached_data=config.use_cached_data,
-                n_processes=self.n_processes,
-            )
+            if batched:
+                loader = functools.partial(
+                    _LazyBatchedMoleculeDataset.from_arrow_dataset,
+                    cache_directory=cache_dir,
+                    use_cached_data=config.use_cached_data,
+                    **kwargs,
+                )
+            else:
+
+                loader = functools.partial(
+                    _LazyDGLMoleculeDataset.from_arrow_dataset,
+                    cache_directory=cache_dir,
+                    use_cached_data=config.use_cached_data,
+                    **kwargs
+                )
         else:
             loader = functools.partial(
                 DGLMoleculeDataset.from_arrow_dataset,
-                format="parquet",
-                atom_features=self.config.model.atom_features,
-                bond_features=self.config.model.bond_features,
-                columns=columns,
-                n_processes=self.n_processes,
+                **kwargs
             )
 
         datasets = []

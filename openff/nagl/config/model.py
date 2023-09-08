@@ -78,7 +78,7 @@ class ReadoutModule(ImmutableModel):
 
 
 class ModelConfig(ImmutableModel, FromYamlMixin):
-    version: typing.Literal["0.1"]
+    version: typing.Literal["0.1"] = "0.1"
     atom_features: typing.List[DiscriminatedAtomFeatureType] = Field(
         description="Atom features to use"
     )
