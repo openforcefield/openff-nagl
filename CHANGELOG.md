@@ -14,24 +14,15 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## [Unreleased]
+## v0.3.1
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @lilyminium
 
-### Reviewers
-
-### Added
-
-### Fixed
-<!-- Bug fixes -->
-
 ### Changed
 <!-- Changes in existing functionality -->
 - Guarded openff.toolkit imports (PR #61, Issue #56)
-
-### Removed
 
 ## v0.3.0
 
