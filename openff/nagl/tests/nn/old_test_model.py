@@ -4,7 +4,6 @@ import pytest
 import torch
 from numpy.testing import assert_allclose
 
-from openff.toolkit import Molecule
 from openff.units import unit
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
@@ -254,6 +253,8 @@ class TestGNNModel:
         ],
     )
     def test_load_and_compute(self, smiles):
+        from openff.toolkit import Molecule
+
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
         testdir = importlib_resources.files("openff.nagl") / "tests"
         path = testdir / "data" / "example_am1bcc_sage_charges" / f"{smiles}.sdf"

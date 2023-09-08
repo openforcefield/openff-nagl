@@ -5,7 +5,6 @@ import typing
 import jinja2
 import torch
 import numpy as np
-from openff.toolkit import Molecule
 
 from openff.utilities import requires_package
 import openff.nagl.training
@@ -13,6 +12,7 @@ import openff.nagl.training
 if typing.TYPE_CHECKING:
     from openff.nagl.molecule._dgl import DGLMolecule
     from openff.nagl.training.metrics import MetricType
+    from openff.toolkit import Molecule
 
 
 def _encode_image(image):
@@ -22,7 +22,7 @@ def _encode_image(image):
 
 @requires_package("rdkit")
 def _draw_molecule_with_atom_labels(
-    molecule: Molecule,
+    molecule: "Molecule",
     predicted_labels: torch.Tensor,
     reference_labels: torch.Tensor,
     highlight_outliers: bool = False,
@@ -91,7 +91,7 @@ def _draw_molecule_with_atom_labels(
 
 @requires_package("rdkit")
 def _draw_molecule(
-    molecule: typing.Union[Molecule, "DGLMolecule"],
+    molecule: typing.Union["Molecule", "DGLMolecule"],
 ) -> str:
     """
     Draw a molecule without labels.
@@ -121,7 +121,7 @@ def _draw_molecule(
 
 
 def _generate_jinja_dicts_per_atom(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     predicted_labels: typing.List[torch.Tensor],
     reference_labels: typing.List[torch.Tensor],
     metrics: typing.List["MetricType"],
@@ -167,7 +167,7 @@ def _generate_jinja_dicts_per_atom(
 
 
 def _generate_jinja_dicts_per_molecule(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     metrics: typing.List[torch.Tensor],
     metric_name: str
 ) -> typing.List[typing.Dict[str, str]]:
@@ -206,7 +206,7 @@ def _write_jinja_report(
 
 
 def create_atom_label_report(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     predicted_labels: typing.List[torch.Tensor],
     reference_labels: typing.List[torch.Tensor],
     metrics: typing.List["MetricType"],
@@ -273,7 +273,7 @@ def create_atom_label_report(
 
 
 def create_molecule_label_report(
-    molecules: typing.List[Molecule],
+    molecules: typing.List["Molecule"],
     losses: typing.List[torch.Tensor],
     metric_name: str,
     output_path: pathlib.Path,

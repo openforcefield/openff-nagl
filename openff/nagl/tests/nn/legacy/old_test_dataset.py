@@ -1,13 +1,12 @@
 import os
 import pathlib
 import pickle
+import typing
 
 import numpy as np
 import pytest
 import torch
 from torch.utils.data import ConcatDataset
-from openff.toolkit.topology.molecule import Molecule
-from openff.toolkit.topology.molecule import unit as off_unit
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
@@ -27,8 +26,12 @@ from openff.nagl.storage._store import (
 
 pytest.importorskip("dgl")
 
+if typing.TYPE_CHECKING:
+    from openff.toolkit.topology.molecule import Molecule
 
-def label_formal_charge(molecule: Molecule):
+def label_formal_charge(molecule: "Molecule"):
+    from openff.toolkit.topology.molecule import unit as off_unit
+
     return {
         "formal_charges": torch.tensor(
             [
@@ -103,6 +106,8 @@ def test_data_set_from_molecule_stores(tmpdir):
 
 
 def test_data_set_loader():
+    from openff.toolkit.topology.molecule import Molecule
+
     data_loader = DGLMoleculeDataLoader(
         dataset=DGLMoleculeDataset.from_openff(
             molecules=[Molecule.from_smiles("C"), Molecule.from_smiles("C[O-]")],

@@ -1,6 +1,5 @@
 import pytest
 
-from openff.toolkit.topology import Molecule
 from openff.units import unit
 
 from openff.nagl.utils.resonance import ResonanceEnumerator, FragmentEnumerator
@@ -9,6 +8,8 @@ from openff.nagl.tests.testing.utils import assert_smiles_equal
 
 @pytest.fixture
 def resonance_enumerator():
+    from openff.toolkit.topology import Molecule
+
     explicit_smarts = "[O-:1][N+:2](=[O:3])[N:4](-[H:16])[c:5]1[c:6](-[H:12])[c:7](-[H:13])[c:8](-[H:14])[c:9](-[H:15])[n+:10]1[O-:11]"
     offmol = Molecule.from_mapped_smiles(explicit_smarts)
     enumerator = ResonanceEnumerator(offmol)
@@ -221,6 +222,8 @@ class TestFragmentEnumerator:
         assert new_bonds == expected_bonds
 
     def test_select_lowest_energy_forms(self):
+        from openff.toolkit.topology import Molecule
+
         input_smiles = {
             "lowest": "[N:1]([H:2])([H:3])[C:4](=[O:5])[H:6]",
             "not_lowest": "[N+:1]([H:2])([H:3])=[C:4]([O-:5])[H:6]",
@@ -237,6 +240,8 @@ class TestFragmentEnumerator:
 class TestFragmentEnumeratorCarboxylate:
     @pytest.fixture()
     def enumerator(self):
+        from openff.toolkit.topology import Molecule
+
         molecule = Molecule.from_mapped_smiles("[C:1]([O-:2])(=[O:3])([H:4])")
         res = ResonanceEnumerator(molecule)
         return res.to_fragment()
@@ -307,6 +312,8 @@ class TestResonanceEnumerator:
     def test_enumerate_resonance_forms_simple(
         self, lowest_energy_only, include_all_transfer_pathways
     ):
+        from openff.toolkit.topology import Molecule
+
         methane = Molecule.from_smiles("C")
         enumerator = ResonanceEnumerator(methane)
         resonance_molecules = enumerator.enumerate_resonance_forms(
@@ -340,6 +347,8 @@ class TestResonanceEnumerator:
         ],
     )
     def test_get_acceptor_donor_fragments(self, smiles, expected_indices):
+        from openff.toolkit.topology import Molecule
+
         offmol = Molecule.from_mapped_smiles(smiles, allow_undefined_stereo=True)
         enumerator = ResonanceEnumerator(offmol)
         fragments = enumerator._get_acceptor_donor_fragments()

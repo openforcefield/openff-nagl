@@ -10,7 +10,9 @@ from openff.units import unit
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
-from openff.toolkit.topology import Molecule
+
+if TYPE_CHECKING:
+    from openff.toolkit.topology import Molecule
 
 
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
