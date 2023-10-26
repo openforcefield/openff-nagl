@@ -93,8 +93,6 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
         yield
         return
 
-    warnings.filterwarnings("ignore")
-
     toolkit_logger = logging.getLogger("openff.toolkit")
     openff_logger_level = toolkit_logger.getEffectiveLevel()
     toolkit_logger.setLevel(logging.ERROR)
@@ -634,9 +632,8 @@ def smiles_to_inchi_key(smiles: str) -> str:
 
     from openff.toolkit.topology import Molecule
 
-    with capture_toolkit_warnings():
-        offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
-        return offmol.to_inchikey(fixed_hydrogens=True)
+    offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    return offmol.to_inchikey(fixed_hydrogens=True)
 
 
 def get_openff_molecule_bond_indices(molecule: "Molecule") -> List[Tuple[int, int]]:
@@ -677,13 +674,12 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
     """
     from openff.toolkit.topology import Molecule
 
-    with capture_toolkit_warnings():
-        reference_molecule = Molecule.from_mapped_smiles(
-            reference_smiles, allow_undefined_stereo=True
-        )
-        target_molecule = Molecule.from_mapped_smiles(
-            target_smiles, allow_undefined_stereo=True
-        )
+    reference_molecule = Molecule.from_mapped_smiles(
+        reference_smiles, allow_undefined_stereo=True
+    )
+    target_molecule = Molecule.from_mapped_smiles(
+        target_smiles, allow_undefined_stereo=True
+    )
 
     _, atom_map = Molecule.are_isomorphic(
         reference_molecule,

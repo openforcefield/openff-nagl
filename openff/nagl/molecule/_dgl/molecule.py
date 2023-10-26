@@ -55,7 +55,6 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         include_all_transfer_pathways: bool = False,
     ):
         import dgl
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
         if atom_features is None:
@@ -106,8 +105,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             }
         )
 
-        with capture_toolkit_warnings():
-            mapped_smiles = offmols[0].to_smiles(mapped=True)
+        mapped_smiles = offmols[0].to_smiles(mapped=True)
 
         return cls(
             graph=graph,

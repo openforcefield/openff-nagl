@@ -132,8 +132,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         return hybridizations
 
     def to_rdkit(self, molecule: "Molecule"):
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
         try:
             return super().to_rdkit(molecule)
         except AssertionError:
@@ -142,23 +140,22 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             # try patching via smiles
             # smiles = "C1CC/C=C/(CC1)Cl"
 
-            with capture_toolkit_warnings():
-                mapped_smiles = molecule.to_smiles(mapped=True)
-                mol2 = Molecule.from_mapped_smiles(
-                    mapped_smiles,
-                    allow_undefined_stereo=True,
-                    toolkit_registry=RDKitToolkitWrapper(),
-                )
-                mol2_bonds = {
-                    (bd.atom1_index, bd.atom2_index): bd.stereochemistry
-                    for bd in mol2.bonds
-                }
+            mapped_smiles = molecule.to_smiles(mapped=True)
+            mol2 = Molecule.from_mapped_smiles(
+                mapped_smiles,
+                allow_undefined_stereo=True,
+                toolkit_registry=RDKitToolkitWrapper(),
+            )
+            mol2_bonds = {
+                (bd.atom1_index, bd.atom2_index): bd.stereochemistry
+                for bd in mol2.bonds
+            }
 
-                molecule = copy.deepcopy(molecule)
-                for bond in molecule.bonds:
-                    bond._stereochemistry = mol2_bonds[
-                        bond.atom1_index, bond.atom2_index
-                    ]
+            molecule = copy.deepcopy(molecule)
+            for bond in molecule.bonds:
+                bond._stereochemistry = mol2_bonds[
+                    bond.atom1_index, bond.atom2_index
+                ]
 
             return molecule.to_rdkit()
 
@@ -176,11 +173,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         mapped_smiles: str
             The mapped SMILES string.
         """
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
-        with capture_toolkit_warnings():
-            molecule = cls.from_smiles(smiles, allow_undefined_stereo=True)
-            return cls.to_smiles(molecule, mapped=True)
+        molecule = cls.from_smiles(smiles, allow_undefined_stereo=True)
+        return cls.to_smiles(molecule, mapped=True)
 
     @classmethod
     def mapped_smiles_to_smiles(cls, mapped_smiles: str) -> str:
@@ -196,11 +190,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         smiles: str
             The SMILES string.
         """
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
-        with capture_toolkit_warnings():
-            molecule = cls.from_smiles(mapped_smiles, allow_undefined_stereo=True)
-            return cls.to_smiles(molecule)
+        molecule = cls.from_smiles(mapped_smiles, allow_undefined_stereo=True)
+        return cls.to_smiles(molecule)
 
     @classmethod
     def stream_molecules_from_sdf_file(

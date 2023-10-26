@@ -105,25 +105,24 @@ class LabelConformers(_BaseLabel):
             self.n_conformer_column: [],
         }
 
-        with capture_toolkit_warnings():
-            for smiles in batch_smiles:
-                mol = Molecule.from_mapped_smiles(
-                    smiles,
-                    allow_undefined_stereo=True
-                )
-                mol.generate_conformers(
-                    n_conformers=self.n_conformer_pool,
-                    rms_cutoff=rms_cutoff, 
-                )
-                mol.apply_elf_conformer_selection(
-                    limit=self.n_conformers,
-                )
-                conformers = np.ravel([
-                    conformer.m_as(unit.angstrom)
-                    for conformer in mol.conformers
-                ])
-                data[self.conformer_column].append(conformers)
-                data[self.n_conformer_column].append(len(mol.conformers))
+        for smiles in batch_smiles:
+            mol = Molecule.from_mapped_smiles(
+                smiles,
+                allow_undefined_stereo=True
+            )
+            mol.generate_conformers(
+                n_conformers=self.n_conformer_pool,
+                rms_cutoff=rms_cutoff, 
+            )
+            mol.apply_elf_conformer_selection(
+                limit=self.n_conformers,
+            )
+            conformers = np.ravel([
+                conformer.m_as(unit.angstrom)
+                for conformer in mol.conformers
+            ])
+            data[self.conformer_column].append(conformers)
+            data[self.n_conformer_column].append(len(mol.conformers))
         
         conformer_field = pa.field(
             self.conformer_column, pa.list_(pa.float64())

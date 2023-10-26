@@ -11,18 +11,15 @@ def rdkit_molecule_to_smiles(rdkit_molecule):
 
 def clean_smiles(smiles, mapped=False):
     from openff.toolkit.topology.molecule import Molecule
-    from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
-
-    with capture_toolkit_warnings():
-        if mapped:
-            func = Molecule.from_mapped_smiles
-        else:
-            func = Molecule.from_smiles
-        return func(
-            smiles,
-            allow_undefined_stereo=True,
-        ).to_smiles(mapped=mapped)
+    if mapped:
+        func = Molecule.from_mapped_smiles
+    else:
+        func = Molecule.from_smiles
+    return func(
+        smiles,
+        allow_undefined_stereo=True,
+    ).to_smiles(mapped=mapped)
 
 
 def assert_smiles_equal(smiles1: str, smiles2: str, mapped=False):

@@ -195,13 +195,11 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             be provided as it will be ignored.
         """
         from openff.toolkit import Molecule
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
-        with capture_toolkit_warnings():
-            molecule = Molecule.from_mapped_smiles(
-                mapped_smiles,
-                allow_undefined_stereo=True,
-            )
+        molecule = Molecule.from_mapped_smiles(
+            mapped_smiles,
+            allow_undefined_stereo=True,
+        )
         return cls.from_openff(
             molecule,
             labels,
@@ -237,18 +235,16 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         smiles_column: str = "mapped_smiles",
     ):
         from openff.toolkit import Molecule
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
 
         labels = dict(row)
         mapped_smiles = labels.pop(smiles_column)
         atom_features = labels.pop(atom_feature_column)
         bond_features = labels.pop(bond_feature_column)
 
-        with capture_toolkit_warnings():
-            molecule = Molecule.from_mapped_smiles(
-                mapped_smiles,
-                allow_undefined_stereo=True,
-            )
+        molecule = Molecule.from_mapped_smiles(
+            mapped_smiles,
+            allow_undefined_stereo=True,
+        )
 
         if atom_features is not None:
             atom_features = torch.tensor(atom_features).float()
@@ -446,8 +442,6 @@ class DGLMoleculeDataset(Dataset):
         columns: typing.Optional[typing.List[str]] = None,
         n_processes: int = 0,
     ):
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
         if columns is not None:
             columns = list(columns)
             if smiles_column not in columns:
@@ -481,9 +475,8 @@ class DGLMoleculeDataset(Dataset):
             input_dataset.to_batches(columns=columns),
             desc="Featurizing dataset",
         ):
-            with capture_toolkit_warnings():
-                for row in tqdm.tqdm(input_batch.to_pylist(), desc="Featurizing batch"):
-                    entries.append(converter(row))
+            for row in tqdm.tqdm(input_batch.to_pylist(), desc="Featurizing batch"):
+                entries.append(converter(row))
             # with get_mapper_to_processes(n_processes=n_processes) as mapper:
             #     row_entries = list(mapper(converter, input_batch.to_pylist()))
             #     entries.extend(row_entries)
