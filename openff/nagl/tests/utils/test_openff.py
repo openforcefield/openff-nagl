@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
@@ -12,6 +14,7 @@ from openff.nagl.toolkits.openff import (
     normalize_molecule,
     smiles_to_inchi_key,
     calculate_circular_fingerprint_similarity,
+    capture_toolkit_warnings,
 )
 from openff.nagl.utils._utils import transform_coordinates
 
@@ -186,3 +189,29 @@ def test_get_best_rmsd():
         offmol.conformers[1].m_as(unit.angstrom),
     )
     assert_allclose(rmsd, reference_rmsd)
+
+
+def test_capture_toolkit_warnings(caplog):
+    from openff.toolkit.topology.molecule import Molecule
+
+    caplog.clear()
+    smiles = "ClC=CCl"
+    stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
+
+    Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    assert len(caplog.records) == 1
+    assert stereo_warning in caplog.records[0].message
+
+    caplog.clear()
+    with capture_toolkit_warnings():
+        Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    assert len(caplog.records) == 0
+
+    # check that logging goes back to normal outside context manager
+    Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    assert len(caplog.records) == 1
+    assert stereo_warning in caplog.records[0].message
+
+    # check we haven't messed with warnings
+    with pytest.warns(UserWarning):
+        warnings.warn("test")

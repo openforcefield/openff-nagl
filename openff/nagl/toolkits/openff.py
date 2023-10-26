@@ -93,8 +93,6 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
         yield
         return
 
-    warnings.filterwarnings("ignore")
-
     toolkit_logger = logging.getLogger("openff.toolkit")
     openff_logger_level = toolkit_logger.getEffectiveLevel()
     toolkit_logger.setLevel(logging.ERROR)
