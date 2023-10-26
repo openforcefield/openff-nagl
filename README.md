@@ -16,6 +16,10 @@ preprint by Wang, Fass and Chodera.
 
 NAGL is bound by a [Code of Conduct](https://github.com/openforcefield/openff-nagl/blob/main/CODE_OF_CONDUCT.md).
 
+### [Documentation](https://docs.openforcefield.org/projects/nagl/en/latest/?badge=latest)
+
+See our documentation for notes on installation, basic usage, and so on!
+
 ### Installation
 
 To build NAGL from source,
