@@ -213,5 +213,6 @@ def test_capture_toolkit_warnings(caplog):
     assert stereo_warning in caplog.records[0].message
 
     # check we haven't messed with warnings
-    with pytest.warns(UserWarning):
+    with warnings.catch_warnings(record=True) as records:
         warnings.warn("test")
+        assert len(records)
