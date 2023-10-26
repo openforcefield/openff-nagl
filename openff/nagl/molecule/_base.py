@@ -90,14 +90,10 @@ class MoleculeMixin:
     
     def to_openff(self):
         from openff.toolkit.topology import Molecule
-        from openff.nagl.toolkits.openff import capture_toolkit_warnings
-
-        with capture_toolkit_warnings():
-            molecule = Molecule.from_mapped_smiles(
-                self.mapped_smiles,
-                allow_undefined_stereo=True,
-            )
-        
+        molecule = Molecule.from_mapped_smiles(
+            self.mapped_smiles,
+            allow_undefined_stereo=True,
+        )
         return molecule
 
 

@@ -199,18 +199,20 @@ def test_capture_toolkit_warnings(caplog):
     stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
 
     Molecule.from_smiles(smiles, allow_undefined_stereo=True)
-    assert len(caplog.records) == 1
-    assert stereo_warning in caplog.records[0].message
+    # as of toolkit v0.14.4 this warning is no longer raised
+    # assert len(caplog.records) == 1
+    # assert stereo_warning in caplog.records[0].message
 
     caplog.clear()
     with capture_toolkit_warnings():
         Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     assert len(caplog.records) == 0
 
+    # as of toolkit v0.14.4 this warning is no longer raised
     # check that logging goes back to normal outside context manager
-    Molecule.from_smiles(smiles, allow_undefined_stereo=True)
-    assert len(caplog.records) == 1
-    assert stereo_warning in caplog.records[0].message
+    # Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    # assert len(caplog.records) == 1
+    # assert stereo_warning in caplog.records[0].message
 
     # check we haven't messed with warnings
     with warnings.catch_warnings(record=True) as records:
