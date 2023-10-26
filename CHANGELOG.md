@@ -14,6 +14,18 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.3.2
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+
+### Changed
+- Added documentation link in README (PR #66, Issue #63)
+- Removed `capture_toolkit_warnings` usage in Molecule
+  creation as OpenFF Toolkit v0.14.4 no longer needs it,
+  and removed warnings filter from method (PR #65, Issue #64)
+
 ## v0.3.1
 
 ### Authors
