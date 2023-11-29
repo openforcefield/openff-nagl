@@ -47,6 +47,15 @@ class RMSEMetric(BaseMetric):
         # return torch.sqrt(torch.mean((predicted_values - expected_values) ** 2))
 
 
+class WeightedRMSEMetric(BaseMetric):
+    name: typing.Literal["weighted_rmse"] = "weighted_rmse"
+
+    def compute(self, predicted_values, expected_values):
+        difference = predicted_values - expected_values
+        weights = torch.abs(expected_values)
+        mse = torch.mean(weights * difference ** 2)
+        return torch.sqrt(mse)
+
 class MSEMetric(BaseMetric):
     name: typing.Literal["mse"] = "mse"
 
@@ -65,10 +74,11 @@ class MAEMetric(BaseMetric):
         # return torch.mean(torch.abs(predicted_values - expected_values))
 
 
-MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
+MetricType = typing.Union[RMSEMetric, WeightedRMSEMetric, MSEMetric, MAEMetric]
 
 METRICS = {
     "rmse": RMSEMetric,
+    "weighted_rmse": WeightedRMSEMetric,
     "mse": MSEMetric,
     "mae": MAEMetric
 }
