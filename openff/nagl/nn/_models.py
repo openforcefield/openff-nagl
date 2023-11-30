@@ -36,6 +36,14 @@ class BaseGNNModel(pl.LightningModule):
         }
         return readouts
 
+    def _get_embeddings(self, molecule: "DGLMoleculeOrBatch") -> torch.Tensor:
+        self.convolution_module(molecule)
+        readouts: Dict[str, torch.Tensor] = {
+            readout_type: readout_module.pooling_layer.forward(molecule)
+            for readout_type, readout_module in self.readout_modules.items()
+        }
+        return readouts
+
 class GNNModel(BaseGNNModel):
     def __init__(
         self,
@@ -92,6 +100,102 @@ class GNNModel(BaseGNNModel):
         copied.convolution_module = self.convolution_module._as_nagl(copy_weights=True)
         copied.load_state_dict(self.state_dict())
         return copied
+
+    def _convert_molecule_to_nagl(self, molecule: "Molecule"):
+        from openff.nagl.molecule._graph.molecule import GraphMolecule
+
+        nxmol = GraphMolecule.from_openff(
+            molecule,
+            atom_features=self.config.atom_features,
+            bond_features=self.config.bond_features,
+        )
+        return nxmol
+
+    def _convert_molecule_to_dgl(self, molecule: "Molecule"):
+        from openff.nagl.molecule._dgl.molecule import DGLMolecule
+
+        if not self._is_dgl:
+            raise TypeError(
+                "This model is not a DGL-based model "
+                 "and cannot be used to compute properties with the DGL backend"
+            )
+
+        dglmol = DGLMolecule.from_openff(
+            molecule,
+            atom_features=self.config.atom_features,
+            bond_features=self.config.bond_features,
+        )
+        return dglmol
+
+    def _get_molecule_embeddings(
+        self,
+        molecule: "Molecule",
+        as_numpy: bool = True,
+    ):
+        """
+        Compute the embeddings for a molecule.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to compute the embeddings for.
+        as_numpy: bool
+            Whether to return the result as a numpy array.
+            If ``False``, the result will be a ``torch.Tensor``.
+
+        Returns
+        -------
+        embeddings: Dict[str, torch.Tensor]
+            The embeddings for the molecule.
+        """
+        model = self
+        try:
+            graph = self._convert_molecule_to_dgl(molecule)
+        except (MissingOptionalDependencyError, TypeError):
+            graph = self._convert_molecule_to_nagl(molecule)
+            if self._is_dgl:
+                model = self._as_nagl()
+        embeddings = model._get_embeddings(graph)
+        if as_numpy:
+            embeddings = {k: v.detach().numpy().flatten() for k, v in embeddings.items()}
+        return embeddings
+    
+    def _get_unprocessed(
+        self,
+        molecule: "Molecule",
+        as_numpy: bool = True,
+    ):
+        """
+        Compute the unprocessed outputs for a molecule.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to compute the outputs for.
+        as_numpy: bool
+            Whether to return the result as a numpy array.
+            If ``False``, the result will be a ``torch.Tensor``.
+
+        Returns
+        -------
+        outputs: Dict[str, torch.Tensor]
+            The outputs for the molecule.
+        """
+        model = self
+        try:
+            graph = self._convert_molecule_to_dgl(molecule)
+        except (MissingOptionalDependencyError, TypeError):
+            graph = self._convert_molecule_to_nagl(molecule)
+            if self._is_dgl:
+                model = self._as_nagl()
+        embeddings = model._get_embeddings(graph, as_numpy=False)
+        values = {
+            k: readout.readout_layers.forward(embeddings[k])
+            for k, readout in self.readout_modules.items()
+        }
+        if as_numpy:
+            values = {k: v.detach().numpy().flatten() for k, v in values.items()}
+        return values
     
     def compute_properties(
         self,
@@ -133,10 +237,14 @@ class GNNModel(BaseGNNModel):
                 else:
                     warnings.warn(error)
 
+        model = self
         try:
-            values = self._compute_properties_dgl(molecule)
+            graph = self._convert_molecule_to_dgl(molecule)
         except (MissingOptionalDependencyError, TypeError):
-            values = self._compute_properties_nagl(molecule)
+            graph = self._convert_molecule_to_nagl(molecule)
+            if self._is_dgl:
+                model = self._as_nagl()
+        values = model.forward(graph)
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
@@ -190,35 +298,6 @@ class GNNModel(BaseGNNModel):
             )
         return properties[readout_name]
 
-    def _compute_properties_nagl(self, molecule: "Molecule") -> "torch.Tensor":
-        from openff.nagl.molecule._graph.molecule import GraphMolecule
-
-        nxmol = GraphMolecule.from_openff(
-            molecule,
-            atom_features=self.config.atom_features,
-            bond_features=self.config.bond_features,
-        )
-        model = self
-        if self._is_dgl:
-            model = self._as_nagl()
-        return model.forward(nxmol)
-
-    def _compute_properties_dgl(self, molecule: "Molecule") -> "torch.Tensor":
-        from openff.nagl.molecule._dgl.molecule import DGLMolecule
-
-        if not self._is_dgl:
-            raise TypeError(
-                "This model is not a DGL-based model "
-                 "and cannot be used to compute properties with the DGL backend"
-            )
-
-        dglmol = DGLMolecule.from_openff(
-            molecule,
-            atom_features=self.config.atom_features,
-            bond_features=self.config.bond_features,
-        )
-        return self.forward(dglmol)
-    
     @classmethod
     def load(cls, model: str, eval_mode: bool = True):
         """
