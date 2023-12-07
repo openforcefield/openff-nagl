@@ -19,7 +19,7 @@ about: Create a report to help us improve
 <!-- Show us how to reproduce the failure. If you can, use trajectory files from the test data. Use the code snipped below as a starting point. -->
 
 ``` python
-import openff-nagl
+import openff.nagl
 
 ...
 
@@ -27,7 +27,7 @@ import openff-nagl
 
 ## Current environment ##
 
-- Which version are you using? (run `python -c "import openff-nagl; print(openff-nagl.__version__)"`)
+- Which version are you using? (run `python -c "import openff.nagl; print(openff.nagl.__version__)"`)
 - Which version of Python (`python -V`)?
 - Which operating system?
 - What is the output of `pip list`?
