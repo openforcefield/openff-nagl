@@ -176,6 +176,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 cache_directory=cache_dir,
                 use_cached_data=config.use_cached_data,
                 n_processes=self.n_processes,
+                from_file_paths=config.determine_cache_file_from_paths,
             )
         else:
             loader = functools.partial(
@@ -210,7 +211,9 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 columns=columns,
                 cache_directory=cache_dir,
                 extension=".pkl",
+                from_file_paths=config.determine_cache_file_from_paths,
             )
+            print("pickle hash", pickle_hash)
 
             if pickle_hash.exists():
                 if not config.use_cached_data:
@@ -244,7 +247,8 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 paths=config.sources,
                 columns=columns,
                 cache_directory=cache_dir,
-                extension=".pkl"
+                extension=".pkl",
+                from_file_paths=config.determine_cache_file_from_paths,
             )
 
             if pickle_hash.exists():
@@ -290,13 +294,15 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         paths: typing.Tuple[typing.Union[str, pathlib.Path], ...] = tuple(),
         columns: typing.Tuple[str, ...] = tuple(),
         cache_directory: typing.Union[pathlib.Path, str] = ".",
-        extension: str = ""
+        extension: str = "",
+        from_file_paths: bool = False,
     ) -> pathlib.Path:
         dhash = DataHash.from_file(
             *paths,
             columns=columns,
             atom_features=self.config.model.atom_features,
             bond_features=self.config.model.bond_features,
+            from_file_paths=from_file_paths,
         )
         cache_directory = pathlib.Path(cache_directory)
 

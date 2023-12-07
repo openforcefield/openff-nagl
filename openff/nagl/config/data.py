@@ -35,6 +35,17 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
         default=None,
         description="Directory to read cached data from, or cache data in",
     )
+    determine_cache_file_from_paths: bool = Field(
+        default=False,
+        description=(
+            "The cache filename is determined in part from the sources. "
+            "If this is True, the cache filename will be determined from the paths. "
+            "That can be dangerous if datasets get modified or updated, but it is "
+            "much faster if the datasets are large and the paths are stable. "
+            "If this is False, the cache filename will be determined from the "
+            "contents of the files. That is safer, but slower."
+        ),
+    )
     lazy_loading: bool = Field(
         default=False,
         description="Whether to lazily load data",

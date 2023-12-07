@@ -48,6 +48,71 @@ class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=_PostprocessLayerMeta
         """Returns the post-processed input vector."""
 
 
+class NormalizePartialCharges(PostprocessLayer):
+    """
+    Maps a set of atomic electronegativity and hardness parameters to partial charges.
+
+    References
+    ----------
+
+    1. Gilson, Michael K.; Gilson, Hillary S.R.; Potter, Michael J. "Fast
+    assignment of accurate partial atomic charges: an electronegativity
+    equalization method that accounts for alternate resonance forms." `Journal
+    of Chemical Information and Computer Sciences
+    <https://doi.org/10.1021/ci034148o>`_ 43.6 (2003): 1982-1997.
+
+    2. Wang, Yuanqing; Fass, Josh; Stern, Chaya D.; Luo, Kun; Chodera, John
+    D. "Graph Nets for Partial Charge Prediction." `arXiv:1909.07903
+    [physics.comp-ph] <https://doi.org/10.48550/arXiv.1909.07903>`_
+    """
+
+    name: ClassVar[str] = "normalize_partial_charges"
+    n_features: ClassVar[int] = 1
+
+    @staticmethod
+    def _normalize_partial_charges(
+        charges: torch.Tensor,
+        total_charge: float,
+    ) -> torch.Tensor:
+        """
+        Ensure molecules have integer charge
+        """
+        difference = total_charge - charges.sum()
+        normalized = charges + (difference / charges.shape[0])
+        return normalized.reshape(-1, 1)
+
+    def forward(
+        self,
+        molecule: Union[DGLMolecule, DGLMoleculeBatch],
+        inputs: torch.Tensor,
+    ) -> torch.Tensor:
+        raw_charges = inputs[:, 0]
+        formal_charges = molecule.graph.ndata["formal_charge"]
+
+        all_charges = []
+        counter = 0
+        for n_atoms, n_representations in zip(
+            molecule.n_atoms_per_molecule,
+            molecule.n_representations_per_molecule,
+        ):
+            n_atoms = int(n_atoms)
+            representation_charges = []
+            for i in range(n_representations):
+                atom_slice = slice(counter, counter + n_atoms)
+                counter += n_atoms
+
+                charges = self._normalize_partial_charges(
+                    raw_charges[atom_slice],
+                    formal_charges[atom_slice].sum(),
+                )
+                representation_charges.append(charges)
+
+            mean_charges = torch.stack(representation_charges).mean(dim=0)
+            all_charges.append(mean_charges)
+
+        return torch.vstack(all_charges)
+
+
 class ComputePartialCharges(PostprocessLayer):
     """
     Maps a set of atomic electronegativity and hardness parameters to partial charges.

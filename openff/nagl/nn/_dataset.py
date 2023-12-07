@@ -55,19 +55,28 @@ class DataHash(ImmutableModel):
         columns: typing.Optional[typing.List[str]] = None,
         atom_features: typing.Optional[typing.List[AtomFeature]] = None,
         bond_features: typing.Optional[typing.List[BondFeature]] = None,
+        from_file_paths: bool = False,
     ):
-        path_hash = ""
-
-        for path in paths:
-            path = pathlib.Path(path)
-            if path.is_dir():
-                for file in path.glob("**/*"):
-                    if file.is_file():
-                        path_hash += digest_file(file)
-            elif path.is_file():
-                path_hash += digest_file(path)
-            else:
-                path_hash += str(path.resolve())
+        print("FROM FILE PATHS:", paths, from_file_paths)
+        if from_file_paths:
+            path_hash = ", ".join(
+                [
+                    str(pathlib.Path(path).resolve())
+                    for path in paths
+                ]
+            )
+        else:
+            path_hash = ""
+            for path in paths:
+                path = pathlib.Path(path)
+                if path.is_dir():
+                    for file in path.glob("**/*"):
+                        if file.is_file():
+                            path_hash += digest_file(file)
+                elif path.is_file():
+                    path_hash += digest_file(path)
+                else:
+                    path_hash += str(path.resolve())
 
         if columns is None:
             columns = []
@@ -96,13 +105,15 @@ def _get_hashed_arrow_dataset_path(
     atom_features: typing.Optional[typing.List[AtomFeature]] = None,
     bond_features: typing.Optional[typing.List[BondFeature]] = None,
     columns: typing.Optional[typing.List[str]] = None,
-    directory: typing.Optional[pathlib.Path] = None
+    directory: typing.Optional[pathlib.Path] = None,
+    from_file_paths: bool = False,
 ) -> pathlib.Path:
     hash_value = DataHash.from_file(
         path,
         columns=columns,
         atom_features=atom_features,
         bond_features=bond_features,
+        from_file_paths=from_file_paths,
     ).to_hash()
     file_path = f"{hash_value}"
     if directory is not None:
@@ -307,6 +318,7 @@ class _LazyDGLMoleculeDataset(Dataset):
         cache_directory: typing.Optional[pathlib.Path] = None,
         use_cached_data: bool = True,
         n_processes: int = 0,
+        from_file_paths: bool = False,
     ):
         import pyarrow.dataset as ds
 
@@ -320,6 +332,7 @@ class _LazyDGLMoleculeDataset(Dataset):
             atom_features,
             bond_features,
             columns,
+            from_file_paths=from_file_paths,
         ).with_suffix(".arrow")
 
         if cache_directory is not None:

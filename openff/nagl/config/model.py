@@ -10,7 +10,7 @@ from openff.nagl.features.bonds import DiscriminatedBondFeatureType
 from openff.nagl.utils._types import FromYamlMixin
 
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
-PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
+PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges", "normalize_partial_charges"]
 
 try:
     from pydantic.v1 import Field, validator
