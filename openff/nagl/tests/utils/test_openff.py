@@ -222,7 +222,7 @@ def test_capture_toolkit_warnings(caplog):
         warnings.warn("test")
         assert len(records)
 
-
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_openff_toolkit_registry(openff_methane_uncharged):
 
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
