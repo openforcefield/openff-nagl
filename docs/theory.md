@@ -94,8 +94,8 @@ Molecular graphs are provided to NAGL via the [`Molecule`] class of the [OpenFF 
 [`Molecule`]: openff.toolkit.topology.Molecule
 [SMILES string]: openff.toolkit.topology.Molecule.from_smiles
 [.SDF file]: openff.toolkit.topology.Molecule.from_file
-[OpenFF Toolkit]: openff.toolkit:index
-[variety of ways]: openff.toolkit:users/molecule_cookbook
+[OpenFF Toolkit]: inv:openff.toolkit#index
+[variety of ways]: inv:openff.toolkit#users/molecule_cookbook
 [`GNNModel.compute_property()`]: openff.nagl.GNNModel.compute_property
 [`MoleculeRecord.from_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_openff
 [`MoleculeRecord.from_precomputed_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_precomputed_openff

@@ -42,7 +42,7 @@ dependencies:
   - myst-nb
   - myst-parser>=0.16
   - docutils
-  - sphinx<5
+  - sphinx=6
   - sphinx-notfound-page
   - autodoc-pydantic
   - sphinx-click

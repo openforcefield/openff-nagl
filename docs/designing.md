@@ -67,12 +67,12 @@ bond_features:
 
 ```
 
-And then loaded with the [`GNNModel.from_yaml_file()`] method:
+And then loaded with the [`GNNModel.from_yaml()`] method:
 
 ```python
 from openff.nagl import GNNModel
 
-model = GNNModel.from_yaml_file("model.yml")
+model = GNNModel.from_yaml("model.yml")
 ```
 
 Here we'll go through each option, what it means, and where to find the available choices.

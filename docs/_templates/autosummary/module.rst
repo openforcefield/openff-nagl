@@ -13,17 +13,30 @@
 .. automodule:: {{ fullname }}
 
    {% block modules %}
-   {% if modules %}
+
+   {%- set doc_modules = [] -%}
+   {%- for item in all_modules -%}
+      {%- if item.startswith(fullname) -%}
+         {%- set item = item[fullname | length+1:] -%}
+      {%- endif -%}
+      {%- if not (
+         item.startswith('_')
+         or item in exclude_modules
+         or fullname + "." + item in exclude_modules
+      ) -%}
+         {%- set _ = doc_modules.append(item) -%}
+      {%- endif -%}
+   {%- endfor %}
+
+   {% if doc_modules %}
    .. rubric:: Modules
 
    .. autosummary::
       :caption: Modules
       :toctree:
       :recursive:
-   {% for item in modules %}
-   {%- if item not in exclude_modules %}
+   {% for item in doc_modules %}
       ~{{ item }}
-   {% endif -%}
    {%- endfor %}
 
    {% endif %}
