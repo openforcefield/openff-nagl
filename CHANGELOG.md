@@ -14,6 +14,25 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## [Unreleased]
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @lilyminium
+
+### Reviewers
+
+### Added
+
+### Fixed
+<!-- Bug fixes -->
+- Fixed OpenFF molecule conversion with toolkit wrappers (Issue #69, PR #71)
+
+### Changed
+<!-- Changes in existing functionality -->
+
+### Removed
+
 ## v0.3.2
 
 ### Authors
