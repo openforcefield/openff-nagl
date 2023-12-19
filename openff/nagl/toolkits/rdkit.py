@@ -18,8 +18,8 @@ if TYPE_CHECKING:
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     name = "rdkit"
 
-    @staticmethod
     def _run_normalization_reactions(
+        self,
         molecule,
         normalization_reactions: Tuple[str, ...] = tuple(),
         max_iter: int = 200,
@@ -45,7 +45,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         from rdkit import Chem
         from rdkit.Chem import rdChemReactions
 
-        rdmol = molecule.to_rdkit()
+        rdmol = self.to_rdkit(molecule=molecule)
         original_smiles = new_smiles = Chem.MolToSmiles(rdmol)
 
         # track atoms
@@ -85,7 +85,11 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     f"{max_iter} iterations for molecule {original_smiles}"
                 )
 
-        new_mol = type(molecule).from_rdkit(rdmol, allow_undefined_stereo=True)
+        new_mol = self.from_rdkit(
+            rdmol,
+            allow_undefined_stereo=True,
+            _cls=molecule.__class__,
+        )
         mapping = new_mol.properties.pop("atom_map")
         adjusted_mapping = dict((current, new - 1) for current, new in mapping.items())
 
@@ -223,6 +227,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         """
         from rdkit import Chem
 
+        wrapper = cls()
+
         if as_smiles:
             if mapped_smiles:
                 converter = cls.smiles_to_mapped_smiles
@@ -232,7 +238,9 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 )
         else:
             converter = functools.partial(
-                Molecule.from_rdkit, allow_undefined_stereo=True
+                wrapper.from_rdkit,
+                allow_undefined_stereo=True,
+                _cls=Molecule
             )
 
         if file.endswith(".gz"):
@@ -455,7 +463,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 _cls=_cls,
             )
 
-        rdkit_molecule = molecule.to_rdkit()
+        rdkit_molecule = self.to_rdkit(molecule)
         AllChem.ComputeGasteigerCharges(rdkit_molecule)
         charges = [
             float(rdatom.GetProp("_GasteigerCharge"))

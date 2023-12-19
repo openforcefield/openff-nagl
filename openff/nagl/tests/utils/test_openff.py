@@ -3,6 +3,9 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
+from openff.toolkit import RDKitToolkitWrapper
+from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
 from openff.units import unit
 
@@ -218,3 +221,10 @@ def test_capture_toolkit_warnings(caplog):
     with warnings.catch_warnings(record=True) as records:
         warnings.warn("test")
         assert len(records)
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_openff_toolkit_registry(openff_methane_uncharged):
+
+    rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
+    with toolkit_registry_manager(rdkit_registry):
+        normalize_molecule(openff_methane_uncharged)

@@ -41,13 +41,17 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
 
         from openeye import oechem
 
-        oemol = molecule.to_openeye()
+        oemol = self.to_openeye(molecule=molecule)
 
         for reaction_smarts in normalization_reactions:
             reaction = oechem.OEUniMolecularRxn(reaction_smarts)
             reaction(oemol)
 
-        molecule = type(molecule).from_openeye(oemol, allow_undefined_stereo=True)
+        molecule = self.from_openeye(
+            oemol,
+            allow_undefined_stereo=True,
+            _cls=molecule.__class__,
+        )
 
         return molecule
 
@@ -80,7 +84,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         }
 
         hybridizations = []
-        oemol = molecule.to_openeye()
+        oemol = self.to_openeye(molecule=molecule)
         oechem.OEAssignHybridization(oemol)
 
         for atom in oemol.GetAtoms():
@@ -119,7 +123,11 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         has_charges = (
             OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
         )
-        offmol = Molecule.from_openeye(oemol, allow_undefined_stereo=True)
+        offmol = self.from_openeye(
+            oemol,
+            allow_undefined_stereo=True,
+            _cls=Molecule,
+        )
         if not has_charges:
             offmol.partial_charges = None
         if as_smiles:
