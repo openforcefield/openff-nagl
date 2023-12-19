@@ -32,6 +32,31 @@ In environments with this configuration, the `-c conda-forge` switch is unnecess
 
 More information on installing OpenFF packages can be found in the [OpenFF installation documentation](openff.docs:install).
 
+## Installation from source
+
+You may want to install NAGL from source, either because you are after an unreleased feature or to manage your own dependencies. To do so, first download the GitHub repository:
+
+```shell
+git clone https://github.com/openforcefield/openff-nagl.git
+cd openff-nagl
+```
+
+Install the dependencies:
+
+```shell
+mamba env create --name nagl --file devtools/conda-envs/test_env.yaml
+conda activate nagl
+```
+
+And then install the package itself:
+
+```shell
+python -m pip install . --no-deps
+```
+
+
+
+
 [Conda Forge]: https://conda-forge.org/
 [MambaForge]: https://github.com/conda-forge/miniforge#mambaforge
 
