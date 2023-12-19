@@ -1,6 +1,5 @@
 name: openff-nagl-test
 channels:
-  - dglteam
   - openeye
   - conda-forge
   - defaults
@@ -31,7 +30,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - dglteam::dgl >=1.0
+  - dgl >=1.0
   - pytorch
   - pytorch-lightning
   - tensorboard
