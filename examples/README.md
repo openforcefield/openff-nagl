@@ -1,8 +1,8 @@
 # Examples Using OpenFF NAGL
 
-The following examples are available in [the OpenFF NAGL repository](https://github.com/openforcefield/openff-nagl/tree/main/examples). Each can be run interactively in the browser with [binder](https://mybinder.org/v2/gh/openforcefield/openff-nagl/main?filepath=%2Fexamples%2F), without installing anything on your computer. 
+The following examples are available in [the OpenFF NAGL repository](https://github.com/openforcefield/openff-nagl/tree/main/examples). They can also be viewed at the [official Open Force Field documentation page](https://docs.openforcefield.org/en/latest/examples.html), where they can be downloaded or run in Google Colab using the links at the top of the page.
 
 ## Index of provided examples
 
-* [prepare-dataset](https://github.com/openforcefield/openff-nagl/tree/main/examples/prepare-dataset) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/openforcefield/openff-nagl/main?labpath=examples%2Fprepare-dataset%2Fprepare-dataset.ipynb) - Prepare a dataset for training, validating or testing NAGL models from a list of SMILES and the OpenFF Toolkit
-* [train-gnn-notebook](https://github.com/openforcefield/openff-nagl/tree/main/examples/train-gnn-notebook) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/openforcefield/openff-nagl/main?labpath=examples%2Ftrain-gnn-notebook%2Ftrain-gnn-notebook.ipynb) - Architect, train, and use a simple GCN partial charge model on an alkane test dataset
+* [prepare-dataset](https://github.com/openforcefield/openff-nagl/tree/main/examples/prepare-dataset) - Prepare a dataset for training, validating or testing NAGL models from a list of SMILES and the OpenFF Toolkit
+* [train-gnn-notebook](https://github.com/openforcefield/openff-nagl/tree/main/examples/train-gnn-notebook) - Architect, train, and use a simple GCN partial charge model on an alkane test dataset
