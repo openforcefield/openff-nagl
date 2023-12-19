@@ -22,6 +22,7 @@ dependencies:
   # chemistry
   - openff-toolkit >=0.11.1
   - openff-units
+  - openff-recharge
   - pydantic <3
   - rdkit
   - openeye-toolkits
