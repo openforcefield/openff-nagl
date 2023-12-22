@@ -14,6 +14,24 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## [Unreleased]
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+
+### Reviewers
+
+### Added
+
+### Fixed
+<!-- Bug fixes -->
+
+### Changed
+<!-- Changes in existing functionality -->
+
+### Removed
+
+
 ## v0.3.3 - 2023-12-22
 
 ### Authors
