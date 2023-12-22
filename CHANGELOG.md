@@ -19,10 +19,12 @@ The rules for this file:
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @lilyminium
+- @IAlibay
 
 ### Fixed
 <!-- Bug fixes -->
 - Fixed OpenFF molecule conversion with toolkit wrappers (Issue #69, PR #71)
+- Bug report templates
 
 ## v0.3.2 - 2023-10-26
 
