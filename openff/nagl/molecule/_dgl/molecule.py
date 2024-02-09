@@ -98,7 +98,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         ]
         graph = dgl.batch(subgraphs)
         n_nodes = graph.batch_num_nodes().sum().reshape((-1,))
-        graph.set_batch_num_nodes(n_nodes.astype(torch.int32))
+        graph.set_batch_num_nodes(n_nodes.type(torch.int32))
         graph.set_batch_num_edges(
             {
                 e_type: graph.batch_num_edges(e_type).sum().reshape((-1,))
