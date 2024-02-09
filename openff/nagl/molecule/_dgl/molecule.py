@@ -99,12 +99,11 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         graph = dgl.batch(subgraphs)
         n_nodes = graph.batch_num_nodes().sum().reshape((-1,))
         graph.set_batch_num_nodes(n_nodes.type(torch.int32))
-        graph.set_batch_num_edges(
-            {
-                e_type: graph.batch_num_edges(e_type).sum().reshape((-1,))
-                for e_type in graph.canonical_etypes
-            }
-        )
+        edges = {}
+        for e_type in graph.canonical_etypes:
+            n_edge = graph.batch_num_edges(e_type).sum().reshape((-1,))
+            edges[e_type] = n_edge.type(torch.int32)
+        graph.set_batch_num_edges(edges)
 
         mapped_smiles = offmols[0].to_smiles(mapped=True)
 
