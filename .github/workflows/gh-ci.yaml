@@ -109,7 +109,7 @@ jobs:
         verbose: True
         # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
   
-    main_tests:
+  main_tests_cuda:
     name: CUDA CI (py-${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
