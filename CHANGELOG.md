@@ -25,6 +25,7 @@ The rules for this file:
 
 ### Fixed
 <!-- Bug fixes -->
+- Fixed batch distribution hardcoding (Issue #80, PR #82)
 
 ### Changed
 <!-- Changes in existing functionality -->

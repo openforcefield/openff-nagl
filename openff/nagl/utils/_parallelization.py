@@ -121,7 +121,7 @@ def batch_distributed(
     env_extra = []
     if worker_type != "local":
         env_extra.extend(
-            dask.config.get("jobqueue.job-script-prologue", default=[])
+            dask.config.get(f"jobqueue.{worker_type}.job-script-prologue", default=[])
         )
     env_extra.append(f"{package_manager} activate {conda_environment}")
 
