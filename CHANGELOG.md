@@ -18,6 +18,7 @@ The rules for this file:
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
+- lilyminium
 
 ### Reviewers
 
@@ -26,6 +27,7 @@ The rules for this file:
 ### Fixed
 <!-- Bug fixes -->
 - Fixed batch distribution hardcoding (Issue #80, PR #82)
+- Fixed node and edge typing, adding DGL 2.0 compatibility (Issue #78, PR #79)
 
 ### Changed
 <!-- Changes in existing functionality -->
