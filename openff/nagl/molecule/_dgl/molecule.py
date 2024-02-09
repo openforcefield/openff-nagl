@@ -97,7 +97,8 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             for offmol in offmols
         ]
         graph = dgl.batch(subgraphs)
-        graph.set_batch_num_nodes(graph.batch_num_nodes().sum().reshape((-1,)))
+        n_nodes = graph.batch_num_nodes().sum().reshape((-1,))
+        graph.set_batch_num_nodes(n_nodes.astype(torch.int32))
         graph.set_batch_num_edges(
             {
                 e_type: graph.batch_num_edges(e_type).sum().reshape((-1,))
