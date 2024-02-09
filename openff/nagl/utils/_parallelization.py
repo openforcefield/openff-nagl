@@ -118,9 +118,11 @@ def batch_distributed(
         f"Setting n_workers={n_workers} for {n_batches} batches"
     )
 
-    env_extra = dask.config.get("jobqueue.lsf.job-script-prologue", default=[])
-    if not env_extra:
-        env_extra = []
+    env_extra = []
+    if worker_type != "local":
+        env_extra.extend(
+            dask.config.get("jobqueue.job-script-prologue", default=[])
+        )
     env_extra.append(f"{package_manager} activate {conda_environment}")
 
 
