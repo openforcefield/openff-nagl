@@ -340,5 +340,5 @@ class TestTrainingGNNModel:
 def test_train_model_no_error(example_training_config):
     model = TrainingGNNModel(example_training_config)
     data = DGLMoleculeDataModule(example_training_config)
-    trainer = pl.Trainer(gpus=1, max_epochs=2)
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2)
     trainer.fit(model, datamodule=data)
