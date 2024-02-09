@@ -5,6 +5,7 @@ import shutil
 
 import torch
 import numpy as np
+import pytorch_lightning as pl
 
 from openff.nagl.training.training import DGLMoleculeDataModule, DataHash, TrainingGNNModel
 from openff.nagl.nn._models import GNNModel
@@ -334,3 +335,10 @@ class TestTrainingGNNModel:
         loss = loss["loss"]
         assert torch.isclose(loss, torch.tensor([expected_loss], dtype=torch.float32))
         assert torch.isclose(loss, torch.tensor([123.534743]))
+
+
+def test_train_model_no_error(example_training_config):
+    model = TrainingGNNModel(example_training_config)
+    data = DGLMoleculeDataModule(example_training_config)
+    trainer = pl.Trainer(gpus=1, max_epochs=2)
+    trainer.fit(model, datamodule=data)
