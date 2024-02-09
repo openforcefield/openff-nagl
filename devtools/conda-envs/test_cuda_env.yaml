@@ -1,0 +1,47 @@
+name: openff-nagl-test-cuda
+channels:
+  - openeye
+  - dglteam
+  - conda-forge
+  - defaults
+dependencies:
+    # Base depends
+  - python
+  - pip
+
+  # UI
+  - click
+  - click-option-group
+  - tqdm
+  - rich
+
+  # chemistry
+  - openff-recharge
+  - openff-toolkit-base >=0.11.1
+  - openff-units
+  - pydantic <3
+  - rdkit
+  - openeye-toolkits
+
+  # database
+  - pyarrow
+
+  # gcn
+  - cudatoolkit
+  - dgl >=1.0
+  - pytorch >=2.0
+  - pytorch-lightning
+  - pytorch-cuda
+
+  # parallelism
+  - dask-jobqueue
+
+  # Testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - codecov
+
+  # Pip-only installs
+  - pip:
+    - rich
