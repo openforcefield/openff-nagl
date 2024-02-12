@@ -37,6 +37,7 @@ dependencies:
 
   # Pip-only installs
   - pip:
+    - git+https://github.com/openforcefield/openff-utilities.git@main
     - git+https://github.com/openforcefield/openff-toolkit.git@main
     - git+https://github.com/openforcefield/openff-recharge.git@main
     - git+https://github.com/openforcefield/openff-units.git@main
