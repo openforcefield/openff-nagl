@@ -21,7 +21,6 @@ dependencies:
   - openff-units
   - pydantic <3
   - rdkit
-  - openeye-toolkits
   - scipy
 
   # database

@@ -16,6 +16,11 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install OpenEye
+      shell: ${{ inputs.shell }}
+      run: |
+        mamba install -y -c openeye openeye-toolkits
+        
     - name: Make oe_license.txt file from GH org secret "OE_LICENSE"
       shell: ${{ inputs.shell }}
       run: |
