@@ -21,6 +21,7 @@ dependencies:
   - pydantic <3
   - rdkit
   - openeye-toolkits
+  - scipy
 
   # database
   - pyarrow
