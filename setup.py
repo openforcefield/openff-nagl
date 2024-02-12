@@ -40,7 +40,7 @@ setup(
     # Customize MANIFEST.in if the general case does not suit your needs
     # Comment out this line to prevent the files from being packaged with your software
     include_package_data=True,
-    python_requires=">=3.8",          # Python version restrictions
+    python_requires=">=3.10",          # Python version restrictions
     # Allows `setup.py test` to work correctly with pytest
     setup_requires=[] + pytest_runner,
     # Required packages, pulls from pip if needed
@@ -51,7 +51,7 @@ setup(
         "tqdm",
         "openff-toolkit",
         "openff-units",
-        "pydantic<2.0",
+        "pydantic",
         "rdkit",
     ],
     # Additional entries you may want simply uncomment the lines you want and fill in the data
