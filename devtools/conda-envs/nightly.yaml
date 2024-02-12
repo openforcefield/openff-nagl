@@ -40,7 +40,10 @@ dependencies:
   - cached-property
   - importlib_resources
   - mdtraj
+  - openff-amber-ff-ports
+  - openmm
   - pint
+  - python-constraint
   - qcelemental
   - qcportal
   - sqlalchemy
@@ -50,6 +53,7 @@ dependencies:
   # Pip-only installs
   - pip:
     - git+https://github.com/openforcefield/openff-utilities.git@main
+    - git+https://github.com/openforcefield/openff-interchange.git@main
     - git+https://github.com/openforcefield/openff-toolkit.git@main
     - git+https://github.com/openforcefield/openff-recharge.git@main
     - git+https://github.com/openforcefield/openff-units.git@main
