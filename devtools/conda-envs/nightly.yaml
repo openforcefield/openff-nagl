@@ -28,13 +28,24 @@ dependencies:
 
   # parallelism
   - dask-jobqueue
-  - pint
 
   # Testing
   - pytest
   - pytest-cov
   - pytest-xdist
   - codecov
+
+  # other openff dependencies
+  - cachetools
+  - cached-property
+  - importlib_resources
+  - mdtraj
+  - pint
+  - qcelemental
+  - qcportal
+  - sqlalchemy
+  - sqlite
+  - xmltodict
 
   # Pip-only installs
   - pip:
