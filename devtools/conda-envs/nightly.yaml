@@ -24,7 +24,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - pytorch::pytorch-nightly
+  - pytorch
 
   # parallelism
   - dask-jobqueue
