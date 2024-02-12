@@ -28,6 +28,7 @@ dependencies:
 
   # parallelism
   - dask-jobqueue
+  - pint
 
   # Testing
   - pytest
