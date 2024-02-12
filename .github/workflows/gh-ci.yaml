@@ -56,7 +56,7 @@ jobs:
     - name: Install environment
       uses: mamba-org/setup-micromamba@v1
       with:
-        environment-file: devtools/conda-envs/test_env_dgl_${{ matirx.include-dgl }}.yaml
+        environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
           python=${{ matrix.python-version }}
           pydantic=${{ matrix.pydantic-version }}
