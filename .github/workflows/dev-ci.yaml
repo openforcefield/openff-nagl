@@ -1,0 +1,69 @@
+name: Dev version CI
+on:
+  schedule:
+    # weekly tests, Sundays at midnight
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  # Specific group naming so CI is only cancelled
+  # within same PR or on merge to main
+  group: ${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  nightly_check:
+    name: Nightly check
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [macOS-latest, ubuntu-latest]
+          python-version: ["3.10", "3.11", "3.12"]
+        exclude:
+          # mdtraj currently doesn't support MacOS py3.12
+          - os: "macOS-latest"
+            python-version: "3.12"
+
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build information
+      run: |
+        uname -a
+        df -h
+        ulimit -a
+
+    - name: Install environment
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-file: devtools/conda-envs/nightly.yaml
+        create-args: >-
+          python=${{ matrix.python-version }}
+          pydantic=2
+    
+    - name: Install nightly pytorch-lightning and DGL
+      run: |
+        python -m pip install --pre dgl -f https://data.dgl.ai/wheels-test/repo.html
+        python -m pip install --pre dglgo -f https://data.dgl.ai/wheels-test/repo.html
+        python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U  
+
+    - name: Install package
+      run: |
+        python -m pip install . --no-deps
+
+    - name: Python information
+      run: |
+        which python
+        conda info
+        conda list
+
+    - name: Run tests
+      run: |
+        python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
+
