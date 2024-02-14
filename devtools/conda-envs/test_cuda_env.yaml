@@ -1,0 +1,50 @@
+# environment for testing cuda
+name: openff-nagl-test-cuda
+channels:
+  - openeye
+  - dglteam/label/cu117
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+    # Base depends
+  - python
+  - pip
+
+  # UI
+  - click
+  - click-option-group
+  - tqdm
+  - rich
+
+  # chemistry
+  - openff-recharge
+  - openff-toolkit-base >=0.11.1
+  - openff-units
+  - pydantic <3
+  - rdkit
+  - openeye-toolkits
+
+  # database
+  - pyarrow
+
+  # gcn
+  - cudatoolkit
+  - dgl ==1.1.2
+  - pytorch >=2.0
+  - pytorch-lightning
+  - pytorch-cuda ==11.7
+
+  # parallelism
+  - dask-jobqueue
+
+  # Testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - codecov
+
+  # Pip-only installs
+  - pip:
+    - rich
