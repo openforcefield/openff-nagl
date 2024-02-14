@@ -18,7 +18,8 @@ The rules for this file:
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
-- lilyminium
+- @lilyminium
+- @mattwthompson
 
 ### Reviewers
 
@@ -26,6 +27,8 @@ The rules for this file:
 
 ### Fixed
 <!-- Bug fixes -->
+- Fixed CUDA launch error (Issue #81, PR #83)
+- Updated versioneer (PR #86)
 - Fixed batch distribution hardcoding (Issue #80, PR #82)
 - Fixed node and edge typing, adding DGL 2.0 compatibility (Issue #78, PR #79)
 
