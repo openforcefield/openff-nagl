@@ -14,16 +14,12 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## [Unreleased]
+## v0.3.4 -- 2024-02-15
 
 ### Authors
 <!-- GitHub usernames of contributors to this release -->
 - @lilyminium
 - @mattwthompson
-
-### Reviewers
-
-### Added
 
 ### Fixed
 <!-- Bug fixes -->
@@ -31,11 +27,6 @@ The rules for this file:
 - Updated versioneer (PR #86)
 - Fixed batch distribution hardcoding (Issue #80, PR #82)
 - Fixed node and edge typing, adding DGL 2.0 compatibility (Issue #78, PR #79)
-
-### Changed
-<!-- Changes in existing functionality -->
-
-### Removed
 
 
 ## v0.3.3 - 2023-12-22
