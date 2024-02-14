@@ -20,13 +20,12 @@ dependencies:
   - openff-units
   - pydantic <3
   - rdkit
-  - openeye-toolkits
+  - scipy
 
   # database
   - pyarrow
 
   # gcn
-  - dgl >=1.0
   - pytorch >=2.0
   - pytorch-lightning
 

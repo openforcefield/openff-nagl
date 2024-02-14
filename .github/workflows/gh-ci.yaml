@@ -6,6 +6,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # weekly tests, Sundays at midnight
+    - cron: "0 0 * * 0"
 
 concurrency:
   # Specific group naming so CI is only cancelled
@@ -28,7 +31,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.9", "3.10"]
+          python-version: ["3.10", "3.11", "3.12"]
           pydantic-version: ["1", "2"]
           include-rdkit: [true, false]
           include-openeye: [true, false]
@@ -36,12 +39,15 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-              # broken OpenMM build for Mac on 3.10
+            # broken OpenMM build for Mac on 3.10
             - os: "macOS-latest"
               python-version: "3.10"
-            # - os: "macOS-latest"
-            #   python-version: "3.9"
-            #   include-dgl: false
+            # no dgl for 3.12 yet
+            - include-dgl: true
+              python-version: "3.12"
+            # no openeye for 3.12 yet
+            - include-openeye: true
+              python-version: "3.12"
 
 
     steps:
@@ -56,7 +62,7 @@ jobs:
     - name: Install environment
       uses: mamba-org/setup-micromamba@v1
       with:
-        environment-file: devtools/conda-envs/test_env.yaml
+        environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
           python=${{ matrix.python-version }}
           pydantic=${{ matrix.pydantic-version }}
@@ -86,10 +92,6 @@ jobs:
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
-    - name: Uninstall DGL
-      if: matrix.include-dgl == false
-      run: conda remove --force dgl --yes || echo "dgl not installed"
-
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
       run: |
@@ -109,6 +111,7 @@ jobs:
         verbose: True
         # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
   
+
   pylint_check:
     runs-on: ubuntu-latest
 
@@ -164,7 +167,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          python-version: ["3.9", "3.10"]
+          python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v3
@@ -187,7 +190,7 @@ jobs:
         conda activate openff-nagl
         conda list
     
-        mamba env update --name openff-nagl --file devtools/conda-envs/test_env.yaml
+        mamba env update --name openff-nagl --file devtools/conda-envs/test_env_dgl_false.yaml
         mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version
         python -m pip install . --no-deps
