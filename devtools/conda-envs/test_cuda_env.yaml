@@ -2,8 +2,9 @@
 name: openff-nagl-test-cuda
 channels:
   - openeye
-  - dglteam
+  - dglteam/label/cu117
   - pytorch
+  - nvidia
   - conda-forge
   - defaults
 dependencies:
@@ -30,10 +31,10 @@ dependencies:
 
   # gcn
   - cudatoolkit
-  - dgl >=1.0
+  - dgl ==1.1.2
   - pytorch >=2.0
   - pytorch-lightning
-  - pytorch-cuda
+  - pytorch-cuda ==11.7
 
   # parallelism
   - dask-jobqueue
