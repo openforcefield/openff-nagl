@@ -1,5 +1,8 @@
 NAGL
 ==============================
+
+![NAGL logo](docs/_static/nagl-logo.png)
+
 [//]: # (Badges)
 
 | **Latest release** | [![Last release tag](https://img.shields.io/github/release-pre/openforcefield/openff-nagl.svg)](https://github.com/openforcefield/openff-nagl/releases) ![GitHub commits since latest release (by date) for a branch](https://img.shields.io/github/commits-since/openforcefield/openff-nagl/latest)  [![Documentation Status](https://readthedocs.org/projects/openff-nagl/badge/?version=latest)](https://docs.openforcefield.org/projects/nagl/en/latest/?badge=latest)                                                                                                        |
