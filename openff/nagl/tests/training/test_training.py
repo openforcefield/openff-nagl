@@ -338,8 +338,42 @@ class TestTrainingGNNModel:
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_train_model_no_error(example_training_config):
-    model = TrainingGNNModel(example_training_config)
-    data = DGLMoleculeDataModule(example_training_config)
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2)
-    trainer.fit(model, datamodule=data)
+def test_train_model_no_error(example_training_config, tmpdir):
+
+    data_module = DGLMoleculeDataModule(example_training_config)
+
+    with tmpdir.as_cwd():
+        shutil.copy(
+            EXAMPLE_FEATURIZED_LAZY_DATA.resolve(),
+            "."
+        )
+        shutil.copy(
+            EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(),
+            "."
+        )
+        shutil.copytree(
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+        )
+        shutil.copytree(
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+        )
+        for stage in ["train", "val", "test"]:
+            config = data_module._dataset_configs[stage]
+            config = config.copy(
+                update={
+                    "use_cached_data": True,
+                    "cache_directory": ".",
+                }
+            )
+            data_module._dataset_configs[stage] = config
+
+        data_module.prepare_data()
+        assert isinstance(data_module.train_dataloader(), DGLMoleculeDataLoader)
+
+        model = TrainingGNNModel(example_training_config)
+        trainer = pl.Trainer(
+            accelerator="gpu", devices=1, max_epochs=2,
+        )
+        trainer.fit(model, datamodule=data_module)

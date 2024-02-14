@@ -623,9 +623,7 @@ class DGLMoleculeDataLoader(DataLoader):
         super().__init__(
             dataset=dataset,
             batch_size=batch_size,
-            num_workers=1,  # otherwise shared memory issues
             collate_fn=self._collate,
-            # pin_memory=True,
             **kwargs,
         )
 

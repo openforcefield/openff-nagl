@@ -1,7 +1,9 @@
+# environment for testing cuda
 name: openff-nagl-test-cuda
 channels:
   - openeye
   - dglteam
+  - pytorch
   - conda-forge
   - defaults
 dependencies:
