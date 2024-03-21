@@ -14,6 +14,17 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.3.5 -- 2024-03-21
+
+### Authors
+<!-- GitHub usernames of contributors to this release -->
+- @Yoshanuikabundi
+- @lilyminium
+
+### Fixed
+- Fixes to docs and examples (Issue #92, PR #73)
+
+
 ## v0.3.4 -- 2024-02-15
 
 ### Authors
