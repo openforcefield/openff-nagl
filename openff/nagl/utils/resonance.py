@@ -24,14 +24,15 @@ def enumerate_resonance_forms(
     as_dicts: bool = False,
 ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
     """
+    Find all resonance structures of ``molecule`` according to Gilson et al [1].
+
     Recursively attempts to find all resonance structures of an input molecule
     according to a modified version of the algorithm proposed by Gilson et al [1].
-
     Enumeration proceeds by:
 
     1. The molecule is turned into a ``networkx`` graph object.
     2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
-    will not be involved in electron transfer.
+       will not be involved in electron transfer.
     3. Disjoint sub-graphs are detected and separated out.
     4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
     5. For each disjoint subgraph:
@@ -48,11 +49,11 @@ def enumerate_resonance_forms(
     .. note::
 
         * This method will strip all stereochemistry and aromaticity information from
-        the input molecule.
+          the input molecule.
         * The method only attempts to enumerate resonance forms that occur when a
-        pair of electrons can be transferred along a conjugated path from a donor to
-        an acceptor. Other types of resonance, e.g. different Kekule structures, are
-        not enumerated.
+          pair of electrons can be transferred along a conjugated path from a donor to
+          an acceptor. Other types of resonance, e.g. different Kekule structures, are
+          not enumerated.
 
     Parameters
     ----------
@@ -85,7 +86,7 @@ def enumerate_resonance_forms(
 
     Returns
     -------
-    resonance_forms: List[Molecule]
+    resonance_forms
         A list of all resonance forms including the original molecule.
 
     """
@@ -107,13 +108,13 @@ class ResonanceEnumerator:
 
     1. The molecule is turned into a ``networkx`` graph object at :attr:`ResonanceEnumerator.graph`.
     2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
-    will not be involved in electron transfer, yielding :attr:`ResonanceEnumerator.reduced_graph`.
+       will not be involved in electron transfer, yielding :attr:`ResonanceEnumerator.reduced_graph`.
     3. Disjoint sub-graphs are detected and separated out.
     4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
     5. For each disjoint subgraph:
         a) The ``networkx`` graph is converted to a :class:`FragmentEnumerator`
         b) The original v-charge algorithm is applied to yield the resonance structures
-        of that subgraph, using :meth:`FragmentEnumerator.enumerate_resonance_forms`
+           of that subgraph, using :meth:`FragmentEnumerator.enumerate_resonance_forms`
 
     """
 
@@ -137,12 +138,12 @@ class ResonanceEnumerator:
 
         1. The molecule is turned into a ``networkx`` graph object.
         2. All hydrogen's and uncharged sp3 carbons are removed from the graph as these
-        will not be involved in electron transfer.
+           will not be involved in electron transfer.
         3. Disjoint sub-graphs are detected and separated out.
         4. Sub-graphs that don't contain at least 1 donor and 1 acceptor are discarded
         5. For each disjoint subgraph:
             a) The original v-charge algorithm is applied to yield the resonance structures
-            of that subgraph.
+               of that subgraph.
 
         Parameters
         ----------
@@ -177,7 +178,7 @@ class ResonanceEnumerator:
 
         Returns
         -------
-        resonance_forms: List[Molecule]
+        resonance_forms
             A list of all resonance forms including the original molecule.
 
         """

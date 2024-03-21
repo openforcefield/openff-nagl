@@ -1,6 +1,5 @@
 name: openff-nagl-docs
 channels:
-  - dglteam
   - openeye
   - conda-forge
   - defaults
@@ -26,7 +25,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - dglteam::dgl >=0.7
+  - dgl >=1.0
   - pytorch
   - pytorch-lightning
 
@@ -43,7 +42,7 @@ dependencies:
   - myst-nb
   - myst-parser>=0.16
   - docutils
-  - sphinx<5
+  - sphinx=6
   - sphinx-notfound-page
   - autodoc-pydantic
   - sphinx-click

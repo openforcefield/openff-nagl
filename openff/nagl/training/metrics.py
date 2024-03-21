@@ -72,6 +72,9 @@ METRICS = {
     "mse": MSEMetric,
     "mae": MAEMetric
 }
+"""
+Mapping from metric names to the corresponding classes.
+"""
 
 
 def get_metric_type(metric):

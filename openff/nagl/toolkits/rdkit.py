@@ -157,9 +157,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
             molecule = copy.deepcopy(molecule)
             for bond in molecule.bonds:
-                bond._stereochemistry = mol2_bonds[
-                    bond.atom1_index, bond.atom2_index
-                ]
+                bond._stereochemistry = mol2_bonds[bond.atom1_index, bond.atom2_index]
 
             return molecule.to_rdkit()
 
@@ -417,6 +415,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Parameters
         ----------
+
         molecule : openff.toolkit.topology.Molecule
             Molecule for which partial charges are to be computed
         partial_charge_method : str, optional, default=None
@@ -443,9 +442,12 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Raises
         ------
-        ChargeMethodUnavailableError if the requested charge method can not be handled by this toolkit
 
-        ChargeCalculationError if the charge method is supported by this toolkit, but fails
+        ChargeMethodUnavailableError
+            if the requested charge method can not be handled by this toolkit
+        ChargeCalculationError
+            if the charge method is supported by this toolkit, but fails
+
         """
 
         # TODO: Remove when superseded by toolkit update

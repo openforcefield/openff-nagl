@@ -94,4 +94,4 @@ trainer.test(model, data_module)
 model.save("model.pt")
 ```
 
-[`Trainer`]: pytorch_lightning:common/trainer
+[`Trainer`]: inv:pytorch_lightning#common/trainer
