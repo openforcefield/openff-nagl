@@ -42,9 +42,10 @@ jobs:
             # broken OpenMM build for Mac on 3.10
             - os: "macOS-latest"
               python-version: "3.10"
-            # no dgl for 3.12 yet
+            # no dgl for 3.12 yet on Mac
             - include-dgl: true
               python-version: "3.12"
+              os: "macOS-latest"
             # no openeye for 3.12 yet
             - include-openeye: true
               python-version: "3.12"
@@ -71,12 +72,6 @@ jobs:
       run: |
         python -m pip install . --no-deps
 
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
-
     - uses: ./.github/actions/include-openeye
       if: matrix.include-openeye == true
       with:
@@ -91,6 +86,12 @@ jobs:
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
+
+    - name: Python information
+      run: |
+        which python
+        conda info
+        conda list
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
