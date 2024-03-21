@@ -39,3 +39,7 @@ dependencies:
   # parallelism
   - dask-jobqueue
 
+
+  # CI
+  - nbval
+  - pytest
