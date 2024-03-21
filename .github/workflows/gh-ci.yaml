@@ -42,6 +42,10 @@ jobs:
             # broken OpenMM build for Mac on 3.10
             - os: "macOS-latest"
               python-version: "3.10"
+            # no dgl for 3.12 yet on Mac
+            - include-dgl: true
+              python-version: "3.12"
+              os: "macOS-latest"
             # no openeye for 3.12 yet
             - include-openeye: true
               python-version: "3.12"
