@@ -43,3 +43,4 @@ dependencies:
   # CI
   - nbval
   - pytest
+  - pytest-xdist
