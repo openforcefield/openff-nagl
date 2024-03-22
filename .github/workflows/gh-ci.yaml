@@ -190,7 +190,6 @@ jobs:
         conda activate openff-nagl
         conda list
     
-        mamba env update --name openff-nagl --file devtools/conda-envs/test_env_dgl_false.yaml
         mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version
         python -m pip install . --no-deps
