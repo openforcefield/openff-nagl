@@ -1,6 +1,5 @@
 name: openff-nagl-test
 channels:
-  - openeye
   - conda-forge
   - defaults
 dependencies:
@@ -25,7 +24,6 @@ dependencies:
   - openff-recharge
   - pydantic <3
   - rdkit
-  - openeye-toolkits
 
   # database
   - pyarrow
