@@ -103,7 +103,7 @@ class TestLabelCharges:
     def test_label_alkane_dataset(self):
         # test conformer generation and labelling
         # as in examples
-        
+
         training_alkanes = [
             'C',
             'CC',
@@ -124,7 +124,10 @@ class TestLabelCharges:
             overwrite_existing=True,
         )
         training_df = training_dataset.to_pandas()
-        assert training_df.mapped_smiles[0] == "[H:2][C:1]([H:3])([H:4])[H:5]"
+        assert training_df.mapped_smiles[0] in (
+            "[H:2][C:1]([H:3])([H:4])[H:5]",
+            "[C:1]([H:2])([H:3])([H:4])[H:5]"
+        )
 
         label_conformers = LabelConformers(
             # create a new 'conformers' with output conformers
