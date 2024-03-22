@@ -14,6 +14,14 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.3.6 -- 2024-03-22
+
+### Authors
+- @lilyminium
+
+### Fixed
+- Fixed typing of conformer generation from RDKit (PR #97)
+
 ## v0.3.5 -- 2024-03-21
 
 ### Authors
