@@ -99,6 +99,7 @@ class LabelConformers(_BaseLabel):
                 conformer.m_as(unit.angstrom)
                 for conformer in mol.conformers
             ])
+            print(conformers)
             data[self.conformer_column].append(conformers)
             data[self.n_conformer_column].append(len(mol.conformers))
         
