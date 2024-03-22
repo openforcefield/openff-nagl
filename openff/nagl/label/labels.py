@@ -98,8 +98,7 @@ class LabelConformers(_BaseLabel):
             conformers = np.ravel([
                 conformer.m_as(unit.angstrom)
                 for conformer in mol.conformers
-            ])
-            print(conformers)
+            ]).astype(float)
             data[self.conformer_column].append(conformers)
             data[self.n_conformer_column].append(len(mol.conformers))
         
