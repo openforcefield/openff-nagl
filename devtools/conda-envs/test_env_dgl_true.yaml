@@ -22,6 +22,7 @@ dependencies:
   - pydantic <3
   - rdkit
   - scipy
+  - ambertools
 
   # database
   - pyarrow

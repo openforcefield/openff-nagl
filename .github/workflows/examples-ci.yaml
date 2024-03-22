@@ -34,7 +34,7 @@ jobs:
           python-version: ["3.9", "3.10", "3.11"]
           pydantic-version: ["2"]
           include-rdkit: [true]
-          include-openeye: [true]
+          include-openeye: [false]
           include-dgl: [true]
           exclude:
             # broken OpenMM build for Mac on 3.10

@@ -100,6 +100,63 @@ class TestLabelCharges:
         columns = ["mapped_smiles", "conformers", "n_conformers", "charges"]
         assert small_dataset.dataset.schema.names == columns
 
+    def test_label_alkane_dataset(self):
+        # test conformer generation and labelling
+        # as in examples
+
+        training_alkanes = [
+            'C',
+            'CC',
+            'CCC',
+            'CCCC',
+            'CC(C)C',
+            'CCCCC',
+            'CC(C)CC',
+            'CCCCCC',
+            'CC(C)CCC',
+            'CC(CC)CC',
+        ]
+
+        training_dataset = LabelledDataset.from_smiles(
+            "training_data",
+            training_alkanes,
+            mapped=False,
+            overwrite_existing=True,
+        )
+        training_df = training_dataset.to_pandas()
+        assert training_df.mapped_smiles[0] in (
+            "[H:2][C:1]([H:3])([H:4])[H:5]",
+            "[C:1]([H:2])([H:3])([H:4])[H:5]"
+        )
+
+        label_conformers = LabelConformers(
+            # create a new 'conformers' with output conformers
+            conformer_column="conformers",
+            # create a new 'n_conformers' with number of conformers
+            n_conformer_column="n_conformers",
+            n_conformer_pool=500, # initially generate 500 conformers
+            n_conformers=10, # prune to max 10 conformers
+            rms_cutoff=0.05,
+        )
+
+        label_am1_charges = LabelCharges(
+            charge_method="am1-mulliken", # AM1
+            # use previously generate conformers instead of new ones
+            use_existing_conformers=True,
+            # use the 'conformers' column as input for charge assignment
+            conformer_column="conformers",
+            # write generated charges to 'target-am1-charges' column
+            charge_column="target-am1-charges",
+        )
+
+        labellers = [
+            label_conformers, # generate initial conformers,
+            label_am1_charges,
+        ]
+
+        training_dataset.apply_labellers(labellers)
+
+
 
 class TestLabelMultipleDipoles:
     

@@ -15,7 +15,7 @@ dependencies:
   - rich
 
   # chemistry
-  - openff-toolkit-base ==0.11.1
+  - openff-toolkit-base >=0.11.1
   - openff-units
   - pydantic <2.0
   - rdkit
