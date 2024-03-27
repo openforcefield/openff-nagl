@@ -38,12 +38,6 @@ class MutableModel(BaseModel):
             pathlib.Path: str,
         }
 
-    _hash_fields: ClassVar[Optional[List[str]]] = None
-    _float_fields: ClassVar[List[str]] = []
-    _float_decimals: ClassVar[int] = 8
-    _hash_int: Optional[int] = None
-    _hash_str: Optional[str] = None
-
     def __init__(self, *args, **kwargs):
         self.__pre_init__(*args, **kwargs)
         super(MutableModel, self).__init__(*args, **kwargs)
@@ -54,10 +48,6 @@ class MutableModel(BaseModel):
 
     def __post_init__(self, *args, **kwargs):
         pass
-
-    # def __eq__(self, other):
-    #     return hash(self) == hash(other)
-
 
     def to_json(self):
         return self.json(
@@ -73,7 +63,11 @@ class MutableModel(BaseModel):
                 string_or_file = f.read()
         except (OSError, FileNotFoundError):
             pass
-        return cls.parse_raw(string_or_file)
+        try:
+            validator = cls.model_validate_json
+        except AttributeError:
+            validator = cls.parse_raw
+        return validator(string_or_file)
 
     def to_yaml(self, filename):
         data = json.loads(self.json())
