@@ -1,6 +1,7 @@
 import pytest
 import torch
 import numpy as np
+from openff.nagl.training.metrics import RMSEMetric
 from openff.nagl.training.loss import (
     MultipleDipoleTarget,
     SingleDipoleTarget,
@@ -8,6 +9,12 @@ from openff.nagl.training.loss import (
     ReadoutTarget,
     MultipleESPTarget
 )
+
+class TestBaseTarget:
+    def test_validate_metric(self):
+        input_text = '{"metric": "rmse", "name": "readout", "prediction_label": "charges", "target_label": "charges"}'
+        target = ReadoutTarget.parse_raw(input_text)
+        assert isinstance(target.metric, RMSEMetric)
 
 class TestReadoutTarget:
 
