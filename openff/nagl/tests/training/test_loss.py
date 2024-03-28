@@ -1,13 +1,41 @@
+import typing
+from typing import Dict, List
 import pytest
+from openff.nagl.nn._containers import ReadoutModule
 import torch
 import numpy as np
+
+from openff.nagl.training.metrics import RMSEMetric
 from openff.nagl.training.loss import (
+    _BaseTarget,
     MultipleDipoleTarget,
     SingleDipoleTarget,
     HeavyAtomReadoutTarget,
     ReadoutTarget,
     MultipleESPTarget
 )
+
+class TestBaseTarget:
+
+    class BaseTarget(_BaseTarget):
+        name: typing.Literal["base"]
+        def get_required_columns(self) -> List[str]:
+            return []
+
+        def evaluate_target(self, molecules, labels, predictions, readout_modules) -> "torch.Tensor":
+            return torch.tensor([0.0])
+
+    def test_validate_metric(self):
+        input_text = '{"metric": "rmse", "name": "readout", "prediction_label": "charges", "target_label": "charges"}'
+        target = ReadoutTarget.parse_raw(input_text)
+        assert isinstance(target.metric, RMSEMetric)
+
+    def test_non_implemented_methods(self):
+        target = self.BaseTarget(name="base", metric="rmse", target_label="charges")
+        with pytest.raises(NotImplementedError):
+            target.compute_reference(None)
+        with pytest.raises(NotImplementedError):
+            target.report_artifact(None, None, None, None)
 
 class TestReadoutTarget:
 

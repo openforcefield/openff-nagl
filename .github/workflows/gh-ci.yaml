@@ -33,9 +33,9 @@ jobs:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.9", "3.10", "3.11", "3.12"]
           pydantic-version: ["1", "2"]
-          include-rdkit: [true, false]
-          include-openeye: [true, false]
-          include-dgl: [true, false]
+          include-rdkit: [false, true]
+          include-openeye: [false, true]
+          include-dgl: [false, true]
           exclude:
             - include-rdkit: false
               include-openeye: false
