@@ -1,7 +1,7 @@
 import contextlib
 import copy
 import functools
-from typing import TYPE_CHECKING, Tuple, List, Union, Dict, NamedTuple, Any
+from typing import TYPE_CHECKING, Tuple, List, Union, Dict, NamedTuple, Any, Optional
 
 import numpy as np
 
@@ -15,6 +15,18 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.utils._types import HybridizationType
 
+class _AtomAttributes(NamedTuple):
+    atomic_number: int
+    formal_charge: int
+    is_aromatic: bool
+    stereochemistry: Optional[str]
+
+
+class _BondAttributes(NamedTuple):
+    bond_order: int
+    is_aromatic: bool
+    stereochemistry: Optional[str]
+
 
 class _MoleculeGraph(NamedTuple):
     atoms: dict[int, dict[str, Any]]
@@ -24,6 +36,8 @@ class _MoleculeGraph(NamedTuple):
         atoms = {k: dict(v) for k, v in self.atoms.items()}
         bonds = {k: dict(v) for k, v in self.bonds.items()}
         return _MoleculeGraph(atoms=atoms, bonds=bonds)
+
+
 
 
 def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):

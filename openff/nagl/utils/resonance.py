@@ -210,6 +210,7 @@ class ResonanceEnumerator:
                 {"atoms": graph.atoms, "bonds": graph.bonds}
                 for graph in resonance_forms
             ]
+            # molecules = resonance_forms
         else:
             molecules = [
                 # molecule_from_networkx(resonance_form)
@@ -310,10 +311,27 @@ class ResonanceEnumerator:
         """
         # graph = self._copy_graph()
         # graph = copy.deepcopy(self._graph_dict)
-        graph = self._graph_dict.copy()
+        # graph = self._graph_dict.copy()
+        # for subgraph in resonance_forms:
+        #     self._update_graph_attributes(subgraph, graph)
+        # return graph
+
+        atoms = {}
+        bonds = {}
         for subgraph in resonance_forms:
-            self._update_graph_attributes(subgraph, graph)
-        return graph
+            for node in subgraph.nodes:
+                atoms[node] = subgraph.nodes[node]
+            for i, j in subgraph.edges:
+                key = tuple(sorted((i, j)))
+                bonds[key] = subgraph.edges[i, j]
+        for i, atom in self._graph_dict.items():
+            if i not in atoms:
+                atoms[i] = atom
+        for key, bond in self._graph_dict.items():
+            if key not in bonds:
+                bonds[key] = bond
+        return _MoleculeGraph(atoms=atoms, bonds=bonds)
+        
     
     def _copy_graph(self):
         return self.molecule.to_networkx()
