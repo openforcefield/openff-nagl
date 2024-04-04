@@ -20,6 +20,11 @@ class _MoleculeGraph(NamedTuple):
     atoms: dict[int, dict[str, Any]]
     bonds: dict[Tuple[int, int], dict[str, Any]]
 
+    def copy(self):
+        atoms = {k: dict(v) for k, v in self.atoms.items()}
+        bonds = {k: dict(v) for k, v in self.bonds.items()}
+        return _MoleculeGraph(atoms=atoms, bonds=bonds)
+
 
 def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     """

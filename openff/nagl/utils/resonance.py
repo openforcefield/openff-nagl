@@ -309,7 +309,8 @@ class ResonanceEnumerator:
             The new molecule graph with all resonance subgraphs
         """
         # graph = self._copy_graph()
-        graph = copy.deepcopy(self._graph_dict)
+        # graph = copy.deepcopy(self._graph_dict)
+        graph = self._graph_dict.copy()
         for subgraph in resonance_forms:
             self._update_graph_attributes(subgraph, graph)
         return graph
