@@ -324,10 +324,10 @@ class ResonanceEnumerator:
             for i, j in subgraph.edges:
                 key = tuple(sorted((i, j)))
                 bonds[key] = subgraph.edges[i, j]
-        for i, atom in self._graph_dict.items():
+        for i, atom in self._graph_dict.atoms.items():
             if i not in atoms:
                 atoms[i] = atom
-        for key, bond in self._graph_dict.items():
+        for key, bond in self._graph_dict.bonds.items():
             if key not in bonds:
                 bonds[key] = bond
         return _MoleculeGraph(atoms=atoms, bonds=bonds)
