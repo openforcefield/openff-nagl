@@ -752,7 +752,8 @@ def _molecule_to_graph(molecule: "Molecule") -> _MoleculeGraph:
 
     bonds = {}
     for bond in molecule.bonds:
-        bonds[(bond.atom1_index, bond.atom2_index)] = {
+        indices = tuple(sorted((bond.atom1_index, bond.atom2_index)))
+        bonds[indices] = {
             "bond_order": bond.bond_order,
             "is_aromatic": bond.is_aromatic,
             "stereochemistry": bond.stereochemistry,

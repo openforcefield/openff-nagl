@@ -12,6 +12,7 @@ from openff.units import unit
 from openff.toolkit.topology import Molecule
 
 from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
+from openff.nagl.toolkits.openff import _molecule_from_graph, _molecule_to_graph, _MoleculeGraph
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 
@@ -121,6 +122,7 @@ class ResonanceEnumerator:
     def __init__(self, molecule: Molecule):
         self.molecule = molecule
         self.graph = self._convert_molecule_to_graph(molecule)
+        self._graph_dict = _molecule_to_graph(molecule)
         self.reduced_graph = self._reduce_graph(self.graph, inplace=False)
 
     def enumerate_resonance_forms(
@@ -206,7 +208,8 @@ class ResonanceEnumerator:
             ]
         else:
             molecules = [
-                molecule_from_networkx(resonance_form)
+                # molecule_from_networkx(resonance_form)
+                _molecule_from_graph(resonance_form)
                 for resonance_form in resonance_forms
             ]
 
@@ -301,7 +304,8 @@ class ResonanceEnumerator:
         new_graph: nx.Graph
             The new molecule graph with all resonance subgraphs
         """
-        graph = self._copy_graph()
+        # graph = self._copy_graph()
+        graph = copy.deepcopy(self._graph_dict)
         for subgraph in resonance_forms:
             self._update_graph_attributes(subgraph, graph)
         return graph
@@ -328,9 +332,11 @@ class ResonanceEnumerator:
 
         """
         for node in source.nodes:
-            target.nodes[node].update(source.nodes[node])
+            # target.nodes[node].update(source.nodes[node])
+            target.atoms[node].update(source.nodes[node])
         for i, j in source.edges:
-            target.edges[i, j].update(source.edges[i, j])
+            # target.edges[i, j].update(source.edges[i, j])
+            target.bonds[(i, j)].update(source.edges[i, j])
 
     @staticmethod
     def _convert_molecule_to_graph(molecule):
