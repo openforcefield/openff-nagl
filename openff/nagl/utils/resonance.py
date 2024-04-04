@@ -23,6 +23,7 @@ def enumerate_resonance_forms(
     max_path_length: Optional[int] = None,
     include_all_transfer_pathways: bool = False,
     as_dicts: bool = False,
+    as_fragments: bool = False,
 ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
     """
     Find all resonance structures of ``molecule`` according to Gilson et al [1].
@@ -97,6 +98,7 @@ def enumerate_resonance_forms(
         max_path_length=max_path_length,
         include_all_transfer_pathways=include_all_transfer_pathways,
         as_dicts=as_dicts,
+        as_fragments=as_fragments
     )
 
 
@@ -131,6 +133,7 @@ class ResonanceEnumerator:
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
         as_dicts: bool = False,
+        as_fragments: bool = False,
     ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
         """
         Recursively attempts to find all resonance structures of an input molecule
@@ -195,24 +198,44 @@ class ResonanceEnumerator:
             [fragment.reduced_graph for fragment in fragments]
             for fragments in all_fragments
         ]
-        combinations = itertools.product(*graphs)
-        resonance_forms = [
-            self._substitute_resonance_fragments(combination)
-            for combination in combinations
-        ]
-
-        if as_dicts:
-            # molecules = [
-            #     self._convert_graph_to_dict(resonance_form)
-            #     for resonance_form in resonance_forms
-            # ]
-            molecules = resonance_forms
-        else:
-            molecules = [
-                # molecule_from_networkx(resonance_form)
-                _molecule_from_dict(resonance_form)
-                for resonance_form in resonance_forms
+        
+        if not as_fragments:
+            combinations = itertools.product(*graphs)
+            resonance_forms = [
+                self._substitute_resonance_fragments(combination)
+                for combination in combinations
             ]
+
+            if as_dicts:
+                # molecules = [
+                #     self._convert_graph_to_dict(resonance_form)
+                #     for resonance_form in resonance_forms
+                # ]
+                molecules = resonance_forms
+            else:
+                molecules = [
+                    # molecule_from_networkx(resonance_form)
+                    _molecule_from_dict(resonance_form)
+                    for resonance_form in resonance_forms
+                ]
+        
+        else:
+            if not as_dicts:
+                raise NotImplementedError("as_fragments=True requires as_dicts=True")
+            
+            molecules = []
+            for fragments in graphs:
+                for subgraph in fragments:
+                    atoms = {
+                        node: subgraph.nodes[node]
+                        for node in subgraph.nodes
+                    }
+                    bonds = {}
+                    for i, j in subgraph.edges:
+                        key = tuple(sorted((i, j)))
+                        bonds[key] = subgraph.edges[i, j]
+                    molecules.append({"atoms": atoms, "bonds": bonds})
+
 
         return molecules
 
