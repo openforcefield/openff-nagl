@@ -301,10 +301,14 @@ class ResonanceEnumerator:
         new_graph: nx.Graph
             The new molecule graph with all resonance subgraphs
         """
-        graph = copy.deepcopy(self.graph)
+        graph = self._copy_graph()
         for subgraph in resonance_forms:
             self._update_graph_attributes(subgraph, graph)
         return graph
+    
+    def _copy_graph(self):
+        return self.molecule.to_networkx()
+        # return copy.deepcopy(graph)
 
     @staticmethod
     def _update_graph_attributes(source: nx.Graph, target: nx.Graph):
