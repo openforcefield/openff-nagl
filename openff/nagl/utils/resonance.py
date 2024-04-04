@@ -206,7 +206,10 @@ class ResonanceEnumerator:
             #     self._convert_graph_to_dict(resonance_form)
             #     for resonance_form in resonance_forms
             # ]
-            molecules = resonance_forms
+            molecules = [
+                {"atoms": graph.atoms, "bonds": graph.bonds}
+                for graph in resonance_forms
+            ]
         else:
             molecules = [
                 # molecule_from_networkx(resonance_form)
