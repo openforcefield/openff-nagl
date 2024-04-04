@@ -15,30 +15,6 @@ if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.utils._types import HybridizationType
 
-class _AtomAttributes(NamedTuple):
-    atomic_number: int
-    formal_charge: int
-    is_aromatic: bool
-    stereochemistry: Optional[str]
-
-
-class _BondAttributes(NamedTuple):
-    bond_order: int
-    is_aromatic: bool
-    stereochemistry: Optional[str]
-
-
-class _MoleculeGraph(NamedTuple):
-    atoms: dict[int, dict[str, Any]]
-    bonds: dict[Tuple[int, int], dict[str, Any]]
-
-    def copy(self):
-        atoms = {k: dict(v) for k, v in self.atoms.items()}
-        bonds = {k: dict(v) for k, v in self.bonds.items()}
-        return _MoleculeGraph(atoms=atoms, bonds=bonds)
-
-
-
 
 def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     """
@@ -737,7 +713,7 @@ def molecule_from_networkx(graph):
     return molecule
 
 
-def _molecule_to_graph(molecule: "Molecule") -> _MoleculeGraph:
+def _molecule_to_dict(molecule: "Molecule") -> dict[str, dict]:
     """
     Convert an OpenFF molecule to a graph representation.
     
@@ -749,13 +725,13 @@ def _molecule_to_graph(molecule: "Molecule") -> _MoleculeGraph:
 
     Returns
     -------
-    graph: _MoleculeGraph
-        A graph representation of the molecule.
-        This will be a tuple of (atoms, bonds).
-        Atoms is a dictionary of integer atom indices to atom information.
+    graph: dict[str, dict]
+        This is a dictionary with the keys "atoms" and "bonds".
+        The "atoms" key maps to a dictionary of atom indices to atom information.
         Each atom information dictionary contains the following keys:
         atomic_number, formal_charge, is_aromatic, stereochemistry.
-        Bonds is a dictionary of bond indices as a tuple of integers.
+        The "bonds" key maps to a dictionary of bond indices as a tuple of integers.
+        The bond indices are sorted so the lowest value is first.
         Each bond indices tuple is mapped to bond information.
         Each bond information dictionary contains the following keys:
         bond_order, is_aromatic, stereochemistry.
@@ -778,11 +754,11 @@ def _molecule_to_graph(molecule: "Molecule") -> _MoleculeGraph:
             "stereochemistry": bond.stereochemistry,
         }
 
-    return _MoleculeGraph(atoms=atoms, bonds=bonds)
+    return {"atoms": atoms, "bonds": bonds}
 
 
 
-def _molecule_from_graph(graph: _MoleculeGraph) -> "Molecule":
+def _molecule_from_dict(graph: dict[str, dict]) -> "Molecule":
     """
     Convert a graph representation to an OpenFF molecule.
     
@@ -790,11 +766,12 @@ def _molecule_from_graph(graph: _MoleculeGraph) -> "Molecule":
     ----------
     graph
         The graph representation to convert.
-        This should be a tuple of (atoms, bonds).
-        Atoms is a dictionary of integer atom indices to atom information.
+        This is a dictionary with the keys "atoms" and "bonds".
+        The "atoms" key maps to a dictionary of atom indices to atom information.
         Each atom information dictionary contains the following keys:
         atomic_number, formal_charge, is_aromatic, stereochemistry.
-        Bonds is a dictionary of bond indices as a tuple of integers.
+        The "bonds" key maps to a dictionary of bond indices as a tuple of integers.
+        The bond indices are sorted so the lowest value is first.
         Each bond indices tuple is mapped to bond information.
         Each bond information dictionary contains the following keys:
         bond_order, is_aromatic, stereochemistry.
@@ -807,8 +784,8 @@ def _molecule_from_graph(graph: _MoleculeGraph) -> "Molecule":
     from openff.toolkit.topology import Molecule
 
     molecule = Molecule()
-    for atom_index in sorted(graph.atoms):
-        atom = graph.atoms[atom_index]
+    for atom_index in sorted(graph["atoms"]):
+        atom = graph["atoms"][atom_index]
         molecule.add_atom(
             atomic_number=atom["atomic_number"],
             formal_charge=atom["formal_charge"],
@@ -816,7 +793,7 @@ def _molecule_from_graph(graph: _MoleculeGraph) -> "Molecule":
             stereochemistry=atom.get("stereochemistry", None),
         )
 
-    for (u, v), info in graph.bonds.items():
+    for (u, v), info in graph["bonds"].items():
         molecule.add_bond(
             u,
             v,

@@ -19,8 +19,8 @@ from openff.nagl.toolkits.openff import (
     calculate_circular_fingerprint_similarity,
     capture_toolkit_warnings,
     molecule_from_networkx,
-    _molecule_from_graph,
-    _molecule_to_graph
+    _molecule_from_dict,
+    _molecule_to_dict,
 )
 from openff.nagl.utils._utils import transform_coordinates
 
@@ -250,8 +250,10 @@ def test_molecule_from_networkx(openff_methane_uncharged):
     assert molecule.is_isomorphic_with(openff_methane_uncharged)
 
 
-def test_molecule_from_graph(openff_methane_uncharged):
-    atoms, bonds = _molecule_to_graph(openff_methane_uncharged)
+def test_molecule_to_dict(openff_methane_uncharged):
+    graph = _molecule_to_dict(openff_methane_uncharged)
+    atoms = graph["atoms"]
+    bonds = graph["bonds"]
     assert len(atoms) == 5
     assert len(bonds) == 4
 
@@ -285,7 +287,7 @@ def test_molecule_from_graph(openff_methane_uncharged):
     assert bonds[(0, 4)] == ch_bond
 
 
-def test_molecule_from_graph(openff_methane_uncharged):
-    graph = _molecule_to_graph(openff_methane_uncharged)
-    molecule = _molecule_from_graph(graph)
+def test_molecule_from_dict(openff_methane_uncharged):
+    graph = _molecule_to_dict(openff_methane_uncharged)
+    molecule = _molecule_from_dict(graph)
     assert molecule.is_isomorphic_with(openff_methane_uncharged)

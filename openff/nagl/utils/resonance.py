@@ -12,7 +12,7 @@ from openff.units import unit
 from openff.toolkit.topology import Molecule
 
 from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
-from openff.nagl.toolkits.openff import _molecule_from_graph, _molecule_to_graph, _MoleculeGraph
+from openff.nagl.toolkits.openff import _molecule_from_dict, _molecule_to_dict
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 
@@ -122,7 +122,7 @@ class ResonanceEnumerator:
     def __init__(self, molecule: Molecule):
         self.molecule = molecule
         self.graph = self._convert_molecule_to_graph(molecule)
-        self._graph_dict = _molecule_to_graph(molecule)
+        self._graph_dict = _molecule_to_dict(molecule)
         self.reduced_graph = self._reduce_graph(self.graph, inplace=False)
 
     def enumerate_resonance_forms(
@@ -206,15 +206,11 @@ class ResonanceEnumerator:
             #     self._convert_graph_to_dict(resonance_form)
             #     for resonance_form in resonance_forms
             # ]
-            molecules = [
-                {"atoms": graph.atoms, "bonds": graph.bonds}
-                for graph in resonance_forms
-            ]
-            # molecules = resonance_forms
+            molecules = resonance_forms
         else:
             molecules = [
                 # molecule_from_networkx(resonance_form)
-                _molecule_from_graph(resonance_form)
+                _molecule_from_dict(resonance_form)
                 for resonance_form in resonance_forms
             ]
 
@@ -309,12 +305,6 @@ class ResonanceEnumerator:
         new_graph: nx.Graph
             The new molecule graph with all resonance subgraphs
         """
-        # graph = self._copy_graph()
-        # graph = copy.deepcopy(self._graph_dict)
-        # graph = self._graph_dict.copy()
-        # for subgraph in resonance_forms:
-        #     self._update_graph_attributes(subgraph, graph)
-        # return graph
 
         atoms = {}
         bonds = {}
@@ -324,19 +314,14 @@ class ResonanceEnumerator:
             for i, j in subgraph.edges:
                 key = tuple(sorted((i, j)))
                 bonds[key] = subgraph.edges[i, j]
-        for i, atom in self._graph_dict.atoms.items():
+        for i, atom in self._graph_dict["atoms"].items():
             if i not in atoms:
                 atoms[i] = atom
-        for key, bond in self._graph_dict.bonds.items():
+        for key, bond in self._graph_dict["bonds"].items():
             if key not in bonds:
                 bonds[key] = bond
-        return _MoleculeGraph(atoms=atoms, bonds=bonds)
+        return {"atoms": atoms, "bonds": bonds}
         
-    
-    def _copy_graph(self):
-        return self.molecule.to_networkx()
-        # return copy.deepcopy(graph)
-
     @staticmethod
     def _update_graph_attributes(source: nx.Graph, target: nx.Graph):
         """
