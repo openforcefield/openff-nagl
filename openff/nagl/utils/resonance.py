@@ -335,8 +335,9 @@ class ResonanceEnumerator:
             # target.nodes[node].update(source.nodes[node])
             target.atoms[node].update(source.nodes[node])
         for i, j in source.edges:
+            key = tuple(sorted((i, j)))
             # target.edges[i, j].update(source.edges[i, j])
-            target.bonds[(i, j)].update(source.edges[i, j])
+            target.bonds[key].update(source.edges[i, j])
 
     @staticmethod
     def _convert_molecule_to_graph(molecule):
