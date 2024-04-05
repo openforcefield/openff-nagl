@@ -8,6 +8,7 @@ from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 
 import networkx as nx
+import numpy as np
 import torch
 from ._batch import FrameDict
 
@@ -139,10 +140,13 @@ class NXMolGraph:
         # mask = [x in nodes for x in v]
 
         mask = []
+        # for node in nodes:
+        #     for i_, v_ in enumerate(v):
+        #         if v_ == node:
+        #             mask.append(i_)
+        # mask = []
         for node in nodes:
-            for i_, v_ in enumerate(v):
-                if v_ == node:
-                    mask.append(i_)
+            mask.extend(np.where(v == node)[0])
                     
         U, V, I = u[mask], v[mask], i[mask]
 
