@@ -380,7 +380,7 @@ def normalize_molecule(
         "[N,P,As,Sb;-1:1]=[C+;v3:2]>>[*+0:1]#[C+0:2]",  # Charge recombination
     )
 
-    molecule_ = Molecule(molecule)
+    molecule_ = type(molecule)(molecule)
     molecule_._conformers = None
 
     normalized = call_toolkit_function(
