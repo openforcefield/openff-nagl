@@ -12,6 +12,7 @@ from openff.units import unit
 from openff.toolkit.topology import Molecule
 
 from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
+from openff.nagl.toolkits.openff import _molecule_from_dict, _molecule_to_dict
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 
@@ -22,6 +23,7 @@ def enumerate_resonance_forms(
     max_path_length: Optional[int] = None,
     include_all_transfer_pathways: bool = False,
     as_dicts: bool = False,
+    as_fragments: bool = False,
 ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
     """
     Find all resonance structures of ``molecule`` according to Gilson et al [1].
@@ -96,6 +98,7 @@ def enumerate_resonance_forms(
         max_path_length=max_path_length,
         include_all_transfer_pathways=include_all_transfer_pathways,
         as_dicts=as_dicts,
+        as_fragments=as_fragments
     )
 
 
@@ -121,6 +124,7 @@ class ResonanceEnumerator:
     def __init__(self, molecule: Molecule):
         self.molecule = molecule
         self.graph = self._convert_molecule_to_graph(molecule)
+        self._graph_dict = _molecule_to_dict(molecule)
         self.reduced_graph = self._reduce_graph(self.graph, inplace=False)
 
     def enumerate_resonance_forms(
@@ -129,6 +133,7 @@ class ResonanceEnumerator:
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
         as_dicts: bool = False,
+        as_fragments: bool = False,
     ) -> List[Union[Molecule, Dict[str, Dict[str, Any]]]]:
         """
         Recursively attempts to find all resonance structures of an input molecule
@@ -193,22 +198,44 @@ class ResonanceEnumerator:
             [fragment.reduced_graph for fragment in fragments]
             for fragments in all_fragments
         ]
-        combinations = itertools.product(*graphs)
-        resonance_forms = [
-            self._substitute_resonance_fragments(combination)
-            for combination in combinations
-        ]
+        
+        if not as_fragments:
+            combinations = itertools.product(*graphs)
+            resonance_forms = [
+                self._substitute_resonance_fragments(combination)
+                for combination in combinations
+            ]
 
-        if as_dicts:
-            molecules = [
-                self._convert_graph_to_dict(resonance_form)
-                for resonance_form in resonance_forms
-            ]
+            if as_dicts:
+                # molecules = [
+                #     self._convert_graph_to_dict(resonance_form)
+                #     for resonance_form in resonance_forms
+                # ]
+                molecules = resonance_forms
+            else:
+                molecules = [
+                    # molecule_from_networkx(resonance_form)
+                    _molecule_from_dict(resonance_form)
+                    for resonance_form in resonance_forms
+                ]
+        
         else:
-            molecules = [
-                molecule_from_networkx(resonance_form)
-                for resonance_form in resonance_forms
-            ]
+            if not as_dicts:
+                raise NotImplementedError("as_fragments=True requires as_dicts=True")
+            
+            molecules = []
+            for fragments in graphs:
+                for subgraph in fragments:
+                    atoms = {
+                        node: subgraph.nodes[node]
+                        for node in subgraph.nodes
+                    }
+                    bonds = {}
+                    for i, j in subgraph.edges:
+                        key = tuple(sorted((i, j)))
+                        bonds[key] = subgraph.edges[i, j]
+                    molecules.append({"atoms": atoms, "bonds": bonds})
+
 
         return molecules
 
@@ -301,11 +328,23 @@ class ResonanceEnumerator:
         new_graph: nx.Graph
             The new molecule graph with all resonance subgraphs
         """
-        graph = copy.deepcopy(self.graph)
-        for subgraph in resonance_forms:
-            self._update_graph_attributes(subgraph, graph)
-        return graph
 
+        atoms = {}
+        bonds = {}
+        for subgraph in resonance_forms:
+            for node in subgraph.nodes:
+                atoms[node] = subgraph.nodes[node]
+            for i, j in subgraph.edges:
+                key = tuple(sorted((i, j)))
+                bonds[key] = subgraph.edges[i, j]
+        for i, atom in self._graph_dict["atoms"].items():
+            if i not in atoms:
+                atoms[i] = atom
+        for key, bond in self._graph_dict["bonds"].items():
+            if key not in bonds:
+                bonds[key] = bond
+        return {"atoms": atoms, "bonds": bonds}
+        
     @staticmethod
     def _update_graph_attributes(source: nx.Graph, target: nx.Graph):
         """
@@ -324,9 +363,12 @@ class ResonanceEnumerator:
 
         """
         for node in source.nodes:
-            target.nodes[node].update(source.nodes[node])
+            # target.nodes[node].update(source.nodes[node])
+            target.atoms[node].update(source.nodes[node])
         for i, j in source.edges:
-            target.edges[i, j].update(source.edges[i, j])
+            key = tuple(sorted((i, j)))
+            # target.edges[i, j].update(source.edges[i, j])
+            target.bonds[key].update(source.edges[i, j])
 
     @staticmethod
     def _convert_molecule_to_graph(molecule):

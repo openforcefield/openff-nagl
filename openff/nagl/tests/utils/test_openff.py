@@ -18,6 +18,9 @@ from openff.nagl.toolkits.openff import (
     smiles_to_inchi_key,
     calculate_circular_fingerprint_similarity,
     capture_toolkit_warnings,
+    molecule_from_networkx,
+    _molecule_from_dict,
+    _molecule_to_dict,
 )
 from openff.nagl.utils._utils import transform_coordinates
 
@@ -228,3 +231,63 @@ def test_openff_toolkit_registry(openff_methane_uncharged):
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
     with toolkit_registry_manager(rdkit_registry):
         normalize_molecule(openff_methane_uncharged)
+
+
+def test_molecule_from_networkx(openff_methane_uncharged):
+    graph = openff_methane_uncharged.to_networkx()
+    molecule = molecule_from_networkx(graph)
+    assert len(molecule.atoms) == 5
+    
+    atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
+    assert atomic_numbers == [6, 1, 1, 1, 1]
+    is_aromatic = [atom.is_aromatic for atom in molecule.atoms]
+    assert is_aromatic == [False, False, False, False, False]
+    formal_charges = [atom.formal_charge for atom in molecule.atoms]
+    assert formal_charges == [0, 0, 0, 0, 0]
+    bond_orders = [bond.bond_order for bond in molecule.bonds]
+    assert bond_orders == [1, 1, 1, 1]
+
+    assert molecule.is_isomorphic_with(openff_methane_uncharged)
+
+
+def test_molecule_to_dict(openff_methane_uncharged):
+    graph = _molecule_to_dict(openff_methane_uncharged)
+    atoms = graph["atoms"]
+    bonds = graph["bonds"]
+    assert len(atoms) == 5
+    assert len(bonds) == 4
+
+    c = {
+        "atomic_number": 6,
+        "is_aromatic": False,
+        "formal_charge": 0,
+        "stereochemistry": None
+    }
+    h = {
+        "atomic_number": 1,
+        "is_aromatic": False,
+        "formal_charge": 0,
+        "stereochemistry": None
+    }
+    assert atoms[0] == c
+    assert atoms[1] == h
+    assert atoms[2] == h
+    assert atoms[3] == h
+    assert atoms[4] == h
+
+    ch_bond = {
+        "bond_order": 1,
+        "is_aromatic": False,
+        "stereochemistry": None,
+    }
+
+    assert bonds[(0, 1)] == ch_bond
+    assert bonds[(0, 2)] == ch_bond
+    assert bonds[(0, 3)] == ch_bond
+    assert bonds[(0, 4)] == ch_bond
+
+
+def test_molecule_from_dict(openff_methane_uncharged):
+    graph = _molecule_to_dict(openff_methane_uncharged)
+    molecule = _molecule_from_dict(graph)
+    assert molecule.is_isomorphic_with(openff_methane_uncharged)

@@ -282,14 +282,17 @@ class AtomAverageFormalCharge(AtomFeature):
             lowest_energy_only=True,
             include_all_transfer_pathways=False,
             as_dicts=True,
+            as_fragments=True,
         )
         formal_charges: typing.List[float] = []
         for index in range(molecule.n_atoms):
             charges = [
-                graph["atoms"][index]["formal_charge"] for graph in resonance_forms
+                graph["atoms"][index]["formal_charge"]
+                for graph in resonance_forms
+                if index in graph["atoms"]
             ]
             if not charges:
-                molecule.atoms[index].formal_charge
+                charges = [molecule.atoms[index].formal_charge]
 
             charges = [q.m_as(unit.elementary_charge) for q in charges]
             charge = np.mean(charges)

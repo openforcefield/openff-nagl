@@ -1,7 +1,7 @@
 import contextlib
 import copy
 import functools
-from typing import TYPE_CHECKING, Tuple, List, Union, Dict
+from typing import TYPE_CHECKING, Tuple, List, Union, Dict, NamedTuple, Any, Optional
 
 import numpy as np
 
@@ -380,9 +380,12 @@ def normalize_molecule(
         "[N,P,As,Sb;-1:1]=[C+;v3:2]>>[*+0:1]#[C+0:2]",  # Charge recombination
     )
 
+    molecule_ = type(molecule)(molecule)
+    molecule_._conformers = None
+
     normalized = call_toolkit_function(
         "_run_normalization_reactions",
-        molecule=molecule,
+        molecule=molecule_,
         normalization_reactions=normalizations,
         max_iter=max_iter,
         toolkit_registry=toolkit_registry,
@@ -703,6 +706,97 @@ def molecule_from_networkx(graph):
         )
 
     for u, v, info in graph.edges(data=True):
+        molecule.add_bond(
+            u,
+            v,
+            bond_order=info["bond_order"],
+            is_aromatic=info["is_aromatic"],
+            stereochemistry=info.get("stereochemistry", None),
+        )
+    return molecule
+
+
+def _molecule_to_dict(molecule: "Molecule") -> dict[str, dict]:
+    """
+    Convert an OpenFF molecule to a graph representation.
+    
+    Parameters
+    ----------
+    molecule
+        The molecule to convert.
+
+
+    Returns
+    -------
+    graph: dict[str, dict]
+        This is a dictionary with the keys "atoms" and "bonds".
+        The "atoms" key maps to a dictionary of atom indices to atom information.
+        Each atom information dictionary contains the following keys:
+        atomic_number, formal_charge, is_aromatic, stereochemistry.
+        The "bonds" key maps to a dictionary of bond indices as a tuple of integers.
+        The bond indices are sorted so the lowest value is first.
+        Each bond indices tuple is mapped to bond information.
+        Each bond information dictionary contains the following keys:
+        bond_order, is_aromatic, stereochemistry.
+    """
+    atoms = {}
+    for i, atom in enumerate(molecule.atoms):
+        atoms[i] = {
+            "atomic_number": atom.atomic_number,
+            "formal_charge": atom.formal_charge,
+            "is_aromatic": atom.is_aromatic,
+            "stereochemistry": atom.stereochemistry,
+        }
+
+    bonds = {}
+    for bond in molecule.bonds:
+        indices = tuple(sorted((bond.atom1_index, bond.atom2_index)))
+        bonds[indices] = {
+            "bond_order": bond.bond_order,
+            "is_aromatic": bond.is_aromatic,
+            "stereochemistry": bond.stereochemistry,
+        }
+
+    return {"atoms": atoms, "bonds": bonds}
+
+
+
+def _molecule_from_dict(graph: dict[str, dict]) -> "Molecule":
+    """
+    Convert a graph representation to an OpenFF molecule.
+    
+    Parameters
+    ----------
+    graph
+        The graph representation to convert.
+        This is a dictionary with the keys "atoms" and "bonds".
+        The "atoms" key maps to a dictionary of atom indices to atom information.
+        Each atom information dictionary contains the following keys:
+        atomic_number, formal_charge, is_aromatic, stereochemistry.
+        The "bonds" key maps to a dictionary of bond indices as a tuple of integers.
+        The bond indices are sorted so the lowest value is first.
+        Each bond indices tuple is mapped to bond information.
+        Each bond information dictionary contains the following keys:
+        bond_order, is_aromatic, stereochemistry.
+    
+    Returns
+    -------
+    molecule
+        The OpenFF molecule representation.
+    """
+    from openff.toolkit.topology import Molecule
+
+    molecule = Molecule()
+    for atom_index in sorted(graph["atoms"]):
+        atom = graph["atoms"][atom_index]
+        molecule.add_atom(
+            atomic_number=atom["atomic_number"],
+            formal_charge=atom["formal_charge"],
+            is_aromatic=atom["is_aromatic"],
+            stereochemistry=atom.get("stereochemistry", None),
+        )
+
+    for (u, v), info in graph["bonds"].items():
         molecule.add_bond(
             u,
             v,
