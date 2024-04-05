@@ -13,6 +13,18 @@ The rules for this file:
     use tabs but use spaces for formatting
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
+## v0.3.7 -- 2024-04-05
+
+### Authors
+- @lilyminium
+- mattwthompson
+
+### Fixed
+- Refactored resonance enumeration to avoid generating whole
+  molecules with itertools.product where possible (PR #102, Issue #101)
+- Refactored NXMolGraph.in_edges to use np.where to speed code up (PR #102, Issue #101)
+- Removed Binder tooling (PR #99)
+
 
 ## v0.3.6 -- 2024-03-22
 
