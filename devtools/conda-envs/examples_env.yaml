@@ -37,6 +37,8 @@ dependencies:
   # parallelism
   - dask-jobqueue
 
+  # https://github.com/openforcefield/openff-nagl/issues/106
+  - snappy<1.2
 
   # CI
   - nbval

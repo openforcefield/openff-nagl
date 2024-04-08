@@ -47,6 +47,9 @@ dependencies:
   - autodoc-pydantic
   - sphinx-click
 
+  # https://github.com/openforcefield/openff-nagl/issues/106
+  - snappy<1.2
+
   #  Pip-only installs
   - pip:
     - git+https://github.com/openforcefield/openff-sphinx-theme.git@main
