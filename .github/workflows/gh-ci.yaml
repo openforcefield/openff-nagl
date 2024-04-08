@@ -87,6 +87,7 @@ jobs:
     - name: Rewrite DGL config
       if: matrix.include-dgl == true
       run: |
+        mkdir -p ~/.dgl
         echo '{"backend": "pytorch"}' > ~/.dgl/config.json
 
     - name: Python information
