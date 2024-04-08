@@ -86,7 +86,7 @@ jobs:
     # See https://github.com/openforcefield/openff-nagl/issues/103
     - name: Remove DGL config
       if: matrix.include-dgl == true
-      run: rm -rf ~/.dgl
+      run: cat ~/.dgl/config.json || echo "no dgl config"
 
     - name: Python information
       run: |
