@@ -83,6 +83,11 @@ jobs:
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
+    # See https://github.com/openforcefield/openff-nagl/issues/103
+    - name: Remove DGL config
+      if: matrix.include-dgl == true
+      run: rm -rf ~/.dgl
+
     - name: Python information
       run: |
         which python
