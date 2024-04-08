@@ -84,9 +84,10 @@ jobs:
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
     # See https://github.com/openforcefield/openff-nagl/issues/103
-    - name: Remove DGL config
+    - name: Rewrite DGL config
       if: matrix.include-dgl == true
-      run: cat ~/.dgl/config.json || echo "no dgl config"
+      run: |
+        echo '{"backend": "pytorch"}' > ~/.dgl/config.json
 
     - name: Python information
       run: |
