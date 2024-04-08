@@ -13,6 +13,15 @@ The rules for this file:
     use tabs but use spaces for formatting
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
+## [Unreleased]
+
+### Authors
+- @lilyminium
+
+### Changed
+- Moved from importlib_resources to plain importlib with 3.9+
+
+
 ## v0.3.7 -- 2024-04-05
 
 ### Authors

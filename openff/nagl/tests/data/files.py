@@ -23,9 +23,9 @@ __all__ = [
     "EXAMPLE_FEATURIZED_LAZY_DATA_SHORT"
 ]
 
-import importlib_resources
+import importlib.resources
 
-data_directory = importlib_resources.files("openff.nagl") / "tests" / "data"
+data_directory = importlib.resources.files("openff.nagl") / "tests" / "data"
 
 EXAMPLE_AM1BCC_MODEL = data_directory / "example_am1bcc_model.pt"
 EXAMPLE_UNFEATURIZED_PARQUET_DATASET = data_directory / "example-data-labelled-unfeaturized"

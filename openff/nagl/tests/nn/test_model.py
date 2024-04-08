@@ -1,4 +1,4 @@
-import importlib_resources
+import importlib.resources
 import numpy as np
 import pytest
 import torch
@@ -298,7 +298,7 @@ class TestGNNModel:
         from openff.toolkit import Molecule
 
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
-        testdir = importlib_resources.files("openff.nagl") / "tests"
+        testdir = importlib.resources.files("openff.nagl") / "tests"
         path = testdir / "data" / "example_am1bcc_sage_charges" / f"{smiles}.sdf"
         molecule = Molecule.from_file(
             str(path), file_format="sdf", allow_undefined_stereo=True

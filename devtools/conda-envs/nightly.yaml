@@ -38,7 +38,6 @@ dependencies:
   # other openff dependencies
   - cachetools
   - cached-property
-  - importlib_resources
   - mdtraj
   - openff-amber-ff-ports
   - openmm
