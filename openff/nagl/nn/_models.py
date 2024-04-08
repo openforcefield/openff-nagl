@@ -36,6 +36,20 @@ class BaseGNNModel(pl.LightningModule):
         }
         return readouts
 
+    def _forward_unpostprocessed(self, molecule: "DGLMoleculeOrBatch"):
+        """
+        Forward pass without postprocessing the readout modules.
+        This is quality-of-life method for debugging and testing.
+        It is *not* intended for public use.
+        """
+        self.convolution_module(molecule)
+        readouts: Dict[str, torch.Tensor] = {
+            readout_type: readout_module._forward_unpostprocessed(molecule)
+            for readout_type, readout_module in self.readout_modules.items()
+        }
+        return readouts
+
+
 class GNNModel(BaseGNNModel):
     def __init__(
         self,
@@ -140,7 +154,7 @@ class GNNModel(BaseGNNModel):
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
-    
+        
     def compute_property(
         self,
         molecule: "Molecule",
@@ -219,8 +233,25 @@ class GNNModel(BaseGNNModel):
         )
         return self.forward(dglmol)
     
+    def _convert_to_nagl_molecule(self, molecule: "Molecule"):
+        from openff.nagl.molecule._graph.molecule import GraphMolecule
+        if self._is_dgl:
+            from openff.nagl.molecule._dgl.molecule import DGLMolecule
+
+            return DGLMolecule.from_openff(
+                molecule,
+                atom_features=self.config.atom_features,
+                bond_features=self.config.bond_features,
+            )
+
+        return GraphMolecule.from_openff(
+            molecule,
+            atom_features=self.config.atom_features,
+            bond_features=self.config.bond_features,
+        )
+    
     @classmethod
-    def load(cls, model: str, eval_mode: bool = True):
+    def load(cls, model: str, eval_mode: bool = True, **kwargs):
         """
         Load a model from a file.
 
@@ -234,6 +265,8 @@ class GNNModel(BaseGNNModel):
             This can be created using the `save` method.
         eval_mode: bool
             Whether to set the model to evaluation mode.
+        **kwargs
+            Additional keyword arguments to pass to `torch.load`.
 
         Returns
         -------
@@ -251,7 +284,7 @@ class GNNModel(BaseGNNModel):
         models saved with ``torch.save``, as it expects
         a dictionary of hyperparameters and a state dictionary.
         """
-        model_kwargs = torch.load(str(model))
+        model_kwargs = torch.load(str(model), **kwargs)
         if isinstance(model_kwargs, dict):
             model = cls(**model_kwargs["hyperparameters"])
             model.load_state_dict(model_kwargs["state_dict"])

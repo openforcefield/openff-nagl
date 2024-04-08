@@ -136,11 +136,22 @@ class ReadoutModule(torch.nn.Module):
         self.postprocess_layer = postprocess_layer
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
-        x = self.pooling_layer.forward(molecule)
-        x = self.readout_layers.forward(x)
+        x = self._forward_unpostprocessed(molecule)
         if self.postprocess_layer is not None:
             x = self.postprocess_layer.forward(molecule, x)
 
+        return x
+    
+    def _forward_unpostprocessed(
+        self, molecule: Union[DGLMolecule, DGLMoleculeBatch]
+    ) -> torch.Tensor:
+        """
+        Forward pass without postprocessing the readout modules.
+        This is quality-of-life method for debugging and testing.
+        It is *not* intended for public use.
+        """
+        x = self.pooling_layer.forward(molecule)
+        x = self.readout_layers.forward(x)
         return x
     
     def copy(self, copy_weights: bool = False):

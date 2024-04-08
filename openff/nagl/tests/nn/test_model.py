@@ -309,6 +309,32 @@ class TestGNNModel:
 
         assert_allclose(computed, desired, atol=1e-5)
 
+    def test_forward_unpostprocessed(self):
+        dgl = pytest.importorskip("dgl")
+        from openff.toolkit import Molecule
+
+        model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
+        molecule = Molecule.from_smiles("C")
+        nagl_mol = model._convert_to_nagl_molecule(molecule)
+        unpostprocessed = model._forward_unpostprocessed(nagl_mol)
+        computed = unpostprocessed["am1bcc_charges"].detach().cpu().numpy()
+        assert computed.shape == (5, 2)
+        expected = np.array([
+            [ 0.166862,  5.489722],
+            [-0.431665,  5.454424],
+            [-0.431665,  5.454424],
+            [-0.431665,  5.454424],
+            [-0.431665,  5.454424],
+        ])
+        assert_allclose(computed, expected, atol=1e-5)
+
+    def test_load_model_with_kwargs(self):
+        GNNModel.load(
+            EXAMPLE_AM1BCC_MODEL,
+            eval_mode=True,
+            map_location=torch.device('cpu')
+        )
+
     def test_protein_computable(self):
         """
         Test that working with moderately sized protein

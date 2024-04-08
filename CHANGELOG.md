@@ -18,6 +18,9 @@ The rules for this file:
 ### Authors
 - @lilyminium
 
+### Added
+- Helper methods for debugging (PR #111)
+
 ### Changed
 - Moved from importlib_resources to plain importlib with 3.9+
 
