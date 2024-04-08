@@ -39,9 +39,6 @@ dependencies:
   - pytest-xdist
   - codecov
 
-  # https://github.com/openforcefield/openff-nagl/issues/106
-  - snappy<1.2
-
   # Pip-only installs
   - pip:
     - rich
