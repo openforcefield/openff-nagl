@@ -10,6 +10,8 @@ from openff.nagl.label.labels import (
     LabelMultipleESPs,
 )
 
+pytest.importorskip("pyarrow")
+
 @pytest.fixture
 def dataset_with_conformers_and_charges(tmp_path):
     smiles = ["NCN", "[NH4+]", "[Cl-]"]
