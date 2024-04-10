@@ -3,18 +3,16 @@ import pathlib
 import tqdm
 import typing
 
-import numpy as np
-import pyarrow as pa
-import pyarrow.dataset as ds
-import pyarrow.parquet as pq
-
-from openff.units import unit
-
 from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.label.labels import LabellerType
+from openff.utilities import requires_package
+
+if typing.TYPE_CHECKING:
+    import pyarrow
 
 class LabelledDataset:
 
+    @requires_package("pyarrow")
     def __init__(
             self,
             source,
@@ -28,6 +26,8 @@ class LabelledDataset:
         return self.dataset.to_table(columns=columns).to_pandas()
 
     def _reload(self):
+        import pyarrow.dataset as ds
+
         self.dataset = ds.dataset(self.source, format="parquet")
 
     @classmethod
@@ -44,6 +44,8 @@ class LabelledDataset:
     ):
         from openff.toolkit import Molecule
 
+        import pyarrow as pa
+        import pyarrow.dataset as ds
 
         loader = functools.partial(
             Molecule.from_smiles,
@@ -84,16 +86,19 @@ class LabelledDataset:
     
     def append_columns(
         self,
-        columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
+        columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
         self._append_columns(columns, exist_ok=exist_ok)
         
     def _append_columns(
         self,
-        columns: typing.Dict[pa.Field, typing.Iterable[typing.Any]],
+        columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
+        import pyarrow.dataset as ds
+        import pyarrow.parquet as pq
+
         from .utils import _append_column_to_table
 
         n_all_rows = self.dataset.count_rows()

@@ -1,11 +1,5 @@
-import os
-import pathlib
-import pickle
 import typing
 
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.dataset as ds
 import numpy as np
 import pytest
 import torch
@@ -204,6 +198,7 @@ class TestDGLMoleculeDataset:
         self,
         featurized_dataset,
     ):
+        ds = pytest.importorskip("pyarrow.dataset")
         df = featurized_dataset.to_pyarrow().to_pandas()
         example = ds.dataset(EXAMPLE_FEATURIZED_PARQUET_DATASET).to_table().to_pandas()
 
