@@ -1,5 +1,4 @@
-
-import pyarrow as pa
+import pytest
 
 from openff.nagl.label.dataset import LabelledDataset
 from openff.nagl.label.labels import (
@@ -7,6 +6,7 @@ from openff.nagl.label.labels import (
     LabelCharges
 )
 
+pa = pytest.importorskip("pyarrow")
 class TestLabelledDataset:
 
     def test_from_unmapped_smiles(self, small_dataset):

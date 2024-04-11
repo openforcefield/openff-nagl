@@ -23,8 +23,8 @@ dependencies:
   - scipy
   - ambertools
 
-  # database
-  - pyarrow
+  # # database
+  # - pyarrow
 
   # gcn
   - pytorch >=2.0

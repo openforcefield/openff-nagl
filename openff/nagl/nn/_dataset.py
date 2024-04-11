@@ -12,6 +12,7 @@ import typing
 
 import tqdm
 import torch
+from openff.utilities import requires_package
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
 from openff.nagl._base.base import ImmutableModel
@@ -23,9 +24,6 @@ from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.utils._hash import digest_file
 
 import pathlib
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.dataset as ds
 import numpy as np
 
 if typing.TYPE_CHECKING:
@@ -267,7 +265,12 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
 
 class _LazyDGLMoleculeDataset(Dataset):
     version = 0.1
-    schema = pa.schema([pa.field("pickled", pa.binary())])
+
+    @property
+    def schema(self):
+        import pyarrow as pa
+
+        return pa.schema([pa.field("pickled", pa.binary())])
 
     def __len__(self):
         return self.n_entries
@@ -277,10 +280,13 @@ class _LazyDGLMoleculeDataset(Dataset):
         entry = pickle.loads(row)
         return entry
     
+    @requires_package("pyarrow")
     def __init__(
         self,
         source: str,
     ):
+        import pyarrow as pa
+
         self.source = str(source)
         with pa.memory_map(self.source, "rb") as src:
             reader = pa.ipc.open_file(src)
@@ -294,6 +300,7 @@ class _LazyDGLMoleculeDataset(Dataset):
     
 
     @classmethod
+    @requires_package("pyarrow")
     def from_arrow_dataset(
         cls,
         path: pathlib.Path,
@@ -308,6 +315,7 @@ class _LazyDGLMoleculeDataset(Dataset):
         use_cached_data: bool = True,
         n_processes: int = 0,
     ):
+        import pyarrow as pa
         import pyarrow.dataset as ds
 
         if columns is not None:
@@ -430,6 +438,7 @@ class DGLMoleculeDataset(Dataset):
         return self[0].molecule.atom_features.shape[1]
 
     @classmethod
+    @requires_package("pyarrow")
     def from_arrow_dataset(
         cls,
         path: pathlib.Path,
@@ -442,6 +451,8 @@ class DGLMoleculeDataset(Dataset):
         columns: typing.Optional[typing.List[str]] = None,
         n_processes: int = 0,
     ):
+        import pyarrow.dataset as ds
+
         if columns is not None:
             columns = list(columns)
             if smiles_column not in columns:
@@ -543,7 +554,7 @@ class DGLMoleculeDataset(Dataset):
 
         return cls(entries)
 
-    
+    @requires_package("pyarrow")
     def to_pyarrow(
         self,
         atom_feature_column: str = "atom_features",
@@ -571,6 +582,8 @@ class DGLMoleculeDataset(Dataset):
         -------
         table
         """
+        import pyarrow as pa
+
         required_columns = [smiles_column, atom_feature_column, bond_feature_column]
         label_columns = []
         if len(self):
