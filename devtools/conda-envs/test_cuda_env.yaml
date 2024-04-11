@@ -16,7 +16,6 @@ dependencies:
   - click
   - click-option-group
   - tqdm
-  - rich
 
   # chemistry
   - openff-recharge
@@ -44,7 +43,3 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - codecov
-
-  # Pip-only installs
-  - pip:
-    - rich
