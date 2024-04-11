@@ -13,7 +13,7 @@ The rules for this file:
     use tabs but use spaces for formatting
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
-## v0.3.8 -- 2024-04-08
+## v0.3.8 -- 2024-04-11
 
 ### Authors
 - @lilyminium
@@ -25,6 +25,8 @@ The rules for this file:
 ### Changed
 - Moved from importlib_resources to plain importlib with 3.9+
 - Removed 3.9 compatibility for NAGL (PR #105)
+- Removed pyarrow as a core dependency (PR #113)
+
 
 
 ## v0.3.7 -- 2024-04-05
