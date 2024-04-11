@@ -13,7 +13,6 @@ dependencies:
   - click
   - click-option-group
   - tqdm
-  - rich
 
   # chemistry
   - pydantic <3
