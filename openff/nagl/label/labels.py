@@ -7,14 +7,13 @@ import tqdm
 import typing
 
 import numpy as np
-import pyarrow as pa
-import pyarrow.parquet as pq
-import pyarrow.dataset as ds
-
 from openff.units import unit
+from openff.utilities import requires_package
 
 from openff.nagl._base.base import ImmutableModel
-from openff.utilities import requires_package
+
+if typing.TYPE_CHECKING:
+    import pyarrow
 
 ChargeMethodType = typing.Literal[
     "am1bcc", "am1-mulliken", "gasteiger", "formal_charge",
@@ -28,12 +27,13 @@ class _BaseLabel(ImmutableModel, abc.ABC):
     smiles_column: str = "mapped_smiles"
     verbose: bool = False
 
+    @requires_package("pyarrow")
     def _append_column(
         self,
-        table: pa.Table,
-        key: typing.Union[pa.Field, str],
+        table: "pyarrow.Table",
+        key: typing.Union["pyarrow.Field", str],
         values: typing.Iterable[typing.Any],
-    ) -> pa.Table:
+    ) -> "pyarrow.Table":
         from .utils import _append_column_to_table
         return _append_column_to_table(
             table,
@@ -46,9 +46,9 @@ class _BaseLabel(ImmutableModel, abc.ABC):
     @abc.abstractmethod
     def apply(
         self,
-        table: pa.Table,
+        table: "pyarrow.Table",
         verbose: bool = False,
-    ) -> pa.Table:
+    ) -> "pyarrow.Table":
         raise NotImplementedError()
 
 
@@ -62,10 +62,11 @@ class LabelConformers(_BaseLabel):
 
     def apply(
         self,
-        table: pa.Table,
+        table: "pyarrow.Table",
         verbose: bool = False,
     ):
         from openff.toolkit import Molecule
+        import pyarrow as pa
 
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
@@ -170,9 +171,11 @@ class LabelCharges(_BaseLabel):
             
     def apply(
         self,
-        table: pa.Table,
+        table: "pyarrow.Table",
         verbose: bool = False,
     ):
+        import pyarrow as pa
+
         rows = table.to_pylist()
         if verbose:
             rows = tqdm.tqdm(rows, desc="Assigning charges")
@@ -221,9 +224,11 @@ class LabelMultipleDipoles(_BaseLabel):
 
     def apply(
         self,
-        table: pa.Table,
+        table: "pyarrow.Table",
         verbose: bool = False,
     ):
+        import pyarrow as pa
+
         rows = table.to_pylist()
         if verbose:
             rows = tqdm.tqdm(rows, desc="Calculating dipoles")
@@ -322,9 +327,11 @@ class LabelMultipleESPs(_BaseLabel):
 
     def apply(
         self,
-        table: pa.Table,
+        table: "pyarrow.Table",
         verbose: bool = False,
     ):
+        import pyarrow as pa
+        
         rows = table.to_pylist()
         if verbose:
             rows = tqdm.tqdm(rows, desc="Calculating ESPs")
@@ -402,7 +409,7 @@ LabellerType = typing.Union[
 ]
 
 def apply_labellers(
-    table: pa.Table,
+    table: "pyarrow.Table",
     labellers: typing.Iterable[LabellerType],
     verbose: bool = False,
 ):
@@ -417,6 +424,9 @@ def apply_labellers_to_batch_file(
     labellers: typing.Iterable[LabellerType] = tuple(),
     verbose: bool = False,
 ):
+    import pyarrow.dataset as ds
+    import pyarrow.parquet as pq
+
     if not labellers:
         return
     source = pathlib.Path(source)

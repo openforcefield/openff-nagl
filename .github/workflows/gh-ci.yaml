@@ -31,7 +31,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.9", "3.10", "3.11", "3.12"]
+          python-version: ["3.10", "3.11", "3.12"]
           pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
           include-openeye: [false, true]
@@ -39,9 +39,6 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-            # broken OpenMM build for Mac on 3.10
-            - os: "macOS-latest"
-              python-version: "3.10"
             # Can't support 3.12 on Mac yet
             - python-version: "3.12"
               os: "macOS-latest"
@@ -86,6 +83,13 @@ jobs:
       if: matrix.include-rdkit == false
       run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
+    # See https://github.com/openforcefield/openff-nagl/issues/103
+    - name: Rewrite DGL config
+      if: matrix.include-dgl == true
+      run: |
+        mkdir -p ~/.dgl
+        echo '{"backend": "pytorch"}' > ~/.dgl/config.json
+
     - name: Python information
       run: |
         which python
@@ -121,7 +125,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: 3.9
+        python-version: "3.10"
 
     - name: Install Pylint
       run: |
@@ -145,7 +149,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: 3.9
+        python-version: "3.10"
 
     - name: Install dependencies
       run: |

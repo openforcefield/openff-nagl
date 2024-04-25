@@ -1,16 +1,14 @@
 import logging
 import typing
 
-import numpy as np
-
-import pyarrow.parquet as pq
-import pyarrow.dataset as ds
+from openff.utilities import requires_package
 
 if typing.TYPE_CHECKING:
     import pyarrow as pa
 
 logger = logging.getLogger(__name__)
 
+@requires_package("pyarrow")
 def _append_column_to_table(
     table: "pa.Table",
     key: typing.Union["pa.Field", str],

@@ -12,7 +12,6 @@ dependencies:
   - click
   - click-option-group
   - tqdm
-  - rich
 
   # chemistry
   - openff-recharge
@@ -23,8 +22,8 @@ dependencies:
   - scipy
   - ambertools
 
-  # database
-  - pyarrow
+  # # database
+  # - pyarrow
 
   # gcn
   - pytorch >=2.0
@@ -39,6 +38,3 @@ dependencies:
   - pytest-xdist
   - codecov
 
-  # Pip-only installs
-  - pip:
-    - rich
