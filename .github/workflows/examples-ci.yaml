@@ -30,7 +30,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-latest, ubuntu-latest]
+          os: [macOS-12, ubuntu-latest]
           python-version: ["3.10", "3.11"]
           pydantic-version: ["2"]
           include-rdkit: [true]
