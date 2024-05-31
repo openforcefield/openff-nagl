@@ -13,6 +13,22 @@ The rules for this file:
     use tabs but use spaces for formatting
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
+
+## v0.3.8 -- 2024-04-11
+
+This version drops pyarrow and rich as core dependencies. It also removes Python 3.9 support.
+
+### Authors
+- [@lilyminium]
+
+## What's Changed
+- Switch to plain importlib (PR #109)
+- Add unprocessed methods(PR #111)
+- Remove dgl config (PR #110)
+- Make pyarrow optional (PR #113)
+- Remove rich library (PR #115)
+
+
 ## v0.3.7 -- 2024-04-05
 
 ### Authors
