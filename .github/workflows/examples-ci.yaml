@@ -68,17 +68,17 @@ jobs:
       
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
-      run: conda remove --force openeye --yes || echo "openeye not installed"
+      run: micromamba remove --force openeye --yes || echo "openeye not installed"
 
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
+      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
     
     - name: Python information
       run: |
         which python
-        conda info
-        conda list
+        micromamba info
+        micromamba list
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"

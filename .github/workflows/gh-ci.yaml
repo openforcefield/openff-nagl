@@ -77,11 +77,11 @@ jobs:
       
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
-      run: conda remove --force openeye --yes || echo "openeye not installed"
+      run: micromamba remove --force openeye --yes || echo "openeye not installed"
 
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
+      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
 
     # See https://github.com/openforcefield/openff-nagl/issues/103
     - name: Rewrite DGL config
@@ -93,8 +93,8 @@ jobs:
     - name: Python information
       run: |
         which python
-        conda info
-        conda list
+        micromamba info
+        micromamba list
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
@@ -190,16 +190,16 @@ jobs:
 
     - name: Build from source
       run: |
-        conda create --name openff-nagl
-        conda activate openff-nagl
-        conda list
+        micromamba create --name openff-nagl
+        micromamba activate openff-nagl
+        micromamba list
     
         mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version
         python -m pip install . --no-deps
-        conda list
+        micromamba list
 
     - name: Check success
       run: |
-        conda activate openff-nagl
+        micromamba activate openff-nagl
         python -c "import openff.nagl ; print(openff.nagl.__version__)"

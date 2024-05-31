@@ -60,8 +60,8 @@ jobs:
     - name: Python information
       run: |
         which python
-        conda info
-        conda list
+        micromamba info
+        micromamba list
 
     - name: Run tests
       run: |
