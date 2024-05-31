@@ -73,6 +73,7 @@ hidden: true
 caption: Developer's Guide
 ---
 
+CHANGELOG.md
 dev.md
 toolkit_wrappers.md
 :::
