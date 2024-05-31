@@ -45,6 +45,9 @@ jobs:
             # no openeye for 3.12 yet
             - include-openeye: true
               python-version: "3.12"
+            # no builds?
+            - include-dgl: true
+              python-version: "3.12"
 
 
     steps:
