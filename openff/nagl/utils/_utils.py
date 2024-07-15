@@ -41,6 +41,13 @@ def as_iterable(obj: typing.Any) -> typing.Iterable:
         return [obj]
     return obj
 
+def potential_dict_to_list(d: typing.Union[dict, list]) -> list:
+    """Convert a possible dictionary to a list of items."""
+    try:
+        return list(d.values())
+    except AttributeError:
+        return d
+
 
 def transform_coordinates(
     coordinates: np.ndarray,
