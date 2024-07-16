@@ -23,7 +23,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - pytorch
+  - pytorch <2.2
 
   # parallelism
   - dask-jobqueue
