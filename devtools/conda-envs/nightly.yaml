@@ -1,7 +1,6 @@
 name: openff-nagl-test
 channels:
   - openeye
-  - pytorch-nightly
   - conda-forge
   - defaults
 dependencies:
@@ -23,7 +22,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - pytorch >=2.3.0,<2.3.0.post101
+  - pytorch
 
   # parallelism
   - dask-jobqueue
@@ -48,9 +47,6 @@ dependencies:
   - sqlalchemy
   - sqlite
   - xmltodict
-
-  # dgl compatibility
-  - cuda-version ==12.1
 
   # Pip-only installs
   - pip:
