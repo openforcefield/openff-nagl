@@ -18,7 +18,7 @@ dependencies:
   - openff-toolkit-base >=0.11.1
   - openff-units
   - pydantic <3
-  - rdkit
+  - rdkit=2024.03.4=*_0
   - scipy
   - ambertools
 
@@ -37,7 +37,3 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - codecov
-
-
-  # CI?
-  - numpy <2.0
