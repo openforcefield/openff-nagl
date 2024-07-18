@@ -38,3 +38,7 @@ dependencies:
   - pytest-xdist
   - codecov
 
+
+  # CI?
+  - qhull
+  - libcxx ==17
