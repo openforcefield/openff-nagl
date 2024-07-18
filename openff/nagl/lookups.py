@@ -145,15 +145,40 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             entry.mapped_smiles,
             allow_undefined_stereo=True
         )
+
+        # first try with input bond orders and formal charges
         is_isomorphic, query_to_entry_mapping = Molecule.are_isomorphic(
             molecule,
             entry_molecule,
             return_atom_map=True,
-            # skip stereochemistry because matching inchi should be enough
-            # atom_stereochemistry_matching=False,
-            # bond_stereochemistry_matching=False,
         )
-        assert is_isomorphic
+        if not is_isomorphic:
+            # try again without bond orders and formal charges.
+            # This should be enough to match the InChI
+
+            is_isomorphic, query_to_entry_mapping = Molecule.are_isomorphic(
+                molecule,
+                entry_molecule,
+                return_atom_map=True,
+                aromatic_matching=True,
+                formal_charge_matching=False,
+                bond_order_matching=False,
+            )
+
+            if not is_isomorphic:
+                # lastly -- skip stereochemistry matching
+                is_isomorphic, query_to_entry_mapping = Molecule.are_isomorphic(
+                    molecule,
+                    entry_molecule,
+                    return_atom_map=True,
+                    formal_charge_matching=False,
+                    bond_order_matching=False,
+                    # skip stereochemistry because matching inchi should be enough
+                    atom_stereochemistry_matching=False,
+                    bond_stereochemistry_matching=False,
+                )
+
+                assert is_isomorphic
 
         # remap the property values to the query order
         property_values = [

@@ -14,6 +14,16 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.4.0
+
+### Authors
+
+- [@lilyminium]
+
+### Added
+
+- Added lookup table support (`openff.nagl.lookups.AtomPropertiesLookupTable`) (PR #122)
+
 ## v0.3.8 -- 2024-04-11
 
 This version drops pyarrow and rich as core dependencies. It also removes Python 3.9 support.
