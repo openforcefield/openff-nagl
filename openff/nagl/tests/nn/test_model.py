@@ -114,9 +114,10 @@ class TestGNNModel:
             property_name="am1bcc_charges",
             properties=[
                 AtomPropertiesLookupTableEntry(
-                    inchi_key="InChI=1/H2S/h1H2",
+                    inchi="InChI=1/H2S/h1H2",
                     mapped_smiles="[H:2][S:1][H:3]",
                     property_value=[-0.1, 0.05, 0.05],
+                    provenance={"description": "test"},
                 )
             ]
         )
