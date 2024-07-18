@@ -14,9 +14,22 @@ except ImportError:
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
 
+
+class PropertyProvenance(ImmutableModel):
+    description: str = Field(
+        description="A description of the provenance"
+    )
+    versions: dict[str, str] = Field(
+        default_factory=dict,
+        description="The versions of the relevant software used to compute the property"
+    )
+
 class BasePropertiesLookupTableEntry(ImmutableModel):
-    inchi_key: str = Field(
-        description="The InChI key of the molecule"
+    inchi: str = Field(
+        description="The InChI of the molecule"
+    )
+    provenance: PropertyProvenance = Field(
+        description="The provenance of the property value"
     )
 
 class AtomPropertiesLookupTableEntry(BasePropertiesLookupTableEntry):
@@ -80,7 +93,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             raise ValueError("All entries must be AtomPropertiesLookupTableEntry instances")
 
         return types.MappingProxyType({
-            entry.inchi_key: entry
+            entry.inchi: entry
             for entry in v
         })
     
@@ -118,7 +131,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         try:
             entry = self.properties[inchi_key]
         except KeyError:
-            raise KeyError(f"Could not find property value for molecule with InChI key {inchi_key}")
+            raise KeyError(f"Could not find property value for molecule with InChI {inchi_key}")
         
         assert len(entry) == molecule.n_atoms
 

@@ -15,18 +15,20 @@ from openff.nagl.lookups import (
 @pytest.fixture(scope="function")
 def CNO2_entry():
     return AtomPropertiesLookupTableEntry(
-        inchi_key="InChI=1/CH3NO2/c1-2(3)4/h1H3",
+        inchi="InChI=1/CH3NO2/c1-2(3)4/h1H3",
         mapped_smiles="[H:5][C:1]([H:6])([H:7])[N+:2](=[O:3])[O-:4]",
         property_value=[-0.103, 0.234, -0.209, -0.209, 0.096, 0.096, 0.096],
+        provenance={"description": "test"}
     )
 
 
 @pytest.fixture(scope="function")
 def SH2_entry():
     return AtomPropertiesLookupTableEntry(
-        inchi_key="InChI=1/H2S/h1H2",
+        inchi="InChI=1/H2S/h1H2",
         mapped_smiles="[H:2][S:1][H:3]",
         property_value=[-0.441, 0.22, 0.22],
+        provenance={"description": "test"}
     )
 
 
@@ -37,8 +39,8 @@ class TestAtomPropertiesLookupTable:
         return AtomPropertiesLookupTable(
             property_name="test",
             properties={
-                CNO2_entry.inchi_key: CNO2_entry,
-                SH2_entry.inchi_key: SH2_entry,
+                CNO2_entry.inchi: CNO2_entry,
+                SH2_entry.inchi: SH2_entry,
             }
         )
 

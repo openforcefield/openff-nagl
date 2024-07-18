@@ -57,6 +57,22 @@ class BaseGNNModel(pl.LightningModule):
 
 
 class GNNModel(BaseGNNModel):
+    """
+    A GNN model for predicting properties of molecules.
+
+    Parameters
+    ----------
+    config: ModelConfig or dict
+        The configuration for the model.
+
+    chemical_domain: ChemicalDomain or dict
+        The applicable chemical domain for the model.
+
+    lookup_tables: dict
+        A dictionary of lookup tables for properties.
+        The keys should be the property names, and the values
+        should be instances of :class:`~openff.nagl.lookups.BaseLookupTable`.
+    """
     def __init__(
         self,
         config: ModelConfig,
@@ -107,12 +123,16 @@ class GNNModel(BaseGNNModel):
             readout_modules=readout_modules,
         )
 
+        lookup_tables_dict = {}
+        for k, v in valid_lookup_tables.items():
+            v_ = v.dict()
+            v_["properties"] = dict(v_["properties"])
+            lookup_tables_dict[k] = v_
+
         self.save_hyperparameters({
             "config": config.dict(),
             "chemical_domain": chemical_domain.dict(),
-            "lookup_tables": {
-                k: v.dict() for k, v in valid_lookup_tables.items()
-            },
+            "lookup_tables": lookup_tables_dict,
         })
         self.config = config
         self.chemical_domain = chemical_domain
