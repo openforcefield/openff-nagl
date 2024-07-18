@@ -68,7 +68,7 @@ jobs:
       
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
-      run: conda remove --force openeye --yes || echo "openeye not installed"
+      run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
 
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
