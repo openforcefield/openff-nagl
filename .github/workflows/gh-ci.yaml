@@ -106,6 +106,10 @@ jobs:
         assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
         assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
+    - name: Tmp debug
+      run: |
+        lscpu
+
     - name: Run tests
       run: |
         python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
