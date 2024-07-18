@@ -18,7 +18,7 @@ dependencies:
   - openff-toolkit-base >=0.11.1
   - openff-units
   - pydantic <3
-  - rdkit=2024.03.4=*_0
+  - rdkit=2024.03.4!=*_1
   - scipy
   - ambertools
 
