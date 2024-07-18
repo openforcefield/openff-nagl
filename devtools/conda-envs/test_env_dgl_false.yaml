@@ -41,4 +41,4 @@ dependencies:
 
   # CI?
   - qhull
-  - libcxx ==17.0
+  - libcxx ==17.0.6
