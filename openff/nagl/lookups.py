@@ -16,12 +16,15 @@ if typing.TYPE_CHECKING:
 
 
 class PropertyProvenance(ImmutableModel):
+    """
+    Class for storing the provenance of a property
+    """
     description: str = Field(
         description="A description of the provenance"
     )
     versions: dict[str, str] = Field(
         default_factory=dict,
-        description="The versions of the relevant software used to compute the property"
+        description="The versions of the relevant software packages used to compute the property"
     )
 
 class BasePropertiesLookupTableEntry(ImmutableModel):
@@ -46,7 +49,9 @@ class AtomPropertiesLookupTableEntry(BasePropertiesLookupTableEntry):
     )
 
     property_value: tuple[float, ...] = Field(
-        description="The values of the property"
+        description=(
+            "The values of the property, ordered according to mapped SMILES"
+        )
     )
 
     def __len__(self):

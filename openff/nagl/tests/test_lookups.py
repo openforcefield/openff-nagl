@@ -91,4 +91,4 @@ class TestAtomPropertiesLookupTable:
     def test_lookup_failure(self, lookup_table):
         molecule = Molecule.from_smiles("CC")
         with pytest.raises(KeyError):
-            lookup_table.lookup(molecule)
+            lookup_table.lookup(molecule, match="Could not find")
