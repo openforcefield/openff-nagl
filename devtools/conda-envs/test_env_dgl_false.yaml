@@ -37,4 +37,3 @@ dependencies:
   - pytest-cov
   - pytest-xdist
   - codecov
-
