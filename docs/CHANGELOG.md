@@ -14,6 +14,19 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.4.0 -- 2024-07-18
+
+This version adds support for lookup tables.
+
+### Authors
+- [@lilyminium]
+- [@mattwthompson]
+- [@j-wags]
+
+### Added
+- Support for lookup tables and entries (PR #122)
+- Pins to DGL and RDKit for compatibility (PRs #117, #123)
+
 ## v0.3.8 -- 2024-04-11
 
 This version drops pyarrow and rich as core dependencies. It also removes Python 3.9 support.
