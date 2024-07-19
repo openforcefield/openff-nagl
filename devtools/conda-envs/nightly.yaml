@@ -16,7 +16,7 @@ dependencies:
 
   # chemistry
   - pydantic <3
-  - rdkit
+  - rdkit !=2024.03.4
   - scipy
 
   # database
@@ -37,6 +37,7 @@ dependencies:
   # other openff dependencies
   - cachetools
   - cached-property
+  - importlib_resources
   - mdtraj
   - openff-amber-ff-ports
   - openmm
