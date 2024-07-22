@@ -1,4 +1,6 @@
 import copy
+import logging
+import types
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optional
 import warnings
 
@@ -9,6 +11,10 @@ from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
+from openff.nagl.lookups import LookupTableType, _as_lookup_table
+from openff.nagl.utils._utils import potential_dict_to_list
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -51,10 +57,27 @@ class BaseGNNModel(pl.LightningModule):
 
 
 class GNNModel(BaseGNNModel):
+    """
+    A GNN model for predicting properties of molecules.
+
+    Parameters
+    ----------
+    config: ModelConfig or dict
+        The configuration for the model.
+
+    chemical_domain: ChemicalDomain or dict
+        The applicable chemical domain for the model.
+
+    lookup_tables: dict
+        A dictionary of lookup tables for properties.
+        The keys should be the property names, and the values
+        should be instances of :class:`~openff.nagl.lookups.BaseLookupTable`.
+    """
     def __init__(
         self,
         config: ModelConfig,
         chemical_domain: Optional[ChemicalDomain] = None,
+        lookup_tables: dict[str, LookupTableType] = None,
     ):
         if not isinstance(config, ModelConfig):
             config = ModelConfig(**config)
@@ -66,6 +89,7 @@ class GNNModel(BaseGNNModel):
             )
         elif not isinstance(chemical_domain, ChemicalDomain):
             chemical_domain = ChemicalDomain(**chemical_domain)
+
 
         convolution_module = ConvolutionModule.from_config(
             config.convolution,
@@ -79,17 +103,40 @@ class GNNModel(BaseGNNModel):
                 n_input_features=config.convolution.layers[-1].hidden_feature_size,
             )
 
+        valid_lookup_tables = {}
+        if not lookup_tables:
+            lookup_tables = {}
+        # allow an iterable of lookup tables
+        lookup_tables = potential_dict_to_list(lookup_tables)
+        for lookup_table in lookup_tables:
+            lookup_table = _as_lookup_table(lookup_table)
+            if not lookup_table.property_name in readout_modules:
+                raise ValueError(
+                    f"The lookup table property name {lookup_table.property_name} "
+                    f"is not in the readout modules."
+                )
+            valid_lookup_tables[lookup_table.property_name] = lookup_table
+            
+
         super().__init__(
             convolution_module=convolution_module,
             readout_modules=readout_modules,
         )
 
+        lookup_tables_dict = {}
+        for k, v in valid_lookup_tables.items():
+            v_ = v.dict()
+            v_["properties"] = dict(v_["properties"])
+            lookup_tables_dict[k] = v_
+
         self.save_hyperparameters({
             "config": config.dict(),
             "chemical_domain": chemical_domain.dict(),
+            "lookup_tables": lookup_tables_dict,
         })
         self.config = config
         self.chemical_domain = chemical_domain
+        self.lookup_tables = types.MappingProxyType(valid_lookup_tables)
         
 
     @classmethod
@@ -113,6 +160,7 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool = True,
         check_domains: bool = False,
         error_if_unsupported: bool = True,
+        check_lookup_table: bool = True,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -132,6 +180,10 @@ class GNNModel(BaseGNNModel):
             is not represented in the training data.
             This is only used if ``check_domains`` is ``True``.
             If ``False``, a warning will be raised instead.
+        check_lookup_table: bool
+            Whether to check a lookup table for the property values.
+            If ``False`` or if the molecule is not in the lookup
+            table, the property will be computed using the model.
 
         Returns
         -------
@@ -151,9 +203,60 @@ class GNNModel(BaseGNNModel):
             values = self._compute_properties_dgl(molecule)
         except (MissingOptionalDependencyError, TypeError):
             values = self._compute_properties_nagl(molecule)
+        
+        if check_lookup_table and self.lookup_tables:
+            property_names = list(values)
+            for property_name in property_names:
+                try:
+                    value = self._check_property_lookup_table(
+                        molecule=molecule,
+                        readout_name=property_name,
+                    )
+                except KeyError as e:
+                    logger.info(
+                        f"Could not find property in lookup table: {e}"
+                    )
+                    continue
+                else:
+                    logger.info(
+                        f"Using lookup table for property {property_name}"
+                    )
+                    values[property_name] = value
+
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
+    
+    def _check_property_lookup_table(
+        self,
+        molecule: "Molecule",
+        readout_name: str,
+    ):
+        """
+        Check if the molecule is in the property lookup table.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to check.
+        readout_name: str
+            The name of the readout to check.
+        
+        Returns
+        -------
+        torch.Tensor
+        
+
+        Raises
+        ------
+        KeyError
+            If there is no table for this property, or
+            if the molecule is not in the property lookup table
+        """
+
+        table = self.lookup_tables[readout_name]
+        return table.lookup(molecule)
+
         
     def compute_property(
         self,
@@ -162,6 +265,7 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool = True,
         check_domains: bool = False,
         error_if_unsupported: bool = True,
+        check_lookup_table: bool = True
     ):
         """
         Compute the trained property for a molecule.
@@ -185,6 +289,10 @@ class GNNModel(BaseGNNModel):
             is not represented in the training data.
             This is only used if ``check_domains`` is ``True``.
             If ``False``, a warning will be raised instead.
+        check_lookup_table: bool
+            Whether to check a lookup table for the property values.
+            If ``False`` or if the molecule is not in the lookup
+            table, the property will be computed using the model.
 
         Returns
         -------
@@ -195,6 +303,7 @@ class GNNModel(BaseGNNModel):
             as_numpy=as_numpy,
             check_domains=check_domains,
             error_if_unsupported=error_if_unsupported,
+            check_lookup_table=check_lookup_table
         )
         if readout_name is None:
             if len(properties) == 1:

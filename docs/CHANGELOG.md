@@ -24,8 +24,8 @@ This version adds support for lookup tables.
 - [@j-wags]
 
 ### Added
-- Support for lookup tables and entries (PR #122)
-- Pins to DGL and RDKit for compatibility (PRs #117, #123)
+- Added lookup table support (`openff.nagl.lookups.AtomPropertiesLookupTable`) (PR #122)
+- Pins to DGL for compatibility (PR #117)
 
 ## v0.3.8 -- 2024-04-11
 

@@ -5,6 +5,7 @@ import torch
 from numpy.testing import assert_allclose
 
 from openff.units import unit
+from openff.toolkit.topology import Molecule
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -13,6 +14,7 @@ from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.domains import ChemicalDomain
+from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
 from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL,
 )
@@ -108,9 +110,18 @@ class TestGNNModel:
         model.chemical_domain = ChemicalDomain(
             allowed_elements=(1, 6)
         )
-        # model = GNNModel.from_yaml(MODEL_CONFIG_V7)
-        # model.load_state_dict(torch.load(EXAMPLE_AM1BCC_MODEL_STATE_DICT))
-        # model.eval()
+        lookup_table = AtomPropertiesLookupTable(
+            property_name="am1bcc_charges",
+            properties=[
+                AtomPropertiesLookupTableEntry(
+                    inchi="InChI=1/H2S/h1H2",
+                    mapped_smiles="[H:2][S:1][H:3]",
+                    property_value=[-0.1, 0.05, 0.05],
+                    provenance={"description": "test"},
+                )
+            ]
+        )
+        model.lookup_tables = {"am1bcc_charges": lookup_table}
 
         return model
 
@@ -357,3 +368,29 @@ class TestGNNModel:
             model = GNNModel.load("model.pt", eval_mode=True)
             charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
             assert_allclose(charges, expected_methane_charges, atol=1e-5)
+
+
+    def test_check_lookup_table(self, am1bcc_model):
+        sh2 = Molecule.from_mapped_smiles("[H:1][S:2][H:3]")
+        charges = am1bcc_model.compute_property(
+            sh2, as_numpy=True, check_lookup_table=True
+        )
+        assert_allclose(charges, [0.05, -0.1, 0.05])
+
+    def test_check_no_lookup_table(self, am1bcc_model):
+        sh2 = Molecule.from_mapped_smiles("[H:1][S:2][H:3]")
+        charges = am1bcc_model.compute_property(
+            sh2, as_numpy=True, check_lookup_table=False
+        )
+        assert_allclose(charges, [0.220583, -0.441167,  0.220583], atol=1e-5)
+
+    def test_outside_lookup_table(self, am1bcc_model):
+        nh2 = Molecule.from_smiles("N")
+        charges =am1bcc_model.compute_property(
+            nh2, as_numpy=True, check_lookup_table=True,
+        )
+        assert_allclose(
+            charges,
+            [-0.738375,  0.246125,  0.246125,  0.246125],
+            atol=1e-5
+        )

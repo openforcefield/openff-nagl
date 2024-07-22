@@ -23,7 +23,7 @@ dependencies:
   - openff-units
   - openff-recharge
   - pydantic <3
-  - rdkit !=2024.03.4
+  - rdkit
 
   # database
   - pyarrow
