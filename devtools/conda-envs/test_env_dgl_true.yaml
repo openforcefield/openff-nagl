@@ -27,7 +27,7 @@ dependencies:
   - pyarrow
 
   # gcn
-  - dgl =2.2
+  - dgl >=1.0,<=2.1
   - pytorch >=2.0
   - pytorch-lightning
 
