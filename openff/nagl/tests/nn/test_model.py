@@ -401,3 +401,16 @@ class TestGNNModelRC3:
     @pytest.fixture()
     def model(self):
         return GNNModel.load(EXAMPLE_MODEL_RC3, eval_mode=True)
+    
+    def test_contains_lookup_tables(self, model):
+        assert "am1bcc_charges" in model.lookup_tables
+        assert len(model.lookup_tables) == 1
+        assert len(model.lookup_tables["am1bcc_charges"]) == 13400
+
+    def test_compute_property(self, model, openff_methane_uncharged):
+        charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
+        assert charges.shape == (5, 2)
+        assert charges.dtype == np.float32
+
+        expected_charges = np.array([-0.087334,  0.021833,  0.021833,  0.021833,  0.021833],)
+        assert_allclose(charges, expected_charges, atol=1e-5)
