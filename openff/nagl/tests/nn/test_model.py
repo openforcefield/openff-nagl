@@ -405,12 +405,22 @@ class TestGNNModelRC3:
     def test_contains_lookup_tables(self, model):
         assert "am1bcc_charges" in model.lookup_tables
         assert len(model.lookup_tables) == 1
-        assert len(model.lookup_tables["am1bcc_charges"]) == 13400
+        assert len(model.lookup_tables["am1bcc_charges"]) == 13944
 
-    def test_compute_property(self, model, openff_methane_uncharged):
-        charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
-        assert charges.shape == (5, 2)
+    @pytest.mark.parametrize("lookup, expected_charges", [
+        (True, [-0.10866 ,  0.027165,  0.027165,  0.027165,  0.027165]),
+        (False, [-0.159474,  0.039869,  0.039869,  0.039869,  0.039869])
+    ])
+    def test_compute_property(
+        self, model, openff_methane_uncharged, lookup, expected_charges
+    ):
+        charges = model.compute_property(
+            openff_methane_uncharged,
+            as_numpy=True,
+            check_lookup_table=lookup,
+
+        )
+        assert charges.shape == (5,)
         assert charges.dtype == np.float32
 
-        expected_charges = np.array([-0.087334,  0.021833,  0.021833,  0.021833,  0.021833],)
         assert_allclose(charges, expected_charges, atol=1e-5)
