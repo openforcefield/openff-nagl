@@ -17,6 +17,7 @@ from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
 from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL,
+    EXAMPLE_MODEL_RC3
 )
 from openff.nagl.features.atoms import (
     AtomicElement,
@@ -394,3 +395,9 @@ class TestGNNModel:
             [-0.738375,  0.246125,  0.246125,  0.246125],
             atol=1e-5
         )
+
+class TestGNNModelRC3:
+
+    @pytest.fixture()
+    def model(self):
+        return GNNModel.load(EXAMPLE_MODEL_RC3, eval_mode=True)
