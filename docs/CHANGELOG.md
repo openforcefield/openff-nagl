@@ -14,15 +14,18 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## v0.4.0
+## v0.4.0 -- 2024-07-18
+
+This version adds support for lookup tables.
 
 ### Authors
-
 - [@lilyminium]
+- [@mattwthompson]
+- [@j-wags]
 
 ### Added
-
-- Added lookup table support (`openff.nagl.lookups.AtomPropertiesLookupTable`) (PR #122)
+- Added lookup table support (`openff.nagl.lookups.AtomPropertiesLookupTable`) (PR #122, #129)
+- Pins to DGL for compatibility (PR #117)
 
 ## v0.3.8 -- 2024-04-11
 
