@@ -1,26 +1,22 @@
+"""
+Metrics for evaluating loss
+"""
 import abc
 import typing
 
 import torch
 
-from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl._base.base import ImmutableModel
 
-try:
-    from pydantic.v1.main import ModelMetaclass
-except ImportError:
-    from pydantic.main import ModelMetaclass
 
 if typing.TYPE_CHECKING:
     import torch
-    from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
-    from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
-
-# class MetricMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
-#     pass
 
 class BaseMetric(ImmutableModel, abc.ABC):
+    """
+    Base class for metrics to evaluate loss between predicted and expected values.
+    """
     name: typing.Literal[""]
     def __call__(
         self,
@@ -44,7 +40,6 @@ class RMSEMetric(BaseMetric):
     def compute(self, predicted_values, expected_values):
         loss = torch.nn.MSELoss()
         return torch.sqrt(loss(predicted_values, expected_values))
-        # return torch.sqrt(torch.mean((predicted_values - expected_values) ** 2))
 
 
 class MSEMetric(BaseMetric):
@@ -53,7 +48,6 @@ class MSEMetric(BaseMetric):
     def compute(self, predicted_values, expected_values):
         loss = torch.nn.MSELoss()
         return loss(predicted_values, expected_values)
-        # return torch.mean((predicted_values - expected_values) ** 2)
 
 
 class MAEMetric(BaseMetric):
@@ -62,7 +56,6 @@ class MAEMetric(BaseMetric):
     def compute(self, predicted_values, expected_values):
         loss = torch.nn.L1Loss()
         return loss(predicted_values, expected_values)
-        # return torch.mean(torch.abs(predicted_values - expected_values))
 
 
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
@@ -77,9 +70,14 @@ Mapping from metric names to the corresponding classes.
 """
 
 
-def get_metric_type(metric):
+def get_metric_type(metric: typing.Union[MetricType, str]) -> MetricType:
+    """
+    Get the metric class instance from a string or class.
+    """
     if isinstance(metric, BaseMetric):
         return metric
     elif isinstance(metric, str):
         metric = metric.lower()
         return METRICS[metric]()
+    else:
+        raise ValueError(f"Unknown metric type: {metric}")
