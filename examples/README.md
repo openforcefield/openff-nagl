@@ -6,3 +6,4 @@ The following examples are available in [the OpenFF NAGL repository](https://git
 
 * [prepare-dataset](https://github.com/openforcefield/openff-nagl/tree/main/examples/prepare-dataset) - Prepare a dataset for training, validating or testing NAGL models from a list of SMILES and the OpenFF Toolkit
 * [train-gnn-notebook](https://github.com/openforcefield/openff-nagl/tree/main/examples/train-gnn-notebook) - Architect, train, and use a simple GCN partial charge model on an alkane test dataset
+* [train-electric-field](https://github.com/openforcefield/openff-nagl/tree/main/examples/train-gnn-to-electric-field) - Prepare a dataset from QM data, set up training and validation sets, create a GNN and train to electric field data
