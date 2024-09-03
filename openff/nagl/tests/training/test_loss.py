@@ -12,7 +12,8 @@ from openff.nagl.training.loss import (
     SingleDipoleTarget,
     HeavyAtomReadoutTarget,
     ReadoutTarget,
-    MultipleESPTarget
+    MultipleESPTarget,
+    GeneralLinearFitTarget
 )
 
 class TestBaseTarget:
@@ -234,3 +235,8 @@ class TestMultipleESPTarget:
             {}
         )
         assert torch.isclose(loss, torch.tensor([0.965650046]))
+
+
+
+class TestGeneralLinearFitTarget:
+    
