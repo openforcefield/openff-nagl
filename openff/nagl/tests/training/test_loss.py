@@ -15,7 +15,6 @@ from openff.nagl.training.loss import (
     MultipleESPTarget,
     GeneralLinearFitTarget
 )
-from openff.nagl.tests.data.files import MOLECULE_ESP_RECORD_CBR3
 
 class TestBaseTarget:
 
