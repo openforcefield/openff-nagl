@@ -1,3 +1,7 @@
+"""
+Config classes for training data.
+"""
+
 import pathlib
 import typing
 
@@ -16,11 +20,21 @@ except ImportError:
 DiscriminatedTargetType = typing.Annotated[TargetType, Field(discriminator="name")]
 
 class DatasetConfig(ImmutableModel, FromYamlMixin):
-    sources: typing.Optional[typing.List[str]] = Field(
+    """
+    A config class for a single dataset. Datasets can be combined from
+    multiple data `sources` and can be used for training or validation.
+    Multiple targets can be defined that read different columns from the training
+    sets. The required columns must be present in all `sources`.
+    """
+    sources: typing.Optional[list[str]] = Field(
         None,
-        description="Paths to data"
+        description=(
+            "Paths to data sources. "
+            "The data should be formatted to be readable as PyArrow dataset. "
+            "Sources can be a single file or a directory of files."
+        )
     )
-    targets: typing.List[DiscriminatedTargetType] = Field(
+    targets: list[DiscriminatedTargetType] = Field(
         description="Targets to train or evaluate against",
     )
     batch_size: typing.Optional[int] = Field(
@@ -44,7 +58,8 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
         description="Number of processes to use for loading data",
     )
 
-    def get_required_target_columns(self):
+    def get_required_target_columns(self) -> list[str]:
+        """Get all required columns from the datasets for the targets"""
         columns = set()
         for target in self.targets:
             columns |= set(target.get_required_columns())
@@ -52,6 +67,9 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
 
 
 class DataConfig(ImmutableModel, FromYamlMixin):
+    """
+    A config class for setting up training, validation, and test datasets.
+    """
     training: DatasetConfig = Field(description="Training dataset")
     validation: typing.Optional[DatasetConfig] = Field(
         default=None,
@@ -62,7 +80,8 @@ class DataConfig(ImmutableModel, FromYamlMixin):
         description="Test dataset",
     )
     
-    def get_required_target_columns(self):
+    def get_required_target_columns(self) -> list[str]:
+        """Get all required columns from the datasets for the targets"""
         columns = set()
         columns |= set(self.training.get_required_target_columns())
         if self.validation is not None:
