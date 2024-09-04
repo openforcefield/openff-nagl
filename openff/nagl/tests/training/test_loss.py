@@ -15,6 +15,7 @@ from openff.nagl.training.loss import (
     MultipleESPTarget,
     GeneralLinearFitTarget
 )
+from openff.nagl.tests.data.files import MOLECULE_ESP_RECORD_CBR3
 
 class TestBaseTarget:
 
@@ -239,4 +240,87 @@ class TestMultipleESPTarget:
 
 
 class TestGeneralLinearFitTarget:
+    def test_single_molecule(self, dgl_methane):
+        predictions = {
+            "am1bcc_charges": torch.tensor([-1, 3, -0.5, 2.1, 0.3]),
+        }
+        A_flat = torch.tensor(np.arange(25, dtype=float))
+        labels={
+            "design_matrix": A_flat,
+            "calculated_vectors": torch.tensor([1, 2, 3, 4, 5])
+        }
+        target = GeneralLinearFitTarget(
+            metric="rmse",
+            prediction_label="am1bcc_charges",
+            target_label="calculated_vectors",
+            design_matrix_column="design_matrix",
+        )
+
+        required_columns = ["calculated_vectors", "design_matrix"]
+        assert target.get_required_columns() == required_columns
+
+        evaluated = target.evaluate_target(
+            dgl_methane,
+            labels,
+            predictions,
+            {}
+        )
+        assert torch.allclose(evaluated, torch.tensor([ 9.5, 29. , 48.5, 68. , 87.5]))
+
+        loss = target.evaluate_loss(
+            dgl_methane,
+            labels=labels,
+            predictions=predictions,
+            readout_modules={},
+        )
+        assert torch.allclose(loss, torch.tensor([52.48571234]))
     
+
+    def test_multiple_molecules(self, dgl_batch):
+        charges = torch.cat([
+            torch.arange(5),
+            torch.arange(4),
+            torch.arange(14),
+        ]).float()
+        predictions = {"charges": charges}
+
+        A_flat = torch.cat([
+            torch.arange(25),
+            torch.arange(16),
+            torch.arange(14 * 14),
+        ]).float()
+        calculated_vectors = torch.arange(23).float()
+        labels = {
+            "design_matrix": A_flat,
+            "calculated_vectors": calculated_vectors,
+        }
+
+        target = GeneralLinearFitTarget(
+            metric="rmse",
+            prediction_label="charges",
+            target_label="calculated_vectors",
+            design_matrix_column="design_matrix",
+        )
+
+        evaluated = target.evaluate_target(
+            dgl_batch,
+            labels,
+            predictions,
+            {}
+        )
+        assert len(evaluated) == 23
+        expected = torch.tensor([
+            30,  80, 130, 180, 230,
+            14, 38, 62, 86,
+            819,  2093,  3367,  4641,  5915,  7189,  8463, 
+            9737, 11011, 12285, 13559, 14833, 16107, 17381
+        ]).float()
+        assert torch.allclose(evaluated, expected)
+
+        loss = target.evaluate_loss(
+            dgl_batch,
+            labels=labels,
+            predictions=predictions,
+            readout_modules={},
+        )
+        assert torch.allclose(loss, torch.tensor([8140.5599]))
