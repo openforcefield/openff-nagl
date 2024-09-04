@@ -39,6 +39,9 @@ dependencies:
   # parallelism
   - dask-jobqueue
 
+  # compatibility
+  - apsw >=3.42
+
 
   # CI
   - nbval
