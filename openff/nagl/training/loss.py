@@ -1,3 +1,5 @@
+"""Targets for calculating loss when training neural networks"""
+
 import abc
 import pathlib
 import typing
@@ -23,9 +25,13 @@ if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule
 
 
-# class _TargetMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
-#     pass
-
+__all__ = [
+    "ReadoutTarget",
+    "HeavyAtomReadoutTarget",
+    "SingleDipoleTarget",
+    "MultipleDipoleTarget",
+    "MultipleESPTarget",
+]
 
 class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
     name: typing.Literal[""]
@@ -226,46 +232,6 @@ class ReadoutTarget(_BaseTarget):
     ) -> "torch.Tensor":
         return predictions[self.prediction_label]
     
-
-    def report_artifact(
-        self,
-        molecules: DGLMoleculeOrBatch,
-        labels: typing.Dict[str, torch.Tensor],
-        predictions: typing.Dict[str, torch.Tensor],
-        output_directory: pathlib.Path,
-        top_n_entries: int = 100,
-        bottom_n_entries: int = 100,
-    ) -> pathlib.Path:
-        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
-        from openff.nagl.training.reporting import create_atom_label_report
-
-        n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
-
-        if isinstance(molecules, DGLMoleculeBatch):
-            molecules = molecules.unbatch()
-        else:
-            molecules = [molecules]
-
-        predictions = predictions[self.prediction_label].squeeze()
-        predictions = torch.split(predictions, n_atoms)
-        labels = labels[self.target_label].squeeze()
-        labels = torch.split(labels, n_atoms)
-
-        report_path = output_directory / f"{self.target_label}.html"
-        create_atom_label_report(
-            molecules=molecules,
-            predicted_labels=predictions,
-            reference_labels=labels,
-            metrics=[self.metric],
-            rank_by=self.metric,
-            output_path=report_path,
-            top_n_entries=top_n_entries,
-            bottom_n_entries=bottom_n_entries,
-            highlight_outliers=True,
-            outlier_threshold=0.5,
-        )
-        return report_path
-        
         
 
 
@@ -375,73 +341,7 @@ class MultipleDipoleTarget(_BaseTarget):
 
         return torch.cat(dipoles)
     
-    def report_artifact(
-        self,
-        molecules: DGLMoleculeOrBatch,
-        labels: typing.Dict[str, torch.Tensor],
-        predictions: typing.Dict[str, torch.Tensor],
-        output_directory: pathlib.Path,
-        top_n_entries: int = 100,
-        bottom_n_entries: int = 100,
-    ) -> pathlib.Path:
-        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
-        from openff.nagl.training.reporting import create_molecule_label_report
-
-        if isinstance(molecules, DGLMoleculeBatch):
-            molecules = molecules.unbatch()
-        else:
-            molecules = [molecules]
-
-        conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(
-            molecules, labels, predictions
-        )
-        ref = labels[self.target_label]
-
-        losses = []
-        counter = 0
-        dipole_counter = 0
-        for i, n_conf in enumerate(n_conformations):
-            mol_charge = all_charges[i]
-            n_atoms = all_n_atoms[i]
-
-            atom_increment = n_conf * n_atoms
-            mol_conformation = conformations[counter:counter+atom_increment]
-
-            mol_predictions = {
-                self.charge_label: mol_charge,
-            }
-
-            dipole_increment = n_conf * 3
-            mol_ref = ref[dipole_counter:dipole_counter+dipole_increment]
-            mol_labels = {
-                self.conformation_column: mol_conformation,
-                self.n_conformation_column: torch.tensor([n_conf]),
-                self.target_label: mol_ref
-            }
-            loss = self._evaluate_loss(
-                molecules[i],
-                mol_labels,
-                mol_predictions,
-                {}
-            )
-            losses.append(loss)
-
-            counter += atom_increment
-            dipole_counter += dipole_increment
-
-
-        report_path = output_directory / f"{self.target_label}.html"
-        create_molecule_label_report(
-            molecules=molecules,
-            losses=torch.tensor(losses),
-            metric_name=self.metric.name,
-            output_path=report_path,
-            top_n_entries=top_n_entries,
-            bottom_n_entries=bottom_n_entries,
-        )
-        return report_path
     
-
 class MultipleESPTarget(_BaseTarget):
     """A target that is evaluated on the electrostatic potential of a molecule."""
     name: typing.Literal["multiple_esps"] = "multiple_esps"
@@ -512,73 +412,6 @@ class MultipleESPTarget(_BaseTarget):
                 esp_counter += n_grid
 
         return torch.cat(esps)
-    
-    def report_artifact(
-        self,
-        molecules: DGLMoleculeOrBatch,
-        labels: typing.Dict[str, torch.Tensor],
-        predictions: typing.Dict[str, torch.Tensor],
-        output_directory: pathlib.Path,
-        top_n_entries: int = 100,
-        bottom_n_entries: int = 100,
-    ) -> pathlib.Path:
-        from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
-        from openff.nagl.training.reporting import create_molecule_label_report
-
-        if isinstance(molecules, DGLMoleculeBatch):
-            molecules = molecules.unbatch()
-        else:
-            molecules = [molecules]
-
-        all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = self._prepare_inputs(
-            molecules, labels, predictions
-        )
-        ref = labels[self.target_label].flatten().squeeze()
-        
-        losses = []
-        for molecule, n_atoms, n_esps, mol_charge in zip(
-            molecules, all_n_atoms, all_n_esps, all_charges
-        ):
-            mol_n_grid_points = n_grid_points[:n_esps]
-            n_grid_total = sum(mol_n_grid_points)
-            inv_increment = n_grid_total * n_atoms
-            mol_inv_dist = inverse_distance_matrix[:inv_increment]
-
-            mol_labels = {
-                self.inverse_distance_matrix_column: mol_inv_dist,
-                self.esp_length_column: mol_n_grid_points,
-                self.n_esp_column: torch.tensor([n_esps]),
-                self.target_label: ref[:n_grid_total]
-
-            }
-
-            mol_predictions = {
-                self.charge_label: mol_charge,
-            }
-
-            loss = self._evaluate_loss(
-                molecule,
-                mol_labels,
-                mol_predictions,
-                {}
-            )
-
-            losses.append(loss)
-
-            ref = ref[n_grid_total:]
-            n_grid_points = n_grid_points[n_esps:]
-            inverse_distance_matrix = inverse_distance_matrix[inv_increment:]
-
-        report_path = output_directory / f"{self.target_label}.html"
-        create_molecule_label_report(
-            molecules=molecules,
-            losses=torch.tensor(losses),
-            metric_name=self.metric.name,
-            output_path=report_path,
-            top_n_entries=top_n_entries,
-            bottom_n_entries=bottom_n_entries,
-        )
-        return report_path
         
 
 

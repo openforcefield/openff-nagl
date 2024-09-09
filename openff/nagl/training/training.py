@@ -1,7 +1,7 @@
+"""Classes for training a GNN"""
+
 from collections import defaultdict
 import functools
-import glob
-import hashlib
 import logging
 import pathlib
 import pickle
@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class TrainingGNNModel(pl.LightningModule):
+    """A convenience class for training a GNN model"""
     def __init__(self, config: TrainingConfig):
         super().__init__()
         if not isinstance(config, TrainingConfig):

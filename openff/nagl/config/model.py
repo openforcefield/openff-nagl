@@ -1,3 +1,5 @@
+"""Config classes for defining a GNNModel"""
+
 
 import pathlib
 import typing
@@ -69,15 +71,11 @@ class ReadoutModule(ImmutableModel):
         description="Optional post-processing layer for prediction"
     )
 
-    # @validator("postprocess", pre=True)
-    # def _validate_postprocess(cls, v):
-    #     from openff.nagl.nn.postprocess import _PostprocessLayerMeta
-    #     if v is None:
-    #         return None
-    #     return _PostprocessLayerMeta._get_object(v)
-
 
 class ModelConfig(ImmutableModel, FromYamlMixin):
+    """
+    The configuration class for a GNNModel
+    """
     version: typing.Literal["0.1"]
     atom_features: typing.List[DiscriminatedAtomFeatureType] = Field(
         description="Atom features to use"
@@ -94,32 +92,6 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
     readouts: typing.Dict[str, ReadoutModule] = Field(
         description="Readout configs to map convolution representation to output"
     )
-
-    # @validator("atom_features", "bond_features", pre=True)
-    # def _validate_atom_features(cls, v, field):
-    #     if isinstance(v, dict):
-    #         v = list(v.items())
-    #     all_v = []
-    #     for item in v:
-    #         if isinstance(item, dict):
-    #             all_v.extend(list(item.items()))
-    #         elif isinstance(item, (str, field.type_, type(field.type_))):
-    #             all_v.append((item, {}))
-    #         else:
-    #             all_v.append(item)
-
-    #     instantiated = []
-    #     for klass, args in all_v:
-    #         if isinstance(klass, (AtomFeature, BondFeature)):
-    #             instantiated.append(klass)
-    #         else:
-    #             klass = type(field.type_)._get_class(klass)
-    #             if not isinstance(args, dict):
-    #                 item = klass._with_args(args)
-    #             else:
-    #                 item = klass(**args)
-    #             instantiated.append(item)
-    #     return instantiated
     
     def to_simple_dict(self):
         """

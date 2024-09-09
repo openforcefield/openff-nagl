@@ -1,3 +1,5 @@
+"""Defining the NAGLToolkitRegistry class."""
+
 from typing import List, Optional
 
 from openff.toolkit.utils.toolkit_registry import (

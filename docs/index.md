@@ -39,7 +39,7 @@ from openff.nagl import GNNModel
 model = GNNModel.load("trained_model.pt")
 ```
 
-Then, the properties the model is trained to predict can be computed with the [`GNNModel.compute_property()`] method, which takes an OpenFF [`Molecule`] object:
+Then, the properties the model is trained to predict can be computed with the [`GNNModel.compute_properties()`] method, which takes an OpenFF [`Molecule`] object:
 
 ```python
 from openff.toolkit import Molecule
@@ -51,7 +51,7 @@ model.compute_property(ethanol)
 
 [`openff.nagl.GNNModel`]: openff.nagl.GNNModel
 [`GNNModel.load()`]: openff.nagl.GNNModel.load
-[`GNNModel.compute_property()`]: openff.nagl.GNNModel.compute_property
+[`GNNModel.compute_properties()`]: openff.nagl.GNNModel.compute_properties
 [`Molecule`]: openff.toolkit.topology.Molecule
 
 :::{toctree}
