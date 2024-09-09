@@ -14,6 +14,15 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## ??
+
+### Authors
+- [@lilyminium]
+
+### Changed
+- Removed unused, undocumented code paths, and updated docs (PR #132)
+
+
 ## v0.4.0 -- 2024-07-18
 
 This version adds support for lookup tables.

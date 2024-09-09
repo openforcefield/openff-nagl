@@ -1,3 +1,5 @@
+"""Targets for calculating loss when training neural networks"""
+
 import abc
 import pathlib
 import typing
@@ -23,9 +25,13 @@ if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule
 
 
-# class _TargetMeta(ModelMetaclass, abc.ABCMeta, create_registry_metaclass("name")):
-#     pass
-
+__all__ = [
+    "ReadoutTarget",
+    "HeavyAtomReadoutTarget",
+    "SingleDipoleTarget",
+    "MultipleDipoleTarget",
+    "MultipleESPTarget",
+]
 
 class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
     name: typing.Literal[""]

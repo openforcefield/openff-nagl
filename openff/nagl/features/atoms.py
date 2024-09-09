@@ -23,16 +23,14 @@ to implement your own features.
 
 import copy
 import typing
-# from typing import TYPE_CHECKING, ClassVar, Dict, List, Type
 
 import numpy as np
 import torch
 
 from openff.nagl.utils._types import HybridizationType
 from openff.units import unit
-from openff.utilities import requires_package
 
-from ._base import CategoricalMixin, Feature #, FeatureMeta
+from ._base import CategoricalMixin, Feature
 from ._utils import one_hot_encode
 
 try:
@@ -54,17 +52,11 @@ __all__ = [
     "AtomFormalCharge",
     "AtomAverageFormalCharge",
     "AtomGasteigerCharge",
-    # "AtomMorganFingerprint"
 ]
 
 
-# class _AtomFeatureMeta(FeatureMeta):
-#     """Metaclass for registering atom features for string lookup."""
 
-#     registry: ClassVar[Dict[str, Type]] = {}
-
-
-class AtomFeature(Feature):#, metaclass=_AtomFeatureMeta):
+class AtomFeature(Feature):
     """Abstract base class for features of atoms.
 
     See :py:class:`Feature<openff.nagl.features.Feature>` for details on how to
@@ -248,10 +240,6 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
     categories: typing.List[int] = [-3, -2, -1, 0, 1, 2, 3]
 
     def _encode(self, molecule) -> torch.Tensor:
-        # from ..utils.openff import get_openff_molecule_formal_charges
-
-        # charges = get_openff_molecule_formal_charges(molecule)
-
         from openff.units import unit
 
         charges = [
@@ -319,6 +307,9 @@ class AtomGasteigerCharge(AtomFeature):
         return torch.tensor(charges)
 
 class AtomElementPeriod(CategoricalMixin, AtomFeature):
+    """
+    The period of the element of the atom as a one-hot encoding.
+    """
     name: typing.Literal["atom_element_period"] = "atom_element_period"
 
     categories: typing.List[int] = [1, 2, 3, 4, 5]
@@ -356,6 +347,9 @@ class AtomElementPeriod(CategoricalMixin, AtomFeature):
 
 
 class AtomElementGroup(CategoricalMixin, AtomFeature):
+    """
+    The group of the atom as a one-hot encoding.
+    """
     name: typing.Literal["atom_element_group"] = "atom_element_group"
 
     categories: typing.List[int] = [1, 14, 15, 16, 17]
@@ -392,6 +386,9 @@ class AtomElementGroup(CategoricalMixin, AtomFeature):
 
 
 class AtomTotalBondOrder(AtomFeature):
+    """
+    The total bond order (i.e. sum of all orders of connected bonds) of the atom.
+    """
     name: typing.Literal["atom_total_bond_order"] = "atom_total_bond_order"
 
     def _encode(self, molecule) -> torch.Tensor:
@@ -407,6 +404,9 @@ class AtomTotalBondOrder(AtomFeature):
 
 
 class AtomElectronegativityAllredRochow(AtomFeature):
+    """
+    The Allred-Rochow electronegativity of the atom.
+    """
     name: typing.Literal["atom_electronegativity_allred_rochow"] = "atom_electronegativity_allred_rochow"
 
     def _encode(self, molecule) -> torch.Tensor:
@@ -421,6 +421,9 @@ class AtomElectronegativityAllredRochow(AtomFeature):
 
 
 class AtomElectronAffinity(AtomFeature):
+    """
+    The electron affinity of the atom.
+    """
     name: typing.Literal["atom_electron_affinity"] = "atom_electron_affinity"
 
     def _encode(self, molecule) -> torch.Tensor:
@@ -433,6 +436,9 @@ class AtomElectronAffinity(AtomFeature):
         return torch.tensor(affinities)
 
 class AtomElectrophilicity(AtomFeature):
+    """
+    The electrophilicity of the atom.
+    """
     name: typing.Literal["atom_electrophilicity"] = "atom_electrophilicity"
 
     def _encode(self, molecule) -> torch.Tensor:

@@ -88,7 +88,7 @@ Neutral and zwitterionic alanine. These might be considered the same molecular s
 :::
 
 :::{admonition} Molecular Graphs in NAGL
-Molecular graphs are provided to NAGL via the [`Molecule`] class of the [OpenFF Toolkit]. These objects can be created in a [variety of ways], but the most common is probably via a [SMILES string] or [.SDF file]. NAGL ingests molecular graphs for inference through the [`GNNModel.compute_property()`] method, and for dataset construction through the [`MoleculeRecord.from_openff()`] and [`MoleculeRecord.from_precomputed_openff()`] methods.
+Molecular graphs are provided to NAGL via the [`Molecule`] class of the [OpenFF Toolkit]. These objects can be created in a [variety of ways], but the most common is probably via a [SMILES string] or [.SDF file]. NAGL ingests molecular graphs for inference through the [`GNNModel.compute_properties()`] method.
 :::
 
 [`Molecule`]: openff.toolkit.topology.Molecule
@@ -96,9 +96,8 @@ Molecular graphs are provided to NAGL via the [`Molecule`] class of the [OpenFF 
 [.SDF file]: openff.toolkit.topology.Molecule.from_file
 [OpenFF Toolkit]: inv:openff.toolkit#index
 [variety of ways]: inv:openff.toolkit#users/molecule_cookbook
-[`GNNModel.compute_property()`]: openff.nagl.GNNModel.compute_property
-[`MoleculeRecord.from_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_openff
-[`MoleculeRecord.from_precomputed_openff()`]: openff.nagl.storage.record.MoleculeRecord.from_precomputed_openff
+[`GNNModel.compute_properties()`]: openff.nagl.GNNModel.compute_properties
+
 
 (featurization_theory)=
 ## Featurization
@@ -117,7 +116,7 @@ NAGL therefore uses **one-hot encoding** for most featurization, in which each f
 This prevents the model from assuming that adjacent elements are similar. Note that these values are represented internally as floating point numbers, not single bits. The model's internal representation is therefore free to mix and scale them as needed, which allows the model to represent a carbon atom (#6) with some oxygen character (#8) without the result appearing like nitrogen (#7).
 
 :::{admonition} Featurization in NAGL
-Feature templates for [bonds] and [atoms] are available in the [`features`] module. A featurization scheme is composed of a tuple of instances of these classes, which are passed to the `bond_features` and `atom_features` arguments of the [`GNNModel`] constructor. Most of these features simply apply a one-hot encoding directly to the molecular graph, but a few are built on the [`ResonanceEnumerator`] class to support features that take into account multiple resonance forms.
+Feature templates for [bonds] and [atoms] are available in the [`features`] module. A featurization scheme is composed of a tuple of instances of these classes, which are passed to the `bond_features` and `atom_features` arguments of the [`ModelConfig`] constructor. Most of these features simply apply a one-hot encoding directly to the molecular graph, but a few are built on the [`ResonanceEnumerator`] class to support features that take into account multiple resonance forms.
 :::
 
 [bonds]: openff.nagl.features.bonds
@@ -151,7 +150,7 @@ NAGL's goal is to produce machine-learned models that can compute partial charge
 
 NAGL produces atom embeddings with a message-passing graph convolutional network (GCN). A GCN takes each node's feature vector and iteratively mixes it with those of progressively more distant neighbors to produce an embedding for the node. To start with, NAGL uses an atom's feature vector as its embedding, and its neighbors are the atoms directly bonded to it. On each iteration, the GCN first **aggregates** the feature vectors of an atom's neighbors and the associated bonds, and then **updates** the embedding with the aggregated features of that neighborhood. On the next iteration, the new embedding will be updated again, and the atoms an additional step away will form its new neighborhood.
 
-NAGL's convolution module supports the [GraphSAGE] architecture to train a single neural network to produce an embedding for any atom in any molecule. GraphSAGE uses any of a number of simple mathematical functions for its aggregation step, and trains a neural network to perform the update function. NAGL currently uses simple element-wise averaging of features for its aggregation step, and trains the update network automatically as part of training a model. The update function is thus custom built to produce an embedding for the property we're trying to predict!
+NAGL's convolution module supports multiple architectures. The most well-tested is the [GraphSAGE] architecture to train a single neural network to produce an embedding for any atom in any molecule. GraphSAGE uses any of a number of simple mathematical functions for its aggregation step, and trains a neural network to perform the update function. NAGL currently uses simple element-wise averaging of features for its aggregation step, and trains the update network automatically as part of training a model. The update function is thus custom built to produce an embedding for the property we're trying to predict!
 
 :::{admonition} Note
 GraphSAGE has nothing to do with the Sage force field!
@@ -164,7 +163,21 @@ GraphSAGE has nothing to do with the Sage force field!
 
 A trained convolution module takes a molecular graph and produces a representation for each atom that is custom-made for prediction of the desired property. These embeddings are then passed directly to the **Readout module** to predict the properties themselves; in fact, both modules are trained together to optimize their performance.
 
-The readout module consists of a neural network and a **post-processing** function. The post-processing function takes the outputs of the neural network and applies some traditional computation to them before producing the model's final result. NAGL therefore sandwiches its machine learning core between conventional, symbolic computation where chemistry knowledge can be injected.
+The readout module consists of a **pooling layer**, a feed-forward neural network and an optional **post-processing** function. The post-processing function takes the outputs of the neural network and applies some traditional computation to them before producing the model's final result. NAGL therefore sandwiches its machine learning core between conventional, symbolic computation where chemistry knowledge can be injected.
+
+
+### Pooling
+
+The function of the pooling layer is to "pool" the feature vectors
+produced by the convolution module into a single representation.
+
+### Postprocessing
+
+NAGL supports a number of post-processing layers.
+These should be specified in the [`ModelConfig`] with their name,
+not an instantiation of the class.
+
+#### compute_partial_charges
 
 NAGL uses an interesting application of the post-processing layer when calculating charges: an application of the **charge equilibration method** [inspired by electronegativity equalization]. The readout neural network does not directly infer partial charges; instead, it predicts two variables that are interpreted as **electronegativity** $e$ and **hardness** $s$. These are the first two derivatives in charge of the molecule's potential energy, and respectively quantify the atom's proclivity to hold negative charge and the atom's resistance to changing charge. An atom's partial charge $q$ is then computed from these properties and the molecule's net charge $Q$:
 
@@ -181,3 +194,13 @@ NAGL's machine learning models can be supplied a post-processing function with t
 :::
 
 [inspired by electronegativity equalization]: https://arxiv.org/pdf/1909.07903.pdf
+
+#### regularized_compute_partial_charges
+
+The is a modification of `compute_partial_charges` that
+also receives an initial charge, $q_0$, and uses the electronegativity
+and hardness to instead compute a "charge correction".
+
+Any neural network using this as a postprocessing layer
+therefore predicts three quantities: the initial charge $q_0$,
+the electronegativity $d$, and the hardness $s$.
