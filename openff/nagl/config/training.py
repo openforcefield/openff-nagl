@@ -1,3 +1,7 @@
+"""
+The `TrainingConfig` class
+"""
+
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.config.data import DataConfig
 from openff.nagl.config.model import ModelConfig

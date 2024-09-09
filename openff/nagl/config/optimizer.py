@@ -1,3 +1,5 @@
+"""Config classes for defining optimizers"""
+
 import typing
 
 from openff.nagl._base.base import ImmutableModel

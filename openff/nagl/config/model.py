@@ -1,3 +1,5 @@
+"""Config classes for defining a GNNModel"""
+
 
 import pathlib
 import typing

@@ -1,5 +1,5 @@
 """
-Config classes for training data.
+Config classes for defining datasets.
 """
 
 import pathlib
