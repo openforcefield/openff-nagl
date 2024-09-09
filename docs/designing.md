@@ -1,3 +1,5 @@
+(designing_a_model)=
+
 # Designing a GCN
 
 Designing a GCN with NAGL primarily involves creating an instance of the [`ModelConfig`] class.

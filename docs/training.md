@@ -14,11 +14,11 @@ Once you have your overall dataset, you should divide it into **training**, **va
 - **validation**: About 10% of your data. Used to validate the model as it is iteratively fitted.
 - **test**: About 10% of your data. Used to test the final model against data it has never "seen" before.
 
-Datasets are constructed by producing OpenFF Toolkit [`Molecule`] objects with the appropriate charges, loading them into [`MoleculeRecord`] objects, and storing them in a SQLite database:
+Datasets can be constructed very flexibly by creating PyArrow-parseable tables.
 
 ```python
-from openff.nagl.storage.record import MoleculeRecord
-from openff.nagl.storage import MoleculeStore
+import pyarrow as pa
+import pyarrow.parquet as pq
 from openff.toolkit import Molecule
 
 records = []
@@ -36,56 +36,97 @@ for smiles in [
     molecule.assign_partial_charges("am1bcc")
 
     # Record results
-    records.append(
-        MoleculeRecord.from_precomputed_openff(
-            molecule,
-            partial_charge_method="am1bcc"
-        )
-    )
+    record = {
+        "mapped_smiles": molecule.to_smiles(mapped=True),
+        "charges": molecule.partial_charges.m.tolist()
+    }
 
 # Save the dataset
-MoleculeStore("dataset.sqlite").store(records)
+table = pa.Table.from_pylist(records)
+pq.write_table(table, "training-data.parquet")
 ```
 
 [`Molecule`]: openff.toolkit.topology.Molecule
-[`MoleculeRecord`]: openff.nagl.storage.record.MoleculeRecord
 
 ## Loading a dataset
 
-Datasets are loaded for training with the [`DGLMoleculeLightningDataModule`] class. Objects of this class require the [featurization schema] used in NAGL models, as well as paths to the datasets and batch sizes for loading the data.
+Datasets are loaded for training with the [`DataConfig`] class. Objects of this class require training targets and loss functions to be defined,
+as well as paths to the datasets and batch sizes for loading the data.
 
 ```python
-from openff.nagl.nn.dataset import DGLMoleculeLightningDataModule
+from openff.nagl.config import DataConfig, DatasetConfig
+from openff.nagl.training import ReadoutTarget
 
-data_module = DGLMoleculeLightningDataModule(
-    atom_features=atom_features,
-    bond_features=bond_features,
-    partial_charge_method="am1bcc",
-    training_set_paths=["training_data.sqlite"],
-    validation_set_paths=["validation_data.sqlite"],
-    test_set_paths=["test_data.sqlite"],
-    training_batch_size=1000,
-    validation_batch_size=1000,
-    test_batch_size=1000,
+direct_charges_target = ReadoutTarget(
+    # what we're using from the parquet table to evaluate loss
+    target_label="charges",
+    # the output of the GNN we use to evaluate loss
+    prediction_label="charges",
+    # how we want to evaluate loss, e.g. RMSE, MSE, ...
+    metric="rmse",
+    # how much to weight this target
+    # helps with scaling in multi-target optimizations
+    weight=1,
+    denominator=1,
+)
+
+training_config = DatasetConfig(
+    sources=["training-data.parquet"],
+    targets=[direct_charges_target],
+    batch_size=1000,
+)
+
+data_config = DataConfig(
+    training=training_config,
+    validation=...,
+    test=...,
 )
 ```
 
-[`DGLMoleculeLightningDataModule`]: openff.nagl.nn.dataset.DGLMoleculeLightningDataModule
-[featurization schema]: model_features
+
 
 ## Training
 
-The PyTorch Lightning [`Trainer`] class greatly simplifies training a model. It's a simple procedure to construct the `Trainer`, fit the model to the data, test it, and save the fitted model:
+Combine the [`ModelConfig`] (see -- [](designing_a_model)), [`DataConfig`] and an [`OptimizerConfig`] class into a [`TrainingConfig`].
+
+An [`OptimizerConfig`] is reasonably simple to define:
+
+```python
+from openff.nagl.config import OptimizerConfig
+
+optimizer_config = OptimizerConfig(optimizer="Adam", learning_rate=0.001)
+```
+
+We can then combine these into a [`TrainingConfig`] and create a [`TrainingGNNModel`]
+
+```
+from openff.nagl.config import TrainingConfig
+from openff.nagl.training.training import TrainingGNNModel
+
+training_config = TrainingConfig(
+    model=model_config,
+    data=data_config,
+    optimizer=optimizer_config
+)
+
+training_model = TrainingGNNModel(training_config)
+```
+
+
+Then use the PyTorch Lightning [`Trainer`] class to greatly simplify training a model. It's a simple procedure to construct the `Trainer`, fit the model to the data, test it, and save the fitted model:
+
+
 
 ```python
 from pytorch_lightning import Trainer
 
 trainer = Trainer(max_epochs=200)
-
 trainer.checkpoint_callback.monitor = "val_loss"
 
+data_module = training_model.create_data_module()
+
 trainer.fit(
-    model, 
+    training_model,
     datamodule=data_module,
 )
 
