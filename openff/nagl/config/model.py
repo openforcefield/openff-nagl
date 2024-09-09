@@ -73,6 +73,9 @@ class ReadoutModule(ImmutableModel):
 
 
 class ModelConfig(ImmutableModel, FromYamlMixin):
+    """
+    The configuration class for a GNNModel
+    """
     version: typing.Literal["0.1"]
     atom_features: typing.List[DiscriminatedAtomFeatureType] = Field(
         description="Atom features to use"

@@ -13,6 +13,13 @@ if typing.TYPE_CHECKING:
     import torch
 
 
+__all__ = [
+    "RMSEMetric",
+    "MSEMetric",
+    "MAEMetric",
+]
+
+
 class BaseMetric(ImmutableModel, abc.ABC):
     """
     Base class for metrics to evaluate loss between predicted and expected values.

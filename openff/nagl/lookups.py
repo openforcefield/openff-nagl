@@ -15,6 +15,12 @@ if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
 
 
+__all__ = [
+    "PropertyProvenance",
+    "AtomPropertiesLookupTableEntry",
+    "AtomPropertiesLookupTable",
+]
+
 class PropertyProvenance(ImmutableModel):
     """
     Class for storing the provenance of a property

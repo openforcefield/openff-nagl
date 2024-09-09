@@ -1,3 +1,6 @@
+"""Functions using the RDKit toolkit"""
+
+
 import copy
 import functools
 from typing import Tuple, TYPE_CHECKING, List, Union

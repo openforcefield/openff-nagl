@@ -1,3 +1,5 @@
+"""Functions using the OpenEye toolkit"""
+
 import copy
 from typing import Tuple, TYPE_CHECKING, List, Union
 
