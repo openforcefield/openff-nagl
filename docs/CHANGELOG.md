@@ -19,6 +19,9 @@ The rules for this file:
 ### Authors
 - [@lilyminium]
 
+### Added
+- General linear fit target and example (PR #131)
+
 ### Changed
 - Removed unused, undocumented code paths, and updated docs (PR #132)
 
