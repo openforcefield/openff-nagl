@@ -20,20 +20,6 @@ class _PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
         if hasattr(cls, "name") and cls.name:
             cls.registry[cls.name.lower()] = cls
 
-    # @classmethod
-    # def get_layer_class(cls, class_name: str):
-    #     if isinstance(class_name, cls):
-    #         return class_name
-    #     if isinstance(type(class_name), cls):
-    #         return type(class_name)
-    #     try:
-    #         return cls.registry[class_name.lower()]
-    #     except KeyError:
-    #         raise ValueError(
-    #             f"Unknown PostprocessLayer type: {class_name}. "
-    #             f"Supported types: {list(cls.registry.keys())}"
-    #         )
-
 
 class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=_PostprocessLayerMeta):
     """A layer to apply to the final readout of a neural network."""

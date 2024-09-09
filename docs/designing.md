@@ -1,6 +1,10 @@
 # Designing a GCN
 
-Designing a GCN with NAGL primarily involves creating an instance of the [`GNNModel`] class. This can be done straightforwardly in Python:
+Designing a GCN with NAGL primarily involves creating an instance of the [`ModelConfig`] class.
+
+## In Python
+
+A ModelConfig class can be created can be done straightforwardly in Python.
 
 ```python
 from openff.nagl.features import atoms, bonds
@@ -9,6 +13,17 @@ from openff.nagl.nn import gcn
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn import postprocess
 
+from openff.nagl.config.model import (
+    ModelConfig,
+    ConvolutionModule, ReadoutModule,
+    ConvolutionLayer, ForwardLayer,
+)
+```
+
+First we can specify our desired features.
+These should be instances of the feature classes.
+
+```python
 atom_features = (
     atoms.AtomicElement(["C", "H", "O", "N", "P", "S"]),
     atoms.AtomConnectivity(),
@@ -19,66 +34,111 @@ bond_features = (
     bonds.BondOrder(),
     ...
 )
+```
 
-model = GNNModel(
+Next, we can design convolution and readout modules. For example:
+
+```python
+convolution_module = ConvolutionModule(
+    architecture="SAGEConv",
+    # construct 2 layers with dropout 0 (default),
+    # hidden feature size 512, and ReLU activation function
+    # these layers can also be individually specified,
+    # but we just duplicate the layer 6 times for identical layers
+    layers=[
+        ConvolutionLayer(
+            hidden_feature_size=512,
+            activation_function="ReLU",
+            aggregator_type="mean"
+        )
+    ] * 2,
+)
+
+# define our readout module/s
+# multiple are allowed but let's focus on charges
+readout_modules = {
+    # key is the name of output property, any naming is allowed
+    "charges": ReadoutModule(
+        pooling="atoms",
+        postprocess="compute_partial_charges",
+        # 1 layers
+        layers=[
+            ForwardLayer(
+                hidden_feature_size=512,
+                activation_function="ReLU",
+            )
+        ],
+    )
+}
+```
+
+We can now bring it all together as a `ModelConfig` and create a `GNNModel`.
+
+```python
+model_config = ModelConfig(
+    version="0.1",
     atom_features=atom_features,
     bond_features=bond_features,
-    convolution_architecture=gcn.SAGEConvStack,
-    n_convolution_hidden_features=128,
-    n_convolution_layers=3,
-    n_readout_hidden_features=128,
-    n_readout_layers=4,
-    activation_function=ActivationFunction.ReLU,
-    postprocess_layer=postprocess.ComputePartialCharges,
-    readout_name=f"am1bcc-charges",
-    learning_rate=0.001,
+    convolution=convolution_module,
+    readouts=readout_modules,
 )
+
+model = GNNModel(model_config)
 ```
+
+## From YAML
 
 Or if you prefer, the same model architecture can be specified as a YAML file:
 
 ```yaml
-convolution_architecture: SAGEConv
-postprocess_layer: compute_partial_charges
-
-activation_function: ReLU
-learning_rate: 0.001
-n_convolution_hidden_features: 128
-n_convolution_layers: 3
-n_readout_hidden_features: 128
-n_readout_layers: 4
-
+version: '0.1'
+convolution:
+  architecture: SAGEConv
+  layers:
+    - hidden_feature_size: 512
+      activation_function: ReLU
+      dropout: 0
+      aggregator_type: mean
+    - hidden_feature_size: 512
+      activation_function: ReLU
+      dropout: 0
+      aggregator_type: mean
+readouts:
+  charges:
+    pooling: atoms
+    postprocess: compute_partial_charges
+    layers:
+      - hidden_feature_size: 128
+        activation_function: Sigmoid
+        dropout: 0
 atom_features:
-  - AtomicElement:
-      categories: ["C", "H", "O", "N", "P", "S"]
-  - AtomConnectivity
-  - AtomAverageFormalCharge
-  - AtomHybridization
-  - AtomInRingOfSize: 3
-  - AtomInRingOfSize: 4
-  - AtomInRingOfSize: 5
-  - AtomInRingOfSize: 6
+  - name: atomic_element
+    categories: ["C", "H", "O", "N", "P", "S"]
+  - name: atom_connectivity
+    categories: [1, 2, 3, 4, 5, 6]
+  - name: atom_hybridization
+  - name: atom_in_ring_of_size
+    ring_size: 3
+  - name: atom_in_ring_of_size
+    ring_size: 4
+  - name: atom_in_ring_of_size
+    ring_size: 5
+  - name: atom_in_ring_of_size
+    ring_size: 6
 bond_features:
-  - BondOrder
-  - BondInRingOfSize: 3
-  - BondInRingOfSize: 4
-  - BondInRingOfSize: 5
-  - BondInRingOfSize: 6
-
+  - name: bond_is_in_ring
 ```
 
-And then loaded with the [`GNNModel.from_yaml()`] method:
+And then loaded into a config using the [`ModelConfig.from_yaml()`] method:
 
 ```python
 from openff.nagl import GNNModel
+from openff.nagl.config import ModelConfig
 
-model = GNNModel.from_yaml("model.yml")
+model = GNNModel(ModelConfig.from_yaml("model.yaml"))
 ```
 
 Here we'll go through each option, what it means, and where to find the available choices.
-
-[`GNNModel`]: openff.nagl.GNNModel
-[`GNNModel.from_yaml_file()`]: openff.nagl.GNNModel.from_yaml_file 
 
 (model_features)=
 ## `atom_features` and `bond_features`
@@ -93,18 +153,14 @@ These arguments specify the featurization scheme for the model (see [](featuriza
 
 ## `convolution_architecture`
 
-The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.nn.gcn`] module. 
+The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.config.model`] module. 
 
 [`openff.nagl.nn.gcn`]: openff.nagl.nn.gcn
 
 ## Number of Features and Layers
 
-The size and shape of the neural networks in the convolution and readout modules are specified by four arguments:
-
-- `n_convolution_hidden_features`
-- `n_convolution_layers`
-- `n_readout_hidden_features`
-- `n_readout_layers`
+Each module comprises a number of layers that must be individually specified.
+For example, a [`ConvolutionModule`] consists of specified [`ConvolutionLayer`]s. A [`ReadoutModule`] consists of specified [`ForwardLayer`]s.
 
 The "convolution" arguments define the update network in the convolution module, and the "readout" the network in the readout module (see [](convolution_theory) and [](readout_theory)). Read the `GNNModel` docstring carefully to determine which layers are considered hidden.
 
