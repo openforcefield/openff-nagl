@@ -84,7 +84,8 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
         description=(
             "Bond features to use. "
             "Not all architectures support bond features"
-        )
+        ),
+        default_factory=list
     )
     convolution: ConvolutionModule = Field(
         description="Convolution config to pass molecular graph through"

@@ -22,6 +22,8 @@ dependencies:
   - openff-toolkit >=0.11.1
   - openff-units
   - openff-recharge
+  - openff-qcsubmit
+  - psi4
   - pydantic <3
   - rdkit
 
@@ -36,6 +38,9 @@ dependencies:
 
   # parallelism
   - dask-jobqueue
+
+  # compatibility
+  - apsw >=3.42
 
 
   # CI

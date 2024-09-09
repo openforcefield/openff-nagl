@@ -113,6 +113,9 @@ class TrainingGNNModel(pl.LightningModule):
         optimizer = self.optimizers()
         return optimizer.optimizer
     
+    def create_data_module(self, n_processes: int = 0, verbose: bool = True):
+        return DGLMoleculeDataModule(self.config, n_processes=n_processes, verbose=verbose)
+    
     
 class DGLMoleculeDataModule(pl.LightningDataModule):
     def __init__(

@@ -36,7 +36,11 @@ __all__ = [
 class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
     name: typing.Literal[""]
     metric: MetricType = Field(..., discriminator="name")
-    target_label: str
+    target_label: str = Field(
+        description=(
+            "The label to use for the target, or reference property. "
+        )
+    )
     denominator: float = Field(
         default=1.0,
         description=(
@@ -218,7 +222,11 @@ class ReadoutTarget(_BaseTarget):
     # name: typing.ClassVar[str] = "readout"
     name: typing.Literal["readout"] = "readout"
 
-    prediction_label: str
+    prediction_label: str = Field(
+        description=(
+            "The predicted property to evaluate the target on."
+        )
+    )
 
     def get_required_columns(self) -> typing.List[str]:
         return [self.target_label]
@@ -231,8 +239,6 @@ class ReadoutTarget(_BaseTarget):
         readout_modules: typing.Dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         return predictions[self.prediction_label]
-    
-        
 
 
 
@@ -243,7 +249,11 @@ class HeavyAtomReadoutTarget(_BaseTarget):
     # name: typing.ClassVar[str] = "heavy_atom_readout"
     name: typing.Literal["heavy_atom_readout"] = "heavy_atom_readout"
     
-    prediction_label: str
+    prediction_label: str = Field(
+        description=(
+            "The predicted property to evaluate the target on."
+        )
+    )
 
     def get_required_columns(self) -> typing.List[str]:
         return [self.target_label]
@@ -258,7 +268,50 @@ class HeavyAtomReadoutTarget(_BaseTarget):
         atomic_numbers = molecules.graph.ndata["atomic_number"]
         heavy_atom_mask = atomic_numbers != 1
         return predictions[self.prediction_label].squeeze()[heavy_atom_mask]
+
+
+class GeneralLinearFitTarget(_BaseTarget):
+    """A target that is evaluated to solve the general Ax=b equation."""
+
+    name: typing.Literal["general_linear_fit"] = "general_linear_fit"
+    prediction_label: str = Field(
+        description=(
+            "The predicted property to evaluate the target on."
+        )
+    )
+    design_matrix_column: str = Field(
+        description=(
+            "The column in the labels that contains the design matrix."
+        )
+    )
+
+    def get_required_columns(self) -> typing.List[str]:
+        return [self.target_label, self.design_matrix_column]
     
+    def evaluate_target(
+        self,
+        molecules: "DGLMoleculeOrBatch",
+        labels: typing.Dict[str, "torch.Tensor"],
+        predictions: typing.Dict[str, "torch.Tensor"],
+        readout_modules: typing.Dict[str, ReadoutModule],
+    ) -> "torch.Tensor":
+        x_vectors = predictions[self.prediction_label].squeeze().float()
+        A_matrices = labels[self.design_matrix_column].float()
+        all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
+
+        result_vectors = []
+        # split up by molecule
+        for n_atoms in all_n_atoms:
+            x_vector = x_vectors[:n_atoms]
+            A_matrix = A_matrices[:n_atoms * n_atoms].reshape(n_atoms, n_atoms)
+            result = torch.matmul(A_matrix, x_vector)
+            result_vectors.append(result)
+
+            x_vectors = x_vectors[n_atoms:]
+            A_matrices = A_matrices[n_atoms * n_atoms:]
+
+        return torch.cat(result_vectors)
+
 
 class SingleDipoleTarget(_BaseTarget):
     """A target that is evaluated on the dipole of a molecule."""
@@ -423,4 +476,5 @@ TargetType = typing.Union[
     HeavyAtomReadoutTarget,
     SingleDipoleTarget,
     MultipleESPTarget,
+    GeneralLinearFitTarget
 ]
