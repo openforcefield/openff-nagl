@@ -443,7 +443,7 @@ class TestGNNModelRC3:
         assert np.isclose(charges[1], 1.)
 
     @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-    @pytest.mark.parameterize(
+    @pytest.mark.parametrize(
         "smiles, expected_formal_charges", [
             ("CCCn1cc[n+](C)c1.C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", [1, -1]),
         ]
