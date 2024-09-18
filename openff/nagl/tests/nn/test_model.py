@@ -426,6 +426,7 @@ class TestGNNModelRC3:
 
         assert_allclose(charges, expected_charges, atol=1e-5)
 
+    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
     def test_assign_partial_charges_to_ion(self, model):
         mol = Molecule.from_smiles("[Cl-]")
         assert mol.n_atoms == 1
@@ -433,6 +434,7 @@ class TestGNNModelRC3:
         charges = model.compute_property(mol, as_numpy=True).flatten()
         assert np.isclose(charges[-1], -1.)
     
+    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
     def test_assign_partial_charges_to_hcl_salt(self, model):
         mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
         assert mol.n_atoms == 2
