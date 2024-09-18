@@ -458,14 +458,45 @@ class TestGNNModelRC3:
         # work out which charges belong to which molecule
         rdmol = mol.to_rdkit()
         # assume lowest atoms are in order of left to right
-        fragment_indices = sorted(
-            Chem.GetMolFrags(rdmol),
-            key=lambda x: min(x),
+        fragment_indices = []
+        fragments = Chem.GetMolFrags(
+            rdmol,
+            asMols=True,
+            fragsMolAtomMapping=fragment_indices
         )
         assert len(fragment_indices) == len(expected_formal_charges)
-        for indices, expected_charge in zip(fragment_indices, expected_formal_charges):
+
+        # sort to get lowest atoms
+        min_indices = [min(indices) for indices in fragment_indices]
+        argsorted = np.argsort(min_indices)
+        fragment_indices = [fragment_indices[i] for i in argsorted]
+        fragments = [fragments[i] for i in argsorted]
+
+        # test individually assigned charges *and* sums are correct
+        # and we didn't muddle indices somehow
+        individual_smiles = smiles.split(".")
+        for i, indices in enumerate(fragment_indices):
+            expected_charge = expected_formal_charges[i]
             fragment_charges = charges[list(indices)]
             assert np.allclose(sum(fragment_charges), expected_charge)
 
-        
+            individual_mol = Molecule.from_smiles(
+                individual_smiles[i],
+                allow_undefined_stereo=True
+            )
+            individual_charges = model.compute_property(individual_mol, as_numpy=True)
+            mol_fragment = Molecule.from_rdkit(fragments[i])
+
+            # remap to fragment charges
+            is_iso, atom_mapping = Molecule.are_isomorphic(
+                individual_mol, mol_fragment, return_atom_map=True
+            )
+            assert is_iso
+            # atom_mapping has k:v of mol2_index: mol_fragment_index
+            remapped_fragment_charges = [
+                fragment_charges[v]
+                for _, v in sorted(atom_mapping.items())
+            ]
+            assert np.allclose(individual_charges, remapped_fragment_charges)
+
 
