@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from openff.toolkit.topology import Molecule
 from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
 from openff.toolkit import RDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
@@ -21,6 +22,7 @@ from openff.nagl.toolkits.openff import (
     molecule_from_networkx,
     _molecule_from_dict,
     _molecule_to_dict,
+    split_up_molecule,
 )
 from openff.nagl.utils._utils import transform_coordinates
 
@@ -291,3 +293,34 @@ def test_molecule_from_dict(openff_methane_uncharged):
     graph = _molecule_to_dict(openff_methane_uncharged)
     molecule = _molecule_from_dict(graph)
     assert molecule.is_isomorphic_with(openff_methane_uncharged)
+
+def test_split_up_molecule():
+    # "N.c1ccccc1.C.CCN"
+    mapped_smiles = (
+        "[H:17][c:4]1[c:3]([c:2]([c:7]([c:6]([c:5]1[H:18])[H:19])[H:20])[H:15])[H:16]"
+        ".[H:21][C:8]([H:22])([H:23])[H:24]"
+        ".[H:25][C:9]([H:26])([H:27])[C:10]([H:28])([H:29])[N:11]([H:30])[H:31]"
+        ".[H:12][N:1]([H:13])[H:14]"
+    )
+    molecule = Molecule.from_mapped_smiles(mapped_smiles)
+
+    fragments, indices = split_up_molecule(molecule, return_indices=True)
+    assert len(fragments) == 4
+
+    # check order
+    n = Molecule.from_smiles("N")
+    benzene = Molecule.from_smiles("c1ccccc1")
+    ethanamine = Molecule.from_smiles("CCN")
+    methane = Molecule.from_smiles("C")
+
+    assert fragments[0].is_isomorphic_with(n)
+    assert fragments[1].is_isomorphic_with(benzene)
+    assert fragments[2].is_isomorphic_with(methane)
+    assert fragments[3].is_isomorphic_with(ethanamine)
+
+    assert indices[0] == [0, 11, 12, 13]
+    assert indices[1] == [1, 2, 3, 4, 5, 6, 14, 15, 16, 17, 18, 19]
+    assert indices[2] == [7, 20, 21, 22, 23]
+    assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
+
+

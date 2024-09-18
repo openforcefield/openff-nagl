@@ -319,6 +319,50 @@ def is_conformer_identical(
     return rmsd.m_as(unit.angstrom) < atol
 
 
+def _split_up_molecule_into_indices(
+    molecule: "Molecule",
+) -> list[list[int]]:
+    import networkx as nx
+
+    graph = molecule.to_networkx()
+    return list(map(list, nx.connected_components(graph)))
+
+def split_up_molecule(
+    molecule: "Molecule",
+    return_indices: bool = True
+) -> list["Molecule"]:
+    """
+    Split up a molecule into its connected components.
+
+    Parameters
+    ----------
+    molecule: openff.toolkit.topology.Molecule
+        The molecule to split up.
+    return_indices: bool, default=True
+        If the indices of the atoms in each component should be returned.
+
+    Returns
+    -------
+    components: List[openff.toolkit.topology.Molecule]
+        The connected components of the molecule.
+    """
+    import networkx as nx
+
+    graph = molecule.to_networkx()
+    indices = list(map(list, nx.connected_components(graph)))
+    
+    fragments = []
+    for ix in indices:
+        subgraph = nx.convert_node_labels_to_integers(graph.subgraph(ix))
+        fragment = molecule_from_networkx(subgraph)
+        fragments.append(fragment)
+    
+    if return_indices:
+        return fragments, indices
+    return fragments
+    
+
+
 def normalize_molecule(
     molecule: "Molecule",
     max_iter: int = 200,

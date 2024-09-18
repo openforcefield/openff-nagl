@@ -1,4 +1,4 @@
-import copy
+import collections
 import logging
 import types
 from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optional
@@ -155,6 +155,95 @@ class GNNModel(BaseGNNModel):
         return copied
     
     def compute_properties(
+        self,
+        molecule: "Molecule",
+        as_numpy: bool = True,
+        check_domains: bool = False,
+        error_if_unsupported: bool = True,
+        check_lookup_table: bool = True,
+    ) -> Dict[str, torch.Tensor]:
+        """
+        Compute the trained property for a molecule.
+
+        Parameters
+        ----------
+        molecule: :class:`~openff.toolkit.topology.Molecule`
+            The molecule to compute the property for.
+        as_numpy: bool
+            Whether to return the result as a numpy array.
+            If ``False``, the result will be a ``torch.Tensor``.
+        check_domains: bool
+            Whether to check if the molecule is similar
+            to the training data.
+        error_if_unsupported: bool
+            Whether to raise an error if the molecule
+            is not represented in the training data.
+            This is only used if ``check_domains`` is ``True``.
+            If ``False``, a warning will be raised instead.
+        check_lookup_table: bool
+            Whether to check a lookup table for the property values.
+            If ``False`` or if the molecule is not in the lookup
+            table, the property will be computed using the model.
+
+        Returns
+        -------
+        result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
+        """
+        import numpy as np
+
+        # split up molecule in case it's fragments
+        from openff.nagl.toolkits.openff import split_up_molecule
+        
+        fragments, all_indices = split_up_molecule(molecule)
+        # TODO: this assumes atom-wise properties
+        # we should add support for bond-wise/more general properties
+
+        results = [
+            self._compute_properties(
+                fragment,
+                as_numpy=as_numpy,
+                check_domains=check_domains,
+                error_if_unsupported=error_if_unsupported,
+                check_lookup_table=check_lookup_table,
+            )
+            for fragment in fragments
+        ]
+
+        # combine the results
+        combined_results = {}
+
+        if as_numpy:
+            tensor = np.empty
+        else:
+            tensor = torch.empty
+        for property_name, value in results[0].items():
+            combined_results[property_name] = tensor(
+                molecule.n_atoms,
+                dtype=value.dtype
+            )
+        
+        seen_indices = collections.defaultdict(set)
+        
+        for result, indices in zip(results, all_indices):
+            for property_name, value in result.items():
+                combined_results[property_name][indices] = value
+                if seen_indices[property_name] & set(indices):
+                    raise ValueError(
+                        "Overlapping indices in the fragments"
+                    )
+                seen_indices[property_name].update(indices)
+
+        expected_indices = list(range(molecule.n_atoms))
+        for property_name, seen_indices in seen_indices.items():
+            assert sorted(seen_indices) == expected_indices, (
+                f"Missing indices for property {property_name}: "
+                f"{set(expected_indices) - seen_indices}"
+            )
+        return combined_results
+
+
+    
+    def _compute_properties(
         self,
         molecule: "Molecule",
         as_numpy: bool = True,

@@ -426,7 +426,6 @@ class TestGNNModelRC3:
 
         assert_allclose(charges, expected_charges, atol=1e-5)
 
-    
     def test_assign_partial_charges_to_ion(self, model):
         mol = Molecule.from_smiles("[Cl-]")
         assert mol.n_atoms == 1
@@ -464,7 +463,7 @@ class TestGNNModelRC3:
         assert len(fragment_indices) == len(expected_formal_charges)
         for indices, expected_charge in zip(fragment_indices, expected_formal_charges):
             fragment_charges = charges[list(indices)]
-            assert np.allclose(fragment_charges, expected_charge)
+            assert np.allclose(sum(fragment_charges), expected_charge)
 
         
 
