@@ -1,0 +1,49 @@
+{
+    "creators": [
+      {
+        "orcid": "0000-0002-6095-6704",
+        "affiliation": "Open Force Field Consortium, Open Molecular Software Foundation, Davis,  CA, USA",
+        "name": "Wang, Lily"
+      },
+      {
+        "orcid": "0000-0001-8694-7200",
+        "affiliation": "School of Natural and Environmental Sciences,  Newcastle University, Newcastle upon Tyne NE1, 7RU, United Kingdom",
+        "name": "Horton, Joshua"
+      },
+      {
+        "orcid": "0000-0002-3456-1872",
+        "affiliation": "Open Force Field Consortium, Open Molecular Software Foundation, Davis,  CA, USA",
+        "name": "Boothroyd, Simon"
+      },
+      {
+        "orcid": "0000-0001-5787-9130",
+        "affiliation": "Open Free Energy, Open Molecular Software Foundation, Davis, CA, USA",
+        "name": "Alibay, Irfan"
+      },
+      {
+        "orcid": "0000-0001-6448-0873",
+        "affiliation": "Open Force Field Consortium, Open Molecular Software Foundation, Davis,  CA, USA",
+        "name": "Wagner, Jeffrey"
+      },
+      {
+        "orcid": "0000-0002-8246-5113",
+        "affiliation": "Open Force Field Consortium, Open Molecular Software Foundation, Davis,  CA, USA",
+        "name": "Mitchell, Josh A."
+      },
+      {
+        "orcid": "0000-0002-1460-3983",
+        "affiliation": "Open Force Field Consortium, Open Molecular Software Foundation, Davis,  CA, USA",
+        "name": "Thompson, Matthew W."
+      }
+    ],
+    "access_right": "open",
+    "license": "MIT",
+    "title": "openforcefield/openff-nagl",
+    "keywords": [
+      "partial charges",
+      "gcnn",
+      "force field",
+      "molecular dynamics",
+      "openforcefield"
+    ]
+}
