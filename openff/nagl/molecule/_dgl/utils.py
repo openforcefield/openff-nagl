@@ -28,7 +28,10 @@ def openff_molecule_to_base_dgl_graph(
     from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
     bonds = get_openff_molecule_bond_indices(molecule)
-    indices_a, indices_b = map(list, zip(*bonds))
+    if bonds:
+        indices_a, indices_b = map(list, zip(*bonds))
+    else:
+        indices_a, indices_b = [], []
     indices_a = torch.tensor(indices_a, dtype=torch.int32)
     indices_b = torch.tensor(indices_b, dtype=torch.int32)
 

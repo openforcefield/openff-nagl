@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 
 from openff.units import unit
 from openff.toolkit.topology import Molecule
+from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -424,3 +425,78 @@ class TestGNNModelRC3:
         assert charges.dtype == np.float32
 
         assert_allclose(charges, expected_charges, atol=1e-5)
+
+    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
+    def test_assign_partial_charges_to_ion(self, model):
+        mol = Molecule.from_smiles("[Cl-]")
+        assert mol.n_atoms == 1
+
+        charges = model.compute_property(mol, as_numpy=True).flatten()
+        assert np.isclose(charges[-1], -1.)
+    
+    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
+    def test_assign_partial_charges_to_hcl_salt(self, model):
+        mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
+        assert mol.n_atoms == 2
+        
+        charges = model.compute_property(mol, as_numpy=True).flatten()
+        assert np.isclose(charges[0], -1.)
+        assert np.isclose(charges[1], 1.)
+
+    @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+    @pytest.mark.parametrize(
+        "smiles, expected_formal_charges", [
+            ("CCCn1cc[n+](C)c1.C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", [1, -1]),
+        ]
+    )
+    def test_multimolecule_smiles(self, model, smiles, expected_formal_charges):
+        from rdkit import Chem
+
+        mol = Molecule.from_smiles(smiles)
+        charges = model.compute_property(mol, as_numpy=True)
+
+        # work out which charges belong to which molecule
+        rdmol = mol.to_rdkit()
+        # assume lowest atoms are in order of left to right
+        fragment_indices = []
+        fragments = Chem.GetMolFrags(
+            rdmol,
+            asMols=True,
+            fragsMolAtomMapping=fragment_indices
+        )
+        assert len(fragment_indices) == len(expected_formal_charges)
+
+        # sort to get lowest atoms
+        min_indices = [min(indices) for indices in fragment_indices]
+        argsorted = np.argsort(min_indices)
+        fragment_indices = [fragment_indices[i] for i in argsorted]
+        fragments = [fragments[i] for i in argsorted]
+
+        # test individually assigned charges *and* sums are correct
+        # and we didn't muddle indices somehow
+        individual_smiles = smiles.split(".")
+        for i, indices in enumerate(fragment_indices):
+            expected_charge = expected_formal_charges[i]
+            fragment_charges = charges[list(indices)]
+            assert np.allclose(sum(fragment_charges), expected_charge)
+
+            individual_mol = Molecule.from_smiles(
+                individual_smiles[i],
+                allow_undefined_stereo=True
+            )
+            individual_charges = model.compute_property(individual_mol, as_numpy=True)
+            mol_fragment = Molecule.from_rdkit(fragments[i])
+
+            # remap to fragment charges
+            is_iso, atom_mapping = Molecule.are_isomorphic(
+                individual_mol, mol_fragment, return_atom_map=True
+            )
+            assert is_iso
+            # atom_mapping has k:v of mol2_index: mol_fragment_index
+            remapped_fragment_charges = [
+                fragment_charges[v]
+                for _, v in sorted(atom_mapping.items())
+            ]
+            assert np.allclose(individual_charges, remapped_fragment_charges)
+
+

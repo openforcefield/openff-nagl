@@ -21,6 +21,7 @@ The rules for this file:
 
 ### Added
 - General linear fit target and example (PR #131)
+- Support for multiple molecules (PR #137, Issue #136)
 
 ### Changed
 - Removed unused, undocumented code paths, and updated docs (PR #132)
