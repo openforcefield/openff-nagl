@@ -57,7 +57,7 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
