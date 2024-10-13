@@ -89,4 +89,4 @@ jobs:
 
     - name: Run example notebooks
       run: |
-        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --dist --nbval-cell-timeout=3000 loadscope examples
+        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=3000 --dist loadscope examples
