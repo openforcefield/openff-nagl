@@ -137,7 +137,7 @@ jobs:
       env:
         PYLINTRC: .pylintrc
       run: |
-        pylint openff-nagl
+        pylint openff.nagl
 
 
   pypi_check:
