@@ -51,8 +51,8 @@ jobs:
       run: |
         git clone --recurse-submodules https://github.com/dmlc/dgl.git
       
-    - name: Set up DGL (Mac)
-      if: matrix.os == 'macOS-12'
+    - name: Set up DGL
+      # if: matrix.os == 'macOS-12'
       run: |
         # from https://docs.dgl.ai/en/latest/install/index.html#macos
         cd dgl/
@@ -61,14 +61,13 @@ jobs:
         make -j4
         cd ../..
     
-    - name: Set up DGL (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        # from https://docs.dgl.ai/en/latest/install/index.html#linux
-        cd dgl/
-        bash script/create_dev_conda_env.sh -c
-        bash script/build_dgl.sh -c
-        cd ../..
+    # - name: Set up DGL (Ubuntu)
+    #   if: matrix.os == 'ubuntu-latest'
+    #   run: |
+    #     # from https://docs.dgl.ai/en/latest/install/index.html#linux
+    #     cd dgl/
+    #     bash script/build_dgl.sh -c
+    #     cd ..
     
     - name: Install DGL Python bindings
       run: |
