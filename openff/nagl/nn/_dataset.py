@@ -376,7 +376,7 @@ class _LazyDGLMoleculeDataset(Dataset):
         input_dataset = ds.dataset(path, format=format)
 
         with pa.OSFile(str(output_path), "wb") as sink:
-            with pa.ipc.new_file(sink, cls.get_schema) as writer:
+            with pa.ipc.new_file(sink, cls.get_schema()) as writer:
                 input_batches = input_dataset.to_batches(columns=columns)
                 for input_batch in input_batches:
                     with get_mapper_to_processes(n_processes=n_processes) as mapper:
