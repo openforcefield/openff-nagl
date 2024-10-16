@@ -1,6 +1,7 @@
 from typing import Dict, List, TYPE_CHECKING, Optional
 
 import torch
+import numpy as np
 from openff.utilities import requires_package
 
 from openff.nagl.features.atoms import AtomFeature
@@ -39,7 +40,8 @@ def openff_molecule_to_base_dgl_graph(
         {
             ("atom", forward, "atom"): (indices_a, indices_b),
             ("atom", reverse, "atom"): (indices_b, indices_a),
-        }
+        },
+        num_nodes_dict={"atom": molecule.n_atoms},
     )
     return molecule_graph
 
@@ -99,7 +101,7 @@ def openff_molecule_to_dgl_graph(
 
     for direction in (forward, reverse):
         n_bonds = len(molecule.bonds)
-        if bond_feature_tensor is not None:
+        if bond_feature_tensor is not None and n_bonds:
             bond_feature_tensor = bond_feature_tensor.reshape(n_bonds, -1)
         else:
             bond_feature_tensor = torch.zeros((n_bonds, 0))
@@ -108,6 +110,71 @@ def openff_molecule_to_dgl_graph(
 
     return molecule_graph
 
+@requires_package("dgl")
+def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata=None) -> "dgl.DGLGraph":
+    """
+    Copied entirely from dgl.python.dgl.convert.to_homogeneous,
+    but with the edges removed.
+    """
+    import dgl
+    from dgl import backend as F
+    from dgl.base import EID, NID, ETYPE, NTYPE
+    from dgl.heterograph import combine_frames
+
+    # TODO: revisit in case DGL accounts for this in the future
+    num_nodes_per_ntype = [G.num_nodes(ntype) for ntype in G.ntypes]
+    offset_per_ntype = np.insert(np.cumsum(num_nodes_per_ntype), 0, 0)
+    srcs = []
+    dsts = []
+    nids = []
+    eids = []
+    ntype_ids = []
+    etype_ids = []
+    total_num_nodes = 0
+
+    for ntype_id, ntype in enumerate(G.ntypes):
+        num_nodes = G.num_nodes(ntype)
+        total_num_nodes += num_nodes
+        # Type ID is always in int64
+        ntype_ids.append(F.full_1d(num_nodes, ntype_id, F.int64, G.device))
+        nids.append(F.arange(0, num_nodes, G.idtype, G.device))
+
+    for etype_id, etype in enumerate(G.canonical_etypes):
+        srctype, _, dsttype = etype
+        src, dst = G.all_edges(etype=etype, order="eid")
+        num_edges = len(src)
+        srcs.append(src + int(offset_per_ntype[G.get_ntype_id(srctype)]))
+        dsts.append(dst + int(offset_per_ntype[G.get_ntype_id(dsttype)]))
+        etype_ids.append(F.full_1d(num_edges, etype_id, F.int64, G.device))
+        eids.append(F.arange(0, num_edges, G.idtype, G.device))
+
+    retg = dgl.graph(
+        (F.cat(srcs, 0), F.cat(dsts, 0)),
+        num_nodes=total_num_nodes,
+        idtype=G.idtype,
+        device=G.device,
+    )
+
+    # copy features
+    if ndata is None:
+        ndata = []
+    if edata is None:
+        edata = []
+    comb_nf = combine_frames(
+        G._node_frames, range(len(G.ntypes)), col_names=ndata
+    )
+    if comb_nf is not None:
+        retg.ndata.update(comb_nf)
+
+    retg.ndata[NID] = F.cat(nids, 0)
+    retg.edata[EID] = F.cat(eids, 0)
+    retg.ndata[NTYPE] = F.cat(ntype_ids, 0)
+    retg.edata[ETYPE] = F.cat(etype_ids, 0)
+
+    return retg
+
+
+
 
 @requires_package("dgl")
 def dgl_heterograph_to_homograph(graph: "dgl.DGLHeteroGraph") -> "dgl.DGLGraph":
@@ -115,6 +182,9 @@ def dgl_heterograph_to_homograph(graph: "dgl.DGLHeteroGraph") -> "dgl.DGLGraph":
 
     try:
         homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[FEATURE])
+    except TypeError as e:
+        if graph.num_edges() == 0:
+            homo_graph = heterograph_to_homograph_no_edges(graph)
     except KeyError:
         # A nasty workaround to check when we don't have any atom / bond features as
         # DGL doesn't allow easy querying of features dicts for hetereographs with
