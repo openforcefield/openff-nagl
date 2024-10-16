@@ -52,7 +52,7 @@ jobs:
         git clone --recurse-submodules https://github.com/dmlc/dgl.git
       
     - name: Set up DGL
-      # if: matrix.os == 'macOS-12'
+      if: matrix.os == 'macOS-12'
       run: |
         # from https://docs.dgl.ai/en/latest/install/index.html#macos
         cd dgl/
@@ -61,13 +61,13 @@ jobs:
         make -j4
         cd ../..
     
-    # - name: Set up DGL (Ubuntu)
-    #   if: matrix.os == 'ubuntu-latest'
-    #   run: |
-    #     # from https://docs.dgl.ai/en/latest/install/index.html#linux
-    #     cd dgl/
-    #     bash script/build_dgl.sh -c
-    #     cd ..
+    - name: Set up DGL (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        # from https://docs.dgl.ai/en/latest/install/index.html#linux
+        cd dgl/
+        printf "yes\n" | bash script/build_dgl.sh -c
+        cd ..
     
     - name: Install DGL Python bindings
       run: |
@@ -76,6 +76,11 @@ jobs:
         python setup.py build_ext --inplace
         cd ../..
 
+    - uses: ./.github/actions/include-openeye
+      if: matrix.include-openeye == true
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ${{ env.OE_LICENSE }}
 
     - name: Check Python environment
       run: |
