@@ -66,6 +66,7 @@ jobs:
       run: |
         # from https://docs.dgl.ai/en/latest/install/index.html#linux
         cd dgl/
+        export DGL_HOME=$PWD
         printf "yes\n" | bash script/build_dgl.sh -c
         cd ..
     
