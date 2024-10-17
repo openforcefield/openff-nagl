@@ -18,8 +18,6 @@ from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
 from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL,
-    EXAMPLE_MODEL_RC3,
-    EXAMPLE_MODEL_RC4,
     data_directory
 )
 from openff.nagl.features.atoms import (
@@ -425,9 +423,6 @@ class TestGNNModel:
 class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
     model_name = "openff-gnn-am1bcc-0.1.0-rc.3"
 
-    # @pytest.fixture()
-    # def model(self):
-    #     return self.get_model()
     
     def test_contains_lookup_tables(self, model):
         assert "am1bcc_charges" in model.lookup_tables
@@ -511,10 +506,6 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
 
 class TestChargeGNNModelRC4(BaseTestChargeGNNModel):
     model_name = "openff-gnn-am1bcc-0.1.0-rc.4"
-
-    # @pytest.fixture()
-    # def model(self):
-    #     return self.get_model()
 
     def test_assign_partial_charges_to_ion(self, model):
         mol = Molecule.from_smiles("[Cl-]")
