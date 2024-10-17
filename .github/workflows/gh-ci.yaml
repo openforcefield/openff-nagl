@@ -84,12 +84,6 @@ jobs:
         mkdir -p ~/.dgl
         echo '{"backend": "pytorch"}' > ~/.dgl/config.json
 
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
-
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
       run: |
@@ -186,5 +180,4 @@ jobs:
 
     - name: Check success
       run: |
-        conda activate openff-nagl
         python -c "import openff.nagl ; print(openff.nagl.__version__)"
