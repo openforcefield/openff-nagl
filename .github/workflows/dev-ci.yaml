@@ -28,6 +28,7 @@ jobs:
         matrix:
           os: [macOS-13, macOS-latest, ubuntu-latest]
           python-version: ["3.10", "3.11", "3.12"]
+          pytorch-version: ["2.3", "2.4"]
 
     steps:
     - uses: actions/checkout@v4
@@ -44,11 +45,11 @@ jobs:
         environment-file: devtools/conda-envs/nightly.yaml
         create-args: >-
           python=${{ matrix.python-version }}
+          pytorch=${{ matrix.pytorch-version }}
           pydantic=2
     
     - name: Install nightly pytorch
       run: |
-        python -m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
         python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U 
 
     - name: Download DGL source
@@ -56,7 +57,7 @@ jobs:
         git clone --recurse-submodules https://github.com/dmlc/dgl.git
       
     - name: Set up DGL
-      if: matrix.os == 'macOS-12'
+      if: matrix.os != 'ubuntu-latest'
       run: |
         # from https://docs.dgl.ai/en/latest/install/index.html#macos
         cd dgl/
