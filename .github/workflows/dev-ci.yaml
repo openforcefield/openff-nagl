@@ -110,12 +110,6 @@ jobs:
       run: |
         python -m pip install . --no-deps
 
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
-
     - name: Run tests
       run: |
         python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
