@@ -69,14 +69,10 @@ jobs:
     - name: Set up DGL (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        # from https://docs.dgl.ai/en/latest/install/index.html#linux
-        # cd dgl/
-        # printf "yes\n" | bash script/build_dgl.sh -c
-        # cd ..
         cd dgl/
         mkdir build && cd build
         cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_LIBXSMM=OFF ..
-        make
+        make -j4
         cd ../..
     
     - name: Install DGL Python bindings
