@@ -19,6 +19,7 @@ from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupT
 from openff.nagl.tests.data.files import (
     EXAMPLE_AM1BCC_MODEL,
     EXAMPLE_MODEL_RC3,
+    EXAMPLE_MODEL_RC4,
     data_directory
 )
 from openff.nagl.features.atoms import (
@@ -107,9 +108,13 @@ class TestBaseGNNModel:
 
 class BaseTestChargeGNNModel:
 
+    @pytest.fixture(scope="class")
+    def model(self):
+        return self.get_model()
+
     @classmethod
     def get_model(cls):
-        model_path = data_directory / f"{cls.model_name}.pt"
+        model_path = data_directory / "models" / f"{cls.model_name}.pt"
         model = GNNModel.load(model_path, eval_mode=True)
         return model
     
@@ -154,10 +159,10 @@ class BaseTestChargeGNNModel:
             "C#N"
         ],
     )
-    def test_load_and_compute(self, smiles):
+    def test_load_and_compute(self, smiles, model):
         from openff.toolkit import Molecule
 
-        model = self.get_model()
+        # model = self.get_model()
         path = self.get_example_charge_directory() / f"{smiles}.sdf"
         molecule = Molecule.from_file(
             str(path), file_format="sdf", allow_undefined_stereo=True
@@ -420,9 +425,9 @@ class TestGNNModel:
 class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
     model_name = "openff-gnn-am1bcc-0.1.0-rc.3"
 
-    @pytest.fixture()
-    def model(self):
-        return GNNModel.load(EXAMPLE_MODEL_RC3, eval_mode=True)
+    # @pytest.fixture()
+    # def model(self):
+    #     return self.get_model()
     
     def test_contains_lookup_tables(self, model):
         assert "am1bcc_charges" in model.lookup_tables
@@ -446,23 +451,6 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
         assert charges.dtype == np.float32
 
         assert_allclose(charges, expected_charges, atol=1e-5)
-
-    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
-    def test_assign_partial_charges_to_ion(self, model):
-        mol = Molecule.from_smiles("[Cl-]")
-        assert mol.n_atoms == 1
-
-        charges = model.compute_property(mol, as_numpy=True).flatten()
-        assert np.isclose(charges[-1], -1.)
-    
-    @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
-    def test_assign_partial_charges_to_hcl_salt(self, model):
-        mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
-        assert mol.n_atoms == 2
-        
-        charges = model.compute_property(mol, as_numpy=True).flatten()
-        assert np.isclose(charges[0], -1.)
-        assert np.isclose(charges[1], 1.)
 
     @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
     @pytest.mark.parametrize(
@@ -521,3 +509,24 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
             assert np.allclose(individual_charges, remapped_fragment_charges)
 
 
+class TestChargeGNNModelRC4(BaseTestChargeGNNModel):
+    model_name = "openff-gnn-am1bcc-0.1.0-rc.4"
+
+    # @pytest.fixture()
+    # def model(self):
+    #     return self.get_model()
+
+    def test_assign_partial_charges_to_ion(self, model):
+        mol = Molecule.from_smiles("[Cl-]")
+        assert mol.n_atoms == 1
+
+        charges = model.compute_property(mol, as_numpy=True).flatten()
+        assert np.isclose(charges[-1], -1.)
+    
+    def test_assign_partial_charges_to_hcl_salt(self, model):
+        mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
+        assert mol.n_atoms == 2
+        
+        charges = model.compute_property(mol, as_numpy=True).flatten()
+        assert np.isclose(charges[0], -1.)
+        assert np.isclose(charges[1], 1.)

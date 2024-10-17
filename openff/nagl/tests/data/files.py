@@ -40,5 +40,7 @@ EXAMPLE_FEATURIZED_LAZY_DATA = data_directory / "cbe6f394311f594a9df33d7580e8b84
 EXAMPLE_FEATURIZED_LAZY_DATA_SHORT = data_directory / "b6713a9ba87e89cb53d264256664bb9e4e4a5831f0c7660808e9f44a9f832ab5.arrow"
 
 EXAMPLE_MODEL_RC3 = data_directory / "models" / "openff-gnn-am1bcc-0.1.0-rc.3.pt"
+EXAMPLE_MODEL_RC4 = data_directory / "models" / "openff-gnn-am1bcc-0.1.0-rc.4.pt"
+
 
 MOLECULE_ESP_RECORD_CBR3 = data_directory / "training-data" / "molecule-esp-record-cbr3.json"
