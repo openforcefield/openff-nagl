@@ -51,7 +51,7 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
@@ -171,28 +171,18 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install conda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: mamba-org/setup-micromamba@v2
       with:
-        python-version: ${{ matrix.python-version }}
-        add-pip-as-python-dependency: true
-        mamba-version: "*"
-        architecture: x64
-        use-mamba: true
-        auto-update-conda: true
-        show-channel-urls: true
-        channels: conda-forge, defaults
-        channel-priority: true
+        environment-name: openff-nagl
+        create-args: >-
+          python=${{ matrix.python-version }}
 
     - name: Build from source
       run: |
-        conda create --name openff-nagl
-        conda activate openff-nagl
-        conda list
-    
-        mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
+        micromamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version
         python -m pip install . --no-deps
-        conda list
+        micromamba list
 
     - name: Check success
       run: |
