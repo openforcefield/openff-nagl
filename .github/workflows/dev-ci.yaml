@@ -72,7 +72,7 @@ jobs:
         cd dgl/
         mkdir build && cd build
         cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_LIBXSMM=OFF ..
-        make -j4
+        make
         cd ../..
     
     - name: Install DGL Python bindings
