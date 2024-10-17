@@ -181,6 +181,7 @@ jobs:
         auto-update-conda: true
         show-channel-urls: true
         channels: conda-forge, defaults
+        channel-priority: true
 
     - name: Build from source
       run: |
