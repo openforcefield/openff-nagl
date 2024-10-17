@@ -70,9 +70,14 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         # from https://docs.dgl.ai/en/latest/install/index.html#linux
+        # cd dgl/
+        # printf "yes\n" | bash script/build_dgl.sh -c
+        # cd ..
         cd dgl/
-        printf "yes\n" | bash script/build_dgl.sh -c
-        cd ..
+        mkdir build && cd build
+        cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_OPENMP=OFF -DUSE_LIBXSMM=OFF ..
+        make
+        cd ../..
     
     - name: Install DGL Python bindings
       run: |
