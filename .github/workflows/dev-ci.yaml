@@ -89,8 +89,8 @@ jobs:
       shell: bash -l -c "python -u {0}"
       run: |
         from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
-        assert str(OPENEYE_AVAILABLE).lower() == 'True'
-        assert str(RDKIT_AVAILABLE).lower() == 'True'
+        assert str(OPENEYE_AVAILABLE).lower() == 'true'
+        assert str(RDKIT_AVAILABLE).lower() == 'true'
 
     - name: Check Python environment
       run: |
