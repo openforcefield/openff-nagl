@@ -175,6 +175,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         add-pip-as-python-dependency: true
+        mamba-version: "*"
         architecture: x64
         use-mamba: true
         auto-update-conda: true
