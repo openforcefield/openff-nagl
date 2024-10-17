@@ -429,7 +429,7 @@ class TestGNNModelRC3:
     def test_lookup_table_before_chemical_domain(self, model):
         hcl = Molecule.from_mapped_smiles("[Cl:1][H:2]")
         expected_charges = [-0.1680,  0.1680]
-        charges = model.compute_property(hcl, as_numpy=True, check_lookup_table=True)
+        charges = model.compute_property(hcl, as_numpy=True, check_domains=True)
         assert_allclose(charges, expected_charges, atol=1e-5)
 
     @pytest.mark.xfail(reason="Model does not include 0 bonds as feature")
