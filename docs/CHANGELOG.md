@@ -26,6 +26,9 @@ The rules for this file:
 ### Changed
 - Removed unused, undocumented code paths, and updated docs (PR #132)
 
+### Fixed
+- Check lookup tables for allowed molecules before ChemicalDomain for forbidden ones (PR #145, Issue #144)
+
 
 ## v0.4.0 -- 2024-07-18
 
