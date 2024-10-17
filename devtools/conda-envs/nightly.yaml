@@ -1,8 +1,8 @@
 name: openff-nagl-test
 channels:
   - openeye
-  - pytorch-nightly
   - conda-forge
+  - pytorch-nightly
   - defaults
 dependencies:
     # Base depends
@@ -18,12 +18,15 @@ dependencies:
   - pydantic <3
   - rdkit
   - scipy
+  - openeye-toolkits
+
+  # gnn
+  - pytorch
+  - torchvision
+  - torchaudio
 
   # database
   - pyarrow
-
-  # gcn
-  - pytorch
 
   # parallelism
   - dask-jobqueue
@@ -48,6 +51,11 @@ dependencies:
   - sqlalchemy
   - sqlite
   - xmltodict
+
+  # building
+  - make
+  - cmake
+  - cython
 
   # Pip-only installs
   - pip:
