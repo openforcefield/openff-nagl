@@ -384,7 +384,7 @@ class _LazyDGLMoleculeDataset(Dataset):
 
                     output_batch = pa.RecordBatch.from_arrays(
                         [pa.array(pickled)],
-                        schema=cls.schema
+                        schema=cls.get_schema()
                     )
                     writer.write_batch(output_batch)
                     
