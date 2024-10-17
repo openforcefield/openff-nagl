@@ -75,7 +75,7 @@ jobs:
         # cd ..
         cd dgl/
         mkdir build && cd build
-        cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_OPENMP=OFF -DUSE_LIBXSMM=OFF ..
+        cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_LIBXSMM=OFF ..
         make
         cd ../..
     
