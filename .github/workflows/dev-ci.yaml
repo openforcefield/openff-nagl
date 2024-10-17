@@ -22,7 +22,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-12, ubuntu-latest]
+          os: [macOS-13, macOS-latest, ubuntu-latest]
           python-version: ["3.10", "3.11", "3.12"]
 
     steps:
@@ -77,10 +77,16 @@ jobs:
         cd ../..
 
     - uses: ./.github/actions/include-openeye
-      if: matrix.include-openeye == true
       with:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
+
+    - name: Check toolkit installations
+      shell: bash -l -c "python -u {0}"
+      run: |
+        from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+        assert str(OPENEYE_AVAILABLE).lower() == 'True'
+        assert str(RDKIT_AVAILABLE).lower() == 'True'
 
     - name: Check Python environment
       run: |
