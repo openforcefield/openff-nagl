@@ -46,7 +46,7 @@ jobs:
           python=${{ matrix.python-version }}
           pydantic=2
     
-    - name: Install nightly pytorch-lightning
+    - name: Install nightly pytorch
       run: |
         python -m pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
         python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U 
