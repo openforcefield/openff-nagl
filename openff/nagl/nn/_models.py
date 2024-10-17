@@ -217,6 +217,7 @@ class GNNModel(BaseGNNModel):
         else:
             tensor = torch.empty
         for property_name, value in results[0].items():
+            print(as_numpy, value, value.dtype)
             combined_results[property_name] = tensor(
                 molecule.n_atoms,
                 dtype=value.dtype
@@ -304,6 +305,8 @@ class GNNModel(BaseGNNModel):
         
         computed_value_keys = set(values.keys())
         if computed_value_keys == set(expected_value_keys):
+            if as_numpy:
+                values = {k: v.detach().numpy().flatten() for k, v in values.items()}
             return values
         
         if check_domains:
