@@ -113,8 +113,14 @@ def openff_molecule_to_dgl_graph(
 @requires_package("dgl")
 def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata=None) -> "dgl.DGLGraph":
     """
-    Copied entirely from dgl.python.dgl.convert.to_homogeneous,
+    Copied and modified from dgl.python.dgl.convert.to_homogeneous,
     but with the edges removed.
+
+    This part of the code is licensed under the Apache 2.0 license according
+    to the terms of DGL (https://github.com/dmlc/dgl?tab=Apache-2.0-1-ov-file).
+
+    Please see our third-party license file for more information
+    (https://github.com/openforcefield/openff-nagl/blob/main/LICENSE-3RD-PARTY)
     """
     import dgl
     from dgl import backend as F
