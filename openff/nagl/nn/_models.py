@@ -278,24 +278,13 @@ class GNNModel(BaseGNNModel):
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
-        if check_domains:
-            is_supported, error = self.chemical_domain.check_molecule(
-                molecule, return_error_message=True
-            )
-            if not is_supported:
-                if error_if_unsupported:
-                    raise ValueError(error)
-                else:
-                    warnings.warn(error)
 
-        try:
-            values = self._compute_properties_dgl(molecule)
-        except (MissingOptionalDependencyError, TypeError):
-            values = self._compute_properties_nagl(molecule)
-        
+        values = {}
+
+        expected_value_keys = list(self.readout_modules.keys())
+
         if check_lookup_table and self.lookup_tables:
-            property_names = list(values)
-            for property_name in property_names:
+            for property_name in expected_value_keys:
                 try:
                     value = self._check_property_lookup_table(
                         molecule=molecule,
@@ -311,6 +300,27 @@ class GNNModel(BaseGNNModel):
                         f"Using lookup table for property {property_name}"
                     )
                     values[property_name] = value
+
+        
+        computed_value_keys = set(values.keys())
+        if computed_value_keys == set(expected_value_keys):
+            return values
+        
+        if check_domains:
+            is_supported, error = self.chemical_domain.check_molecule(
+                molecule, return_error_message=True
+            )
+            if not is_supported:
+                if error_if_unsupported:
+                    raise ValueError(error)
+                else:
+                    warnings.warn(error)
+
+        try:
+            values = self._compute_properties_dgl(molecule)
+        except (MissingOptionalDependencyError, TypeError):
+            values = self._compute_properties_nagl(molecule)
+        
 
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
