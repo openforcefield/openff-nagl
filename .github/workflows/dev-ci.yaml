@@ -94,7 +94,7 @@ jobs:
     
     - name: Import DGL
       run: |
-        python -c "import dgl"
+        python -c "import dgl; import dgl.nn"
 
     - name: Install package
       run: |
