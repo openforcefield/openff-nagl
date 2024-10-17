@@ -154,7 +154,13 @@ class NXMolGraph:
             raise ValueError("Unknown form: {}".format(form))
 
     def _bond_indices(self):
-        u, v = map(list, zip(*self.graph.edges()))
+        try:
+            u, v = map(list, zip(*self.graph.edges()))
+        except ValueError as e:
+            # this may be due to there not being bonds
+            if not self.graph.edges():
+                return torch.tensor([], dtype=torch.long), torch.tensor([], dtype=torch.long)
+            raise e
         U = torch.tensor(u, dtype=torch.long)
         V = torch.tensor(v, dtype=torch.long)
         return U, V

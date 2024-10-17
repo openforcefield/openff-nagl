@@ -28,6 +28,7 @@ The rules for this file:
 
 ### Fixed
 - Check lookup tables for allowed molecules before ChemicalDomain for forbidden ones (PR #145, Issue #144)
+- Add support for single atoms (PR #146, Issue #138)
 
 
 ## v0.4.0 -- 2024-07-18
