@@ -30,7 +30,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-12, ubuntu-latest]
+          os: [macOS-13, macOS-latest, ubuntu-latest]
           python-version: ["3.10", "3.11", "3.12"]
           pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
@@ -39,12 +39,6 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-            # no openeye for 3.12 yet
-            - include-openeye: true
-              python-version: "3.12"
-            # no builds?
-            - include-dgl: true
-              python-version: "3.12"
 
 
     steps:
@@ -182,7 +176,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         add-pip-as-python-dependency: true
         architecture: x64
-        miniforge-variant: Mambaforge
         use-mamba: true
         auto-update-conda: true
         show-channel-urls: true
