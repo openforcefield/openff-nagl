@@ -2,7 +2,6 @@ name: openff-nagl-test
 channels:
   - openeye
   - conda-forge
-  - defaults
 dependencies:
     # Base depends
   - python
