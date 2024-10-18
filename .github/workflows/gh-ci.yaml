@@ -91,6 +91,11 @@ jobs:
         assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
         assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
+    - name: Check DGL installation
+      if: matrix.include-dgl == true
+      run: |
+        python -c "import dgl"
+
     - name: Run tests
       run: |
         python -m pytest -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
