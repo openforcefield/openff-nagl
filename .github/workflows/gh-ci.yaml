@@ -93,7 +93,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
+        python -m pytest -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
       uses: codecov/codecov-action@v4
