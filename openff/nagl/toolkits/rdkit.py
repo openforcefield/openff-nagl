@@ -76,7 +76,16 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     )
 
                 for atom in rdmol.GetAtoms():
-                    atom.SetAtomMapNum(atom.GetIntProp("react_atom_idx") + 1)
+                    # reorder the rdkit mol following mapping
+                    original_atom_indices = [
+                        atom.GetIntProp("react_atom_idx")
+                        for atom in rdmol.GetAtoms()
+                    ]
+                new_order = [original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
+                rdmol = Chem.RenumberAtoms(rdmol, new_order)
+                # RDKit can assign stereochemistry differently
+                # and toolkit doesn't allow STEREOCIS and STEREOTRANS bonds
+                Chem.AssignStereochemistry(rdmol, cleanIt=True)
 
                 new_smiles = Chem.MolToSmiles(Chem.AddHs(rdmol))
                 # stop changing when smiles converges to same product
@@ -87,6 +96,9 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     f"Reaction {reaction_smarts} did not converge after "
                     f"{max_iter} iterations for molecule {original_smiles}"
                 )
+            
+        for i, atom in enumerate(rdmol.GetAtoms(), 1):
+            atom.SetAtomMapNum(i)
 
         new_mol = self.from_rdkit(
             rdmol,
