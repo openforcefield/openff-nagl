@@ -100,11 +100,24 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         for i, atom in enumerate(rdmol.GetAtoms(), 1):
             atom.SetAtomMapNum(i)
 
-        new_mol = self.from_rdkit(
+        # required to calculate explicit atom valence
+        # for kekulize call
+        Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
+        Chem.Kekulize(rdmol)
+        Chem.AssignStereochemistry(rdmol)
+            
+        new_mol = Molecule.from_rdkit(
             rdmol,
             allow_undefined_stereo=True,
-            _cls=molecule.__class__,
         )
+        # copy over formal charges and bonds again; from_rdkit sanitizes the rdmol
+        for atom, rdatom in zip(new_mol.atoms, rdmol.GetAtoms()):
+            atom.formal_charge = rdatom.GetFormalCharge() * unit.elementary_charge
+        for rdbond in rdmol.GetBonds():
+            i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
+            bond = new_mol.get_bond_between(i, j)
+            bond._bond_order = int(rdbond.GetBondTypeAsDouble())
+            
         mapping = new_mol.properties.pop("atom_map")
         adjusted_mapping = dict((current, new - 1) for current, new in mapping.items())
 
