@@ -7,7 +7,7 @@ from openff.toolkit.topology import Molecule
 from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
 from openff.toolkit import RDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
-from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
+from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE, AMBERTOOLS_AVAILABLE
 from openff.units import unit
 
 from openff.nagl.toolkits.openff import (
@@ -324,6 +324,7 @@ def test_split_up_molecule():
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
 
+@pytest.mark.skipif(not sum([OPENEYE_AVAILABLE, AMBERTOOLS_AVAILABLE]), reason="requires a charge toolkit")
 def test_can_charge_methane():
     # verify we can assign AM1 charges to methane
     # See https://github.com/openforcefield/openff-nagl/issues/152 for more
