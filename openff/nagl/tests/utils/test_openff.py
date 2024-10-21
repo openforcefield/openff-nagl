@@ -330,16 +330,4 @@ def test_can_charge_methane():
     # See https://github.com/openforcefield/openff-nagl/issues/152 for more
 
     mol = Molecule.from_smiles("C")
-    conformer = np.array(
-        [
-            [ 0.00511871, -0.0106205,   0.00601428],
-            [ 0.54966796,  0.75543841, -0.59698119],
-            [ 0.7497641,  -0.5879439,   0.58528463],
-            [-0.58675256, -0.65213582, -0.67609162],
-            [-0.71779821,  0.4952618,   0.6817739 ],
-        ]
-    )
-    mol.assign_partial_charges(
-        "am1-mulliken",
-        use_conformers=[conformer * unit.angstrom]
-    )
+    mol.assign_partial_charges("am1-mulliken")
