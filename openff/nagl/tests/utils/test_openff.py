@@ -26,6 +26,36 @@ from openff.nagl.toolkits.openff import (
 )
 from openff.nagl.utils._utils import transform_coordinates
 
+def _load_rdkit_molecule_exactly(mapped_smiles: str):
+    """
+    Load a molecule from a mapped SMILES string using RDKit, without any normalization.
+    """
+    from rdkit import Chem
+
+    # load into RDKit
+    params = Chem.SmilesParserParams()
+    params.removeHs = False
+    params.sanitize = False
+    rdmol = Chem.MolFromSmiles(mapped_smiles, params)
+    Chem.MolToSmiles(rdmol)
+
+    atom_indices = [atom.GetAtomMapNum() - 1 for atom in rdmol.GetAtoms()]
+    ordering = [atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
+    rdmol = Chem.RenumberAtoms(rdmol, ordering)
+    Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
+    Chem.Kekulize(rdmol)
+
+    molecule = Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
+
+    # copy over formal charges and bonds again; from_rdkit sanitizes the rdmol
+    for atom, rdatom in zip(molecule.atoms, rdmol.GetAtoms()):
+        atom.formal_charge = rdatom.GetFormalCharge() * unit.elementary_charge
+    for rdbond in rdmol.GetBonds():
+        i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
+        bond = molecule.get_bond_between(i, j)
+        bond._bond_order = int(rdbond.GetBondTypeAsDouble())
+
+    return molecule
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
@@ -103,39 +133,26 @@ def test_normalize_molecule_bypasses_rdkit_normalization(
     given_smiles,
     expected_smiles,
 ):
-    from rdkit import Chem
-
     from openff.toolkit.topology.molecule import Molecule
 
-    # load into RDKit
-    params = Chem.SmilesParserParams()
-    params.removeHs = False
-    params.sanitize = False
-    rdmol = Chem.MolFromSmiles(expected_smiles, params)
-    Chem.MolToSmiles(rdmol)
-
-    atom_indices = [atom.GetAtomMapNum() - 1 for atom in rdmol.GetAtoms()]
-    ordering = [atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
-    rdmol = Chem.RenumberAtoms(rdmol, ordering)
-    Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
-    Chem.Kekulize(rdmol)
-
-    expected_molecule = Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
-    # copy over formal charges and bonds again; from_rdkit sanitizes the rdmol
-    for atom, rdatom in zip(expected_molecule.atoms, rdmol.GetAtoms()):
-        atom.formal_charge = rdatom.GetFormalCharge() * unit.elementary_charge
-    for rdbond in rdmol.GetBonds():
-        i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
-        bond = expected_molecule.get_bond_between(i, j)
-        bond._bond_order = int(rdbond.GetBondTypeAsDouble())
+    expected_molecule = _load_rdkit_molecule_exactly(expected_smiles)
+    molecule = _load_rdkit_molecule_exactly(given_smiles)
     
-    molecule = Molecule.from_mapped_smiles(given_smiles)
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
     output_molecule = normalize_molecule(molecule)
-    output_smiles = output_molecule.to_smiles(mapped=True)
-    # reload molecule to avoid spurious failures from different kekulization
-    output_molecule = Molecule.from_mapped_smiles(output_smiles)
-    assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0], output_molecule.to_smiles(mapped=True)
+    is_isomorphic = Molecule.are_isomorphic(output_molecule, expected_molecule)[0]
+
+    # this may fail spuriously due to kekulization error, in which case
+    # we reload the molecule and try again
+    if not is_isomorphic:
+        output_smiles = output_molecule.to_smiles(mapped=True)
+        # reload molecule to avoid spurious failures from different kekulization
+        output_molecule = _load_rdkit_molecule_exactly(output_smiles)
+        is_isomorphic = Molecule.are_isomorphic(
+            output_molecule, expected_molecule,
+        )[0]
+
+    assert is_isomorphic, output_molecule.to_smiles(mapped=True)
 
 
         
