@@ -47,11 +47,11 @@ def test_smiles_to_inchi_key(smiles, expected):
 
 
 @pytest.mark.parametrize(
-    "expected_smiles, given_smiles",
+    "given_smiles, expected_smiles",
     [
         (
+            "[H:6][C:1]([H:7])([H:8])[S+2:2]([C:5]([H:9])([H:10])[H:11])([O-:3])[O-:4]",
             "[H:6][C:1]([H:7])([H:8])[S:2](=[O:3])(=[O:4])[C:5]([H:9])([H:10])[H:11]",
-            "[H:6][C:1]([H:7])([H:8])[S+2:2]([C:5]([H:9])([H:10])[H:11])([O-:3])[O-:4]"
 
         ),
         (
@@ -74,7 +74,7 @@ def test_smiles_to_inchi_key(smiles, expected):
 
     ],
 )
-def test_normalize_molecule(expected_smiles, given_smiles):
+def test_normalize_molecule(given_smiles, expected_smiles):
     from openff.toolkit.topology.molecule import Molecule
     expected_molecule = Molecule.from_mapped_smiles(expected_smiles)
 
