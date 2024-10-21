@@ -85,7 +85,13 @@ def test_normalize_molecule_openeye(given_smiles, expected_smiles):
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
 
     output_molecule = normalize_molecule(molecule)
-    assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0], output_molecule.to_smiles(mapped=True)
+    output_smiles = output_molecule.to_smiles(mapped=True)
+    # reload molecule to avoid spurious failures from different kekulization
+    output_molecule = Molecule.from_mapped_smiles(output_smiles)
+    is_isomorphic = Molecule.are_isomorphic(
+        output_molecule, expected_molecule,
+    )[0]
+    assert is_isomorphic, output_molecule.to_smiles(mapped=True)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -111,6 +117,7 @@ def test_normalize_molecule_bypasses_rdkit_normalization(
     atom_indices = [atom.GetAtomMapNum() - 1 for atom in rdmol.GetAtoms()]
     ordering = [atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
     rdmol = Chem.RenumberAtoms(rdmol, ordering)
+    Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
     Chem.Kekulize(rdmol)
 
     expected_molecule = Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
@@ -125,6 +132,9 @@ def test_normalize_molecule_bypasses_rdkit_normalization(
     molecule = Molecule.from_mapped_smiles(given_smiles)
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
     output_molecule = normalize_molecule(molecule)
+    output_smiles = output_molecule.to_smiles(mapped=True)
+    # reload molecule to avoid spurious failures from different kekulization
+    output_molecule = Molecule.from_mapped_smiles(output_smiles)
     assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0], output_molecule.to_smiles(mapped=True)
 
 
