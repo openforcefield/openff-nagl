@@ -106,7 +106,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Chem.Kekulize(rdmol)
         Chem.AssignStereochemistry(rdmol)
             
-        new_mol = Molecule.from_rdkit(
+        new_mol = self.from_rdkit(
             rdmol,
             allow_undefined_stereo=True,
         )
@@ -117,7 +117,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
             bond = new_mol.get_bond_between(i, j)
             bond._bond_order = int(rdbond.GetBondTypeAsDouble())
-            
+
         mapping = new_mol.properties.pop("atom_map")
         adjusted_mapping = dict((current, new - 1) for current, new in mapping.items())
 
