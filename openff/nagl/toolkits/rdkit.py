@@ -76,7 +76,16 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     )
 
                 for atom in rdmol.GetAtoms():
-                    atom.SetAtomMapNum(atom.GetIntProp("react_atom_idx") + 1)
+                    # reorder the rdkit mol following mapping
+                    original_atom_indices = [
+                        atom.GetIntProp("react_atom_idx")
+                        for atom in rdmol.GetAtoms()
+                    ]
+                new_order = [original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
+                rdmol = Chem.RenumberAtoms(rdmol, new_order)
+                # RDKit can assign stereochemistry differently
+                # and toolkit doesn't allow STEREOCIS and STEREOTRANS bonds
+                Chem.AssignStereochemistry(rdmol, cleanIt=True)
 
                 new_smiles = Chem.MolToSmiles(Chem.AddHs(rdmol))
                 # stop changing when smiles converges to same product
@@ -87,12 +96,28 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     f"Reaction {reaction_smarts} did not converge after "
                     f"{max_iter} iterations for molecule {original_smiles}"
                 )
+            
+        for i, atom in enumerate(rdmol.GetAtoms(), 1):
+            atom.SetAtomMapNum(i)
 
+        # required to calculate explicit atom valence
+        # for kekulize call
+        Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
+        Chem.Kekulize(rdmol)
+        Chem.AssignStereochemistry(rdmol)
+            
         new_mol = self.from_rdkit(
             rdmol,
             allow_undefined_stereo=True,
-            _cls=molecule.__class__,
         )
+        # copy over formal charges and bonds again; from_rdkit sanitizes the rdmol
+        for atom, rdatom in zip(new_mol.atoms, rdmol.GetAtoms()):
+            atom.formal_charge = rdatom.GetFormalCharge() * unit.elementary_charge
+        for rdbond in rdmol.GetBonds():
+            i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
+            bond = new_mol.get_bond_between(i, j)
+            bond._bond_order = int(rdbond.GetBondTypeAsDouble())
+
         mapping = new_mol.properties.pop("atom_map")
         adjusted_mapping = dict((current, new - 1) for current, new in mapping.items())
 

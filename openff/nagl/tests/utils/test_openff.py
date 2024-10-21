@@ -7,7 +7,7 @@ from openff.toolkit.topology import Molecule
 from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
 from openff.toolkit import RDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
-from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
+from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.units import unit
 
 from openff.nagl.toolkits.openff import (
@@ -26,6 +26,36 @@ from openff.nagl.toolkits.openff import (
 )
 from openff.nagl.utils._utils import transform_coordinates
 
+def _load_rdkit_molecule_exactly(mapped_smiles: str):
+    """
+    Load a molecule from a mapped SMILES string using RDKit, without any normalization.
+    """
+    from rdkit import Chem
+
+    # load into RDKit
+    params = Chem.SmilesParserParams()
+    params.removeHs = False
+    params.sanitize = False
+    rdmol = Chem.MolFromSmiles(mapped_smiles, params)
+    Chem.MolToSmiles(rdmol)
+
+    atom_indices = [atom.GetAtomMapNum() - 1 for atom in rdmol.GetAtoms()]
+    ordering = [atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
+    rdmol = Chem.RenumberAtoms(rdmol, ordering)
+    Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
+    Chem.Kekulize(rdmol)
+
+    molecule = Molecule.from_rdkit(rdmol, allow_undefined_stereo=True)
+
+    # copy over formal charges and bonds again; from_rdkit sanitizes the rdmol
+    for atom, rdatom in zip(molecule.atoms, rdmol.GetAtoms()):
+        atom.formal_charge = rdatom.GetFormalCharge() * unit.elementary_charge
+    for rdbond in rdmol.GetBonds():
+        i, j = rdbond.GetBeginAtomIdx(), rdbond.GetEndAtomIdx()
+        bond = molecule.get_bond_between(i, j)
+        bond._bond_order = int(rdbond.GetBondTypeAsDouble())
+
+    return molecule
 
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
@@ -46,21 +76,86 @@ def test_smiles_to_inchi_key(smiles, expected):
     assert smiles_to_inchi_key(smiles) == expected
 
 
-@pytest.mark.parametrize(
-    "expected_smiles, given_smiles",
-    [
-        ("CS(=O)(=O)C", "C[S+2]([O-])([O-])C"),
-    ],
-)
-def test_normalize_molecule(expected_smiles, given_smiles):
-    from openff.toolkit.topology.molecule import Molecule
-    expected_molecule = Molecule.from_smiles(expected_smiles)
+NORMALIZATION_MOLECULE_TESTS = [
+    (
+        r"[H:6][C:1]([H:7])([H:8])[S+2:2]([C:5]([H:9])([H:10])[H:11])([O-:3])[O-:4]",
+        r"[H:6][C:1]([H:7])([H:8])[S:2](=[O:3])(=[O:4])[C:5]([H:9])([H:10])[H:11]",
 
-    molecule = Molecule.from_smiles(given_smiles)
+    ),
+    (
+        r"[H:22][c:7]1[c:6]([c:12]([n:10](=[O:11])[c:9]([n:8]1)[H:23])[C:13]([H:24])([H:25])[N:14](=[O:15])=[O:16])[C:5]([H:20])([H:21])[S+2:2]([C:1]([H:17])([H:18])[H:19])([O-:3])[O-:4]",
+        r"[H:22][c:7]1[c:6]([c:12]([n+:10]([c:9]([n:8]1)[H:23])[O-:11])[C:13]([H:24])([H:25])[N+:14](=[O:16])[O-:15])[C:5]([H:20])([H:21])[S:2](=[O:3])(=[O:4])[C:1]([H:17])([H:18])[H:19]"
+    ),
+    # Issue 119
+    (
+        r"[H:1][C:2]([H:3])([H:4])[c:5]1[c:6]2=[N:7][O:8][N+:9](=[c:10]2[c:11]([n+:12]([n+:13]1[O-:14])[O-:15])[C:16]([H:17])([H:18])[H:19])[O-:20]",
+        r"[H:1][C:2]([H:3])([H:4])[c:5]1[c:6]2=[N:7][O:8][N+:9](=[c:10]2[c:11]([n:12](=[O:15])[n:13]1=[O:14])[C:16]([H:17])([H:18])[H:19])[O-:20]",
+    ),
+    (
+        r"[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N-:28][c:29]4[c:30]([c:31]([c:32]([c:33]([n+:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]",
+        r"[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N:28]=[C:29]4[C:30](=[C:31]([C:32](=[C:33]([N:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]"
+    ),
+    (
+        r"[H:21][c:1]1[c:2]([c:3]([c:4]([c:5]([c:6]1[C:7]2=[N:8][N+:9]3=[C:15]([S:16]2)[N:14]([C:12](=[O:13])[C:11](=[C:10]3[O-:17])[H:25])[H:26])[H:24])[H:23])[N:18](=[O:19])=[O:20])[H:22]",
+        r"[H:21][c:1]1[c:2]([c:3]([c:4]([c:5]([c:6]1[C:7]2=[N:8][N:9]3[C:10](=[C:11]([C:12](=[O:13])[N+:14](=[C:15]3[S:16]2)[H:26])[H:25])[O-:17])[H:24])[H:23])[N+:18](=[O:20])[O-:19])[H:22]"
+    )
+
+]
+
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
+@pytest.mark.parametrize(
+    "given_smiles, expected_smiles",
+    NORMALIZATION_MOLECULE_TESTS
+)
+def test_normalize_molecule_openeye(given_smiles, expected_smiles):
+    from openff.toolkit.topology.molecule import Molecule
+    expected_molecule = Molecule.from_mapped_smiles(expected_smiles)
+
+    molecule = Molecule.from_mapped_smiles(given_smiles)
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
 
     output_molecule = normalize_molecule(molecule)
-    assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0]
+    output_smiles = output_molecule.to_smiles(mapped=True)
+    # reload molecule to avoid spurious failures from different kekulization
+    output_molecule = Molecule.from_mapped_smiles(output_smiles)
+    is_isomorphic = Molecule.are_isomorphic(
+        output_molecule, expected_molecule,
+    )[0]
+    assert is_isomorphic, output_molecule.to_smiles(mapped=True)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "given_smiles, expected_smiles",
+    NORMALIZATION_MOLECULE_TESTS
+)
+def test_normalize_molecule_bypasses_rdkit_normalization(
+    given_smiles,
+    expected_smiles,
+):
+    from openff.toolkit.topology.molecule import Molecule
+
+    expected_molecule = _load_rdkit_molecule_exactly(expected_smiles)
+    molecule = _load_rdkit_molecule_exactly(given_smiles)
+    
+    assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
+    output_molecule = normalize_molecule(molecule)
+    is_isomorphic = Molecule.are_isomorphic(output_molecule, expected_molecule)[0]
+
+    # this may fail spuriously due to kekulization error, in which case
+    # we reload the molecule and try again
+    if not is_isomorphic:
+        output_smiles = output_molecule.to_smiles(mapped=True)
+        # reload molecule to avoid spurious failures from different kekulization
+        output_molecule = _load_rdkit_molecule_exactly(output_smiles)
+        is_isomorphic = Molecule.are_isomorphic(
+            output_molecule, expected_molecule,
+        )[0]
+
+    assert is_isomorphic, output_molecule.to_smiles(mapped=True)
+
+
+        
 
 
 @pytest.mark.parametrize(

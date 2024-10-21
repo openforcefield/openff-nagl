@@ -47,6 +47,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
 
         for reaction_smarts in normalization_reactions:
             reaction = oechem.OEUniMolecularRxn(reaction_smarts)
+            reaction.SetValidateKekule(False)
             reaction(oemol)
 
         molecule = self.from_openeye(
