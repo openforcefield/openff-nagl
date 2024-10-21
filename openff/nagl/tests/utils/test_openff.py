@@ -61,7 +61,7 @@ def test_smiles_to_inchi_key(smiles, expected):
         # Issue 119
         (
             "[H:1][C:2]([H:3])([H:4])[c:5]1[c:6]2=[N:7][O:8][N+:9](=[c:10]2[c:11]([n+:12]([n+:13]1[O-:14])[O-:15])[C:16]([H:17])([H:18])[H:19])[O-:20]",
-            "[H:1][C:2]([H:3])([H:4])[c:5]1[c:6]2=[N:7][O:8][N+:9](=[c:10]2[c:11]([n+:12]([n+:13]1[O-:14])[O-:15])[C:16]([H:17])([H:18])[H:19])[O-:20]"
+            "[H:1][C:2]([H:3])([H:4])[c:5]1[c:6]2=[N:7][O:8][N+:9](=[c:10]2[c:11]([n:12](=[O:15])[n:13]1=[O:14])[C:16]([H:17])([H:18])[H:19])[O-:20]",
         ),
         (
             "[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N-:28][c:29]4[c:30]([c:31]([c:32]([c:33]([n+:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]",
@@ -82,7 +82,7 @@ def test_normalize_molecule(expected_smiles, given_smiles):
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
 
     output_molecule = normalize_molecule(molecule)
-    assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0]
+    assert Molecule.are_isomorphic(output_molecule, expected_molecule)[0], output_molecule.to_smiles(mapped=True)
 
 
 @pytest.mark.parametrize(
