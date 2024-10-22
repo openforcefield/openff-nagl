@@ -418,4 +418,3 @@ def test_split_up_molecule():
     assert indices[2] == [7, 20, 21, 22, 23]
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
-

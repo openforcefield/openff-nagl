@@ -9,6 +9,7 @@ from openff.nagl.label.labels import (
     LabelMultipleDipoles,
     LabelMultipleESPs,
 )
+from openff.toolkit.utils import OPENEYE_AVAILABLE
 
 pytest.importorskip("pyarrow")
 
@@ -102,6 +103,7 @@ class TestLabelCharges:
         columns = ["mapped_smiles", "conformers", "n_conformers", "charges"]
         assert small_dataset.dataset.schema.names == columns
 
+    @pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="AmberTools fails on macOS-13 currently")
     def test_label_alkane_dataset(self):
         # test conformer generation and labelling
         # as in examples
