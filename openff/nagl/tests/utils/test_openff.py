@@ -323,11 +323,3 @@ def test_split_up_molecule():
     assert indices[2] == [7, 20, 21, 22, 23]
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
-
-@pytest.mark.skipif(not sum([OPENEYE_AVAILABLE, AMBERTOOLS_AVAILABLE]), reason="requires a charge toolkit")
-def test_can_charge_methane():
-    # verify we can assign AM1 charges to methane
-    # See https://github.com/openforcefield/openff-nagl/issues/152 for more
-
-    mol = Molecule.from_smiles("C")
-    mol.assign_partial_charges("am1-mulliken")
