@@ -14,6 +14,10 @@ concurrency:
 defaults:
   run:
     shell: bash -l {0}
+  
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+  DGL_HOME: ${{ github.workspace }}/dgl
 
 jobs:
   nightly_check:
@@ -22,8 +26,8 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-12, ubuntu-latest]
-          python-version: ["3.10", "3.11", "3.12"]
+          os: [macOS-13, macOS-latest, ubuntu-latest]
+          python-version: ["3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -42,25 +46,63 @@ jobs:
           python=${{ matrix.python-version }}
           pydantic=2
     
-    - name: Install nightly pytorch-lightning and DGL
+    - name: Install nightly pytorch
       run: |
-        python -m pip install --pre dgl -f https://data.dgl.ai/wheels-test/repo.html
-        python -m pip install --pre dglgo -f https://data.dgl.ai/wheels-test/repo.html
-        python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U  
+        python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U 
+
+    - name: Download DGL source
+      run: |
+        git clone --recurse-submodules https://github.com/dmlc/dgl.git
+      
+    - name: Set up DGL
+      if: matrix.os != 'ubuntu-latest'
+      run: |
+        # from https://docs.dgl.ai/en/latest/install/index.html#macos
+        cd dgl/
+        mkdir build && cd build
+        cmake -DUSE_OPENMP=off -DUSE_LIBXSMM=OFF ..
+        make -j4
+        cd ../..
+    
+    - name: Set up DGL (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd dgl/
+        mkdir build && cd build
+        cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_LIBXSMM=OFF ..
+        make
+        cd ../..
+    
+    - name: Install DGL Python bindings
+      run: |
+        cd dgl/python
+        python setup.py install
+        python setup.py build_ext --inplace
+        cd ../..
+
+    - uses: ./.github/actions/include-openeye
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ${{ env.OE_LICENSE }}
+
+    - name: Check toolkit installations
+      shell: bash -l -c "python -u {0}"
+      run: |
+        from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+        assert str(OPENEYE_AVAILABLE).lower() == 'true'
+        assert str(RDKIT_AVAILABLE).lower() == 'true'
+
+    - name: Check Python environment
+      run: |
+        pip list
+    
+    - name: Import DGL
+      run: |
+        python -c "import dgl; import dgl.nn"
 
     - name: Install package
       run: |
         python -m pip install . --no-deps
-
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
-
-    - name: Import DGL
-      run: |
-        python -c "import dgl"
 
     - name: Run tests
       run: |

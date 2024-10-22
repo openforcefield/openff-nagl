@@ -30,7 +30,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-12, ubuntu-latest]
+          os: [macOS-13, macOS-latest, ubuntu-latest]
           python-version: ["3.10", "3.11", "3.12"]
           pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
@@ -39,12 +39,6 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-            # no openeye for 3.12 yet
-            - include-openeye: true
-              python-version: "3.12"
-            # no builds?
-            - include-dgl: true
-              python-version: "3.12"
 
 
     steps:
@@ -57,7 +51,7 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
@@ -77,11 +71,11 @@ jobs:
       
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
-      run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
+      run: micromamba remove --force openeye-toolkits --yes || echo "openeye not installed"
 
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
+      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
 
     # See https://github.com/openforcefield/openff-nagl/issues/103
     - name: Rewrite DGL config
@@ -90,12 +84,6 @@ jobs:
         mkdir -p ~/.dgl
         echo '{"backend": "pytorch"}' > ~/.dgl/config.json
 
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
-
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
       run: |
@@ -103,9 +91,14 @@ jobs:
         assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
         assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
+    - name: Check DGL installation
+      if: matrix.include-dgl == true
+      run: |
+        python -c "import dgl"
+
     - name: Run tests
       run: |
-        python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
+        python -m pytest -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
       uses: codecov/codecov-action@v4
@@ -177,29 +170,19 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install conda
-      uses: conda-incubator/setup-miniconda@v3
+      uses: mamba-org/setup-micromamba@v2
       with:
-        python-version: ${{ matrix.python-version }}
-        add-pip-as-python-dependency: true
-        architecture: x64
-        miniforge-variant: Mambaforge
-        use-mamba: true
-        auto-update-conda: true
-        show-channel-urls: true
-        channels: conda-forge, defaults
+        environment-name: openff-nagl
+        create-args: >-
+          python=${{ matrix.python-version }}
 
     - name: Build from source
       run: |
-        conda create --name openff-nagl
-        conda activate openff-nagl
-        conda list
-    
-        mamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
+        micromamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
         python --version
         python -m pip install . --no-deps
-        conda list
+        micromamba list
 
     - name: Check success
       run: |
-        conda activate openff-nagl
         python -c "import openff.nagl ; print(openff.nagl.__version__)"

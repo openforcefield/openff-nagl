@@ -1,40 +1,35 @@
 name: openff-nagl-test
 channels:
-  - openeye
   - conda-forge
+  - defaults
 dependencies:
     # Base depends
   - python
   - pip
+  - importlib_resources
 
   # UI
   - click
   - click-option-group
+  - rich
   - tqdm
 
   # chemistry
-  - openff-recharge
   - openff-toolkit-base >=0.11.1
   - openff-units
   - pydantic <3
   - rdkit
   - scipy
-  - ambertools
 
-  # database
-  - pyarrow
+  # files
+  - pyyaml
 
   # gcn
-  - dgl =2.1
   - pytorch >=2.0
   - pytorch-lightning
-
-  # parallelism
-  - dask-jobqueue
 
   # Testing
   - pytest
   - pytest-cov
   - pytest-xdist
   - codecov
-

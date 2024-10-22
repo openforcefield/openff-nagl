@@ -27,6 +27,7 @@ The rules for this file:
 - Removed unused, undocumented code paths, and updated docs (PR #132)
 
 ### Fixed
+- Fixed molecule normalization issues (Issue #119, PR #149)
 - Check lookup tables for allowed molecules before ChemicalDomain for forbidden ones (PR #145, Issue #144)
 - Add support for single atoms (PR #146, Issue #138)
 
