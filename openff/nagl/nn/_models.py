@@ -217,7 +217,6 @@ class GNNModel(BaseGNNModel):
         else:
             tensor = torch.empty
         for property_name, value in results[0].items():
-            print(as_numpy, value, value.dtype)
             combined_results[property_name] = tensor(
                 molecule.n_atoms,
                 dtype=value.dtype
