@@ -179,6 +179,7 @@ class ReadoutModule(torch.nn.Module):
         layer_dropout = [
             layer.dropout for layer in readout_config.layers
         ]
+        postprocess_layer = None
         if readout_config.postprocess is not None:
             postprocess_layer = _PostprocessLayerMeta._get_object(readout_config.postprocess)
             hidden_feature_sizes.append(postprocess_layer.n_features)
