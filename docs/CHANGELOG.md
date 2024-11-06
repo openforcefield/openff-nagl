@@ -14,7 +14,7 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## ??
+## v0.5.0 -- 2024-11-06
 
 ### Authors
 - [@lilyminium]
@@ -30,6 +30,7 @@ The rules for this file:
 - Fixed molecule normalization issues (Issue #119, PR #149)
 - Check lookup tables for allowed molecules before ChemicalDomain for forbidden ones (PR #145, Issue #144)
 - Add support for single atoms (PR #146, Issue #138)
+- Fixed optionality for PostProcessLayers (PR #156, Issue #155)
 
 
 ## v0.4.0 -- 2024-07-18
