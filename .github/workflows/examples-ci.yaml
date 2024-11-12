@@ -22,6 +22,7 @@ defaults:
 
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+  PYTORCH_ENABLE_MPS_FALLBACK: 0
 
 jobs:
   example_tests:
