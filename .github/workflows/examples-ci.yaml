@@ -28,65 +28,63 @@ jobs:
     name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest]
-          python-version: ["3.11", "3.12"]
-          pydantic-version: ["2"]
-          include-rdkit: [true]
-          include-openeye: [false]
-          include-dgl: [true]
-
+      fail-fast: false
+      matrix:
+        os: [macOS-12, ubuntu-latest]
+        python-version: ["3.11", "3.12"]
+        pydantic-version: ["2"]
+        include-rdkit: [true]
+        include-openeye: [false]
+        include-dgl: [true]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Build information
-      run: |
-        uname -a
-        df -h
-        ulimit -a
+      - name: Build information
+        run: |
+          uname -a
+          df -h
+          ulimit -a
 
-    - name: Install environment
-      uses: mamba-org/setup-micromamba@v1
-      with:
-        environment-file: devtools/conda-envs/examples_env.yaml
-        create-args: >-
-          python=${{ matrix.python-version }}
-          pydantic=${{ matrix.pydantic-version }}
+      - name: Install environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: devtools/conda-envs/examples_env.yaml
+          create-args: >-
+            python=${{ matrix.python-version }}
+            pydantic=${{ matrix.pydantic-version }}
 
-    - name: Install package
-      run: |
-        python -m pip install . --no-deps
+      - name: Install package
+        run: |
+          python -m pip install . --no-deps
 
-    - uses: ./.github/actions/include-openeye
-      if: matrix.include-openeye == true
-      with:
-        openeye-license-text: ${{ secrets.OE_LICENSE }}
-        openeye-license-file: ${{ env.OE_LICENSE }}
+      - uses: ./.github/actions/include-openeye
+        if: matrix.include-openeye == true
+        with:
+          openeye-license-text: ${{ secrets.OE_LICENSE }}
+          openeye-license-file: ${{ env.OE_LICENSE }}
 
-      
-    - name: Uninstall OpenEye
-      if: matrix.include-openeye == false
-      run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
+      - name: Uninstall OpenEye
+        if: matrix.include-openeye == false
+        run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
 
-    - name: Uninstall RDKit
-      if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
-    
-    - name: Python information
-      run: |
-        which python
-        conda info
-        conda list
+      - name: Uninstall RDKit
+        if: matrix.include-rdkit == false
+        run: conda remove --force rdkit --yes || echo "rdkit not installed"
 
-    - name: Check toolkit installations
-      shell: bash -l -c "python -u {0}"
-      run: |
-        from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
-        assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
-        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
+      - name: Python information
+        run: |
+          which python
+          conda info
+          conda list
 
-    - name: Run example notebooks
-      run: |
-        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=50000 --dist loadscope examples
+      - name: Check toolkit installations
+        shell: bash -l -c "python -u {0}"
+        run: |
+          from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+          assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
+          assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
+
+      - name: Run example notebooks
+        run: |
+          python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --dist loadscope examples
