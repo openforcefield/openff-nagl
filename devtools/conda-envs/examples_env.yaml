@@ -1,7 +1,6 @@
 name: openff-nagl-test
 channels:
   - conda-forge
-  - defaults
 dependencies:
   # Base depends
   - python
@@ -41,7 +40,6 @@ dependencies:
 
   # compatibility
   - apsw >=3.42
-
 
   # CI
   - nbval
