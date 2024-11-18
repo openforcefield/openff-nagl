@@ -6,7 +6,6 @@ channels:
   - pytorch
   - nvidia
   - conda-forge
-  - defaults
 dependencies:
     # Base depends
   - python
