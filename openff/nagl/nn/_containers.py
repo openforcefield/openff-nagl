@@ -128,12 +128,16 @@ class ReadoutModule(torch.nn.Module):
         super().__init__()
 
         self.pooling_layer = get_pooling_layer(pooling_layer)
-        self.readout_layers = readout_layers
+        self.pooling_layer.layers = readout_layers
 
         if postprocess_layer is not None:
             if not isinstance(postprocess_layer, PostprocessLayer):
                 postprocess_layer = _PostprocessLayerMeta._get_object(postprocess_layer)
         self.postprocess_layer = postprocess_layer
+
+    @property
+    def readout_layers(self):
+        return self.pooling_layer.layers
 
     def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
         x = self._forward_unpostprocessed(molecule)
@@ -150,8 +154,7 @@ class ReadoutModule(torch.nn.Module):
         This is quality-of-life method for debugging and testing.
         It is *not* intended for public use.
         """
-        x = self.pooling_layer.forward(molecule)
-        x = self.readout_layers.forward(x)
+        x = self.pooling_layer.forward(molecule, self.readout_layers)
         return x
     
     def copy(self, copy_weights: bool = False):
