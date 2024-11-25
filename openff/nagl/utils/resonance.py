@@ -218,6 +218,8 @@ class ResonanceEnumerator:
                     _molecule_from_dict(resonance_form)
                     for resonance_form in resonance_forms
                 ]
+                for mol in molecules:
+                    mol._conformers = copy.deepcopy(self.molecule.conformers)
         
         else:
             if not as_dicts:
