@@ -1,4 +1,5 @@
 import copy
+import typing
 from typing import List, Optional, Union, Tuple, Callable
 
 import torch
@@ -8,7 +9,7 @@ from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer, get_pooling_layer_type
 from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 
@@ -111,6 +112,7 @@ class ReadoutModule(torch.nn.Module):
         pooling_layer: PoolingLayer,
         readout_layers: SequentialLayers,
         postprocess_layer: Optional[PostprocessLayer] = None,
+        pooling_kwargs: dict[str, typing.Any] = None,
     ):
         """
 
@@ -127,31 +129,45 @@ class ReadoutModule(torch.nn.Module):
 
         super().__init__()
 
-        self.pooling_layer = get_pooling_layer(pooling_layer)
-        self.readout_layers = readout_layers
+        if pooling_kwargs is None:
+            pooling_kwargs = {}
+
+        self.pooling_layer = get_pooling_layer(
+            pooling_layer,
+            layers=readout_layers,
+            **pooling_kwargs
+        )
 
         if postprocess_layer is not None:
             if not isinstance(postprocess_layer, PostprocessLayer):
                 postprocess_layer = _PostprocessLayerMeta._get_object(postprocess_layer)
         self.postprocess_layer = postprocess_layer
 
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
-        x = self._forward_unpostprocessed(molecule)
+    @property
+    def readout_layers(self):
+        return self.pooling_layer.layers
+
+    def forward(
+        self,
+        molecule: Union[DGLMolecule, DGLMoleculeBatch],
+        **kwargs
+    ) -> torch.Tensor:
+        x = self._forward_unpostprocessed(molecule, **kwargs)
         if self.postprocess_layer is not None:
-            x = self.postprocess_layer.forward(molecule, x)
+            x = self.postprocess_layer.forward(molecule, x, **kwargs)
 
         return x
     
     def _forward_unpostprocessed(
-        self, molecule: Union[DGLMolecule, DGLMoleculeBatch]
+        self, molecule: Union[DGLMolecule, DGLMoleculeBatch],
+        **kwargs
     ) -> torch.Tensor:
         """
         Forward pass without postprocessing the readout modules.
         This is quality-of-life method for debugging and testing.
         It is *not* intended for public use.
         """
-        x = self.pooling_layer.forward(molecule)
-        x = self.readout_layers.forward(x)
+        x = self.pooling_layer.forward(molecule, **kwargs)
         return x
     
     def copy(self, copy_weights: bool = False):
@@ -167,9 +183,14 @@ class ReadoutModule(torch.nn.Module):
     def from_config(
         cls,
         readout_config,
-        n_input_features: int
+        n_input_features: int = None
     ):
         pooling_layer = readout_config.pooling
+        pooling_layer_type = get_pooling_layer_type(pooling_layer)
+        pooling_kwargs = {}
+        for k in ["include_internal_coordinates"]:
+            pooling_kwargs[k] = getattr(readout_config, k)
+
         hidden_feature_sizes = [
             layer.hidden_feature_size for layer in readout_config.layers
         ]
@@ -186,14 +207,17 @@ class ReadoutModule(torch.nn.Module):
             layer_activation_functions.append(ActivationFunction.Identity)
             layer_dropout.append(0.0)
 
+        n_dense_input_features = pooling_layer_type.get_n_feature_columns(n_input_features)
         readout_layers = SequentialLayers.with_layers(
-            n_input_features,
+            n_dense_input_features,
             hidden_feature_sizes,
             layer_activation_functions,
             layer_dropout,
         )
+        
         return cls(
             pooling_layer,
             readout_layers,
-            postprocess_layer
+            postprocess_layer,
+            pooling_kwargs=pooling_kwargs
         )

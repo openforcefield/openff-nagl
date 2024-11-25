@@ -355,6 +355,11 @@ def split_up_molecule(
     for ix in indices:
         subgraph = nx.convert_node_labels_to_integers(graph.subgraph(ix))
         fragment = molecule_from_networkx(subgraph)
+        if molecule.conformers:
+            new_conformers = []
+            for conformer in molecule.conformers:
+                new_conformers.append(conformer[ix])
+            fragment._conformers = new_conformers
         fragments.append(fragment)
     
     if return_indices:

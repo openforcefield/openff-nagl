@@ -36,10 +36,13 @@ class BaseGNNModel(pl.LightningModule):
     ) -> Dict[str, torch.Tensor]:
         self.convolution_module(molecule)
 
-        readouts: Dict[str, torch.Tensor] = {
-            readout_type: readout_module(molecule)
-            for readout_type, readout_module in self.readout_modules.items()
-        }
+        readouts: Dict[str, torch.Tensor] = {}
+        for readout_type, readout_module in self.readout_modules.items():
+            readouts[readout_type] = readout_module(
+                molecule,
+                model=self,
+                readouts=readouts,
+            )
         return readouts
 
     def _forward_unpostprocessed(self, molecule: "DGLMoleculeOrBatch"):
@@ -216,29 +219,42 @@ class GNNModel(BaseGNNModel):
             tensor = np.empty
         else:
             tensor = torch.empty
-        for property_name, value in results[0].items():
-            combined_results[property_name] = tensor(
-                molecule.n_atoms,
-                dtype=value.dtype
-            )
         
+        for property_name in results[0].keys():
+            n_values = sum(len(result[property_name]) for result in results)
+            combined_results[property_name] = tensor(n_values)
+
         seen_indices = collections.defaultdict(set)
         
-        for result, indices in zip(results, all_indices):
+        for i, (result, indices) in enumerate(zip(results, all_indices)):
             for property_name, value in result.items():
-                combined_results[property_name][indices] = value
-                if seen_indices[property_name] & set(indices):
-                    raise ValueError(
-                        "Overlapping indices in the fragments"
+                j = 0
+                if self.readout_modules[property_name].pooling_layer.name == "atom":
+                    combined_results[property_name][indices] = value
+                    if seen_indices[property_name] & set(indices):
+                        raise ValueError(
+                            "Overlapping indices in the fragments"
+                        )
+                    seen_indices[property_name].update(indices)
+                else:
+                    warnings.warn(
+                        "TODO: currently non-atom-wise properties "
+                        "are not properly handled!!! "
+                        "We just assume they are **strictly sequential**. "
+                        "In general we don't recommend using multiple molecules!!"
                     )
-                seen_indices[property_name].update(indices)
+                    combined_results[property_name][j : j+ len(value)] = value
+                    j += len(value)
+                
+                
 
         expected_indices = list(range(molecule.n_atoms))
         for property_name, seen_indices in seen_indices.items():
-            assert sorted(seen_indices) == expected_indices, (
-                f"Missing indices for property {property_name}: "
-                f"{set(expected_indices) - seen_indices}"
-            )
+            if self.readout_modules[property_name].pooling_layer.name == "atom":
+                assert sorted(seen_indices) == expected_indices, (
+                    f"Missing indices for property {property_name}: "
+                    f"{set(expected_indices) - seen_indices}"
+                )
         return combined_results
 
 
@@ -320,7 +336,8 @@ class GNNModel(BaseGNNModel):
 
         try:
             values = self._compute_properties_dgl(molecule)
-        except (MissingOptionalDependencyError, TypeError):
+        except (MissingOptionalDependencyError, TypeError) as e:
+            raise e
             values = self._compute_properties_nagl(molecule)
         
 
@@ -417,10 +434,9 @@ class GNNModel(BaseGNNModel):
     def _compute_properties_nagl(self, molecule: "Molecule") -> "torch.Tensor":
         from openff.nagl.molecule._graph.molecule import GraphMolecule
 
-        nxmol = GraphMolecule.from_openff(
+        nxmol = GraphMolecule.from_openff_config(
             molecule,
-            atom_features=self.config.atom_features,
-            bond_features=self.config.bond_features,
+            self.config,
         )
         model = self
         if self._is_dgl:
@@ -436,10 +452,10 @@ class GNNModel(BaseGNNModel):
                  "and cannot be used to compute properties with the DGL backend"
             )
 
-        dglmol = DGLMolecule.from_openff(
+        dglmol = DGLMolecule.from_openff_config(
             molecule,
-            atom_features=self.config.atom_features,
-            bond_features=self.config.bond_features,
+            self.config,
+            model=self,
         )
         return self.forward(dglmol)
     
@@ -448,16 +464,15 @@ class GNNModel(BaseGNNModel):
         if self._is_dgl:
             from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
-            return DGLMolecule.from_openff(
+            return DGLMolecule.from_openff_config(
                 molecule,
-                atom_features=self.config.atom_features,
-                bond_features=self.config.bond_features,
+                self.config,
+                model=self
             )
 
-        return GraphMolecule.from_openff(
+        return GraphMolecule.from_openff_config(
             molecule,
-            atom_features=self.config.atom_features,
-            bond_features=self.config.bond_features,
+            self.config,
         )
     
     @classmethod
