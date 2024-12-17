@@ -150,7 +150,7 @@ jobs:
 
     - name: Build package
       run: |
-        python setup.py sdist
+        python -m pip install .
 
     - name: Check package build
       run: |
