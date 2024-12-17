@@ -1,0 +1,69 @@
+[build-system]
+requires = [
+  "setuptools"
+  "versioneer[toml]==0.29",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openff-nagl"
+description = "A playground for applying graph convolutional networks to molecules."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
+]
+maintainers = [
+    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
+]
+requires-python = ">=3.10"
+dynamic = ["version"]
+
+[tool.setuptools.packages]
+find = {}
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+    "pytest-xdist>=2.5",
+    "pytest-cov>=3.0",
+]
+doc = [
+    "sphinx>=1.8",
+    "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
+]
+
+[project.scripts]
+openff-nagl = "openff.nagl.cli:cli"
+
+[project.urls]
+source = "https://github.com/openforcefield/openff-nagl"
+documentation = "https://docs.openforcefield.org/projects/nagl/"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "openff/nagl/tests",
+]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "openff/nagl/_version.py"
+versionfile_build = "openff/nagl/_version.py"
+tag_prefix = "v"
+parentdir_prefix = "openff-nagl-"
+
+[tool.coverage.run]
+omit = [
+    "*/*/_tests/*",
+    "openff/nagl/_version.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
