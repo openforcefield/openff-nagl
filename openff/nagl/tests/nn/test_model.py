@@ -419,6 +419,11 @@ class TestGNNModel:
             [-0.738375,  0.246125,  0.246125,  0.246125],
             atol=1e-5
         )
+    
+    def test_compute_long_molecule(self, am1bcc_model):
+        mol = Molecule.from_smiles(341 * "C")
+        charges = am1bcc_model.compute_property(mol, as_numpy=True)
+        assert charges.shape == (mol.n_atoms,)
 
 class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
     model_name = "openff-gnn-am1bcc-0.1.0-rc.3"
