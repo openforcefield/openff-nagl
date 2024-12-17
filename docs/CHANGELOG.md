@@ -14,6 +14,11 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## Current development
+
+### Changed
+- Switched build from using `setup.py` to `pyproject.toml`.
+
 ## v0.5.0 -- 2024-11-06
 
 ### Authors
