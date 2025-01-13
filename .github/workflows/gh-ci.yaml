@@ -155,8 +155,8 @@ jobs:
 
     - name: Check package build
       run: |
-        DISTRIBUTION=$(ls -t1 dist/openff-nagl-*.tar.gz | head -n 1)
-        test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff-nagl-*.tar.gz found"; exit 1; }
+        DISTRIBUTION=$(ls -t1 dist/openff_nagl-*.tar.gz | head -n 1)
+        test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff_nagl-*.tar.gz found"; exit 1; }
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
   
