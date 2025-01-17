@@ -57,8 +57,8 @@ jobs:
         with:
           environment-file: devtools/conda-envs/test_cuda_env.yaml
 
-      - name: Install Package and test plugins
-        run: python -m pip install .
+      - name: Install Package
+        run: python -m pip install . --no-deps
 
       - name: Double-check local installation
         run: python -c "from openff.nagl import __version__; print(__version__)"
