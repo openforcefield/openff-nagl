@@ -31,6 +31,8 @@ jobs:
           action: "start"
           aws_image_id: ami-0d5079d9be06933e5
           aws_instance_type: g4dn.xlarge
+          # IAM default might be 5 GB?
+          aws_root_device_size: 10
           aws_region_name: us-east-1
           aws_home_dir: /home/ubuntu
         env:
