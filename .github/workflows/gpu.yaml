@@ -63,6 +63,9 @@ jobs:
       - name: Double-check local installation
         run: python -c "from openff.nagl import __version__; print(__version__)"
 
+      - name: Check that PyTorch can see CUDA
+        run: python -c "import torch; assert torch.cuda.is_available()"
+
       - name: Run training test
         run: python -m pytest openff/nagl/tests/training/test_training.py::test_train_model_no_error
 
