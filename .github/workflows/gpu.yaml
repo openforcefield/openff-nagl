@@ -43,6 +43,8 @@ jobs:
       - start-aws-runner
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Print disk usage
         run: "df -h"
