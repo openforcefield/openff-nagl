@@ -29,7 +29,7 @@ dependencies:
 
   # gcn
   - cudatoolkit
-  - dgl ==1.1.2
+  - dgl =2.1
   - pytorch >=2.0
   - pytorch-lightning
   - pytorch-cuda ==11.7
