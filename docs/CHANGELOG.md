@@ -14,10 +14,19 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## Current development
+## v0.5.1 -- 2025-01-21
 
 ### Changed
-- Switched build from using `setup.py` to `pyproject.toml`.
+- Switched build from using `setup.py` to `pyproject.toml` (PR #169).
+- Do not use defaults channel in test environments (PR #162)
+
+### Fixed
+- Fix InChI error with large molecules (PR #165).
+- Fixes docs builds (PR #172).
+
+### Authors
+- [@lilyminium]
+- [@mattwthompson]
 
 ## v0.5.0 -- 2024-11-06
 
