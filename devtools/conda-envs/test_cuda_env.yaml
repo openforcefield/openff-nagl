@@ -31,6 +31,7 @@ dependencies:
   - cudatoolkit
   - dgl =2.1
   - pytorch >=2.0
+  - pytorch-gpu  # is effectively a subpackage?
   - pytorch-lightning
   - pytorch-cuda ==11.7
 
