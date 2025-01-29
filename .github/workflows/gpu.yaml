@@ -66,6 +66,9 @@ jobs:
       - name: Check that PyTorch can see CUDA
         run: python -c "import torch; assert torch.cuda.is_available()"
 
+      - name: Check we can see DGL
+        run: python -c "import dgl; print(dgl.__version__)"
+
       - name: Run training test
         run: |
           python -c "import torch; print(torch.cuda.is_available())"
