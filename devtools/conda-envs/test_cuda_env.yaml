@@ -2,7 +2,7 @@
 name: openff-nagl-test-cuda
 channels:
   - openeye
-  - dglteam/label/cu117
+  - dglteam/label/th21_cu118
   - pytorch
   - nvidia
   - conda-forge
@@ -29,14 +29,14 @@ dependencies:
 
   # gcn
   - cudatoolkit
-  - dgl =2.1
+  - dgl ~=2.1
   - torchdata
   - torchvision
   - torchaudio
-  - pytorch >=2.0
-  - pytorch-gpu  # is effectively a subpackage?
+  - pytorch ==2.1
+  # pytorch-gpu  # is effectively a subpackage?
   - pytorch-lightning
-  - pytorch-cuda ==11.7
+  - pytorch-cuda ==11.8
 
   # parallelism
   - dask-jobqueue
