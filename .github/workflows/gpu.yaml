@@ -67,7 +67,9 @@ jobs:
         run: python -c "import torch; assert torch.cuda.is_available()"
 
       - name: Run training test
-        run: python -m pytest -v openff/nagl/tests/training/test_training.py::test_train_model_no_error
+        run: |
+          python -c "import torch; print(torch.cuda.is_available())"
+          python -m pytest -v openff/nagl/tests/training/test_training.py::test_cuda
 
   stop-aws-runner:
     runs-on: ubuntu-latest

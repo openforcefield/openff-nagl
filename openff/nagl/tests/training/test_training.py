@@ -350,6 +350,10 @@ class TestTrainingGNNModel:
         assert torch.isclose(loss, torch.tensor([123.534743]))
 
 
+def test_cuda():
+    assert torch.cuda.is_available()
+
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_train_model_no_error(example_training_config, tmpdir):
 
