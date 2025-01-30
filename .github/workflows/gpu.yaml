@@ -70,7 +70,7 @@ jobs:
         run: python -c "import dgl; print(dgl.__version__)"
 
       - name: Run training test
-          run: python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
+        run: python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
     
       - name: codecov
         uses: codecov/codecov-action@v5

@@ -100,7 +100,7 @@ jobs:
         python -m pytest -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
