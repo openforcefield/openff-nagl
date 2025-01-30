@@ -69,16 +69,8 @@ jobs:
       - name: Check we can see DGL
         run: python -c "import dgl; print(dgl.__version__)"
 
-      - name: Run training test
+      - name: Run tests
         run: python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
-    
-      - name: codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-          fail_ci_if_error: true  # $HOME not being set causes problems
-  
 
   stop-aws-runner:
     runs-on: ubuntu-latest
