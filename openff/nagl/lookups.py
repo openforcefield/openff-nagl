@@ -137,8 +137,12 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             If the property value cannot be found for this molecule
         """
         from openff.toolkit.topology import Molecule
+        from openff.toolkit.utils.exceptions import EmptyInChiError
 
-        inchi_key = molecule.to_inchi(fixed_hydrogens=True)
+        try:
+            inchi_key = molecule.to_inchi(fixed_hydrogens=True)
+        except EmptyInChiError as e:
+            raise KeyError(e.msg)
         try:
             entry = self.properties[inchi_key]
         except KeyError:
