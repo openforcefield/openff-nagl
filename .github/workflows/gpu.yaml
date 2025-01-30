@@ -77,7 +77,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
-          verbose: True
+          fail_ci_if_error: true  # $HOME not being set causes problems
   
 
   stop-aws-runner:
