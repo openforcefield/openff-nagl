@@ -68,7 +68,6 @@ jobs:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
 
-      
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
       run: micromamba remove --force openeye-toolkits --yes || echo "openeye not installed"
@@ -98,16 +97,15 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
+        python -m pytest -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
+        files: ./coverage.xml
         verbose: True
         # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-  
 
   pylint_check:
     runs-on: ubuntu-latest

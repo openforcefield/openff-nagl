@@ -73,5 +73,4 @@ jobs:
         assert str(RDKIT_AVAILABLE).lower() == 'true'
 
     - name: Run tests
-      run: |
-        python -m pytest -n 4 -v --cov=openff/nagl --cov-config=setup.cfg --cov-append --cov-report=xml --color=yes openff/nagl/
+      run: python -m pytest -n logical --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
