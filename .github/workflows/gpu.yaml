@@ -70,9 +70,7 @@ jobs:
         run: python -c "import dgl; print(dgl.__version__)"
 
       - name: Run training test
-        run: |
-          python -c "import torch; print(torch.cuda.is_available())"
-          python -m pytest -v openff/nagl/tests/training/test_training.py::test_cuda
+        run: python -m pytest -v openff/nagl/tests/training/test_training.py::test_train_model_no_error
 
   stop-aws-runner:
     runs-on: ubuntu-latest
