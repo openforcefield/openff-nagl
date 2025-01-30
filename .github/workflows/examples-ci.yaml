@@ -26,14 +26,13 @@ env:
 
 jobs:
   example_tests:
-    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macOS-latest, ubuntu-latest]
         python-version: ["3.11", "3.12"]
-        pydantic-version: ["2"]
         include-rdkit: [true]
         include-openeye: [false]
         include-dgl: [true]
@@ -53,7 +52,6 @@ jobs:
           environment-file: devtools/conda-envs/examples_env.yaml
           create-args: >-
             python=${{ matrix.python-version }}
-            pydantic=${{ matrix.pydantic-version }}
 
       - name: Install package
         run: |
