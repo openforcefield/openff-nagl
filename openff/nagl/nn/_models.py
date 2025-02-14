@@ -494,7 +494,7 @@ class GNNModel(BaseGNNModel):
         models saved with ``torch.save``, as it expects
         a dictionary of hyperparameters and a state dictionary.
         """
-        model_kwargs = torch.load(str(model), **kwargs)
+        model_kwargs = torch.load(str(model), weights_only=False, **kwargs)
         if isinstance(model_kwargs, dict):
             model = cls(**model_kwargs["hyperparameters"])
             model.load_state_dict(model_kwargs["state_dict"])
