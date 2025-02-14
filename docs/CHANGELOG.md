@@ -14,6 +14,15 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.5.2 -- 2025-02-14
+
+### Fixed
+- GNN.load loads models with `weights_only=False`, which was the default
+  way of loading in PyTorch pre v2.6. (Issue #181, PR #183)
+
+### Authors
+- [@lilyminium]
+
 ## v0.5.1 -- 2025-01-21
 
 ### Changed
