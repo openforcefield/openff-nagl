@@ -1,5 +1,7 @@
 name: Upstream nightly version CI
 on:
+  push:
+  pull_request:
   schedule:
     # weekly tests, Sundays at midnight
     - cron: "0 0 * * 0"
