@@ -97,3 +97,8 @@ class TestAtomPropertiesLookupTable:
         mol = Molecule.from_mapped_smiles("[H:5][C:1]([H:6])([H:7])[N+2:2](-[O-:3])[O-:4]")
         properties = lookup_table.lookup(mol)
         assert_allclose(properties.numpy(), np.array([-0.103, 0.234, -0.209, -0.209, 0.096, 0.096, 0.096]))
+
+    def test_lookup_long(self, lookup_table):
+        mol = Molecule.from_smiles(341 * "C")
+        with pytest.raises(KeyError, match="failed to generate an InChI"):
+            lookup_table.lookup(mol)
