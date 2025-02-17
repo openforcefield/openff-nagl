@@ -34,15 +34,34 @@ class NAGLMoleculeBase:
 
 
 class MoleculeMixin:
+    """
+    Attributes
+    ----------
+    
+    pooling_representations: dict[str, torch.tensor]
+        A dictionary of pooling representations for each molecule.
+        The tensor is of shape (n_atoms, n_representations).
+    """
     def __init__(
             self,
             graph,
             n_representations: int = 1,
             mapped_smiles: str = "",
+            pooling_representations: Optional[dict] = None,
         ):
         self.graph = graph
         self.n_representations = n_representations
         self.mapped_smiles = mapped_smiles
+        if pooling_representations is None:
+            pooling_representations = {}
+        self._pooling_representations = pooling_representations
+
+    @property
+    def _n_pooling_representations_per_molecule(self):
+        return {
+            name: [len(self._pooling_representations[name])]
+            for name in self._pooling_representations
+        }
 
     @property
     def n_atoms(self):
@@ -64,13 +83,8 @@ class MoleculeMixin:
     def from_smiles(
         cls,
         smiles: str,
+        config,
         mapped: bool = False,
-        atom_features: Tuple["AtomFeature"] = tuple(),
-        bond_features: Tuple["BondFeature"] = tuple(),
-        enumerate_resonance_forms: bool = False,
-        lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
-        include_all_transfer_pathways: bool = False,
     ):
         from openff.toolkit import Molecule
 
@@ -80,12 +94,7 @@ class MoleculeMixin:
         molecule = func(smiles)
         return cls.from_openff(
             molecule=molecule,
-            atom_features=atom_features,
-            bond_features=bond_features,
-            enumerate_resonance_forms=enumerate_resonance_forms,
-            lowest_energy_only=lowest_energy_only,
-            max_path_length=max_path_length,
-            include_all_transfer_pathways=include_all_transfer_pathways,
+            config=config,
         )
     
     def to_openff(self):
@@ -99,11 +108,14 @@ class MoleculeMixin:
 
 class BatchMixin:
     def __init__(
-        self, graph, n_representations: Tuple[int, ...], n_atoms: Tuple[int, ...]
+        self, graph,
+        n_representations: Tuple[int, ...],
+        n_atoms: Tuple[int, ...]
     ):
         self.graph = graph
         self.n_representations = n_representations
         self.n_atoms = n_atoms
+        self._pooling_representations = {}
 
     @property
     def n_atoms_per_molecule(self):

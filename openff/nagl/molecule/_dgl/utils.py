@@ -1,7 +1,9 @@
+import warnings
 from typing import Dict, List, TYPE_CHECKING, Optional
 
 import torch
 import numpy as np
+from openff.units import unit
 from openff.utilities import requires_package
 
 from openff.nagl.features.atoms import AtomFeature
@@ -13,8 +15,6 @@ from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 if TYPE_CHECKING:
     import dgl
     from openff.toolkit.topology.molecule import Molecule
-
-
 
 @requires_package("dgl")
 def openff_molecule_to_base_dgl_graph(
@@ -54,8 +54,12 @@ def openff_molecule_to_dgl_graph(
     bond_feature_tensor: Optional[torch.Tensor] = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
+    include_xyz: bool = False,
 ) -> "dgl.DGLHeteroGraph":
-    from openff.nagl.molecule._utils import _get_openff_molecule_information
+    from openff.nagl.molecule._utils import (
+        _get_openff_molecule_information,
+        _add_xyz_information
+    )
 
     if len(atom_features) and atom_feature_tensor is not None:
         raise ValueError(
@@ -75,6 +79,11 @@ def openff_molecule_to_dgl_graph(
         forward=forward,
         reverse=reverse,
     )
+
+    # add coordinates
+    if include_xyz:
+        _add_xyz_information(molecule, molecule_graph)
+
 
     # add atom features
     if len(atom_features):
