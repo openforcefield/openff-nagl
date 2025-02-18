@@ -1,0 +1,187 @@
+name: GH Actions CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # weekly tests, Sundays at midnight
+    - cron: "0 0 * * 0"
+
+concurrency:
+  # Specific group naming so CI is only cancelled
+  # within same PR or on merge to main
+  group: ${{ github.ref }}-${{ github.head_ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
+jobs:
+  main_tests:
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+          os: [macOS-13, macOS-latest, ubuntu-latest]
+          python-version: ["3.10", "3.11", "3.12"]
+          pydantic-version: ["1", "2"]
+          include-rdkit: [false, true]
+          include-openeye: [false, true]
+          include-dgl: [false, true]
+          exclude:
+            - include-rdkit: false
+              include-openeye: false
+
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build information
+      run: |
+        uname -a
+        df -h
+        ulimit -a
+
+    - name: Install environment
+      uses: mamba-org/setup-micromamba@v2
+      with:
+        environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
+        create-args: >-
+          python=${{ matrix.python-version }}
+          pydantic=${{ matrix.pydantic-version }}
+
+    - name: Install package
+      run: |
+        python -m pip install . --no-deps
+
+    - uses: ./.github/actions/include-openeye
+      if: matrix.include-openeye == true
+      with:
+        openeye-license-text: ${{ secrets.OE_LICENSE }}
+        openeye-license-file: ${{ env.OE_LICENSE }}
+
+    - name: Uninstall OpenEye
+      if: matrix.include-openeye == false
+      run: micromamba remove --force openeye-toolkits --yes || echo "openeye not installed"
+
+    - name: Uninstall RDKit
+      if: matrix.include-rdkit == false
+      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
+
+    # See https://github.com/openforcefield/openff-nagl/issues/103
+    - name: Rewrite DGL config
+      if: matrix.include-dgl == true
+      run: |
+        mkdir -p ~/.dgl
+        echo '{"backend": "pytorch"}' > ~/.dgl/config.json
+
+    - name: Check toolkit installations
+      shell: bash -l -c "python -u {0}"
+      run: |
+        from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
+        assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
+        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
+
+    - name: Check DGL installation
+      if: matrix.include-dgl == true
+      run: |
+        python -c "import dgl"
+
+    - name: Run tests
+      run: |
+        python -m pytest -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
+
+    - name: codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        verbose: True
+        # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
+
+  pylint_check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install Pylint
+      run: |
+        which pip
+        which python
+        pip install pylint
+
+    - name: Run Pylint
+      env:
+        PYLINTRC: .pylintrc
+      run: |
+        pylint openff.nagl
+
+
+  pypi_check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        pip install setuptools twine
+
+    - name: Build package
+      run: |
+        python3 -m pip install --upgrade build
+        python3 -m build
+
+    - name: Check package build
+      run: |
+        DISTRIBUTION=$(ls -t1 dist/openff_nagl-*.tar.gz | head -n 1)
+        test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff_nagl-*.tar.gz found"; exit 1; }
+        echo "twine check $DISTRIBUTION"
+        twine check $DISTRIBUTION
+  
+  install_from_source_conda:
+    runs-on: ubuntu-latest
+    strategy:
+        fail-fast: false
+        matrix:
+          python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install conda
+      uses: mamba-org/setup-micromamba@v2
+      with:
+        environment-name: openff-nagl
+        create-args: >-
+          python=${{ matrix.python-version }}
+
+    - name: Build from source
+      run: |
+        micromamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
+        python --version
+        python -m pip install . --no-deps
+        micromamba list
+
+    - name: Check success
+      run: |
+        python -c "import openff.nagl ; print(openff.nagl.__version__)"
