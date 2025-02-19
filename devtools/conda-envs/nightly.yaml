@@ -2,7 +2,6 @@ name: openff-nagl-test
 channels:
   - openeye
   - conda-forge
-  - pytorch-nightly
 dependencies:
     # Base depends
   - python
@@ -20,7 +19,7 @@ dependencies:
   - openeye-toolkits
 
   # gnn
-  - pytorch
+  - pytorch ~=2.6
   - torchvision
   - torchaudio
 
