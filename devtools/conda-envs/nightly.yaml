@@ -20,8 +20,6 @@ dependencies:
 
   # gnn
   - pytorch ~=2.6
-  - torchvision
-  - torchaudio
 
   # database
   - pyarrow
