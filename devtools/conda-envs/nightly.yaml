@@ -6,6 +6,7 @@ dependencies:
     # Base depends
   - python
   - pip
+  - numpy =1
 
   # UI
   - click
