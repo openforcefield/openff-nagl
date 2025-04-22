@@ -2,11 +2,11 @@ name: openff-nagl-test
 channels:
   - openeye
   - conda-forge
-  - pytorch-nightly
 dependencies:
     # Base depends
   - python
   - pip
+  - numpy =1
 
   # UI
   - click
@@ -20,9 +20,7 @@ dependencies:
   - openeye-toolkits
 
   # gnn
-  - pytorch
-  - torchvision
-  - torchaudio
+  - pytorch ~=2.6
 
   # database
   - pyarrow
@@ -63,5 +61,9 @@ dependencies:
     - git+https://github.com/openforcefield/openff-toolkit.git@main
     - git+https://github.com/openforcefield/openff-recharge.git@main
     - git+https://github.com/openforcefield/openff-units.git@main
-  
+    - --pre
+    - --extra-index-url https://download.pytorch.org/whl/nightly/cpu
+    - torch
+    - torchvision
+    - torchaudio
 
