@@ -2,6 +2,7 @@ import contextlib
 import copy
 from collections import defaultdict
 from typing import List, Tuple, TYPE_CHECKING
+import warnings
 
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
@@ -313,12 +314,20 @@ class NXMolHeteroGraph(NXMolGraph):
         molecule: "Molecule",
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
+        include_xyz: bool = False,
     ):
-        from openff.nagl.molecule._utils import _get_openff_molecule_information
+        from openff.nagl.molecule._utils import (
+            _get_openff_molecule_information,
+            _add_xyz_information
+        )
 
         nx_graph = openff_molecule_to_base_nx_graph(molecule)
 
         molecule_graph = cls(nx_graph)
+
+        # add coordinates
+        if include_xyz:
+            _add_xyz_information(molecule, molecule_graph)
 
         if len(atom_features):
             atom_featurizer = AtomFeaturizer(atom_features)
