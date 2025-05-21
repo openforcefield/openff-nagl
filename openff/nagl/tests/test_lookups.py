@@ -100,13 +100,18 @@ class TestAtomPropertiesLookupTable:
 
     def test_lookup_long(self, lookup_table):
         from openff.toolkit import __version__ as toolkit_version
+        from openff.utilities import has_package
+
 
         mol = Molecule.from_smiles(341 * "C")
-        if toolkit_version >= "0.16.9":
+
+        # toolkit >= 0.16.9 with RDKit supports "large" InChI
+        if toolkit_version >= "0.16.9" and not has_package("openeye"):
             with pytest.raises(KeyError, match="Could not find property.*C341H684"):
                 lookup_table.lookup(mol)
         else:
-            # toolkit < 0.16.9 cannot support "large" InChI, NAGL still raises a KeyError
+            # toolkit < 0.16.9 with RDKit or any version with OpenEye
+            # cannot support "large" InChI, NAGL still raises a KeyError
             # but with a different message
             with pytest.raises(KeyError, match="failed to generate an InChI"):
                 lookup_table.lookup(mol)
