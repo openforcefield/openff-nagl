@@ -99,7 +99,7 @@ class TestAtomPropertiesLookupTable:
         assert_allclose(properties.numpy(), np.array([-0.103, 0.234, -0.209, -0.209, 0.096, 0.096, 0.096]))
 
     def test_lookup_long(self, lookup_table):
-        from packging.version import Version
+        from packaging.version import Version
         from openff.toolkit import __version__ as toolkit_version
         from openff.utilities import has_package
 
