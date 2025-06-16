@@ -106,7 +106,7 @@ class TestAtomPropertiesLookupTable:
         mol = Molecule.from_smiles(341 * "C")
 
         # toolkit >= 0.16.9 with RDKit supports "large" InChI
-        if toolkit_version >= "0.16.9" and not has_package("openeye"):
+        if Version(toolkit_version) >= Version("0.16.9") and not has_package("openeye"):
             with pytest.raises(KeyError, match="Could not find property.*C341H684"):
                 lookup_table.lookup(mol)
         else:
