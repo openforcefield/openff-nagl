@@ -9,6 +9,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   start-aws-runner:
     runs-on: ubuntu-latest
