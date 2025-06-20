@@ -18,7 +18,7 @@ dependencies:
 
   # chemistry
   - openff-recharge
-  - openff-toolkit-base >=0.11.1
+  - openff-toolkit-base >=0.16.9
   - openff-units
   - pydantic <3
   - rdkit

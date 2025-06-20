@@ -9,6 +9,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   start-aws-runner:
     runs-on: ubuntu-latest
@@ -66,6 +69,11 @@ jobs:
 
       - name: Check we can see DGL
         run: python -c "import dgl; print(dgl.__version__)"
+
+      - uses: ./.github/actions/include-openeye
+        with:
+          openeye-license-text: ${{ secrets.OE_LICENSE }}
+          openeye-license-file: ${{ env.OE_LICENSE }}
 
       - name: Run tests
         run: python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
