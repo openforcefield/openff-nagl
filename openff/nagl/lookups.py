@@ -152,12 +152,12 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             inchi_key = molecule.to_inchi(fixed_hydrogens=True)
 
             if rdkit_only:
-                RDLogger.EnableLog('rdApp.info')
+                RDLogger.EnableLog('rdApp.*')
 
         except EmptyInChiError as e:
 
             if rdkit_only:
-                RDLogger.EnableLog('rdApp.info')
+                RDLogger.EnableLog('rdApp.*')
 
             raise KeyError(e.msg)
         try:
