@@ -136,18 +136,35 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         KeyError
             If the property value cannot be found for this molecule
         """
-        from openff.toolkit.topology import Molecule
+        from openff.toolkit import Molecule
         from openff.toolkit.utils.exceptions import EmptyInChiError
+        from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
+
+        rdkit_only = "OpenEye" not in GLOBAL_TOOLKIT_REGISTRY.__repr__()
+
+        if rdkit_only:
+            from rdkit import RDLogger
 
         try:
+            if rdkit_only:
+                RDLogger.DisableLog('rdApp.*')
+
             inchi_key = molecule.to_inchi(fixed_hydrogens=True)
+
+            if rdkit_only:
+                RDLogger.EnableLog('rdApp.info')
+
         except EmptyInChiError as e:
+
+            if rdkit_only:
+                RDLogger.EnableLog('rdApp.info')
+
             raise KeyError(e.msg)
         try:
             entry = self.properties[inchi_key]
         except KeyError:
             raise KeyError(f"Could not find property value for molecule with InChI {inchi_key}")
-        
+
         assert len(entry) == molecule.n_atoms
 
         # remap to query order
