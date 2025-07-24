@@ -439,8 +439,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Compute partial charges with RDKit, and assign
         the new values to the partial_charges attribute.
 
-        .. warning :: This API is experimental and subject to change.
-
         Parameters
         ----------
 

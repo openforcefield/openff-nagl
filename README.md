@@ -9,8 +9,6 @@ NAGL
 
 A playground for applying graph convolutional networks to molecules, with a focus on learning continuous "atom-type" embeddings and from these classical molecule force field parameters.
 
-**Note:** This project is still in development and liable to substantial API and other changes.
-
 This framework is mostly based upon the [*End-to-End Differentiable Molecular Mechanics Force Field Construction*](https://arxiv.org/abs/2010.01196) 
 preprint by Wang, Fass and Chodera.
 

@@ -49,8 +49,6 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
         """
         Remove a ToolkitWrapper from the list of toolkits in this ToolkitRegistry
 
-        .. warning :: This API is experimental and subject to change.
-
         Parameters
         ----------
         toolkit_wrapper : instance or subclass of ToolkitWrapper
@@ -83,8 +81,6 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
     def add_toolkit(self, toolkit_wrapper: ToolkitWrapperType):
         """
         Append a ToolkitWrapper onto the list of toolkits in this ToolkitRegistry
-
-        .. warning :: This API is experimental and subject to change.
 
         Parameters
         ----------
