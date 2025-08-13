@@ -6,7 +6,6 @@ from typing import Tuple, TYPE_CHECKING, List, Union
 import numpy as np
 
 from openff.units import unit
-from requests import options
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
