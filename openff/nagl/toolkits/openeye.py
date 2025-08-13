@@ -6,6 +6,7 @@ from typing import Tuple, TYPE_CHECKING, List, Union
 import numpy as np
 
 from openff.units import unit
+from requests import options
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
 from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
@@ -48,7 +49,10 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         for reaction_smarts in normalization_reactions:
             reaction = oechem.OEUniMolecularRxn(reaction_smarts)
             reaction.SetValidateKekule(False)
-            reaction(oemol)
+            options = reaction.GetOptions()
+            # no idea what this does, this is completely undocumented
+            options.SetHydrogenConversions(False)
+            outcome = reaction(oemol)
 
         molecule = self.from_openeye(
             oemol,
