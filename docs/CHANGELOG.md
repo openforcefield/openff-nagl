@@ -14,6 +14,15 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.5.3 -- 2025-08-18
+
+### Fixed
+- Updated openeye_wrapper for behavior changes in reaction 
+  functionality in the 2025.1.1 openeye-toolkits package.
+
+### Authors
+- [@lilyminium]
+
 ## v0.5.2 -- 2025-02-14
 
 ### Fixed
