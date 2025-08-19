@@ -14,6 +14,11 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## Current development
+
+### Fixed
+- Removed stray references to the CLI, which was removed long ago.
+
 ## v0.5.3 -- 2025-08-18
 
 ### Fixed
