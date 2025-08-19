@@ -10,7 +10,8 @@ build-backend = "setuptools.build_meta"
 name = "openff-nagl"
 description = "A playground for applying graph convolutional networks to molecules."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
 ]
