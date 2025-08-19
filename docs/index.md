@@ -19,12 +19,6 @@ NAGL can then be imported from the [`openff.nagl`] module:
 import openff.nagl
 ```
 
-Or executed from the command line:
-
-```shell
-openff-nagl --help
-```
-
 [`openff-nagl`]: https://anaconda.org/conda-forge/openff-nagl
 [`openff.nagl`]: openff.nagl
 
@@ -77,16 +71,6 @@ CHANGELOG.md
 dev.md
 toolkit_wrappers.md
 :::
-
-:::{toctree}
----
-hidden: true
-caption: CLI Reference
----
-
-cli.md
-:::
-
 
 <!--
 The autosummary directive renders to rST,
