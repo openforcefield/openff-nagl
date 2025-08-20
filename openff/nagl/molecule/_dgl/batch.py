@@ -1,5 +1,6 @@
 from typing import List, Tuple
 
+import torch
 
 from openff.utilities import requires_package
 from .molecule import DGLBase, DGLMolecule
@@ -24,7 +25,18 @@ class DGLMoleculeBatch(BatchMixin, DGLBase):
         graph = dgl.batch([molecule.graph for molecule in molecules])
         n_representations = tuple(molecule.n_representations for molecule in molecules)
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
-        return cls(graph=graph, n_representations=n_representations, n_atoms=n_atoms)
+        obj = cls(graph=graph, n_representations=n_representations, n_atoms=n_atoms)
+
+        # concatenate pooling representations
+        pooling_representations = {}
+        keys = molecules[0]._pooling_representations.keys()
+        for k in keys:
+            all_indices = [
+                molecule._pooling_representations[k] for molecule in molecules
+            ]
+            pooling_representations[k] = torch.cat(all_indices, dim=1)
+        obj._pooling_representations.update(pooling_representations)
+        return obj
 
     @requires_package("dgl")
     def unbatch(self) -> List[DGLMolecule]:

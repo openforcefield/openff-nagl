@@ -78,6 +78,7 @@ class ComputePartialCharges(PostprocessLayer):
         self,
         molecule: Union[DGLMolecule, DGLMoleculeBatch],
         inputs: torch.Tensor,
+        **kwargs
     ) -> torch.Tensor:
         electronegativity = inputs[:, 0]
         hardness = inputs[:, 1]
@@ -156,6 +157,7 @@ class RegularizedComputePartialCharges(PostprocessLayer):
         self,
         molecule: Union[DGLMolecule, DGLMoleculeBatch],
         inputs: torch.Tensor,
+        **kwargs,
     ) -> torch.Tensor:
         charge_priors = inputs[:, 0]
         electronegativity = inputs[:, 1]
