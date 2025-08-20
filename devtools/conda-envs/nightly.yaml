@@ -9,8 +9,6 @@ dependencies:
   - pip
 
   # UI
-  - click
-  - click-option-group
   - tqdm
 
   # chemistry
