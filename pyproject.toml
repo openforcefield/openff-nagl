@@ -20,8 +20,12 @@ maintainers = [
 requires-python = ">=3.10"
 dynamic = ["version"]
 
-[tool.setuptools.packages]
-find = {}
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ['openff.nagl*']
+exclude = ['openff.nagl.tests.data*']
 
 [project.optional-dependencies]
 test = [
