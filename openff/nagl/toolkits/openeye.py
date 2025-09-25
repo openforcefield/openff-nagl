@@ -49,7 +49,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             reaction = oechem.OEUniMolecularRxn(reaction_smarts)
             reaction.SetValidateKekule(False)
             options = reaction.GetOptions()
-            if hasattr(options, "SethydrogenConversions"):
+            if hasattr(options, "SetHydrogenConversions"):
                 # disallow reconciling the hydrogen state between the target and query
                 # as well as any other perception information needed for the query
                 # (aromaticity, etc.)
