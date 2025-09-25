@@ -49,8 +49,12 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
             reaction = oechem.OEUniMolecularRxn(reaction_smarts)
             reaction.SetValidateKekule(False)
             options = reaction.GetOptions()
-            # no idea what this does, this is completely undocumented
-            options.SetHydrogenConversions(False)
+            if hasattr(options, "SethydrogenConversions"):
+                # disallow reconciling the hydrogen state between the target and query
+                # as well as any other perception information needed for the query
+                # (aromaticity, etc.)
+                # in particular changing aromaticity seems to cause issues here
+                options.SetHydrogenConversions(False)
             outcome = reaction(oemol)
 
         molecule = self.from_openeye(
