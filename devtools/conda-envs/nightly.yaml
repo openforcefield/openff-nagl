@@ -15,7 +15,7 @@ dependencies:
   - pydantic <3
   - rdkit
   - scipy
-  - openeye-toolkits =2024
+  - openeye-toolkits
 
   # gnn
   - pytorch
