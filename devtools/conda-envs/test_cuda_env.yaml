@@ -20,7 +20,7 @@ dependencies:
   - openff-units
   - pydantic <3
   - rdkit
-  - openeye-toolkits
+  - openeye-toolkits =2024
 
   # database
   - pyarrow
