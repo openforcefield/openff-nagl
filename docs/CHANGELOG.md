@@ -14,10 +14,16 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## Current development
+## v0.5.4 -- 2025-09-30
 
 ### Fixed
 - Removed stray references to the CLI, which was removed long ago.
+- Removed test data from package, reducing the size substantially (PR #216, Issue #215)
+- Now backwards-compatible with older versions of OpenEye (PR #218)
+
+### Authors
+- [@lilyminium]
+- [@mattwthompson]
 
 ## v0.5.3 -- 2025-08-18
 
