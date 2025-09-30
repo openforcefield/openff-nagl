@@ -39,6 +39,8 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
+            - include-openeye: true
+              python-version: "3.13"  # OpenEye not supported on Python 3.13 yet
 
 
     steps:

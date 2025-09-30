@@ -33,6 +33,9 @@ jobs:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.11", "3.12"]
           include-openeye: [false, true]
+          exclude:
+            - include-openeye: true
+              python-version: "3.13"  # OpenEye not supported on Python 3.13 yet
 
     steps:
     - uses: actions/checkout@v5
