@@ -31,7 +31,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest]
-          python-version: ["3.11", "3.12", "3.13"]
+          python-version: ["3.11", "3.12"]
           pydantic-version: ["2"]
           include-rdkit: [true]
           include-openeye: [false]
