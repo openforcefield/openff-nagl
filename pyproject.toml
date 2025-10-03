@@ -11,7 +11,7 @@ name = "openff-nagl"
 description = "A playground for applying graph convolutional networks to molecules."
 readme = "README.md"
 license = "MIT"
-license-files = "LICENSE"
+license-files = [ "LICENSE", "LICENSE-3RD-PARTY", "AUTHORS.md" ]
 maintainers = [
   { name = "Lily Wang", email = "lily.wang@openforcefield.org" },
 ]
