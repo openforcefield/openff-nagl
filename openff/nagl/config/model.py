@@ -10,9 +10,18 @@ from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.features.atoms import DiscriminatedAtomFeatureType
 from openff.nagl.features.bonds import DiscriminatedBondFeatureType
 from openff.nagl.utils._types import FromYamlMixin
+from openff.nagl.nn.postprocess import PostprocessLayer
+from openff.nagl.nn._pooling import PoolingLayer
 
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
-PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
+PostprocessType = typing.Union[
+    typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"],
+    PostprocessLayer
+]
+PoolingType = typing.Union[
+    typing.Literal["atom", "bond", "angle", "proper_torsion"],
+    type,
+]
 
 try:
     from pydantic.v1 import Field, validator
@@ -63,12 +72,16 @@ class ConvolutionModule(ImmutableModel):
 
 
 class ReadoutModule(ImmutableModel):
-    pooling: typing.Literal["atoms", "bonds"]
+    pooling: PoolingType
     layers: typing.List[ForwardLayer] = Field(
         description="Configuration for each layer"
     )
     postprocess: typing.Optional[PostprocessType] = Field(
         description="Optional post-processing layer for prediction"
+    )
+    include_internal_coordinates: bool = Field(
+        default=False,
+        description="Whether to include internal coordinates in the model"
     )
 
 
@@ -76,7 +89,15 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
     """
     The configuration class for a GNNModel
     """
-    version: typing.Literal["0.1"]
+    version: typing.Literal["0.2"]
+    include_xyz: bool = Field(
+        default=False,
+        description="Whether to include 3D coordinates in the model"
+    )
+    enumerate_resonance_forms: bool = Field(
+        description="Whether to enumerate resonance forms for atom features",
+        default=False
+    )
     atom_features: typing.List[DiscriminatedAtomFeatureType] = Field(
         description="Atom features to use"
     )

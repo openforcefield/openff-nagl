@@ -9,12 +9,14 @@ import logging
 import pickle
 import tempfile
 import typing
+import warnings
 
 import tqdm
 import torch
 from openff.utilities import requires_package
 from torch.utils.data import Dataset, DataLoader, ConcatDataset
 
+from openff.units import unit
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.features.atoms import AtomFeature
@@ -127,7 +129,9 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         bond_features: typing.List[BondFeature],
         atom_feature_tensor: typing.Optional[torch.Tensor] = None,
         bond_feature_tensor: typing.Optional[torch.Tensor] = None,
-        
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
+        model=None,
     ):
         dglmol = DGLMolecule.from_openff(
             openff_molecule,
@@ -135,6 +139,9 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             bond_features=bond_features,
             atom_feature_tensor=atom_feature_tensor,
             bond_feature_tensor=bond_feature_tensor,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms,
+            model=model,
         )
 
         labels_ = {}
@@ -160,8 +167,11 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         labels: typing.Dict[str, typing.Any],
         atom_features: typing.List[AtomFeature],
         bond_features: typing.List[BondFeature],
+        conformer: typing.Optional[np.ndarray] = None,
         atom_feature_tensor: typing.Optional[torch.Tensor] = None,
         bond_feature_tensor: typing.Optional[torch.Tensor] = None,
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         """
         Create a dataset entry from a mapped SMILES string.
@@ -198,6 +208,13 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             mapped_smiles,
             allow_undefined_stereo=True,
         )
+        if conformer is not None:
+            warnings.warn(
+                "Conformer geometry is expected to be in angstrom"
+            )
+            molecule._conformers = [
+                np.array(conformer).reshape((-1, 3)) * unit.angstrom
+            ]
         return cls.from_openff(
             molecule,
             labels,
@@ -205,6 +222,8 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             bond_features,
             atom_feature_tensor,
             bond_feature_tensor,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms,
         )
 
     @classmethod
@@ -214,14 +233,24 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         atom_features: typing.List[AtomFeature],
         bond_features: typing.List[BondFeature],
         smiles_column: str = "mapped_smiles",
+        conformer_column: typing.Optional[str] = "conformer",
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         labels = dict(row)
         mapped_smiles = labels.pop(smiles_column)
+        if conformer_column is not None:
+            conformer = labels.pop(conformer_column, None)
+        else:
+            conformer = None
         return cls.from_mapped_smiles(
             mapped_smiles,
             labels,
             atom_features,
             bond_features,
+            conformer=conformer,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms,
         )
     
     @classmethod
@@ -231,6 +260,8 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         atom_feature_column: str,
         bond_feature_column: str,
         smiles_column: str = "mapped_smiles",
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         from openff.toolkit import Molecule
 
@@ -260,6 +291,8 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             bond_features=[],
             atom_feature_tensor=atom_features,
             bond_feature_tensor=bond_features,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms
         )
 
 
@@ -320,6 +353,8 @@ class _LazyDGLMoleculeDataset(Dataset):
         cache_directory: typing.Optional[pathlib.Path] = None,
         use_cached_data: bool = True,
         n_processes: int = 0,
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         import pyarrow as pa
         import pyarrow.dataset as ds
@@ -360,6 +395,8 @@ class _LazyDGLMoleculeDataset(Dataset):
                 atom_features=atom_features,
                 bond_features=bond_features,
                 smiles_column=smiles_column,
+                include_xyz=include_xyz,
+                enumerate_resonance_forms=enumerate_resonance_forms
             )
         else:
             converter = functools.partial(
@@ -367,6 +404,8 @@ class _LazyDGLMoleculeDataset(Dataset):
                 atom_feature_column=atom_feature_column,
                 bond_feature_column=bond_feature_column,
                 smiles_column=smiles_column,
+                include_xyz=include_xyz,
+                enumerate_resonance_forms=enumerate_resonance_forms
             )
             if columns is not None and atom_feature_column not in columns:
                 columns.append(atom_feature_column)
@@ -396,12 +435,16 @@ class _LazyDGLMoleculeDataset(Dataset):
         atom_features=None,
         bond_features=None,
         smiles_column="mapped_smiles",
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         entry = DGLMoleculeDatasetEntry._from_unfeaturized_pyarrow_row(
             row,
             atom_features=atom_features,
             bond_features=bond_features,
             smiles_column=smiles_column,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms,
         )
         f = io.BytesIO()
         pickle.dump(entry, f)
@@ -413,12 +456,16 @@ class _LazyDGLMoleculeDataset(Dataset):
         atom_feature_column: str = "atom_features",
         bond_feature_column: str = "bond_features",
         smiles_column: str = "mapped_smiles",
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         entry = DGLMoleculeDatasetEntry._from_featurized_pyarrow_row(
             row,
             atom_feature_column=atom_feature_column,
             bond_feature_column=bond_feature_column,
             smiles_column=smiles_column,
+            include_xyz=include_xyz,
+            enumerate_resonance_forms=enumerate_resonance_forms,
         )
         f = io.BytesIO()
         pickle.dump(entry, f)
@@ -454,8 +501,11 @@ class DGLMoleculeDataset(Dataset):
         atom_feature_column: typing.Optional[str] = None,
         bond_feature_column: typing.Optional[str] = None,
         smiles_column: str = "mapped_smiles",
+        conformer_column: str = "conformer",
         columns: typing.Optional[typing.List[str]] = None,
         n_processes: int = 0,
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
     ):
         import pyarrow.dataset as ds
 
@@ -463,6 +513,8 @@ class DGLMoleculeDataset(Dataset):
             columns = list(columns)
             if smiles_column not in columns:
                 columns.append(smiles_column)
+            if conformer_column not in columns:
+                columns.append(conformer_column)
 
         if atom_feature_column is None and bond_feature_column is None:
             converter = functools.partial(
@@ -470,6 +522,8 @@ class DGLMoleculeDataset(Dataset):
                 atom_features=atom_features,
                 bond_features=bond_features,
                 smiles_column=smiles_column,
+                include_xyz=include_xyz,
+                enumerate_resonance_forms=enumerate_resonance_forms,
             )
         else:
             converter = functools.partial(
@@ -477,6 +531,8 @@ class DGLMoleculeDataset(Dataset):
                 atom_feature_column=atom_feature_column,
                 bond_feature_column=bond_feature_column,
                 smiles_column=smiles_column,
+                include_xyz=include_xyz,
+                enumerate_resonance_forms=enumerate_resonance_forms,
             )
             if columns is not None and atom_feature_column not in columns:
                 columns.append(atom_feature_column)
@@ -512,6 +568,9 @@ class DGLMoleculeDataset(Dataset):
         label_function: typing.Optional[
             typing.Callable[["Molecule"], typing.Dict[str, typing.Any]]
         ] = None,
+        include_xyz: bool = False,
+        enumerate_resonance_forms: bool = False,
+        model=None
     ):
         if labels is None:
             labels = [{} for _ in molecules]
@@ -552,6 +611,9 @@ class DGLMoleculeDataset(Dataset):
                 bond_features=bond_features,
                 atom_feature_tensor=atom_tensor,
                 bond_feature_tensor=bond_tensor,
+                include_xyz=include_xyz,
+                enumerate_resonance_forms=enumerate_resonance_forms,
+                model=model
             )
             for molecule, atom_tensor, bond_tensor, label in zip(
                 molecules, atom_feature_tensors, bond_feature_tensors, labels
