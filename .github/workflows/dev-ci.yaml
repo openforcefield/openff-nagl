@@ -52,6 +52,7 @@ jobs:
 
     - name: Download DGL source
       run: |
+        # Pin to v2.4.0 to avoid instability from master branch
         git clone --recurse-submodules --branch v2.4.0 https://github.com/dmlc/dgl.git
       
     - name: Set up DGL
