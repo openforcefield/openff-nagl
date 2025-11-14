@@ -52,8 +52,7 @@ jobs:
 
     - name: Download DGL source
       run: |
-        # Pin to v2.4.0 to avoid instability from master branch
-        git clone --recurse-submodules --branch v2.4.0 https://github.com/dmlc/dgl.git
+        git clone --recurse-submodules https://github.com/dmlc/dgl.git
       
     - name: Set up DGL
       if: matrix.os != 'ubuntu-latest'
@@ -77,8 +76,7 @@ jobs:
     - name: Install DGL Python bindings
       run: |
         cd dgl/python
-        python setup.py install
-        python setup.py build_ext --inplace
+        pip install -e .
         cd ../..
 
     - uses: ./.github/actions/include-openeye
