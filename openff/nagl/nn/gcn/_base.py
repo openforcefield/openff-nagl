@@ -62,26 +62,31 @@ class BaseGCNStack(
 
     # hidden_feature_sizes: List[GCNLayerType]
 
+    @property
     @classmethod
     @abc.abstractmethod
     def name(cls) -> str:
         pass
 
+    @property
     @classmethod
     @abc.abstractmethod
     def available_aggregator_types(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
+    @property
     @classmethod
     @abc.abstractmethod
     def default_aggregator_type(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
+    @property
     @classmethod
     @abc.abstractmethod
     def default_dropout(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
+    @property
     @classmethod
     @abc.abstractmethod
     def default_activation_function(cls) -> str:

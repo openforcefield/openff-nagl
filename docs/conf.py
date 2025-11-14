@@ -345,3 +345,27 @@ texinfo_documents = [
         "Miscellaneous",
     ),
 ]
+
+
+# -- Custom autodoc event handlers ------------------------------------------
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """
+    Skip abstract property-classmethod combinations that cause Sphinx warnings.
+    
+    These are abstract methods in BaseGCNStack that use both @property and 
+    @classmethod decorators, which Sphinx cannot properly document. The 
+    concrete implementations in subclasses are simple class attributes that
+    will be documented correctly.
+    """
+    # Skip the problematic abstract property-classmethods in BaseGCNStack
+    if what == "class" and hasattr(obj, "__isabstractmethod__"):
+        if isinstance(obj, property) and hasattr(obj.fget, "__func__"):
+            # This is a property wrapping a classmethod - skip it
+            return True
+    return skip
+
+
+def setup(app):
+    """Setup function for Sphinx."""
+    app.connect("autodoc-skip-member", autodoc_skip_member)
