@@ -52,7 +52,7 @@ jobs:
 
     - name: Download DGL source
       run: |
-        git clone --recurse-submodules https://github.com/dmlc/dgl.git
+        git clone --recurse-submodules --branch v2.4.0 https://github.com/dmlc/dgl.git
       
     - name: Set up DGL
       if: matrix.os != 'ubuntu-latest'
