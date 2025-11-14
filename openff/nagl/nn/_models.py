@@ -72,12 +72,18 @@ class GNNModel(BaseGNNModel):
         A dictionary of lookup tables for properties.
         The keys should be the property names, and the values
         should be instances of :class:`~openff.nagl.lookups.BaseLookupTable`.
+    
+    eval_mode: bool, optional
+        If True, skip saving hyperparameters to improve loading performance.
+        This should be True when loading models for inference only.
+        Default is False to maintain training compatibility.
     """
     def __init__(
         self,
         config: ModelConfig,
         chemical_domain: Optional[ChemicalDomain] = None,
         lookup_tables: dict[str, LookupTableType] = None,
+        eval_mode: bool = False,
     ):
         if not isinstance(config, ModelConfig):
             config = ModelConfig(**config)
@@ -129,11 +135,14 @@ class GNNModel(BaseGNNModel):
             v_["properties"] = dict(v_["properties"])
             lookup_tables_dict[k] = v_
 
-        self.save_hyperparameters({
-            "config": config.dict(),
-            "chemical_domain": chemical_domain.dict(),
-            "lookup_tables": lookup_tables_dict,
-        })
+        # Only save hyperparameters if not in eval_mode
+        # This significantly speeds up model loading for inference
+        if not eval_mode:
+            self.save_hyperparameters({
+                "config": config.dict(),
+                "chemical_domain": chemical_domain.dict(),
+                "lookup_tables": lookup_tables_dict,
+            })
         self.config = config
         self.chemical_domain = chemical_domain
         self.lookup_tables = types.MappingProxyType(valid_lookup_tables)
@@ -496,7 +505,7 @@ class GNNModel(BaseGNNModel):
         """
         model_kwargs = torch.load(str(model), weights_only=False, **kwargs)
         if isinstance(model_kwargs, dict):
-            model = cls(**model_kwargs["hyperparameters"])
+            model = cls(**model_kwargs["hyperparameters"], eval_mode=eval_mode)
             model.load_state_dict(model_kwargs["state_dict"])
         elif isinstance(model_kwargs, cls):
             model = model_kwargs
