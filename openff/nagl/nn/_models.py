@@ -185,7 +185,6 @@ class GNNModel(BaseGNNModel):
                     new_key = new_key.replace("convs.0.lin_l", "fc_self")
                     mapped_state_dict[new_key] = value
             state_dict = mapped_state_dict
-            print(state_dict.keys())
 
         return super().load_state_dict(state_dict, strict, assign)
     
