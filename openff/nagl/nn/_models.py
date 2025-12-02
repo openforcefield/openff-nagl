@@ -154,6 +154,41 @@ class GNNModel(BaseGNNModel):
         copied.load_state_dict(self.state_dict())
         return copied
     
+    def load_state_dict(self, state_dict, strict = True, assign = False):
+        """This is an EXPERIMENTAL METHOD OVERRIDE to allow loading models with Pytorch Geometric.
+        
+        It is a temporary, hardcoded workaround for AshGC v1.
+        """
+        import warnings
+
+        warnings.warn(
+            "The load_state_dict override in GNNModel is EXPERIMENTAL "
+            "and not recommended for general use.",
+        )
+
+        # map keys if needed
+        own_state = self.state_dict()
+        
+        if not set(own_state.keys()) == set(state_dict.keys()):
+            mapped_state_dict = {}
+
+            if any("lin" in key for key in own_state.keys()):
+                # map dgl keys to pytorch geometric
+                for key, value in state_dict.items():
+                    new_key = key.replace("fc_neigh", "convs.0.lin_r")
+                    new_key = new_key.replace("fc_self", "convs.0.lin_l")
+                    mapped_state_dict[new_key] = value
+            elif any("fc" in key for key in own_state.keys()):
+                # map pytorch geometric keys to dgl
+                for key, value in state_dict.items():
+                    new_key = key.replace("convs.0.lin_r", "fc_neigh")
+                    new_key = new_key.replace("convs.0.lin_l", "fc_self")
+                    mapped_state_dict[new_key] = value
+            state_dict = mapped_state_dict
+            print(state_dict.keys())
+
+        return super().load_state_dict(state_dict, strict, assign)
+    
     def compute_properties(
         self,
         molecule: "Molecule",

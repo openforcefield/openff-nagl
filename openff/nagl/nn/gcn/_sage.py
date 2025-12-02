@@ -258,14 +258,24 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
                 **kwargs,
             )
         except MissingOptionalDependencyError:
-            return cls._create_gcn_layer_nagl(
-                n_input_features=n_input_features,
-                n_output_features=n_output_features,
-                aggregator_type=aggregator_type,
-                dropout=dropout,
-                activation_function=activation_function,
-                **kwargs,
-            )
+            try:
+                return cls._create_gcn_layer_pytorch_geometric(
+                    n_input_features=n_input_features,
+                    n_output_features=n_output_features,
+                    aggregator_type=aggregator_type,
+                    dropout=dropout,
+                    activation_function=activation_function,
+                    **kwargs,
+                )
+            except MissingOptionalDependencyError:
+                return cls._create_gcn_layer_nagl(
+                    n_input_features=n_input_features,
+                    n_output_features=n_output_features,
+                    aggregator_type=aggregator_type,
+                    dropout=dropout,
+                    activation_function=activation_function,
+                    **kwargs,
+                )
 
     @classmethod
     def _create_gcn_layer_nagl(
@@ -305,21 +315,82 @@ class SAGEConvStack(BaseGCNStack[Union[SAGEConv, "dgl.nn.pytorch.SAGEConv"]]):
             feat_drop=dropout,
             aggregator_type=aggregator_type,
         )
+    
+    @classmethod
+    @requires_package("torch_geometric")
+    def _create_gcn_layer_pytorch_geometric(
+        cls,
+        n_input_features: int,
+        n_output_features: int,
+        aggregator_type: str,
+        dropout: float,
+        activation_function: ActivationFunction,
+        **kwargs,
+    ):
+        import torch_geometric.nn as pyg_nn
+
+        # todo: work out if gcn and pool map onto something in pyg
+        aggregator_type_map = {
+            "mean": "mean",
+            "lstm": "lstm",
+        }
+        if aggregator_type not in aggregator_type_map:
+            raise ValueError(
+                f"Aggregator type {aggregator_type} not supported by PyTorch Geometric SAGEConv."
+            )
+        return pyg_nn.GraphSAGE(
+            in_channels=n_input_features,
+            hidden_channels=0, # not used in this context
+            num_layers=1, # single layer
+            out_channels=n_output_features,
+            aggr=aggregator_type_map[aggregator_type],
+            dropout=dropout,
+            act=activation_function,
+        )
+
 
     def _as_nagl(self, copy_weights: bool = False):
         if self._is_dgl:
             new_obj = type(self)()
             new_obj.hidden_feature_sizes = self.hidden_feature_sizes
             for layer in self:
+                if hasattr(layer, "_in_src_feats"):
+                    # dgl
+                    layer_kwargs = {
+                        "n_input_features": layer._in_src_feats,
+                        "n_output_features": layer._out_feats,
+                        "aggregator_type": layer._aggre_type,
+                        "dropout": layer.feat_drop.p,
+                        "activation_function": layer.activation,
+                    }
+                    state_dict = layer.state_dict()
+                elif hasattr(layer, "in_channels"):
+                    # pytorch geometric
+                    layer_kwargs = {
+                        "n_input_features": layer.in_channels,
+                        "n_output_features": layer.out_channels,
+                        "aggregator_type": layer.convs[0].aggr,
+                        "dropout": layer.dropout.p,
+                        "activation_function": layer.act,
+                    }
+                    state_dict = layer.state_dict()
+
+                    # map keys
+                    new_state_dict = {}
+                    for key, value in state_dict.items():
+                        new_key = key.replace("convs.0.lin_r", "fc_neigh")
+                        new_key = new_key.replace("convs.0.lin_l", "fc_self")
+                        new_state_dict[new_key] = value
+                    state_dict = new_state_dict
+                else:
+                    raise ValueError(
+                        "Unrecognized layer type for conversion to NAGL."
+                    )
                 new_layer = self._create_gcn_layer_nagl(
-                    n_input_features=layer._in_src_feats,
-                    n_output_features=layer._out_feats,
-                    aggregator_type=layer._aggre_type,
-                    dropout=layer.feat_drop.p,
-                    activation_function=layer.activation,
+                    **layer_kwargs,
                 )
                 if copy_weights:
-                    new_layer.load_state_dict(layer.state_dict())
+                    new_layer.load_state_dict(state_dict)
                 new_obj.append(new_layer)
             return copy.deepcopy(new_obj)
         return copy.deepcopy(self)

@@ -1,0 +1,42 @@
+name: openff-nagl-test-pytorch-geometric
+channels:
+  - openeye
+  - conda-forge
+  - pyg
+  
+dependencies:
+    # Base depends
+  - python
+  - pip
+
+  # UI
+  - tqdm
+
+  # chemistry
+  - openff-recharge
+  - openff-toolkit-base >=0.11.1
+  - openff-units
+  - pydantic <3
+  - rdkit
+  - scipy
+  - ambertools
+
+  # database
+  - pyarrow
+
+  # gcn
+  - pytorch >=2.0
+  - pytorch-lightning
+  - pyg
+
+  # parallelism
+  - dask-jobqueue
+
+  # Testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - codecov
+
+  # https://github.com/openforcefield/openff-docs/pull/81/files#diff-68677a278ca13dde111a8ae641890bc84d82d1a4e6922d4e498219d5127947c3R29-R30
+  - torchdata<=0.10.0

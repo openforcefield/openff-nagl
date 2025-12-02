@@ -10,8 +10,25 @@ from openff.nagl.nn._pooling import PoolAtomFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
 
+import pytest
 
+try:
+    import torch_geometric
+    CAN_IMPORT_TORCH_GEOMETRIC = True
+except ImportError:
+    CAN_IMPORT_TORCH_GEOMETRIC = False
+
+try:
+    import dgl
+    CAN_IMPORT_DGL = True
+except ImportError:
+    CAN_IMPORT_DGL = False
 class TestConvolutionModule:
+
+    @pytest.mark.skipif(
+        CAN_IMPORT_TORCH_GEOMETRIC and not CAN_IMPORT_DGL,
+        reason="Test only valid if DGL is installed, and PyTorch Geometric is not.",
+    )
     def test_init(self):
         module = ConvolutionModule(
             n_input_features=2,

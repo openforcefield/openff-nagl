@@ -10,13 +10,28 @@ from openff.nagl.nn.gcn._sage import SAGEConv
 
 try:
     import dgl
-
+    CAN_IMPORT_DGL = True
     _BASE_SAGECONV_CLASS = dgl.nn.pytorch.SAGEConv
 except ImportError:
-    _BASE_SAGECONV_CLASS = SAGEConv
+    CAN_IMPORT_DGL = False
+    try:
+        import torch_geometric
+        _BASE_SAGECONV_CLASS = torch_geometric.nn.GraphSAGE
+    except ImportError:
+        _BASE_SAGECONV_CLASS = SAGEConv
 
+try:
+    import torch_geometric
+    CAN_IMPORT_TORCH_GEOMETRIC = True
+except ImportError:
+    CAN_IMPORT_TORCH_GEOMETRIC = False
 
 class TestDGLSAGEConvStack:
+    # skip if pytorch geometric installed, and dgl is not
+    @pytest.mark.skipif(
+        CAN_IMPORT_TORCH_GEOMETRIC and not CAN_IMPORT_DGL,
+        reason="Test only valid if DGL is installed, and PyTorch Geometric is not.",
+    )
     def test_default_with_layers(self):
         stack = SAGEConvStack.with_layers(
             n_input_features=1,
@@ -36,6 +51,11 @@ class TestDGLSAGEConvStack:
         assert second.fc_self.in_features == 2
         assert second.fc_self.out_features == 3
 
+    # skip if pytorch geometric installed, and dgl is not
+    @pytest.mark.skipif(
+        CAN_IMPORT_TORCH_GEOMETRIC and not CAN_IMPORT_DGL,
+        reason="Test only valid if DGL is installed, and PyTorch Geometric is not.",
+    )
     def test_with_layers_inputs(self):
         stack = SAGEConvStack.with_layers(
             n_input_features=2,
