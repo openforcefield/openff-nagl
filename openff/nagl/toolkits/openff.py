@@ -1,3 +1,4 @@
+import re
 import contextlib
 import copy
 import functools
@@ -679,7 +680,11 @@ def smiles_to_inchi_key(smiles: str) -> str:
 
     from openff.toolkit.topology import Molecule
 
-    method = "from_mapped_smiles" if ":" in smiles else "from_smiles"
+    # Check if the SMILES is mapped by looking for a colon followed by a number,
+    # just looking for colon or brackets alone won't work
+    MAPPED_PATTERN = re.compile(r":\d+")
+
+    method = "from_mapped_smiles" if re.search(MAPPED_PATTERN, smiles) else "from_smiles"
     offmol = getattr(Molecule, method)(smiles, allow_undefined_stereo=True)
 
     return offmol.to_inchikey(fixed_hydrogens=True)
