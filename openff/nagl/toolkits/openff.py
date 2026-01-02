@@ -679,7 +679,9 @@ def smiles_to_inchi_key(smiles: str) -> str:
 
     from openff.toolkit.topology import Molecule
 
-    offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
+    method = "from_mapped_smiles" if ":" in smiles else "from_smiles"
+    offmol = getattr(Molecule, method)(smiles, allow_undefined_stereo=True)
+
     return offmol.to_inchikey(fixed_hydrogens=True)
 
 

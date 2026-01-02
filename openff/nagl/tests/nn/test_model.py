@@ -452,6 +452,10 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
 
         assert_allclose(charges, expected_charges, atol=1e-5)
 
+
+    @pytest.mark.filterwarnings(
+        "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
+    )
     @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
     @pytest.mark.parametrize(
         "smiles, expected_formal_charges", [
@@ -518,7 +522,11 @@ class TestChargeGNNModelRC4(BaseTestChargeGNNModel):
 
         charges = model.compute_property(mol, as_numpy=True).flatten()
         assert np.isclose(charges[-1], -1.)
-    
+
+
+    @pytest.mark.filterwarnings(
+        "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
+    )
     def test_assign_partial_charges_to_hcl_salt(self, model):
         mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
         assert mol.n_atoms == 2
