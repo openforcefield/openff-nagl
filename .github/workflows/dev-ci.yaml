@@ -26,8 +26,8 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-13, macOS-latest, ubuntu-latest]
-          python-version: ["3.11", "3.12"]
+          os: [macOS-latest, ubuntu-latest]
+          python-version: ["3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v6

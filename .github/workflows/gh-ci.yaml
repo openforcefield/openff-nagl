@@ -30,8 +30,8 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-13, macOS-latest, ubuntu-latest]
-          python-version: ["3.11", "3.12"]
+          os: [macOS-latest, ubuntu-latest]
+          python-version: ["3.11", "3.12", "3.13"]
           pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
           include-openeye: [false, true]
@@ -39,7 +39,8 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-
+            - include-dgl: true
+              python-version: "3.13"  # DGL not supported on Python 3.13 yet
 
     steps:
     - uses: actions/checkout@v6
