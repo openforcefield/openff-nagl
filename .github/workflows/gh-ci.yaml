@@ -39,15 +39,8 @@ jobs:
           exclude:
             - include-rdkit: false
               include-openeye: false
-            - include-openeye: true
-              python-version: "3.13"  # OpenEye not supported on Python 3.13 yet
             - include-dgl: true
               python-version: "3.13"  # DGL not supported on Python 3.13 yet
-            - include-dgl: false
-              include-openeye: false
-              os: macOS-13  # AmberTools not on macOS-13 for Python 3.13
-              python-version: "3.13"
-
 
     steps:
     - uses: actions/checkout@v5
