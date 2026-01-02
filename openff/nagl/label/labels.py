@@ -134,7 +134,7 @@ class LabelCharges(_BaseLabel):
     @staticmethod
     def _assign_charges(
         mapped_smiles: str = None,
-        charge_method: ChargeMethodType = "formal_charges",
+        charge_method: ChargeMethodType = "formal_charge",
         conformers: typing.Optional[unit.Quantity] = None,
         use_existing_conformers: bool = False,
     ) -> np.ndarray:
