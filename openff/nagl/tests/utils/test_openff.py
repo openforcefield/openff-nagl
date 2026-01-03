@@ -389,6 +389,9 @@ def test_molecule_from_dict(openff_methane_uncharged):
     molecule = _molecule_from_dict(graph)
     assert molecule.is_isomorphic_with(openff_methane_uncharged)
 
+@pytest.mark.filterwarnings(
+    "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
+)
 def test_split_up_molecule():
     # "N.c1ccccc1.C.CCN"
     mapped_smiles = (
