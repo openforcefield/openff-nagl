@@ -30,7 +30,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-13, macOS-latest, ubuntu-latest]
+          os: [macOS-latest, ubuntu-latest]
           python-version: ["3.11", "3.12"]
           pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
@@ -42,7 +42,7 @@ jobs:
 
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Build information
       run: |
@@ -111,10 +111,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
 
@@ -135,10 +135,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: "3.11"
 
@@ -166,7 +166,7 @@ jobs:
           python-version: ["3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install conda
       uses: mamba-org/setup-micromamba@v2

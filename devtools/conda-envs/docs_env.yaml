@@ -8,10 +8,7 @@ dependencies:
   - pip
 
   # UI
-  - click
-  - click-option-group
   - tqdm
-  - rich
 
   # chemistry
   - openff-toolkit-base >=0.11.1

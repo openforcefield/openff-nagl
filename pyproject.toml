@@ -1,49 +1,69 @@
 [build-system]
+build-backend = "setuptools.build_meta"
 requires = [
-  "setuptools",
+  "setuptools>=77.0.3",
   "versioneer[toml]==0.29",
   "wheel",
 ]
-build-backend = "setuptools.build_meta"
 
 [project]
 name = "openff-nagl"
 description = "A playground for applying graph convolutional networks to molecules."
 readme = "README.md"
-license = { file = "LICENSE" }
-authors = [
-    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
-]
+license = "MIT"
+license-files = [ "LICENSE", "LICENSE-3RD-PARTY", "AUTHORS.md" ]
 maintainers = [
-    {name = "Lily Wang", email = "lily.wang@openforcefield.org"},
+  { name = "Lily Wang", email = "lily.wang@openforcefield.org" },
+]
+authors = [
+  { name = "Lily Wang", email = "lily.wang@openforcefield.org" },
 ]
 requires-python = ">=3.10"
-dynamic = ["version"]
-
-[tool.setuptools.packages]
-find = {}
-
-[project.optional-dependencies]
-test = [
-    "pytest>=6.0",
-    "pytest-xdist>=2.5",
-    "pytest-cov>=3.0",
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
-doc = [
-    "sphinx>=1.8",
-    "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
+dynamic = [ "version" ]
+
+optional-dependencies.doc = [
+  "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
+  "sphinx>=1.8",
 ]
+optional-dependencies.test = [
+  "pytest>=6",
+  "pytest-cov>=3",
+  "pytest-xdist>=2.5",
+]
+urls.documentation = "https://docs.openforcefield.org/projects/nagl/"
+urls.source = "https://github.com/openforcefield/openff-nagl"
 
-[project.scripts]
-openff-nagl = "openff.nagl.cli:cli"
+[tool.setuptools]
+include-package-data = false
 
-[project.urls]
-source = "https://github.com/openforcefield/openff-nagl"
-documentation = "https://docs.openforcefield.org/projects/nagl/"
+[tool.setuptools.packages.find]
+include = [ 'openff.nagl*' ]
+exclude = [ 'openff.nagl.tests.data*' ]
 
 [tool.pytest.ini_options]
 testpaths = [
-    "openff/nagl/tests",
+  "openff/nagl/tests",
+]
+
+[tool.coverage.run]
+omit = [
+  "*/*/_tests/*",
+  "openff/nagl/_version.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
 ]
 
 [tool.versioneer]
@@ -53,17 +73,3 @@ versionfile_source = "openff/nagl/_version.py"
 versionfile_build = "openff/nagl/_version.py"
 tag_prefix = "v"
 parentdir_prefix = "openff-nagl-"
-
-[tool.coverage.run]
-omit = [
-    "*/*/_tests/*",
-    "openff/nagl/_version.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-    "@overload",
-]

@@ -14,6 +14,26 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## v0.5.4 -- 2025-09-30
+
+### Fixed
+- Removed stray references to the CLI, which was removed long ago.
+- Removed test data from package, reducing the size substantially (PR #216, Issue #215)
+- Now backwards-compatible with older versions of OpenEye (PR #218)
+
+### Authors
+- [@lilyminium]
+- [@mattwthompson]
+
+## v0.5.3 -- 2025-08-18
+
+### Fixed
+- Updated openeye_wrapper for behavior changes in reaction 
+  functionality in the 2025.1.1 openeye-toolkits package.
+
+### Authors
+- [@lilyminium]
+
 ## v0.5.2 -- 2025-02-14
 
 ### Fixed
