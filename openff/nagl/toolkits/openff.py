@@ -1,4 +1,4 @@
-import re
+import warnings
 import contextlib
 import copy
 import functools
@@ -88,7 +88,6 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
     thousands of molecules at once."""
 
     import logging
-    import warnings
 
     if not run:
         yield
@@ -678,14 +677,18 @@ def smiles_to_inchi_key(smiles: str) -> str:
         The InChI key corresponding to the SMILES string.
     """
 
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
+    from openff.toolkit.utils.exceptions import AtomMappingWarning
 
-    # Check if the SMILES is mapped by looking for a colon followed by a number,
-    # just looking for colon or brackets alone won't work
-    MAPPED_PATTERN = re.compile(r":\d+")
-
-    method = "from_mapped_smiles" if re.search(MAPPED_PATTERN, smiles) else "from_smiles"
-    offmol = getattr(Molecule, method)(smiles, allow_undefined_stereo=True)
+    # the toolkit warnings when mapped SMILES is passed to from_smiles, but that's fine for our
+    # uses here and the user doesn't need to be concerned. So filter out this specific warning
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=AtomMappingWarning,
+            message=".*Fully mapped SMILES pattern passed.*",
+        )
+        offmol = Molecule.from_smiles(smiles, allow_undefined_stereo=True)
 
     return offmol.to_inchikey(fixed_hydrogens=True)
 
