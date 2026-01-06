@@ -9,6 +9,9 @@ defaults:
   run:
     shell: bash -l {0}
 
+env:
+  OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+
 jobs:
   start-aws-runner:
     runs-on: ubuntu-latest
@@ -19,13 +22,13 @@ jobs:
       mapping: ${{ steps.aws-start.outputs.mapping }}
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::649715411074:role/gh-actions-runner-role
           aws-region: us-east-1
       - name: Create cloud runner
         id: aws-start
-        uses: omsf/start-aws-gha-runner@v1.0.0
+        uses: omsf/start-aws-gha-runner@v1.1.1
         with:
           aws_image_id: ami-0d5079d9be06933e5
           aws_instance_type: g4dn.xlarge
@@ -40,7 +43,7 @@ jobs:
     needs:
       - start-aws-runner
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -67,6 +70,11 @@ jobs:
       - name: Check we can see DGL
         run: python -c "import dgl; print(dgl.__version__)"
 
+      - uses: ./.github/actions/include-openeye
+        with:
+          openeye-license-text: ${{ secrets.OE_LICENSE }}
+          openeye-license-file: ${{ env.OE_LICENSE }}
+
       - name: Run tests
         run: python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
 
@@ -81,7 +89,7 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::649715411074:role/gh-actions-runner-role
           aws-region: us-east-1

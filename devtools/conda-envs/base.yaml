@@ -8,9 +8,6 @@ dependencies:
   - importlib_resources
 
   # UI
-  - click
-  - click-option-group
-  - rich
   - tqdm
 
   # chemistry
