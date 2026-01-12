@@ -22,21 +22,20 @@ defaults:
 
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
+  PYTORCH_ENABLE_MPS_FALLBACK: 0
 
 jobs:
   example_tests:
-    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest]
-          python-version: ["3.11", "3.12"]
-          pydantic-version: ["2"]
-          include-rdkit: [true]
-          include-openeye: [false]
-          include-dgl: [true]
-
+      fail-fast: false
+      matrix:
+        os: [macOS-latest, ubuntu-latest]
+        python-version: ["3.11", "3.12"]
+        include-rdkit: [true]
+        include-openeye: [false]
+        include-dgl: [true]
 
     steps:
     - uses: actions/checkout@v6
@@ -48,12 +47,11 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/setup-micromamba@v1
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-file: devtools/conda-envs/examples_env.yaml
         create-args: >-
           python=${{ matrix.python-version }}
-          pydantic=${{ matrix.pydantic-version }}
 
     - name: Install package
       run: |
@@ -65,20 +63,19 @@ jobs:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
 
-      
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
-      run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
+      run: micromamba remove --force openeye-toolkits --yes || echo "openeye not installed"
 
     - name: Uninstall RDKit
       if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
-    
+      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
+
     - name: Python information
       run: |
         which python
-        conda info
-        conda list
+        micromamba info
+        micromamba list
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
@@ -89,4 +86,4 @@ jobs:
 
     - name: Run example notebooks
       run: |
-        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=50000 --dist loadscope examples
+        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --dist loadscope examples

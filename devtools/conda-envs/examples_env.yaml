@@ -40,7 +40,6 @@ dependencies:
   # compatibility
   - apsw >=3.42
 
-
   # CI
   - nbval
   - pytest
