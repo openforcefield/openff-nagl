@@ -14,6 +14,11 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## Current development
+
+### Fixed
+- Some InChi warnings emitted by internal calls to RDKit are suppressed (PR #203, Issue #203)
+
 ## v0.5.4 -- 2025-09-30
 
 ### Fixed

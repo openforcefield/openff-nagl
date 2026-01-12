@@ -30,7 +30,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          os: [macOS-13, macOS-latest, ubuntu-latest]
+          os: [macOS-latest, ubuntu-latest]
           python-version: ["3.11", "3.12"]
           include-openeye: [false, true]
 
