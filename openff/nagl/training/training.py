@@ -47,6 +47,19 @@ class TrainingGNNModel(pl.LightningModule):
         }
 
     def forward(self, molecule: "DGLMoleculeOrBatch") -> typing.Dict[str, torch.Tensor]:
+        """
+        Forward pass through the model.
+
+        Parameters
+        ----------
+        molecule : DGLMoleculeOrBatch
+            The molecule or batch of molecules to process.
+
+        Returns
+        -------
+        Dict[str, torch.Tensor]
+            Dictionary of predictions for each readout module.
+        """
         outputs = self.model.forward(molecule)
         return outputs
 
@@ -88,14 +101,59 @@ class TrainingGNNModel(pl.LightningModule):
         return loss
     
     def training_step(self, train_batch, batch_idx):
+        """
+        Training step for PyTorch Lightning.
+
+        Parameters
+        ----------
+        train_batch : tuple
+            Batch of training data containing molecules and labels.
+        batch_idx : int
+            Index of the current batch.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the training loss.
+        """
         loss = self._default_step(train_batch, "train")
         return {"loss": loss}
 
     def validation_step(self, val_batch, batch_idx):
+        """
+        Validation step for PyTorch Lightning.
+
+        Parameters
+        ----------
+        val_batch : tuple
+            Batch of validation data containing molecules and labels.
+        batch_idx : int
+            Index of the current batch.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the validation loss.
+        """
         loss = self._default_step(val_batch, "val")
         return {"validation_loss": loss}
 
     def test_step(self, test_batch, batch_idx):
+        """
+        Test step for PyTorch Lightning.
+
+        Parameters
+        ----------
+        test_batch : tuple
+            Batch of test data containing molecules and labels.
+        batch_idx : int
+            Index of the current batch.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the test loss.
+        """
         loss = self._default_step(test_batch, "test")
         return {"test_loss": loss}
     
