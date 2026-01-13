@@ -8,6 +8,7 @@ from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
 from openff.toolkit import RDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
+from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
 from openff.units import unit
 
 from openff.nagl.toolkits.openff import (
@@ -397,7 +398,12 @@ def test_split_up_molecule():
         ".[H:25][C:9]([H:26])([H:27])[C:10]([H:28])([H:29])[N:11]([H:30])[H:31]"
         ".[H:12][N:1]([H:13])[H:14]"
     )
-    molecule = Molecule.from_mapped_smiles(mapped_smiles)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=MultipleComponentsInMoleculeWarning,
+        )
+        molecule = Molecule.from_mapped_smiles(mapped_smiles)
 
     fragments, indices = split_up_molecule(molecule, return_indices=True)
     assert len(fragments) == 4

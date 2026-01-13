@@ -134,7 +134,7 @@ class LabelCharges(_BaseLabel):
     @staticmethod
     def _assign_charges(
         mapped_smiles: str = None,
-        charge_method: ChargeMethodType = "formal_charges",
+        charge_method: ChargeMethodType = "formal_charge",
         conformers: typing.Optional[unit.Quantity] = None,
         use_existing_conformers: bool = False,
     ) -> np.ndarray:
@@ -159,7 +159,7 @@ class LabelCharges(_BaseLabel):
             for conformer in conformers:
                 mol.assign_partial_charges(
                     charge_method,
-                    use_conformers=[conformer],
+                    use_conformers=None if charge_method == "formal_charge" else [conformer],
                 )
                 charges.append(
                     mol.partial_charges.m_as(unit.elementary_charge)
