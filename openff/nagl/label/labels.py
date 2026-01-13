@@ -159,7 +159,7 @@ class LabelCharges(_BaseLabel):
             for conformer in conformers:
                 mol.assign_partial_charges(
                     charge_method,
-                    use_conformers=None if charge_method is "formal_charge" else [conformer],
+                    use_conformers=None if charge_method == "formal_charge" else [conformer],
                 )
                 charges.append(
                     mol.partial_charges.m_as(unit.elementary_charge)
