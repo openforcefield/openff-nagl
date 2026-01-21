@@ -11,6 +11,7 @@ from openff.units import unit
 from openff.utilities import requires_package
 from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
+from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -39,15 +40,44 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         NAGLToolkitWrapperBase,
     )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
+    from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+    from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
+        # case of NAGLRDKitToolkitWrapper (not instantiated)
         toolkit_registry = toolkit_registry()
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperBase):
+        # case of NAGLRDKitToolkitWrapper() (instantiated)
         toolkit_function = getattr(toolkit_registry, function_name)
         return toolkit_function(*args, **kwargs)
+    
     elif isinstance(toolkit_registry, NAGLToolkitRegistry):
         return toolkit_registry.call(function_name, *args, **kwargs)
+    
+    elif toolkit_registry is None or toolkit_registry is GLOBAL_TOOLKIT_REGISTRY:
+        # if the argument isn't passed in,
+        # or someone got confused and passed in GLOBAL_TOOLKIT_REGISTRY
+        # hackily try to fix #177
+        # we inspect GLOBAL_TOOLKIT_REGISTRY and modify accordingly
+        _COUNTERPARTS = {
+            RDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
+            OpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
+        }
+        if toolkit_registry is None:
+            toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
+
+        # build new registry from scratch
+        new_nagl_registry = NAGLToolkitRegistry(exception_if_unavailable=False)
+        for toolkit_wrapper in GLOBAL_TOOLKIT_REGISTRY.registered_toolkits:
+            if type(toolkit_wrapper) in _COUNTERPARTS:
+                nagl_toolkit_wrapper_class = _COUNTERPARTS[type(toolkit_wrapper)]
+                new_nagl_registry.register_toolkit(
+                    nagl_toolkit_wrapper_class,
+                    exception_if_unavailable=False,
+                )
+        return new_nagl_registry.call(function_name, *args, **kwargs)
+
     else:
         raise InvalidToolkitRegistryError(
             "toolkit_registry must be instance of OpenFF NAGL "
@@ -58,7 +88,7 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
 
 def toolkit_registry_function(function):
     @functools.wraps(function)
-    def wrapper(*args, toolkit_registry=NAGL_TOOLKIT_REGISTRY, **kwargs):
+    def wrapper(*args, toolkit_registry=None, **kwargs):
         return call_toolkit_function(
             function.__name__, toolkit_registry, *args, **kwargs
         )
@@ -110,7 +140,7 @@ def capture_toolkit_warnings(run: bool = True):  # pragma: no cover
 @toolkit_registry_function
 def stream_molecules_to_file(
     file: str,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ):
     """
     Stream molecules to an SDF file using a context manager.
@@ -140,7 +170,7 @@ def stream_molecules_to_file(
 @toolkit_registry_function
 def get_molecule_hybridizations(
     molecule: "Molecule",
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> List["HybridizationType"]:
     """
     Get the hybridization of each atom in a molecule.
@@ -164,7 +194,7 @@ def get_molecule_hybridizations(
 def get_atoms_are_in_ring_size(
     molecule: "Molecule",
     ring_size: int,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> List[bool]:
     """
     Determine whether each atom in a molecule is in a ring of a given size.
@@ -190,7 +220,7 @@ def get_atoms_are_in_ring_size(
 def get_bonds_are_in_ring_size(
     molecule: "Molecule",
     ring_size: int,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> List[bool]:
     """
     Determine whether each bond in a molecule is in a ring of a given size.
@@ -217,7 +247,7 @@ def get_best_rmsd(
     molecule: "Molecule",
     reference_conformer: Union[np.ndarray, unit.Quantity],
     target_conformer: Union[np.ndarray, unit.Quantity],
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> unit.Quantity:
     """
     Compute the lowest all-atom RMSD between a reference and target conformer,
@@ -259,7 +289,7 @@ def calculate_circular_fingerprint_similarity(
     reference_molecule: "Molecule",
     radius: int = 3,
     nbits: int = 2048,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> float:
     """
     Compute the similarity between two molecules using a fingerprinting method.
@@ -367,7 +397,7 @@ def normalize_molecule(
     molecule: "Molecule",
     max_iter: int = 200,
     inplace: bool = False,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> "Molecule":
     """
     Normalize the bond orders and charges of a molecule by applying a series of transformations to it.
@@ -454,7 +484,7 @@ def enumerate_stereoisomers(
     max_isomers: int = 20,
     rationalize: bool = True,
     include_self: bool = False,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ) -> List["Molecule"]:
     """Enumerate stereoisomers for a molecule.
 
@@ -521,7 +551,7 @@ def stream_molecules_from_sdf_file(
     as_smiles: bool = False,
     mapped_smiles: bool = False,
     include_sdf_data: bool = True,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ):
     """Stream molecules from an SDF file.
 
@@ -547,7 +577,7 @@ def stream_molecules_from_sdf_file(
     pass
 
 
-def validate_smiles(smiles: str, toolkit_registry=NAGL_TOOLKIT_REGISTRY):
+def validate_smiles(smiles: str, toolkit_registry=None):
     from openff.toolkit.topology import Molecule
 
     offmol = Molecule.from_smiles(smiles, toolkit_registry=toolkit_registry)
@@ -560,7 +590,7 @@ def stream_molecules_from_smiles_file(
     file: str,
     as_smiles: bool = False,
     mapped_smiles: bool = False,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ):
     """Stream molecules from a SMILES file.
 
@@ -612,7 +642,7 @@ def stream_molecules_from_file(
     as_smiles: bool = False,
     mapped_smiles: bool = False,
     include_sdf_data: bool = True,
-    toolkit_registry=NAGL_TOOLKIT_REGISTRY,
+    toolkit_registry=None,
 ):
     """Stream molecules from a file.
 
