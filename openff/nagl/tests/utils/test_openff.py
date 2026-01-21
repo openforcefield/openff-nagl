@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
+from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
 from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
@@ -428,13 +429,19 @@ def test_split_up_molecule():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
-def test_toolkit_registry_passes_through_nagl():
+@pytest.mark.parameterize(
+    "toolkit_combinations",
+    [
+        [RDKitToolkitWrapper()],
+        [RDKitToolkitWrapper(), OpenEyeToolkitWrapper()], # check precedence
+    ]
+)
+def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
     """
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
     """
 
     from rdkit.Chem import ForwardSDMolSupplier
-    from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper
     from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
 
 
@@ -443,7 +450,7 @@ def test_toolkit_registry_passes_through_nagl():
     m = Molecule.from_rdkit(rdmol)
 
     # Force AmberTools + RDKit
-    amber_rdkit = ToolkitRegistry([RDKitToolkitWrapper(), AmberToolsToolkitWrapper()])
+    amber_rdkit = ToolkitRegistry([*toolkit_combinations])
 
     with toolkit_registry_manager(amber_rdkit):
         m.assign_partial_charges(
