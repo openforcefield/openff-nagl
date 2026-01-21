@@ -432,8 +432,8 @@ def test_split_up_molecule():
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
-        [RDKitToolkitWrapper()],
-        [RDKitToolkitWrapper(), OpenEyeToolkitWrapper()], # check precedence
+        [RDKitToolkitWrapper],
+        [RDKitToolkitWrapper, OpenEyeToolkitWrapper], # check precedence
     ]
 )
 def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
@@ -450,7 +450,7 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
     m = Molecule.from_rdkit(rdmol)
 
     # Force AmberTools + RDKit
-    amber_rdkit = ToolkitRegistry([*toolkit_combinations])
+    amber_rdkit = ToolkitRegistry([*(wrapper() for wrapper in toolkit_combinations)])
 
     with toolkit_registry_manager(amber_rdkit):
         m.assign_partial_charges(
