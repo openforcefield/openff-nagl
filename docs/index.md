@@ -58,6 +58,7 @@ installation.md
 theory.md
 designing.md
 training.md
+config.md
 examples.md
 :::
 
