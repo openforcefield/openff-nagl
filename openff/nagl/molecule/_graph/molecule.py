@@ -23,6 +23,22 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
     @property
     def n_graph_edges(self):
         return int(self.graph.graph.number_of_edges())
+    
+    @classmethod
+    def from_openff_config(
+        cls,
+        molecule,
+        model_config,
+    ):
+        return cls.from_openff(
+            molecule,
+            atom_features=model_config.atom_features,
+            bond_features=model_config.bond_features,
+            enumerate_resonance_forms=model_config.enumerate_resonance_forms,
+            lowest_energy_only=True,
+            max_path_length=None,
+            include_all_transfer_pathways=False,
+        )
 
     @classmethod
     def from_openff(
@@ -34,6 +50,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
+        include_xyz: bool = False,
     ):
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
@@ -51,6 +68,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
                 offmol,
                 atom_features=atom_features,
                 bond_features=bond_features,
+                include_xyz=include_xyz
             )
             for offmol in offmols
         ]

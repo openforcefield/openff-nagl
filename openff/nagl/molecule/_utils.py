@@ -1,4 +1,6 @@
 from typing import Dict, TYPE_CHECKING
+import warnings
+
 
 if TYPE_CHECKING:
     from openff.toolkit.topology.molecule import Molecule
@@ -24,3 +26,20 @@ def _get_openff_molecule_information(
         "formal_charge": torch.tensor(charges, dtype=torch.int8),
         "atomic_number": torch.tensor(atomic_numbers, dtype=torch.int8),
     }
+
+def _add_xyz_information(
+    molecule, molecule_graph
+):
+    from openff.units import unit
+    import torch
+
+    if not molecule.conformers:
+        raise ValueError("Molecule does not have coordinates.")
+    if len(molecule.conformers) > 1:
+        warnings.warn(
+            "Molecule has multiple conformers. Using the first one."
+        )
+    molecule_graph.ndata["xyz"] = torch.tensor(
+        molecule.conformers[0].m_as(unit.angstrom),
+        dtype=torch.float32,
+    )
