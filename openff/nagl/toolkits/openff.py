@@ -61,7 +61,9 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         # hackily try to fix #177
         # we inspect GLOBAL_TOOLKIT_REGISTRY and modify accordingly
         _COUNTERPARTS = {
+            NAGLRDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
             RDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
+            NAGLOpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
             OpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
         }
         if toolkit_registry is None:
