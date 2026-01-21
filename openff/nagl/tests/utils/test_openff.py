@@ -429,7 +429,7 @@ def test_split_up_molecule():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "toolkit_combinations",
     [
         [RDKitToolkitWrapper()],
