@@ -1,11 +1,12 @@
+import gzip
 import warnings
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
+from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
 from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
-from openff.toolkit import RDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
@@ -26,6 +27,8 @@ from openff.nagl.toolkits.openff import (
     split_up_molecule,
 )
 from openff.nagl.utils._utils import transform_coordinates
+
+from openff.nagl.tests.data.files import COFACTOR_SDF_GZ
 
 def _load_rdkit_molecule_exactly(mapped_smiles: str):
     """
@@ -424,3 +427,58 @@ def test_split_up_molecule():
     assert indices[2] == [7, 20, 21, 22, 23]
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.parametrize(
+    "toolkit_combinations",
+    [
+        [RDKitToolkitWrapper],
+        [RDKitToolkitWrapper, OpenEyeToolkitWrapper], # check precedence
+    ]
+)
+def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
+    """
+    Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
+    """
+
+    from rdkit.Chem import ForwardSDMolSupplier
+    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+
+
+    suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
+    rdmol = list(suppl)[0]
+    m = Molecule.from_rdkit(rdmol)
+
+    # Force AmberTools + RDKit
+    amber_rdkit = ToolkitRegistry([*(wrapper() for wrapper in toolkit_combinations)])
+
+    with toolkit_registry_manager(amber_rdkit):
+        m.assign_partial_charges(
+            partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
+            toolkit_registry=NAGLToolkitWrapper(),
+        )
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+def test_toolkit_registry_passes_through_nagl_and_fails():
+    """
+    Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
+    """
+
+    from rdkit.Chem import ForwardSDMolSupplier
+    from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
+    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from openff.toolkit.utils.exceptions import InconsistentStereochemistryError
+
+    suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
+    rdmol = list(suppl)[0]
+    m = Molecule.from_rdkit(rdmol)
+
+    with pytest.raises(
+        InconsistentStereochemistryError,
+        match="OpenEye atom stereochemistry assumptions failed"
+    ):
+        with toolkit_registry_manager(GLOBAL_TOOLKIT_REGISTRY):
+            m.assign_partial_charges(
+                partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
+                toolkit_registry=NAGLToolkitWrapper(),
+            )

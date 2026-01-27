@@ -21,7 +21,8 @@ __all__ = [
     "EXAMPLE_TRAINING_CONFIG_LAZY",
     "EXAMPLE_FEATURIZED_LAZY_DATA",
     "EXAMPLE_FEATURIZED_LAZY_DATA_SHORT",
-    "MOLECULE_ESP_RECORD_CBR3"
+    "MOLECULE_ESP_RECORD_CBR3",
+    "COFACTOR_SDF_GZ"
 ]
 
 import importlib.resources
@@ -44,3 +45,5 @@ EXAMPLE_MODEL_RC4 = data_directory / "models" / "openff-gnn-am1bcc-0.1.0-rc.4.pt
 
 
 MOLECULE_ESP_RECORD_CBR3 = data_directory / "training-data" / "molecule-esp-record-cbr3.json"
+
+COFACTOR_SDF_GZ = data_directory / "eg5_cofactor.sdf.gz"
