@@ -454,6 +454,31 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
 
     with toolkit_registry_manager(amber_rdkit):
         m.assign_partial_charges(
-            partial_charge_method="openff-gnn-am1bcc-0.1.0-rc.1.pt",
+            partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
             toolkit_registry=NAGLToolkitWrapper(),
         )
+
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
+def test_toolkit_registry_passes_through_nagl_and_fails():
+    """
+    Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
+    """
+
+    from rdkit.Chem import ForwardSDMolSupplier
+    from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
+    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from openff.toolkit.utils.exceptions import InconsistentStereochemistryError
+
+    suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
+    rdmol = list(suppl)[0]
+    m = Molecule.from_rdkit(rdmol)
+
+    with pytest.raises(
+        InconsistentStereochemistryError,
+        match="OpenEye atom stereochemistry assumptions failed"
+    ):
+        with toolkit_registry_manager(GLOBAL_TOOLKIT_REGISTRY):
+            m.assign_partial_charges(
+                partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
+                toolkit_registry=NAGLToolkitWrapper(),
+            )
