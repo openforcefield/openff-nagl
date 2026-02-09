@@ -152,7 +152,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             if rdkit_only:
                 RDLogger.DisableLog('rdApp.*')
 
-            inchi_key = molecule.to_inchi(fixed_hydrogens=True)
+            inchi_key = molecule.to_inchi(fixed_hydrogens=True, toolkit_registry=toolkit_registry)
 
         except EmptyInChiError as e:
 
