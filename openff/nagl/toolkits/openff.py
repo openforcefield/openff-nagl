@@ -66,8 +66,6 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
             NAGLOpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
             OpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
         }
-        if toolkit_registry is None:
-            toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
 
         # build new registry from scratch
         new_nagl_registry = NAGLToolkitRegistry(exception_if_unavailable=False)
