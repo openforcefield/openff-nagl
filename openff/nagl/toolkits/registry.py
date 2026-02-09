@@ -45,6 +45,88 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                     toolkit, exception_if_unavailable=exception_if_unavailable
                 )
 
+    def to_openff_toolkit_registry(self):
+        """
+        Convert this NAGLToolkitRegistry to an openff.toolkit.utils.ToolkitRegistry
+
+        Returns
+        -------
+        openff.toolkit.utils.ToolkitRegistry
+            A ToolkitRegistry with the same toolkits as this NAGLToolkitRegistry
+        """
+        from openff.toolkit.utils import ToolkitRegistry, OpenEyeToolkitWrapper, RDKitToolkitWrapper
+        from openff.nagl.toolkits import NAGLOpenEyeToolkitWrapper, NAGLRDKitToolkitWrapper
+    
+
+        _COUNTERPARTS = {
+            RDKitToolkitWrapper: RDKitToolkitWrapper,
+            NAGLRDKitToolkitWrapper: RDKitToolkitWrapper,
+            OpenEyeToolkitWrapper: OpenEyeToolkitWrapper,
+            NAGLOpenEyeToolkitWrapper: OpenEyeToolkitWrapper,
+        }
+
+        # build new registry from scratch
+        new_registry = ToolkitRegistry(exception_if_unavailable=False)
+        for toolkit_wrapper in self.registered_toolkits:
+            if type(toolkit_wrapper) in _COUNTERPARTS:
+                toolkit_wrapper_class = _COUNTERPARTS[type(toolkit_wrapper)]
+                new_registry.register_toolkit(
+                    toolkit_wrapper_class,
+                    exception_if_unavailable=False,
+                )
+
+        return new_registry
+    
+    @classmethod
+    def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> _ToolkitRegistry:
+        if toolkit_registry is None:
+            from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
+            toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
+        if isinstance(toolkit_registry, NAGLToolkitRegistry):
+            return toolkit_registry
+        elif isinstance(toolkit_registry, _ToolkitRegistry):
+            return cls.from_openff_toolkit_registry(toolkit_registry)
+        else:
+            raise ValueError(
+                f"toolkit_registry must be an instance of NAGLToolkitRegistry, ToolkitRegistry, or None. Got {type(toolkit_registry)}"
+            )
+        
+    @classmethod
+    def from_openff_toolkit_registry(cls, toolkit_registry: _ToolkitRegistry) -> "NAGLToolkitRegistry":
+        """
+        Convert an openff.toolkit.utils.ToolkitRegistry to a NAGLToolkitRegistry
+
+        Parameters
+        ----------
+        toolkit_registry : openff.toolkit.utils.ToolkitRegistry
+            The ToolkitRegistry to convert
+
+        Returns
+        -------
+        NAGLToolkitRegistry
+            A NAGLToolkitRegistry with the same toolkits as the input registry
+        """
+        from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
+        from openff.nagl.toolkits import NAGLOpenEyeToolkitWrapper, NAGLRDKitToolkitWrapper
+
+        _COUNTERPARTS = {
+            NAGLRDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
+            RDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
+            NAGLOpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
+            OpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
+        }
+
+        # build new registry from scratch
+        new_nagl_registry = NAGLToolkitRegistry(exception_if_unavailable=False)
+        for toolkit_wrapper in toolkit_registry.registered_toolkits:
+            if type(toolkit_wrapper) in _COUNTERPARTS:
+                nagl_toolkit_wrapper_class = _COUNTERPARTS[type(toolkit_wrapper)]
+                new_nagl_registry.register_toolkit(
+                    nagl_toolkit_wrapper_class,
+                    exception_if_unavailable=False,
+                )
+        return new_nagl_registry
+
     def deregister_toolkit(self, toolkit_wrapper: ToolkitWrapperType):
         """
         Remove a ToolkitWrapper from the list of toolkits in this ToolkitRegistry

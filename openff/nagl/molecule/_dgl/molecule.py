@@ -6,6 +6,8 @@ from openff.utilities import requires_package
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
+from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits import NAGLToolkitRegistry
 from .utils import (
     FORWARD,
     dgl_heterograph_to_homograph,
@@ -42,6 +44,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
 
     @classmethod
     @requires_package("dgl")
+    @validate_toolkit_registry
     def from_openff(
         cls,
         molecule: "Molecule",
@@ -53,6 +56,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
+        toolkit_registry: NAGLToolkitRegistry | None = None
     ):
         import dgl
         from openff.nagl.utils.resonance import ResonanceEnumerator
@@ -93,6 +97,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
                 bond_feature_tensor=bond_feature_tensor,
                 forward=cls._graph_forward_edge_type,
                 reverse=cls._graph_backward_edge_type,
+                toolkit_registry=toolkit_registry
             )
             for offmol in offmols
         ]
@@ -105,7 +110,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             edges[e_type] = n_edge.type(torch.int32)
         graph.set_batch_num_edges(edges)
 
-        mapped_smiles = offmols[0].to_smiles(mapped=True)
+        mapped_smiles = offmols[0].to_smiles(mapped=True, toolkit_registry=toolkit_registry)
 
         return cls(
             graph=graph,

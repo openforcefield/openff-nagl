@@ -6,8 +6,12 @@ from .atoms import AtomFeature
 from ._base import Feature
 from .bonds import BondFeature
 
+from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits import NAGLToolkitRegistry
+
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
 
 T = TypeVar("T", bound=Feature)
 
@@ -22,8 +26,9 @@ class Featurizer(Generic[T]):
                 feature = feature()
             self.features.append(feature)
 
-    def featurize(self, molecule: "Molecule") -> torch.Tensor:
-        encoded = [feature.encode(molecule) for feature in self.features]
+    @validate_toolkit_registry
+    def featurize(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+        encoded = [feature.encode(molecule, toolkit_registry=toolkit_registry) for feature in self.features]
         features = torch.hstack(encoded)
         return features
 

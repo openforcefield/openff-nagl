@@ -11,7 +11,7 @@ from openff.units import unit
 from openff.utilities import requires_package
 from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
-from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY
+from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY, ToolkitRegistry
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -55,27 +55,20 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     elif isinstance(toolkit_registry, NAGLToolkitRegistry):
         return toolkit_registry.call(function_name, *args, **kwargs)
     
-    elif toolkit_registry is None or toolkit_registry is GLOBAL_TOOLKIT_REGISTRY:
+    elif (
+        toolkit_registry is None
+        or isinstance(toolkit_registry, ToolkitRegistry)
+        or toolkit_registry is GLOBAL_TOOLKIT_REGISTRY
+    ):
         # if the argument isn't passed in,
         # or someone got confused and passed in GLOBAL_TOOLKIT_REGISTRY
         # hackily try to fix #177
         # we inspect GLOBAL_TOOLKIT_REGISTRY and modify accordingly
-        _COUNTERPARTS = {
-            NAGLRDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
-            RDKitToolkitWrapper: NAGLRDKitToolkitWrapper,
-            NAGLOpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
-            OpenEyeToolkitWrapper: NAGLOpenEyeToolkitWrapper,
-        }
+        if toolkit_registry is None:
+            toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
 
         # build new registry from scratch
-        new_nagl_registry = NAGLToolkitRegistry(exception_if_unavailable=False)
-        for toolkit_wrapper in GLOBAL_TOOLKIT_REGISTRY.registered_toolkits:
-            if type(toolkit_wrapper) in _COUNTERPARTS:
-                nagl_toolkit_wrapper_class = _COUNTERPARTS[type(toolkit_wrapper)]
-                new_nagl_registry.register_toolkit(
-                    nagl_toolkit_wrapper_class,
-                    exception_if_unavailable=False,
-                )
+        new_nagl_registry = NAGLToolkitRegistry.from_openff_toolkit_registry(toolkit_registry)
         return new_nagl_registry.call(function_name, *args, **kwargs)
 
     else:
@@ -92,6 +85,18 @@ def toolkit_registry_function(function):
         return call_toolkit_function(
             function.__name__, toolkit_registry, *args, **kwargs
         )
+
+    return wrapper
+
+
+def validate_toolkit_registry(function):
+    """A decorator to validate that a toolkit registry is passed in to a function that requires one."""
+    @functools.wraps(function)
+    def wrapper(*args, toolkit_registry=None, **kwargs):
+        from openff.nagl.toolkits import NAGLToolkitRegistry
+
+        toolkit_registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry)
+        return function(*args, toolkit_registry=toolkit_registry, **kwargs)
 
     return wrapper
 
@@ -359,7 +364,7 @@ def _split_up_molecule_into_indices(
 
 def split_up_molecule(
     molecule: "Molecule",
-    return_indices: bool = True
+    return_indices: bool = True,
 ) -> list["Molecule"]:
     """
     Split up a molecule into its connected components.

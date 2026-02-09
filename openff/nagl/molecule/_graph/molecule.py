@@ -2,6 +2,8 @@ from typing import List, TYPE_CHECKING, Tuple, Optional
 
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
+from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits import NAGLToolkitRegistry
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -25,6 +27,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         return int(self.graph.graph.number_of_edges())
 
     @classmethod
+    @validate_toolkit_registry
     def from_openff(
         cls,
         molecule: "Molecule",
@@ -34,6 +37,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
+        toolkit_registry: NAGLToolkitRegistry | None = None
     ):
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
@@ -51,12 +55,13 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
                 offmol,
                 atom_features=atom_features,
                 bond_features=bond_features,
+                toolkit_registry=toolkit_registry
             )
             for offmol in offmols
         ]
         graph = NXMolHeteroGraph._batch(graphs)
 
-        mapped_smiles = molecule.to_smiles(mapped=True)
+        mapped_smiles = molecule.to_smiles(mapped=True, toolkit_registry=toolkit_registry)
 
         return cls(
             graph=graph,
