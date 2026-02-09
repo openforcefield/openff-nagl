@@ -17,7 +17,7 @@ dependencies:
   - tqdm
 
   # chemistry
-  - openff-toolkit >=0.11.1
+  - openff-toolkit >=0.18
   - openff-units
   - openff-recharge
   - openff-qcsubmit
