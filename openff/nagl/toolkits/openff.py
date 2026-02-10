@@ -10,7 +10,6 @@ from openff.units import unit
 
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
-from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
