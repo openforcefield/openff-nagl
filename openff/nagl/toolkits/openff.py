@@ -10,6 +10,7 @@ from openff.units import unit
 
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
+from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -39,6 +40,8 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         NAGLToolkitWrapperBase,
     )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
+    from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+    from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
         # case of NAGLRDKitToolkitWrapper (not instantiated)
