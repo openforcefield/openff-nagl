@@ -1,15 +1,13 @@
 import abc
 import typing
 
-
-
 from .._base.base import ImmutableModel
-from openff.nagl.toolkits import NAGLToolkitRegistry
 from openff.nagl.toolkits.openff import validate_toolkit_registry
 
 if typing.TYPE_CHECKING:
     import torch
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 class Feature(ImmutableModel, abc.ABC):
@@ -49,7 +47,7 @@ class Feature(ImmutableModel, abc.ABC):
         return cls(**kwargs)
 
     @validate_toolkit_registry
-    def encode(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> "torch.Tensor":
+    def encode(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
 
@@ -61,7 +59,7 @@ class Feature(ImmutableModel, abc.ABC):
         return self._encode(molecule, toolkit_registry=toolkit_registry).reshape(self.tensor_shape)
     
     @abc.abstractmethod
-    def _encode(self, molecule:  "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> "torch.Tensor":
+    def _encode(self, molecule:  "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
         """

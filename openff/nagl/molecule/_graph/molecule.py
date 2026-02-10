@@ -3,12 +3,12 @@ from typing import List, TYPE_CHECKING, Tuple, Optional
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
 from openff.nagl.toolkits.openff import validate_toolkit_registry
-from openff.nagl.toolkits import NAGLToolkitRegistry
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
@@ -37,7 +37,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        toolkit_registry: NAGLToolkitRegistry | None = None
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None
     ):
         from openff.nagl.utils.resonance import ResonanceEnumerator
 

@@ -13,15 +13,14 @@ from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import LookupTableType, _as_lookup_table
 from openff.nagl.utils._utils import potential_dict_to_list
-from openff.nagl.toolkits import NAGLToolkitRegistry
 from openff.nagl.toolkits.openff import validate_toolkit_registry
-from openff.nagl.toolkits import NAGLToolkitRegistry
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 class BaseGNNModel(pl.LightningModule):
@@ -165,7 +164,7 @@ class GNNModel(BaseGNNModel):
         check_domains: bool = False,
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
-        toolkit_registry: NAGLToolkitRegistry | None = None,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -259,7 +258,7 @@ class GNNModel(BaseGNNModel):
         check_domains: bool = False,
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
-        toolkit_registry: NAGLToolkitRegistry | None = None,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -349,7 +348,7 @@ class GNNModel(BaseGNNModel):
         self,
         molecule: "Molecule",
         readout_name: str,
-        toolkit_registry: NAGLToolkitRegistry | None = None,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         """
         Check if the molecule is in the property lookup table.
@@ -388,7 +387,7 @@ class GNNModel(BaseGNNModel):
         check_domains: bool = False,
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
-        toolkit_registry: NAGLToolkitRegistry | None = None,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         """
         Compute the trained property for a molecule.
@@ -441,7 +440,7 @@ class GNNModel(BaseGNNModel):
         return properties[readout_name]
 
     @validate_toolkit_registry
-    def _compute_properties_nagl(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> "torch.Tensor":
+    def _compute_properties_nagl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
         from openff.nagl.molecule._graph.molecule import GraphMolecule
 
         nxmol = GraphMolecule.from_openff(
@@ -456,7 +455,7 @@ class GNNModel(BaseGNNModel):
         return model.forward(nxmol)
 
     @validate_toolkit_registry
-    def _compute_properties_dgl(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> "torch.Tensor":
+    def _compute_properties_dgl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
         from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
         if not self._is_dgl:
@@ -474,7 +473,7 @@ class GNNModel(BaseGNNModel):
         return self.forward(dglmol)
     
     @validate_toolkit_registry
-    def _convert_to_nagl_molecule(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None):
+    def _convert_to_nagl_molecule(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None):
         from openff.nagl.molecule._graph.molecule import GraphMolecule
         if self._is_dgl:
             from openff.nagl.molecule._dgl.molecule import DGLMolecule

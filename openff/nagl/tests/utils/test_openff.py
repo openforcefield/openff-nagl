@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
 from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
-from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
+from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning

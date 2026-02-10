@@ -1,7 +1,6 @@
 import typing
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.toolkits import NAGLToolkitRegistry
 from openff.nagl.toolkits.openff import validate_toolkit_registry
 
 try:
@@ -11,6 +10,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 class ChemicalDomain(ImmutableModel):
     """A domain of chemical space to which a molecule can belong
@@ -32,7 +32,7 @@ class ChemicalDomain(ImmutableModel):
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
-        toolkit_registry: NAGLToolkitRegistry | None = None
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
         checks = [
             self.check_allowed_elements,
@@ -53,7 +53,7 @@ class ChemicalDomain(ImmutableModel):
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
-        toolkit_registry: NAGLToolkitRegistry | None = None
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
         if not self.allowed_elements:
             return True
@@ -73,7 +73,7 @@ class ChemicalDomain(ImmutableModel):
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
-        toolkit_registry: NAGLToolkitRegistry | None = None
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
         for pattern in self.forbidden_patterns:
             if molecule.chemical_environment_matches(pattern, toolkit_registry=toolkit_registry):

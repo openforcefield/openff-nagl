@@ -9,9 +9,7 @@ import numpy as np
 from openff.units import unit
 
 from openff.utilities import requires_package
-from openff.nagl.toolkits import NAGL_TOOLKIT_REGISTRY
 from openff.utilities.exceptions import MissingOptionalDependencyError
-from openff.toolkit import RDKitToolkitWrapper, OpenEyeToolkitWrapper, GLOBAL_TOOLKIT_REGISTRY, ToolkitRegistry
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -34,14 +32,13 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
     **kwargs:
         The keyword arguments to pass to the function.
     """
+    from openff.toolkit import GLOBAL_TOOLKIT_REGISTRY, ToolkitRegistry
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
     from openff.nagl.toolkits._base import (
         NAGLToolkitWrapperMeta,
         NAGLToolkitWrapperBase,
     )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
-    from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
-    from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
         # case of NAGLRDKitToolkitWrapper (not instantiated)
@@ -93,7 +90,7 @@ def validate_toolkit_registry(function):
     """A decorator to validate that a toolkit registry is passed in to a function that requires one."""
     @functools.wraps(function)
     def wrapper(*args, toolkit_registry=None, **kwargs):
-        from openff.nagl.toolkits import NAGLToolkitRegistry
+        from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
         toolkit_registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry)
         return function(*args, toolkit_registry=toolkit_registry, **kwargs)

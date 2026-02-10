@@ -9,7 +9,6 @@ from openff.toolkit.utils.toolkit_registry import (
 
 from openff.nagl.toolkits._base import (
     NAGLToolkitWrapperMeta,
-    NAGLToolkitWrapperBase,
     ToolkitWrapperType,
 )
 
@@ -55,7 +54,8 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
             A ToolkitRegistry with the same toolkits as this NAGLToolkitRegistry
         """
         from openff.toolkit.utils import ToolkitRegistry, OpenEyeToolkitWrapper, RDKitToolkitWrapper
-        from openff.nagl.toolkits import NAGLOpenEyeToolkitWrapper, NAGLRDKitToolkitWrapper
+        from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
+        from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
     
 
         _COUNTERPARTS = {
@@ -107,7 +107,8 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
             A NAGLToolkitRegistry with the same toolkits as the input registry
         """
         from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
-        from openff.nagl.toolkits import NAGLOpenEyeToolkitWrapper, NAGLRDKitToolkitWrapper
+        from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
+        from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
 
         _COUNTERPARTS = {
             NAGLRDKitToolkitWrapper: NAGLRDKitToolkitWrapper,

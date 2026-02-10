@@ -23,7 +23,6 @@ import typing
 
 import torch
 
-from openff.nagl.toolkits import NAGLToolkitRegistry
 from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
 
@@ -31,6 +30,9 @@ try:
     from pydantic.v1 import Field
 except ImportError:
     from pydantic import Field
+
+if typing.TYPE_CHECKING:
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 __all__ = [
@@ -63,7 +65,7 @@ class BondIsAromatic(BondFeature):
     """One-hot encoding for whether the bond is aromatic or not."""
     name: typing.Literal["bond_is_aromatic"] = "bond_is_aromatic"
 
-    def _encode(self, molecule, toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         return torch.tensor([bool(bond.is_aromatic) for bond in molecule.bonds])
 
 
@@ -78,7 +80,7 @@ class BondIsInRing(BondFeature):
     """
     name: typing.Literal["bond_is_in_ring"] = "bond_is_in_ring"
 
-    def _encode(self, molecule, toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
         ring_bonds = {
@@ -116,7 +118,7 @@ class BondInRingOfSize(BondFeature):
 
     ring_size: int
 
-    def _encode(self, molecule, toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_bonds_are_in_ring_size
 
         is_in_ring = get_bonds_are_in_ring_size(molecule, self.ring_size, toolkit_registry=toolkit_registry)
@@ -132,7 +134,7 @@ class WibergBondOrder(BondFeature):
     """
     name: typing.Literal["wiberg_bond_order"] = "wiberg_bond_order"
 
-    def _encode(self, molecule, toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         return torch.tensor([bond.fractional_bond_order for bond in molecule.bonds])
 
 
@@ -155,7 +157,7 @@ class BondOrder(CategoricalMixin, BondFeature):
 
     categories = [1, 2, 3]
 
-    def _encode(self, molecule, toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         return torch.vstack(
             [
                 one_hot_encode(int(bond.bond_order), self.categories)

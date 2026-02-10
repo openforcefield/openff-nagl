@@ -9,12 +9,12 @@ from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 from openff.nagl.toolkits.openff import validate_toolkit_registry
-from openff.nagl.toolkits import NAGLToolkitRegistry
 
 
 if TYPE_CHECKING:
     import dgl
     from openff.toolkit.topology.molecule import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 
@@ -57,7 +57,7 @@ def openff_molecule_to_dgl_graph(
     bond_feature_tensor: Optional[torch.Tensor] = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
-    toolkit_registry: NAGLToolkitRegistry | None = None
+    toolkit_registry: Optional["NAGLToolkitRegistry"] = None
 ) -> "dgl.DGLHeteroGraph":
     from openff.nagl.molecule._utils import _get_openff_molecule_information
 

@@ -7,7 +7,7 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
 from openff.nagl.toolkits.openff import validate_toolkit_registry
-from openff.nagl.toolkits import NAGLToolkitRegistry
+
 from .utils import (
     FORWARD,
     dgl_heterograph_to_homograph,
@@ -16,6 +16,7 @@ from .utils import (
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 class DGLBase(NAGLMoleculeBase):
@@ -56,7 +57,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        toolkit_registry: NAGLToolkitRegistry | None = None
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None
     ):
         import dgl
         from openff.nagl.utils.resonance import ResonanceEnumerator

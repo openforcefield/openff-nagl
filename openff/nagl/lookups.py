@@ -5,7 +5,6 @@ import torch
 
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import validate_toolkit_registry
-from openff.nagl.toolkits import NAGLToolkitRegistry
 from openff.nagl.utils._utils import is_iterable, potential_dict_to_list
 
 try:
@@ -15,6 +14,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 __all__ = [
@@ -120,7 +120,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         return key in self.properties
 
     @validate_toolkit_registry
-    def lookup(self, molecule: "Molecule", toolkit_registry: NAGLToolkitRegistry | None = None) -> torch.Tensor:
+    def lookup(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         """
         Look up the property value for a molecule
 
