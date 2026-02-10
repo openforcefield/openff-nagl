@@ -16,6 +16,7 @@ dependencies:
   - rdkit
   - scipy
   - openeye-toolkits
+  - openff-nagl-models
 
   # gnn
   - pytorch

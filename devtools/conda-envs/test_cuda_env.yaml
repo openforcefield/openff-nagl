@@ -17,6 +17,7 @@ dependencies:
   # chemistry
   - openff-recharge
   - openff-toolkit-base >=0.16.9
+  - openff-nagl-models
   - openff-units
   - pydantic <3
   - rdkit
