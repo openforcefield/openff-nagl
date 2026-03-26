@@ -30,3 +30,10 @@ Here is where the optimizer is configured for training the GNN.
 
 The model, data, and optimizer configs are combined in a [`TrainingConfig`] that is then used to create a [`TrainingGNNModel`] and [`DGLMoleculeDataModule`]
 that can be passed to a Pytorch Lightning trainer.
+
+[`TrainingConfig`]: openff.nagl.config.TrainingConfig
+[`ConvolutionModule`]: openff.nagl.model.ConvolutionModule
+[`ReadoutModule`]: openff.nagl.config.model.ReadoutModule
+[`DatasetConfig`]: openff.nagl.config.DatasetConfig
+[`TrainingGNNModel`]: openff.nagl.training.TrainingGNNModel
+[`DGLMoleculeDataModule`]: openff.nagl.training.DGLMoleculeDataModule
