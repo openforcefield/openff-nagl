@@ -479,8 +479,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     rdmol = list(suppl)[0]
     m = Molecule.from_rdkit(rdmol)
 
-    # Force AmberTools + RDKit
-    amber_rdkit = ToolkitRegistry([*(wrapper() for wrapper in toolkit_combinations)])
+    registry = ToolkitRegistry([*(wrapper() for wrapper in toolkit_combinations)])
     model = GNNModel.load(EXAMPLE_MODEL_RC4, eval_mode=True)
     model.compute_property(
         m,
@@ -488,7 +487,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
         readout_name="am1bcc_charges",
         check_domains=True,
         error_if_unsupported=True,
-        toolkit_registry=amber_rdkit
+        toolkit_registry=registry
     )
 
 
