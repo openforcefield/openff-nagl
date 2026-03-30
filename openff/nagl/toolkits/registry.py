@@ -78,7 +78,7 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
         return new_registry
     
     @classmethod
-    def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> _ToolkitRegistry:
+    def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> "NAGLToolkitRegistry":
         if toolkit_registry is None:
             from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
             toolkit_registry = GLOBAL_TOOLKIT_REGISTRY

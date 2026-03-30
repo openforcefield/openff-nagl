@@ -1,7 +1,7 @@
 import typing
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 try:
     from pydantic.v1 import Field
@@ -27,13 +27,13 @@ class ChemicalDomain(ImmutableModel):
         default_factory=tuple
     )
 
-    @validate_toolkit_registry
     def check_molecule(
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
         toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         checks = [
             self.check_allowed_elements,
             self.check_forbidden_patterns
@@ -48,13 +48,13 @@ class ChemicalDomain(ImmutableModel):
             return True, ""
         return True
         
-    @validate_toolkit_registry
     def check_allowed_elements(
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
         toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         if not self.allowed_elements:
             return True
         atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
@@ -68,13 +68,13 @@ class ChemicalDomain(ImmutableModel):
             return True, ""
         return True
 
-    @validate_toolkit_registry
     def check_forbidden_patterns(
         self,
         molecule: "Molecule",
         return_error_message: bool = False,
         toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         for pattern in self.forbidden_patterns:
             if molecule.chemical_environment_matches(pattern, toolkit_registry=toolkit_registry):
                 err = f"Molecule contains forbidden SMARTS pattern {pattern}"

@@ -4,7 +4,7 @@ import typing
 import torch
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 from openff.nagl.utils._utils import is_iterable, potential_dict_to_list
 
 try:
@@ -119,7 +119,6 @@ class AtomPropertiesLookupTable(BaseLookupTable):
     def __contains__(self, key: str) -> bool:
         return key in self.properties
 
-    @validate_toolkit_registry
     def lookup(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         """
         Look up the property value for a molecule
@@ -139,6 +138,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         KeyError
             If the property value cannot be found for this molecule
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.toolkit import Molecule
         from openff.toolkit.utils.exceptions import EmptyInChiError
 

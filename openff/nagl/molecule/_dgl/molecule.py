@@ -6,7 +6,7 @@ from openff.utilities import requires_package
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 from .utils import (
     FORWARD,
@@ -45,7 +45,6 @@ class DGLMolecule(MoleculeMixin, DGLBase):
 
     @classmethod
     @requires_package("dgl")
-    @validate_toolkit_registry
     def from_openff(
         cls,
         molecule: "Molecule",
@@ -59,6 +58,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         include_all_transfer_pathways: bool = False,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None
     ):
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         import dgl
         from openff.nagl.utils.resonance import ResonanceEnumerator
 

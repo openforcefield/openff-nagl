@@ -88,16 +88,16 @@ def toolkit_registry_function(function):
     return wrapper
 
 
-def validate_toolkit_registry(function):
-    """A decorator to validate that a toolkit registry is passed in to a function that requires one."""
-    @functools.wraps(function)
-    def wrapper(*args, toolkit_registry=None, **kwargs):
-        from openff.nagl.toolkits.registry import NAGLToolkitRegistry
+def ensure_toolkit_registry(toolkit_registry=None) -> "NAGLToolkitRegistry":
+    """Resolve a toolkit registry argument to a NAGLToolkitRegistry.
 
-        toolkit_registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry)
-        return function(*args, toolkit_registry=toolkit_registry, **kwargs)
+    Converts ``None`` or a standard ``ToolkitRegistry`` to a
+    ``NAGLToolkitRegistry``. Call this as the first line of any function that
+    accepts a ``toolkit_registry`` kwarg.
+    """
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
-    return wrapper
+    return NAGLToolkitRegistry._resolve_registry(toolkit_registry)
 
 
 @contextlib.contextmanager

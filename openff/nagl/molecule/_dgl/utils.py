@@ -8,7 +8,7 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 
 if TYPE_CHECKING:
@@ -48,7 +48,6 @@ def openff_molecule_to_base_dgl_graph(
     return molecule_graph
 
 
-@validate_toolkit_registry
 def openff_molecule_to_dgl_graph(
     molecule: "Molecule",
     atom_features: List[AtomFeature] = tuple(),
@@ -59,6 +58,7 @@ def openff_molecule_to_dgl_graph(
     reverse: str = REVERSE,
     toolkit_registry: Optional["NAGLToolkitRegistry"] = None
 ) -> "dgl.DGLHeteroGraph":
+    toolkit_registry = ensure_toolkit_registry(toolkit_registry)
     from openff.nagl.molecule._utils import _get_openff_molecule_information
 
     if len(atom_features) and atom_feature_tensor is not None:

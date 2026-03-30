@@ -6,7 +6,7 @@ from typing import List, Tuple, TYPE_CHECKING
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 import networkx as nx
 import numpy as np
@@ -309,7 +309,6 @@ class NXMolHeteroGraph(NXMolGraph):
         return batched_graph
 
     @classmethod
-    @validate_toolkit_registry
     def from_openff(
         cls,
         molecule: "Molecule",
@@ -317,6 +316,7 @@ class NXMolHeteroGraph(NXMolGraph):
         bond_features: Tuple[BondFeature, ...] = tuple(),
         toolkit_registry=None
     ):
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._utils import _get_openff_molecule_information
 
         nx_graph = openff_molecule_to_base_nx_graph(molecule)

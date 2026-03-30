@@ -13,7 +13,7 @@ from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import LookupTableType, _as_lookup_table
 from openff.nagl.utils._utils import potential_dict_to_list
-from openff.nagl.toolkits.openff import validate_toolkit_registry
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +156,6 @@ class GNNModel(BaseGNNModel):
         copied.load_state_dict(self.state_dict())
         return copied
     
-    @validate_toolkit_registry
     def compute_properties(
         self,
         molecule: "Molecule",
@@ -196,6 +195,7 @@ class GNNModel(BaseGNNModel):
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         import numpy as np
 
         # split up molecule in case it's fragments
@@ -250,7 +250,6 @@ class GNNModel(BaseGNNModel):
         return combined_results
 
 
-    @validate_toolkit_registry
     def _compute_properties(
         self,
         molecule: "Molecule",
@@ -290,6 +289,7 @@ class GNNModel(BaseGNNModel):
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
 
         values = {}
 
@@ -343,7 +343,6 @@ class GNNModel(BaseGNNModel):
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
     
-    @validate_toolkit_registry
     def _check_property_lookup_table(
         self,
         molecule: "Molecule",
@@ -362,11 +361,11 @@ class GNNModel(BaseGNNModel):
         toolkit_registry: NAGLToolkitRegistry or None
             A toolkit registry to use for checking the lookup table.
             If ``None``, the default NAGL toolkit registry will be used.
-        
+
         Returns
         -------
         torch.Tensor
-        
+
 
         Raises
         ------
@@ -374,11 +373,11 @@ class GNNModel(BaseGNNModel):
             If there is no table for this property, or
             if the molecule is not in the property lookup table
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
 
         table = self.lookup_tables[readout_name]
         return table.lookup(molecule, toolkit_registry=toolkit_registry)
 
-    @validate_toolkit_registry
     def compute_property(
         self,
         molecule: "Molecule",
@@ -423,6 +422,7 @@ class GNNModel(BaseGNNModel):
         -------
         result: torch.Tensor or numpy.ndarray
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         properties = self.compute_properties(
             molecule=molecule,
             as_numpy=as_numpy,
@@ -439,8 +439,8 @@ class GNNModel(BaseGNNModel):
             )
         return properties[readout_name]
 
-    @validate_toolkit_registry
     def _compute_properties_nagl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
 
         nxmol = GraphMolecule.from_openff(
@@ -454,8 +454,8 @@ class GNNModel(BaseGNNModel):
             model = self._as_nagl()
         return model.forward(nxmol)
 
-    @validate_toolkit_registry
     def _compute_properties_dgl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
         if not self._is_dgl:
@@ -472,8 +472,8 @@ class GNNModel(BaseGNNModel):
         )
         return self.forward(dglmol)
     
-    @validate_toolkit_registry
     def _convert_to_nagl_molecule(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None):
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
         if self._is_dgl:
             from openff.nagl.molecule._dgl.molecule import DGLMolecule
