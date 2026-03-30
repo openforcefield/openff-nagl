@@ -44,39 +44,6 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                     toolkit, exception_if_unavailable=exception_if_unavailable
                 )
 
-    def to_openff_toolkit_registry(self):
-        """
-        Convert this NAGLToolkitRegistry to an openff.toolkit.utils.ToolkitRegistry
-
-        Returns
-        -------
-        openff.toolkit.utils.ToolkitRegistry
-            A ToolkitRegistry with the same toolkits as this NAGLToolkitRegistry
-        """
-        from openff.toolkit.utils import ToolkitRegistry, OpenEyeToolkitWrapper, RDKitToolkitWrapper
-        from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
-        from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
-    
-
-        _COUNTERPARTS = {
-            RDKitToolkitWrapper: RDKitToolkitWrapper,
-            NAGLRDKitToolkitWrapper: RDKitToolkitWrapper,
-            OpenEyeToolkitWrapper: OpenEyeToolkitWrapper,
-            NAGLOpenEyeToolkitWrapper: OpenEyeToolkitWrapper,
-        }
-
-        # build new registry from scratch
-        new_registry = ToolkitRegistry(exception_if_unavailable=False)
-        for toolkit_wrapper in self.registered_toolkits:
-            if type(toolkit_wrapper) in _COUNTERPARTS:
-                toolkit_wrapper_class = _COUNTERPARTS[type(toolkit_wrapper)]
-                new_registry.register_toolkit(
-                    toolkit_wrapper_class,
-                    exception_if_unavailable=False,
-                )
-
-        return new_registry
-    
     @classmethod
     def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> "NAGLToolkitRegistry":
         if toolkit_registry is None:
