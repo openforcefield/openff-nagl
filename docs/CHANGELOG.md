@@ -14,7 +14,7 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## v0.5.5 -- 2025-04-02
+## v0.5.5 -- 2026-04-02
 
 ### Fixed
 - Changes to `GLOBAL_TOOLKIT_REGISTRY` are now followed (PR #237, Issue #177)
