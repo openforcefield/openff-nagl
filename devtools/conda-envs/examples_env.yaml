@@ -21,7 +21,7 @@ dependencies:
   - openff-units
   - openff-recharge
   - openff-qcsubmit
-  - psi4
+  - psi4 >=1.10
   - pydantic <3
   - rdkit
 
