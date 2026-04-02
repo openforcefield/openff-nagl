@@ -17,7 +17,7 @@ The rules for this file:
 ## v0.5.5 -- 2025-04-02
 
 ### Fixed
-- Changes to ``GLOBAL_TOOLKIT_REGISTRY`` are now followed (PR #237, Issue #177)
+- Changes to `GLOBAL_TOOLKIT_REGISTRY` are now followed (PR #237, Issue #177)
 - Some InChI warnings emitted by internal calls to RDKit are suppressed (PR #203,
   Issue #203)
 - Package metadata is updated for PEP 639 (PR #222)
