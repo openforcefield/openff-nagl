@@ -14,10 +14,17 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## Current development
+## v0.5.5 -- 2025-04-02
 
 ### Fixed
-- Some InChi warnings emitted by internal calls to RDKit are suppressed (PR #203, Issue #203)
+- Changes to ``GLOBAL_TOOLKIT_REGISTRY`` are now followed (PR #237, Issue #177)
+- Some InChI warnings emitted by internal calls to RDKit are suppressed (PR #203,
+  Issue #203)
+- Package metadata is updated for PEP 639 (PR #222)
+
+### Authors
+- [@lilyminium]
+- [@mattwthompson]
 
 ## v0.5.4 -- 2025-09-30
 
