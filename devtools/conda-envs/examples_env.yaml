@@ -21,7 +21,8 @@ dependencies:
   - openff-units
   - openff-recharge
   - openff-qcsubmit
-  - psi4
+  - psi4 =1.9.1  # solver can't figure out 1.10+
+  - libint =2.9
   - pydantic <3
   - rdkit
 

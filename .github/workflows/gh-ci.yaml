@@ -51,7 +51,7 @@ jobs:
         ulimit -a
 
     - name: Install environment
-      uses: mamba-org/setup-micromamba@v2
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
@@ -100,7 +100,7 @@ jobs:
         python -m pytest -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
 
     - name: codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
@@ -169,7 +169,7 @@ jobs:
     - uses: actions/checkout@v6
 
     - name: Install conda
-      uses: mamba-org/setup-micromamba@v2
+      uses: mamba-org/setup-micromamba@v3
       with:
         environment-name: openff-nagl
         create-args: >-
