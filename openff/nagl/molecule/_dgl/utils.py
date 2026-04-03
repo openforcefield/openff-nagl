@@ -8,11 +8,13 @@ from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 
 if TYPE_CHECKING:
     import dgl
     from openff.toolkit.topology.molecule import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 
@@ -54,7 +56,9 @@ def openff_molecule_to_dgl_graph(
     bond_feature_tensor: Optional[torch.Tensor] = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
+    toolkit_registry: Optional["NAGLToolkitRegistry"] = None
 ) -> "dgl.DGLHeteroGraph":
+    toolkit_registry = ensure_toolkit_registry(toolkit_registry)
     from openff.nagl.molecule._utils import _get_openff_molecule_information
 
     if len(atom_features) and atom_feature_tensor is not None:
@@ -79,7 +83,7 @@ def openff_molecule_to_dgl_graph(
     # add atom features
     if len(atom_features):
         atom_featurizer = AtomFeaturizer(atom_features)
-        atom_feature_tensor = atom_featurizer.featurize(molecule)
+        atom_feature_tensor = atom_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
     
     if atom_feature_tensor is None:
         atom_feature_tensor = torch.zeros((molecule.n_atoms, 0))
@@ -97,7 +101,7 @@ def openff_molecule_to_dgl_graph(
 
     if len(bond_features):
         bond_featurizer = BondFeaturizer(bond_features)
-        bond_feature_tensor = bond_featurizer.featurize(molecule)
+        bond_feature_tensor = bond_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
 
     for direction in (forward, reverse):
         n_bonds = len(molecule.bonds)

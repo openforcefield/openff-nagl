@@ -1,6 +1,7 @@
 import typing
 
 from openff.nagl._base.base import ImmutableModel
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 try:
     from pydantic.v1 import Field
@@ -9,6 +10,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 class ChemicalDomain(ImmutableModel):
     """A domain of chemical space to which a molecule can belong
@@ -28,14 +30,16 @@ class ChemicalDomain(ImmutableModel):
     def check_molecule(
         self,
         molecule: "Molecule",
-        return_error_message: bool = False
+        return_error_message: bool = False,
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         checks = [
             self.check_allowed_elements,
             self.check_forbidden_patterns
         ]
         for check in checks:
-            is_allowed, err = check(molecule, return_error_message=True)
+            is_allowed, err = check(molecule, return_error_message=True, toolkit_registry=toolkit_registry)
             if not is_allowed:
                 if return_error_message:
                     return False, err
@@ -47,8 +51,10 @@ class ChemicalDomain(ImmutableModel):
     def check_allowed_elements(
         self,
         molecule: "Molecule",
-        return_error_message: bool = False
+        return_error_message: bool = False,
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         if not self.allowed_elements:
             return True
         atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
@@ -65,10 +71,12 @@ class ChemicalDomain(ImmutableModel):
     def check_forbidden_patterns(
         self,
         molecule: "Molecule",
-        return_error_message: bool = False
+        return_error_message: bool = False,
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
     ) -> typing.Union[bool, typing.Tuple[bool, str]]:
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         for pattern in self.forbidden_patterns:
-            if molecule.chemical_environment_matches(pattern):
+            if molecule.chemical_environment_matches(pattern, toolkit_registry=toolkit_registry):
                 err = f"Molecule contains forbidden SMARTS pattern {pattern}"
                 if return_error_message:
                     return False, err

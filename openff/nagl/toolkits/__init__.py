@@ -1,21 +1,11 @@
 "Extensions of the OpenFF Toolkit ToolkitWrappers for use with NAGL."
 
-from typing import Union
-
-from ._base import NAGLToolkitWrapperBase, NAGLToolkitWrapperMeta, ToolkitWrapperType
-from .registry import NAGLToolkitRegistry
-from .openeye import NAGLOpenEyeToolkitWrapper
-from .rdkit import NAGLRDKitToolkitWrapper
-
-NAGL_TOOLKIT_REGISTRY = NAGLToolkitRegistry(
-    [NAGLOpenEyeToolkitWrapper, NAGLRDKitToolkitWrapper], exception_if_unavailable=False
-)
-
-
-ToolkitRegistryType = Union[NAGLToolkitRegistry, ToolkitWrapperType]
+from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
+from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 __all__ = [
     "NAGLOpenEyeToolkitWrapper",
     "NAGLRDKitToolkitWrapper",
-    "NAGL_TOOLKIT_REGISTRY",
+    "NAGLToolkitRegistry",
 ]

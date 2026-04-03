@@ -6,7 +6,7 @@ import pytest
 from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
 from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
-from openff.nagl.toolkits import NAGLRDKitToolkitWrapper
+from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
@@ -28,7 +28,7 @@ from openff.nagl.toolkits.openff import (
 )
 from openff.nagl.utils._utils import transform_coordinates
 
-from openff.nagl.tests.data.files import COFACTOR_SDF_GZ
+from openff.nagl.tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
 
 def _load_rdkit_molecule_exactly(mapped_smiles: str):
     """
@@ -457,6 +457,39 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
             partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
             toolkit_registry=NAGLToolkitWrapper(),
         )
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.parametrize(
+    "toolkit_combinations",
+    [
+        [RDKitToolkitWrapper],
+        [RDKitToolkitWrapper, OpenEyeToolkitWrapper], # check precedence
+    ]
+)
+def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
+    """
+    Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
+    """
+
+    from rdkit.Chem import ForwardSDMolSupplier
+    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from openff.nagl import GNNModel
+
+    suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
+    rdmol = list(suppl)[0]
+    m = Molecule.from_rdkit(rdmol)
+
+    registry = ToolkitRegistry([*(wrapper() for wrapper in toolkit_combinations)])
+    model = GNNModel.load(EXAMPLE_MODEL_RC4, eval_mode=True)
+    model.compute_property(
+        m,
+        as_numpy=True,
+        readout_name="am1bcc_charges",
+        check_domains=True,
+        error_if_unsupported=True,
+        toolkit_registry=registry
+    )
+
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 def test_toolkit_registry_passes_through_nagl_and_fails():

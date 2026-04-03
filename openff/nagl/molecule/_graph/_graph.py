@@ -6,6 +6,7 @@ from typing import List, Tuple, TYPE_CHECKING
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 import networkx as nx
 import numpy as np
@@ -313,7 +314,9 @@ class NXMolHeteroGraph(NXMolGraph):
         molecule: "Molecule",
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
+        toolkit_registry=None
     ):
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._utils import _get_openff_molecule_information
 
         nx_graph = openff_molecule_to_base_nx_graph(molecule)
@@ -322,7 +325,7 @@ class NXMolHeteroGraph(NXMolGraph):
 
         if len(atom_features):
             atom_featurizer = AtomFeaturizer(atom_features)
-            atom_features = atom_featurizer.featurize(molecule)
+            atom_features = atom_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
             molecule_graph.ndata[FEATURE] = atom_features
 
         molecule_info = _get_openff_molecule_information(molecule)
@@ -338,7 +341,7 @@ class NXMolHeteroGraph(NXMolGraph):
 
         if len(bond_features):
             bond_featurizer = BondFeaturizer(bond_features)
-            bond_features = bond_featurizer.featurize(molecule)
+            bond_features = bond_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
             molecule_graph.edges[FORWARD].data[FEATURE] = bond_features
             molecule_graph.edges[REVERSE].data[FEATURE] = bond_features
 
