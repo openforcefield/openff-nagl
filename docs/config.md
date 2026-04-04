@@ -1,12 +1,12 @@
 # Training a GNN using config files
 
-The configuration files defined in `openff.nagl.config` are expected
+The configuration files defined in [](openff.nagl.config) are expected
 to be the main way a user will train a GNN. They are split into
 three sections, which are all combined in a [`TrainingConfig`]. This document gives a broad outline of the config classes; please see examples for how to train a GNN.
 
 ## Model config
 
-A model is defined using the classes in `openff.nagl.config.model`.
+A model is defined using the classes in [](openff.nagl.config.model).
 A model is expected to consist of a single [`ConvolutionModule`],
 and any number of [`ReadoutModule`]s. The readout modules are
 registered by name so multiple properties can be predicted from a single
@@ -30,3 +30,10 @@ Here is where the optimizer is configured for training the GNN.
 
 The model, data, and optimizer configs are combined in a [`TrainingConfig`] that is then used to create a [`TrainingGNNModel`] and [`DGLMoleculeDataModule`]
 that can be passed to a Pytorch Lightning trainer.
+
+[`TrainingConfig`]: openff.nagl.config.TrainingConfig
+[`ConvolutionModule`]: openff.nagl.config.model.ConvolutionModule
+[`ReadoutModule`]: openff.nagl.config.model.ReadoutModule
+[`DatasetConfig`]: openff.nagl.config.DatasetConfig
+[`TrainingGNNModel`]: openff.nagl.training.training.TrainingGNNModel
+[`DGLMoleculeDataModule`]: openff.nagl.training.training.DGLMoleculeDataModule
