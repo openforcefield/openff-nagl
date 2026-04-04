@@ -512,17 +512,35 @@ class FragmentEnumerator:
         if key in self._path_cache:
             return self._path_cache[key]
 
-        all_paths = map(
-            tuple,
-            nx.all_simple_paths(
-                self.reduced_graph,
-                node_a,
-                node_b,
+        use_rx = True
+        if use_rx:
+            import rustworkx as rx
+            rg = rx.networkx_converter(self.reduced_graph)
+            all_paths_indices: list[list[int]] = rx.all_simple_paths(
+                rg,
+                rg.nodes().index(node_a),
+                rg.nodes().index(node_b),
                 cutoff=max_path_length,
-            ),
-        )
-        odd_paths = [path for path in all_paths if len(path) % 2 == 1]
-        odd_paths = tuple(sorted(odd_paths, key=len, reverse=True))
+            )
+            odd_paths = [tuple(path) for path in all_paths_indices if len(path) % 2 == 1]
+            odd_paths = tuple(sorted(odd_paths, key=len, reverse=True))
+
+            # Need to return payload, not just indices
+            odd_paths = tuple(tuple(rg.nodes()[index] for index in path) for path in odd_paths)
+
+        else:
+            all_paths = map(
+                tuple,
+                nx.all_simple_paths(
+                    self.reduced_graph,
+                    node_a,
+                    node_b,
+                    cutoff=max_path_length,
+                ),
+            )
+            odd_paths = [path for path in all_paths if len(path) % 2 == 1]
+            odd_paths = tuple(sorted(odd_paths, key=len, reverse=True))
+
         self._path_cache[key] = odd_paths
         self._path_cache[key[::-1]] = odd_paths
         return odd_paths
