@@ -7,6 +7,7 @@ from numpy.testing import assert_allclose
 from openff.toolkit.topology import Molecule
 from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
 from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
@@ -332,6 +333,26 @@ def test_openff_toolkit_registry(openff_methane_uncharged):
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
     with toolkit_registry_manager(rdkit_registry):
         normalize_molecule(openff_methane_uncharged)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "toolkit_registry",
+    [
+        NAGLRDKitToolkitWrapper,
+        NAGLRDKitToolkitWrapper(),
+        RDKitToolkitWrapper(),
+    ],
+)
+def test_resolve_registry_from_wrapper(toolkit_registry):
+    registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry)
+
+    assert isinstance(registry, NAGLToolkitRegistry)
+    assert len(registry.registered_toolkits) == 1
+    assert any(
+        isinstance(wrapper, NAGLRDKitToolkitWrapper)
+        for wrapper in registry.registered_toolkits
+    )
 
 
 def test_molecule_from_networkx(openff_methane_uncharged):
