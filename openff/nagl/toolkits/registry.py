@@ -9,6 +9,7 @@ from openff.toolkit.utils.toolkit_registry import (
 
 from openff.nagl.toolkits._base import (
     NAGLToolkitWrapperMeta,
+    NAGLToolkitWrapperBase,
     ToolkitWrapperType,
 )
 
@@ -46,16 +47,26 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
 
     @classmethod
     def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> "NAGLToolkitRegistry":
+        from openff.toolkit.utils.base_wrapper import ToolkitWrapper as _ToolkitWrapper
+
         if toolkit_registry is None:
             from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
             toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
         if isinstance(toolkit_registry, NAGLToolkitRegistry):
             return toolkit_registry
+        elif isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
+            return cls([toolkit_registry], exception_if_unavailable=False)
+        elif isinstance(toolkit_registry, NAGLToolkitWrapperBase):
+            return cls([type(toolkit_registry)], exception_if_unavailable=False)
+        elif isinstance(toolkit_registry, _ToolkitWrapper):
+            return cls.from_openff_toolkit_registry(_ToolkitRegistry([toolkit_registry]))
         elif isinstance(toolkit_registry, _ToolkitRegistry):
             return cls.from_openff_toolkit_registry(toolkit_registry)
         else:
             raise ValueError(
-                f"toolkit_registry must be an instance of NAGLToolkitRegistry, ToolkitRegistry, or None. Got {type(toolkit_registry)}"
+                "toolkit_registry must be an instance of NAGLToolkitRegistry, "
+                "ToolkitRegistry, ToolkitWrapper, NAGLToolkitWrapper, or None. "
+                f"Got {type(toolkit_registry)}"
             )
         
     @classmethod
