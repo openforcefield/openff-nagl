@@ -173,6 +173,8 @@ class TrainingGNNModel(pl.LightningModule):
     
     def create_data_module(self, n_processes: int = 0, verbose: bool = True):
         return DGLMoleculeDataModule(self.config, n_processes=n_processes, verbose=verbose)
+
+
     
     
 class DGLMoleculeDataModule(pl.LightningDataModule):
@@ -234,6 +236,8 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 format="parquet",
                 atom_features=self.config.model.atom_features,
                 bond_features=self.config.model.bond_features,
+                include_xyz=self.config.model.include_xyz,
+                enumerate_resonance_forms=self.config.model.enumerate_resonance_forms,
                 columns=columns,
                 cache_directory=cache_dir,
                 use_cached_data=config.use_cached_data,
@@ -245,6 +249,8 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 format="parquet",
                 atom_features=self.config.model.atom_features,
                 bond_features=self.config.model.bond_features,
+                include_xyz=self.config.model.include_xyz,
+                enumerate_resonance_forms=self.config.model.enumerate_resonance_forms,
                 columns=columns,
                 n_processes=self.n_processes,
             )
