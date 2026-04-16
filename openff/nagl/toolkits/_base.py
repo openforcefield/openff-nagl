@@ -1,4 +1,3 @@
-import importlib
 from typing import Union
 
 from openff.nagl._base.metaregistry import create_registry_metaclass

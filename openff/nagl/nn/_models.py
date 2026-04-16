@@ -13,12 +13,14 @@ from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import LookupTableType, _as_lookup_table
 from openff.nagl.utils._utils import potential_dict_to_list
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 class BaseGNNModel(pl.LightningModule):
@@ -161,6 +163,7 @@ class GNNModel(BaseGNNModel):
         check_domains: bool = False,
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -184,11 +187,15 @@ class GNNModel(BaseGNNModel):
             Whether to check a lookup table for the property values.
             If ``False`` or if the molecule is not in the lookup
             table, the property will be computed using the model.
+        toolkit_registry: NAGLToolkitRegistry or None
+            A toolkit registry to use for checking the lookup table and computing the properties.
+            If ``None``, the default NAGL toolkit registry will be used.
 
         Returns
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         import numpy as np
 
         # split up molecule in case it's fragments
@@ -205,6 +212,7 @@ class GNNModel(BaseGNNModel):
                 check_domains=check_domains,
                 error_if_unsupported=error_if_unsupported,
                 check_lookup_table=check_lookup_table,
+                toolkit_registry=toolkit_registry,
             )
             for fragment in fragments
         ]
@@ -242,7 +250,6 @@ class GNNModel(BaseGNNModel):
         return combined_results
 
 
-    
     def _compute_properties(
         self,
         molecule: "Molecule",
@@ -250,6 +257,7 @@ class GNNModel(BaseGNNModel):
         check_domains: bool = False,
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
@@ -273,11 +281,15 @@ class GNNModel(BaseGNNModel):
             Whether to check a lookup table for the property values.
             If ``False`` or if the molecule is not in the lookup
             table, the property will be computed using the model.
+        toolkit_registry: NAGLToolkitRegistry or None
+            A toolkit registry to use for checking the lookup table and computing the properties.
+            If ``None``, the default NAGL toolkit registry will be used.
 
         Returns
         -------
         result: Dict[str, torch.Tensor] or Dict[str, numpy.ndarray]
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
 
         values = {}
 
@@ -289,6 +301,7 @@ class GNNModel(BaseGNNModel):
                     value = self._check_property_lookup_table(
                         molecule=molecule,
                         readout_name=property_name,
+                        toolkit_registry=toolkit_registry,
                     )
                 except KeyError as e:
                     logger.info(
@@ -310,7 +323,9 @@ class GNNModel(BaseGNNModel):
         
         if check_domains:
             is_supported, error = self.chemical_domain.check_molecule(
-                molecule, return_error_message=True
+                molecule,
+                return_error_message=True,
+                toolkit_registry=toolkit_registry,
             )
             if not is_supported:
                 if error_if_unsupported:
@@ -319,9 +334,9 @@ class GNNModel(BaseGNNModel):
                     warnings.warn(error)
 
         try:
-            values = self._compute_properties_dgl(molecule)
+            values = self._compute_properties_dgl(molecule, toolkit_registry=toolkit_registry)
         except (MissingOptionalDependencyError, TypeError):
-            values = self._compute_properties_nagl(molecule)
+            values = self._compute_properties_nagl(molecule, toolkit_registry=toolkit_registry)
         
 
         if as_numpy:
@@ -332,6 +347,7 @@ class GNNModel(BaseGNNModel):
         self,
         molecule: "Molecule",
         readout_name: str,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         """
         Check if the molecule is in the property lookup table.
@@ -342,11 +358,14 @@ class GNNModel(BaseGNNModel):
             The molecule to check.
         readout_name: str
             The name of the readout to check.
-        
+        toolkit_registry: NAGLToolkitRegistry or None
+            A toolkit registry to use for checking the lookup table.
+            If ``None``, the default NAGL toolkit registry will be used.
+
         Returns
         -------
         torch.Tensor
-        
+
 
         Raises
         ------
@@ -354,11 +373,11 @@ class GNNModel(BaseGNNModel):
             If there is no table for this property, or
             if the molecule is not in the property lookup table
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
 
         table = self.lookup_tables[readout_name]
-        return table.lookup(molecule)
+        return table.lookup(molecule, toolkit_registry=toolkit_registry)
 
-        
     def compute_property(
         self,
         molecule: "Molecule",
@@ -366,7 +385,8 @@ class GNNModel(BaseGNNModel):
         as_numpy: bool = True,
         check_domains: bool = False,
         error_if_unsupported: bool = True,
-        check_lookup_table: bool = True
+        check_lookup_table: bool = True,
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         """
         Compute the trained property for a molecule.
@@ -394,17 +414,22 @@ class GNNModel(BaseGNNModel):
             Whether to check a lookup table for the property values.
             If ``False`` or if the molecule is not in the lookup
             table, the property will be computed using the model.
+        toolkit_registry: NAGLToolkitRegistry or None
+            A toolkit registry to use for checking the lookup table and computing the properties.
+            If ``None``, the default NAGL toolkit registry will be used.
 
         Returns
         -------
         result: torch.Tensor or numpy.ndarray
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         properties = self.compute_properties(
             molecule=molecule,
             as_numpy=as_numpy,
             check_domains=check_domains,
             error_if_unsupported=error_if_unsupported,
-            check_lookup_table=check_lookup_table
+            check_lookup_table=check_lookup_table,
+            toolkit_registry=toolkit_registry,
         )
         if readout_name is None:
             if len(properties) == 1:
@@ -414,20 +439,23 @@ class GNNModel(BaseGNNModel):
             )
         return properties[readout_name]
 
-    def _compute_properties_nagl(self, molecule: "Molecule") -> "torch.Tensor":
+    def _compute_properties_nagl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
 
         nxmol = GraphMolecule.from_openff(
             molecule,
             atom_features=self.config.atom_features,
             bond_features=self.config.bond_features,
+            toolkit_registry=toolkit_registry,
         )
         model = self
         if self._is_dgl:
             model = self._as_nagl()
         return model.forward(nxmol)
 
-    def _compute_properties_dgl(self, molecule: "Molecule") -> "torch.Tensor":
+    def _compute_properties_dgl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
         if not self._is_dgl:
@@ -440,10 +468,12 @@ class GNNModel(BaseGNNModel):
             molecule,
             atom_features=self.config.atom_features,
             bond_features=self.config.bond_features,
+            toolkit_registry=toolkit_registry,
         )
         return self.forward(dglmol)
     
-    def _convert_to_nagl_molecule(self, molecule: "Molecule"):
+    def _convert_to_nagl_molecule(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None):
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
         if self._is_dgl:
             from openff.nagl.molecule._dgl.molecule import DGLMolecule
@@ -452,12 +482,13 @@ class GNNModel(BaseGNNModel):
                 molecule,
                 atom_features=self.config.atom_features,
                 bond_features=self.config.bond_features,
+                toolkit_registry=toolkit_registry,
             )
-
         return GraphMolecule.from_openff(
             molecule,
             atom_features=self.config.atom_features,
             bond_features=self.config.bond_features,
+            toolkit_registry=toolkit_registry,
         )
     
     @classmethod

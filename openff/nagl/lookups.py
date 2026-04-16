@@ -4,6 +4,7 @@ import typing
 import torch
 
 from openff.nagl._base.base import ImmutableModel
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
 from openff.nagl.utils._utils import is_iterable, potential_dict_to_list
 
 try:
@@ -13,6 +14,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
 __all__ = [
@@ -117,7 +119,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
     def __contains__(self, key: str) -> bool:
         return key in self.properties
 
-    def lookup(self, molecule: "Molecule") -> torch.Tensor:
+    def lookup(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         """
         Look up the property value for a molecule
 
@@ -136,11 +138,11 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         KeyError
             If the property value cannot be found for this molecule
         """
+        toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.toolkit import Molecule
         from openff.toolkit.utils.exceptions import EmptyInChiError
-        from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
 
-        rdkit_only = "OpenEye" not in GLOBAL_TOOLKIT_REGISTRY.__repr__()
+        rdkit_only = "OpenEye" not in toolkit_registry.__repr__()
 
         if rdkit_only:
             from rdkit import RDLogger
@@ -150,7 +152,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             if rdkit_only:
                 RDLogger.DisableLog('rdApp.*')
 
-            inchi_key = molecule.to_inchi(fixed_hydrogens=True)
+            inchi_key = molecule.to_inchi(fixed_hydrogens=True, toolkit_registry=toolkit_registry)
 
         except EmptyInChiError as e:
 
@@ -171,7 +173,8 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         # remap to query order
         entry_molecule = Molecule.from_mapped_smiles(
             entry.mapped_smiles,
-            allow_undefined_stereo=True
+            allow_undefined_stereo=True,
+            toolkit_registry=toolkit_registry,
         )
 
         # first try with input bond orders and formal charges
@@ -179,6 +182,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             molecule,
             entry_molecule,
             return_atom_map=True,
+            toolkit_registry=toolkit_registry,
         )
         if not is_isomorphic:
             # try again without bond orders and formal charges.
@@ -191,6 +195,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
                 aromatic_matching=True,
                 formal_charge_matching=False,
                 bond_order_matching=False,
+                toolkit_registry=toolkit_registry,
             )
 
             if not is_isomorphic:
@@ -204,6 +209,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
                     # skip stereochemistry because matching inchi should be enough
                     atom_stereochemistry_matching=False,
                     bond_stereochemistry_matching=False,
+                    toolkit_registry=toolkit_registry,
                 )
 
                 assert is_isomorphic
