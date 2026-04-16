@@ -58,6 +58,8 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
             return cls([toolkit_registry], exception_if_unavailable=False)
         elif isinstance(toolkit_registry, NAGLToolkitWrapperBase):
             return cls([type(toolkit_registry)], exception_if_unavailable=False)
+        elif isinstance(toolkit_registry, type) and issubclass(toolkit_registry, _ToolkitWrapper):
+            return cls.from_openff_toolkit_registry(_ToolkitRegistry([toolkit_registry()]))
         elif isinstance(toolkit_registry, _ToolkitWrapper):
             return cls.from_openff_toolkit_registry(_ToolkitRegistry([toolkit_registry]))
         elif isinstance(toolkit_registry, _ToolkitRegistry):
