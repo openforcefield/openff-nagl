@@ -329,7 +329,6 @@ def test_capture_toolkit_warnings(caplog):
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_openff_toolkit_registry(openff_methane_uncharged):
-
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
     with toolkit_registry_manager(rdkit_registry):
         normalize_molecule(openff_methane_uncharged)
@@ -340,8 +339,7 @@ def test_openff_toolkit_registry(openff_methane_uncharged):
     "toolkit_registry",
     [
         NAGLRDKitToolkitWrapper,
-        NAGLRDKitToolkitWrapper(),
-        RDKitToolkitWrapper(),
+        RDKitToolkitWrapper,
     ],
 )
 def test_resolve_registry_from_wrapper(toolkit_registry):
@@ -352,6 +350,14 @@ def test_resolve_registry_from_wrapper(toolkit_registry):
     assert any(
         isinstance(wrapper, NAGLRDKitToolkitWrapper)
         for wrapper in registry.registered_toolkits
+    )
+
+    # also try with an instance
+    registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry())
+    assert isinstance(registry, NAGLToolkitRegistry)
+    assert len(registry.registered_toolkits) == 1
+    assert any(
+        isinstance(wrapper, NAGLRDKitToolkitWrapper)        for wrapper in registry.registered_toolkits
     )
 
 
