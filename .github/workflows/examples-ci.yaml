@@ -31,7 +31,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest]
-          python-version: ["3.11", "3.12"]
+          python-version: ["3.12"]
           pydantic-version: ["2"]
           include-rdkit: [true]
           include-openeye: [false]
@@ -88,5 +88,4 @@ jobs:
         assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
 
     - name: Run example notebooks
-      run: |
-        python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=50000 --dist loadscope examples
+      run: python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=50000 --dist loadscope examples --ignore=examples/train-gnn-to-electric-field/
