@@ -18,6 +18,7 @@ dependencies:
 
   # chemistry
   - openff-toolkit >=0.11.1
+  - ambertools
   - openff-units
   - openff-recharge
   - openff-qcsubmit
