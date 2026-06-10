@@ -15,7 +15,7 @@ dependencies:
   - openff-toolkit-base >=0.18
   - openff-nagl-models >=2025
   - openff-units
-  - pydantic <3
+  - pydantic =2.11
   - rdkit
   - openeye::openeye-toolkits
 
@@ -23,13 +23,13 @@ dependencies:
   - pyarrow
 
   # gcn
-  - dgl >=2.2
+  - dgl =2
   # torchdata
   # torchvision
   # torchaudio
-  - pytorch >=2.5
+  - pytorch =2
   - pytorch-lightning
-  - cuda-version >=12.0
+  - cuda-version >=11
 
   # parallelism
   - dask-jobqueue
