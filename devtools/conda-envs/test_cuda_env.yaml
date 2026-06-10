@@ -1,14 +1,10 @@
 # environment for testing cuda
 name: openff-nagl-test-cuda
 channels:
-  - openeye
-  - dglteam/label/th21_cu118
-  - pytorch
-  - nvidia
   - conda-forge
 dependencies:
     # Base depends
-  - python
+  - python >=3.12
   - pip
 
   # UI
@@ -16,26 +12,24 @@ dependencies:
 
   # chemistry
   - openff-recharge
-  - openff-toolkit-base >=0.16.9
-  - openff-nagl-models
+  - openff-toolkit-base >=0.18
+  - openff-nagl-models >=2025
   - openff-units
   - pydantic <3
   - rdkit
-  - openeye-toolkits
+  - openeye::openeye-toolkits
 
   # database
   - pyarrow
 
   # gcn
-  - cudatoolkit
-  - dgl ~=2.1
-  - torchdata
-  - torchvision
-  - torchaudio
-  - pytorch ==2.1
-  - pytorch-gpu  # is effectively a subpackage?
+  - dgl >=2.2
+  # torchdata
+  # torchvision
+  # torchaudio
+  - pytorch >=2.5
   - pytorch-lightning
-  - pytorch-cuda ==11.8
+  - cuda-version >=12.0
 
   # parallelism
   - dask-jobqueue
