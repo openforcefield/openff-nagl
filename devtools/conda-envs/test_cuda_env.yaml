@@ -24,7 +24,7 @@ dependencies:
 
   # gcn
   - dgl =2
-  # torchdata
+  - torchdata <=0.10.0
   # torchvision
   # torchaudio
   - pytorch =2
