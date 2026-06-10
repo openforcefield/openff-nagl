@@ -1,9 +1,4 @@
-import copy
-
 from collections import UserDict
-
-from typing import Dict
-
 
 import torch
 
@@ -210,7 +205,7 @@ class NodeBatch:
         graph,
         nodes: torch.Tensor,
         ntype: str,
-        data: Dict[str, torch.Tensor],
+        data: dict[str, torch.Tensor],
         msgs=None,
     ):
         self._graph = graph

@@ -3,13 +3,13 @@ import torch
 from openff.toolkit.topology.molecule import Molecule
 from torch.testing import assert_close
 
+from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.bonds import BondIsInRing
 from openff.nagl.molecule._dgl.utils import (
     dgl_heterograph_to_homograph,
     openff_molecule_to_base_dgl_graph,
     openff_molecule_to_dgl_graph,
 )
-from openff.nagl.features.atoms import AtomConnectivity
-from openff.nagl.features.bonds import BondIsInRing
 
 pytest.importorskip("dgl")
 
@@ -35,12 +35,8 @@ def test_openff_molecule_to_base_dgl_graph(methane_dgl_heterograph):
         ([AtomConnectivity()], [BondIsInRing()]),
     ],
 )
-def test_openff_molecule_to_dgl_graph(
-    openff_methane_uncharged, atom_features, bond_features
-):
-    graph = openff_molecule_to_dgl_graph(
-        openff_methane_uncharged, atom_features, bond_features
-    )
+def test_openff_molecule_to_dgl_graph(openff_methane_uncharged, atom_features, bond_features):
+    graph = openff_molecule_to_dgl_graph(openff_methane_uncharged, atom_features, bond_features)
     assert graph.number_of_nodes() == 5
     assert graph.number_of_edges() == 8
 

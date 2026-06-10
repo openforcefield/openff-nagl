@@ -1,17 +1,14 @@
 """Functions using the RDKit toolkit"""
 
-
 import copy
 import functools
-from typing import Tuple, TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-
+from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.units import unit
 
-
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
 
 if TYPE_CHECKING:
@@ -24,7 +21,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     def _run_normalization_reactions(
         self,
         molecule,
-        normalization_reactions: Tuple[str, ...] = tuple(),
+        normalization_reactions: tuple[str, ...] = tuple(),
         max_iter: int = 200,
     ):
         """
@@ -71,16 +68,11 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 try:
                     ((rdmol,),) = products
                 except ValueError:
-                    raise ValueError(
-                        f"Reaction produced multiple products: {reaction_smarts}"
-                    )
+                    raise ValueError(f"Reaction produced multiple products: {reaction_smarts}")
 
                 for atom in rdmol.GetAtoms():
                     # reorder the rdkit mol following mapping
-                    original_atom_indices = [
-                        atom.GetIntProp("react_atom_idx")
-                        for atom in rdmol.GetAtoms()
-                    ]
+                    original_atom_indices = [atom.GetIntProp("react_atom_idx") for atom in rdmol.GetAtoms()]
                 new_order = [original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
                 rdmol = Chem.RenumberAtoms(rdmol, new_order)
                 # RDKit can assign stereochemistry differently
@@ -96,7 +88,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     f"Reaction {reaction_smarts} did not converge after "
                     f"{max_iter} iterations for molecule {original_smiles}"
                 )
-            
+
         for i, atom in enumerate(rdmol.GetAtoms(), 1):
             atom.SetAtomMapNum(i)
 
@@ -105,7 +97,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
         Chem.Kekulize(rdmol)
         Chem.AssignStereochemistry(rdmol)
-            
+
         new_mol = self.from_rdkit(
             rdmol,
             allow_undefined_stereo=True,
@@ -123,9 +115,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         return new_mol.remap(adjusted_mapping, current_to_new=True)
 
-    def get_molecule_hybridizations(
-        self, molecule: "Molecule"
-    ) -> List[HybridizationType]:
+    def get_molecule_hybridizations(self, molecule: "Molecule") -> list[HybridizationType]:
         """
         Get the hybridization of each atom in a molecule.
 
@@ -178,10 +168,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 allow_undefined_stereo=True,
                 toolkit_registry=RDKitToolkitWrapper(),
             )
-            mol2_bonds = {
-                (bd.atom1_index, bd.atom2_index): bd.stereochemistry
-                for bd in mol2.bonds
-            }
+            mol2_bonds = {(bd.atom1_index, bd.atom2_index): bd.stereochemistry for bd in mol2.bonds}
 
             molecule = copy.deepcopy(molecule)
             for bond in molecule.bonds:
@@ -259,22 +246,14 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             if mapped_smiles:
                 converter = cls.smiles_to_mapped_smiles
             else:
-                converter = functools.partial(
-                    Chem.MolToSmiles, allHsExplicit=explicit_hydrogens
-                )
+                converter = functools.partial(Chem.MolToSmiles, allHsExplicit=explicit_hydrogens)
         else:
-            converter = functools.partial(
-                wrapper.from_rdkit,
-                allow_undefined_stereo=True,
-                _cls=Molecule
-            )
+            converter = functools.partial(wrapper.from_rdkit, allow_undefined_stereo=True, _cls=Molecule)
 
         if file.endswith(".gz"):
             file = file[:-3]
 
-        for rdmol in Chem.SupplierFromFilename(
-            file, removeHs=False, sanitize=True, strictParsing=True
-        ):
+        for rdmol in Chem.SupplierFromFilename(file, removeHs=False, sanitize=True, strictParsing=True):
             if rdmol is not None:
                 yield converter(rdmol)
 
@@ -322,8 +301,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     def get_best_rmsd(
         self,
         molecule: "Molecule",
-        reference_conformer: Union[np.ndarray, unit.Quantity],
-        target_conformer: Union[np.ndarray, unit.Quantity],
+        reference_conformer: np.ndarray | unit.Quantity,
+        target_conformer: np.ndarray | unit.Quantity,
     ) -> unit.Quantity:
         """
         Compute the lowest all-atom RMSD between a reference and target conformer,
@@ -379,7 +358,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each atom in a molecule is in a ring of a given size.
 
@@ -403,7 +382,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each bond in a molecule is in a ring of a given size.
 
@@ -495,10 +474,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         rdkit_molecule = self.to_rdkit(molecule)
         AllChem.ComputeGasteigerCharges(rdkit_molecule)
-        charges = [
-            float(rdatom.GetProp("_GasteigerCharge"))
-            for rdatom in rdkit_molecule.GetAtoms()
-        ]
+        charges = [float(rdatom.GetProp("_GasteigerCharge")) for rdatom in rdkit_molecule.GetAtoms()]
 
         charges = np.asarray(charges)
         molecule.partial_charges = unit.Quantity(charges, unit.elementary_charge)
@@ -534,7 +510,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             The Dice similarity between the two molecules.
 
         """
-        from rdkit import Chem
         from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
         from rdkit.DataStructs import DiceSimilarity
 

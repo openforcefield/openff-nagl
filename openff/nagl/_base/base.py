@@ -1,16 +1,16 @@
 import enum
-import pathlib
 import json
-import yaml
+import pathlib
 
 import numpy as np
+import yaml
 from openff.units import unit
-
 
 try:
     from pydantic.v1 import BaseModel
 except ImportError:
     from pydantic import BaseModel
+
 
 class MutableModel(BaseModel):
     """
@@ -34,7 +34,7 @@ class MutableModel(BaseModel):
 
     def __init__(self, *args, **kwargs):
         self.__pre_init__(*args, **kwargs)
-        super(MutableModel, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__post_init__(*args, **kwargs)
 
     def __pre_init__(self, *args, **kwargs):
@@ -53,7 +53,7 @@ class MutableModel(BaseModel):
     @classmethod
     def from_json(cls, string_or_file):
         try:
-            with open(string_or_file, "r") as f:
+            with open(string_or_file) as f:
                 string_or_file = f.read()
         except (OSError, FileNotFoundError):
             pass
@@ -70,9 +70,10 @@ class MutableModel(BaseModel):
 
     @classmethod
     def from_yaml(cls, filename):
-        with open(filename, "r") as f:
+        with open(filename) as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
         return cls(**data)
+
 
 class ImmutableModel(MutableModel):
     class Config(MutableModel.Config):

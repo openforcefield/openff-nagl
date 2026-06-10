@@ -2,27 +2,30 @@ import pathlib
 
 import click
 import tqdm
-
 from openff.toolkit import Molecule
 from openff.units import unit
+
 from openff.nagl import GNNModel
 
 
 @click.command()
 @click.option(
-    "--input", "-i",
+    "--input",
+    "-i",
     "input_directory",
     required=True,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     "output_directory",
     required=True,
     type=click.Path(file_okay=False, dir_okay=True),
 )
 @click.option(
-    "--model", "-m",
+    "--model",
+    "-m",
     "model_path",
     required=True,
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
@@ -40,10 +43,7 @@ def main(
 
     for input_file in tqdm.tqdm(input_files):
         mol = Molecule.from_file(input_file, "SDF", allow_undefined_stereo=True)
-        mol._partial_charges = (
-            model.compute_property(mol, as_numpy=True)
-            * unit.elementary_charge
-        )
+        mol._partial_charges = model.compute_property(mol, as_numpy=True) * unit.elementary_charge
         output_file = output_directory / input_file.name
         mol.to_file(output_file, "SDF")
 

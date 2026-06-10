@@ -1,16 +1,14 @@
 """Functions using the OpenEye toolkit"""
 
 import copy
-from typing import Tuple, TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-
+from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
 from openff.units import unit
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
-
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -22,7 +20,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     def _run_normalization_reactions(
         self,
         molecule: "Molecule",
-        normalization_reactions: Tuple[str, ...] = tuple(),
+        normalization_reactions: tuple[str, ...] = tuple(),
         **kwargs,
     ):
         """
@@ -55,7 +53,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
                 # (aromaticity, etc.)
                 # in particular changing aromaticity seems to cause issues here
                 options.SetHydrogenConversions(False)
-            outcome = reaction(oemol)
+            reaction(oemol)
 
         molecule = self.from_openeye(
             oemol,
@@ -65,9 +63,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
 
         return molecule
 
-    def get_molecule_hybridizations(
-        self, molecule: "Molecule"
-    ) -> List[HybridizationType]:
+    def get_molecule_hybridizations(self, molecule: "Molecule") -> list[HybridizationType]:
         """
         Get the hybridization of each atom in a molecule.
 
@@ -130,9 +126,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
 
         from openff.toolkit.topology import Molecule
 
-        has_charges = (
-            OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
-        )
+        has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
         offmol = self.from_openeye(
             oemol,
             allow_undefined_stereo=True,
@@ -188,9 +182,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
                             oechem.OESetSDData(confmol, dp.GetTag(), dp.GetValue())
             else:
                 confmol = oemol
-            yield self._molecule_from_openeye(
-                confmol, as_smiles=as_smiles, mapped_smiles=mapped_smiles
-            )
+            yield self._molecule_from_openeye(confmol, as_smiles=as_smiles, mapped_smiles=mapped_smiles)
 
     def to_openeye(self, molecule: "Molecule"):
         """
@@ -211,9 +203,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         oemol = super().to_openeye(molecule)
 
         if molecule.partial_charges is not None:
-            partial_charges_list = [
-                oeatom.GetPartialCharge() for oeatom in oemol.GetAtoms()
-            ]
+            partial_charges_list = [oeatom.GetPartialCharge() for oeatom in oemol.GetAtoms()]
             partial_charges_str = " ".join([f"{val:f}" for val in partial_charges_list])
             oechem.OESetSDData(oemol, "atom.dprop.PartialCharge", partial_charges_str)
         return oemol
@@ -256,8 +246,8 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
     def get_best_rmsd(
         self,
         molecule: "Molecule",
-        reference_conformer: Union[np.ndarray, unit.Quantity],
-        target_conformer: Union[np.ndarray, unit.Quantity],
+        reference_conformer: np.ndarray | unit.Quantity,
+        target_conformer: np.ndarray | unit.Quantity,
     ) -> unit.Quantity:
         """
         Compute the lowest all-atom RMSD between a reference and target conformer,
@@ -305,7 +295,15 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         oemol1 = self.to_openeye(mol1)
         oemol2 = self.to_openeye(mol2)
 
-        # OERMSD(OEMolBase ref, OEMolBase fit, bool automorph=True, bool heavyOnly=True, bool overlay=False, double * rot=None, double * trans=None) -> double
+        # OERMSD(
+        #   OEMolBase ref,
+        #   OEMolBase fit,
+        #   bool automorph=True,
+        #   bool heavyOnly=True,
+        #   bool overlay=False,
+        #   double * rot=None,
+        #   double * trans=None
+        # ) -> double
         rmsd = oechem.OERMSD(oemol1, oemol2, True, False, True)
         return rmsd * unit.angstrom
 
@@ -313,7 +311,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each atom in a molecule is in a ring of a given size.
 
@@ -334,16 +332,14 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         oemol = self.to_openeye(molecule)
         oechem.OEFindRingAtomsAndBonds(oemol)
 
-        in_ring_size = [
-            oechem.OEAtomIsInRingSize(atom, ring_size) for atom in oemol.GetAtoms()
-        ]
+        in_ring_size = [oechem.OEAtomIsInRingSize(atom, ring_size) for atom in oemol.GetAtoms()]
         return in_ring_size
 
     def get_bonds_are_in_ring_size(
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each bond in a molecule is in a ring of a given size.
 

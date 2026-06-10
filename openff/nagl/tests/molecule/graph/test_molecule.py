@@ -1,10 +1,9 @@
-import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 
-from openff.nagl.molecule._graph.molecule import GraphMolecule
-from openff.nagl.molecule._graph._graph import NXMolHeteroGraph, NXMolHomoGraph
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
+from openff.nagl.molecule._graph._graph import NXMolHeteroGraph, NXMolHomoGraph
+from openff.nagl.molecule._graph.molecule import GraphMolecule
 
 
 class TestNXMolecule:

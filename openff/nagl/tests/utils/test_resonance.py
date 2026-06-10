@@ -1,16 +1,15 @@
 import pytest
-
 from openff.units import unit
 
-from openff.nagl.utils.resonance import ResonanceEnumerator, FragmentEnumerator
 from openff.nagl.tests.testing.utils import assert_smiles_equal
+from openff.nagl.utils.resonance import FragmentEnumerator, ResonanceEnumerator
 
 
 @pytest.fixture
 def resonance_enumerator():
     from openff.toolkit.topology import Molecule
 
-    explicit_smarts = "[O-:1][N+:2](=[O:3])[N:4](-[H:16])[c:5]1[c:6](-[H:12])[c:7](-[H:13])[c:8](-[H:14])[c:9](-[H:15])[n+:10]1[O-:11]"
+    explicit_smarts = "[O-:1][N+:2](=[O:3])[N:4](-[H:16])[c:5]1[c:6](-[H:12])[c:7](-[H:13])[c:8](-[H:14])[c:9](-[H:15])[n+:10]1[O-:11]"  # noqa E501
     offmol = Molecule.from_mapped_smiles(explicit_smarts)
     enumerator = ResonanceEnumerator(offmol)
     return enumerator
@@ -38,9 +37,7 @@ class TestFragmentEnumerator:
 
     def test_creation(self, fragment_enumerator):
         atomic_numbers = [8, 7, 8, 7, 6, 6, 6, 6, 6, 7, 8]
-        fragment_atomic_numbers = [
-            z for _, z in fragment_enumerator.reduced_graph.nodes(data="atomic_number")
-        ]
+        fragment_atomic_numbers = [z for _, z in fragment_enumerator.reduced_graph.nodes(data="atomic_number")]
         assert fragment_atomic_numbers == atomic_numbers
 
         formal_charges = [-1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1]
@@ -102,9 +99,7 @@ class TestFragmentEnumerator:
             (9, 3, [(3, 4, 5, 6, 7, 8, 9)]),
         ],
     )
-    def test_get_transfer_paths(
-        self, fragment_enumerator, acceptor, donor, expected_paths
-    ):
+    def test_get_transfer_paths(self, fragment_enumerator, acceptor, donor, expected_paths):
         paths = fragment_enumerator._get_transfer_paths(donor, acceptor)
         assert list(paths) == expected_paths
 
@@ -131,15 +126,11 @@ class TestFragmentEnumerator:
         assert given == expected
 
     def test_enumerate_donor_acceptor_resonance_forms(self, fragment_enumerator):
-        fragments = list(
-            fragment_enumerator._enumerate_donor_acceptor_resonance_forms()
-        )
+        fragments = list(fragment_enumerator._enumerate_donor_acceptor_resonance_forms())
         assert len(fragments) == 3
 
         # (0, 1, 2)
-        resonance_fragment1 = fragments[0]._to_resonance_dict(
-            include_formal_charges=True
-        )
+        resonance_fragment1 = fragments[0]._to_resonance_dict(include_formal_charges=True)
         expected_fragment1 = {
             "acceptor_indices": [0, 1, 9],
             "donor_indices": [2, 3, 10],
@@ -161,9 +152,7 @@ class TestFragmentEnumerator:
         assert resonance_fragment1 == expected_fragment1
 
         # (3, 1, 2)
-        resonance_fragment2 = fragments[1]._to_resonance_dict(
-            include_formal_charges=True
-        )
+        resonance_fragment2 = fragments[1]._to_resonance_dict(include_formal_charges=True)
         expected_fragment2 = {
             "acceptor_indices": [1, 3, 9],
             "donor_indices": [0, 2, 10],
@@ -185,9 +174,7 @@ class TestFragmentEnumerator:
         assert resonance_fragment2 == expected_fragment2
 
         # (3, 4, 5, 6, 7, 8, 9)
-        resonance_fragment3 = fragments[2]._to_resonance_dict(
-            include_formal_charges=True
-        )
+        resonance_fragment3 = fragments[2]._to_resonance_dict(include_formal_charges=True)
         expected_fragment3 = {
             "acceptor_indices": [1, 2, 3],
             "donor_indices": [0, 9, 10],
@@ -309,9 +296,7 @@ class TestResonanceEnumerator:
 
     @pytest.mark.parametrize("lowest_energy_only", [True, False])
     @pytest.mark.parametrize("include_all_transfer_pathways", [True, False])
-    def test_enumerate_resonance_forms_simple(
-        self, lowest_energy_only, include_all_transfer_pathways
-    ):
+    def test_enumerate_resonance_forms_simple(self, lowest_energy_only, include_all_transfer_pathways):
         from openff.toolkit.topology import Molecule
 
         methane = Molecule.from_smiles("C")
@@ -353,7 +338,5 @@ class TestResonanceEnumerator:
         enumerator = ResonanceEnumerator(offmol)
         fragments = enumerator._get_acceptor_donor_fragments()
 
-        fragment_indices = sorted(
-            tuple(fragment.reduced_graph.nodes) for fragment in fragments
-        )
+        fragment_indices = sorted(tuple(fragment.reduced_graph.nodes) for fragment in fragments)
         assert fragment_indices == expected_indices

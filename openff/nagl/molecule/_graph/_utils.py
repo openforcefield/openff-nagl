@@ -1,8 +1,8 @@
 from collections import defaultdict
-from typing import List, Tuple, Iterable
+from collections.abc import Iterable
 
-import torch
 import networkx as nx
+import torch
 
 
 def nonzero_1d(values):
@@ -16,7 +16,7 @@ def as_numpy(val: torch.Tensor):
     return val.cpu().detach().numpy()
 
 
-def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
+def _bucketing(val: torch.Tensor) -> tuple[torch.Tensor, callable]:
     """Internal function to create groups on the values.
 
     Parameters
@@ -40,7 +40,7 @@ def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
         selected = torch.index_select(sorted_indices_in_original, 0, value_indices)
         bucket_indices.append(selected.long())
 
-    def bucketor(data) -> List[torch.Tensor]:
+    def bucketor(data) -> list[torch.Tensor]:
         buckets = [torch.index_select(data, 0, idx) for idx in bucket_indices]
 
         return buckets
@@ -49,17 +49,16 @@ def _bucketing(val: torch.Tensor) -> Tuple[torch.Tensor, callable]:
 
 
 def _batch_nx_graphs(graphs):
-    import torch
     import networkx as nx
+    import torch
+
     from openff.nagl.molecule._graph._batch import FrameDict
 
     if not len(graphs):
         raise ValueError("Cannot batch empty graphs")
 
     for graph in graphs:
-        assert all(
-            key in graph.graph for key in ["node_data", "graph_data", "edge_data"]
-        )
+        assert all(key in graph.graph for key in ["node_data", "graph_data", "edge_data"])
 
     joined_graph = nx.disjoint_union_all(graphs)
 
@@ -82,9 +81,7 @@ def _batch_nx_graphs(graphs):
             tensors = []
             for graph in graphs:
                 if feature_key not in graph.graph[key]:
-                    raise ValueError(
-                        f"Graphs are missing feature {feature_key} in {key}"
-                    )
+                    raise ValueError(f"Graphs are missing feature {feature_key} in {key}")
                 tensors.append(graph.graph[key][feature_key])
             joined_graph.graph[key][feature_key] = torch.cat(tensors, dim=0)
     return joined_graph
@@ -93,8 +90,9 @@ def _batch_nx_graphs(graphs):
 def _unbatch_nx_graphs(
     graph: nx.Graph,
     n_representations_per_molecule: Iterable[int],
-) -> List[nx.Graph]:
+) -> list[nx.Graph]:
     import networkx as nx
+
     from openff.nagl.molecule._graph._batch import FrameDict
 
     unbatched_graphs = []

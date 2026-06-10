@@ -18,12 +18,11 @@ to implement your own features.
 
 """
 
-# from typing import ClassVar, Dict, Type
 import typing
 
 import torch
 
-from ._base import CategoricalMixin, Feature #, FeatureMeta
+from ._base import CategoricalMixin, Feature  # , FeatureMeta
 from ._utils import one_hot_encode
 
 try:
@@ -37,11 +36,11 @@ if typing.TYPE_CHECKING:
 
 __all__ = [
     "BondFeature",
+    "BondInRingOfSize",
     "BondIsAromatic",
     "BondIsInRing",
-    "BondInRingOfSize",
-    "WibergBondOrder",
     "BondOrder",
+    "WibergBondOrder",
 ]
 
 
@@ -51,7 +50,7 @@ __all__ = [
 #     registry: ClassVar[Dict[str, Type]] = {}
 
 
-class BondFeature(Feature):#, metaclass=_BondFeatureMeta):
+class BondFeature(Feature):  # , metaclass=_BondFeatureMeta):
     """Abstract base class for features of bonds.
 
     See :py:class:`Feature<openff.nagl.features.Feature>` for details on how to
@@ -63,6 +62,7 @@ class BondFeature(Feature):#, metaclass=_BondFeatureMeta):
 
 class BondIsAromatic(BondFeature):
     """One-hot encoding for whether the bond is aromatic or not."""
+
     name: typing.Literal["bond_is_aromatic"] = "bond_is_aromatic"
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
@@ -78,6 +78,7 @@ class BondIsInRing(BondFeature):
     BondInRingOfSize
 
     """
+
     name: typing.Literal["bond_is_in_ring"] = "bond_is_in_ring"
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
@@ -114,6 +115,7 @@ class BondInRingOfSize(BondFeature):
     BondIsInRing, AtomIsInRingOfSize, AtomIsInRing
 
     """
+
     name: typing.Literal["bond_in_ring_of_size"] = "bond_in_ring_of_size"
 
     ring_size: int
@@ -132,6 +134,7 @@ class WibergBondOrder(BondFeature):
     This feature encodes the Wiberg bond order directly, it does not use a
     one-hot encoding.
     """
+
     name: typing.Literal["wiberg_bond_order"] = "wiberg_bond_order"
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
@@ -153,27 +156,15 @@ class BondOrder(CategoricalMixin, BondFeature):
     ...     ...
     ... )
     """
+
     name: typing.Literal["bond_order"] = "bond_order"
 
     categories = [1, 2, 3]
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
-        return torch.vstack(
-            [
-                one_hot_encode(int(bond.bond_order), self.categories)
-                for bond in molecule.bonds
-            ]
-        )
+        return torch.vstack([one_hot_encode(int(bond.bond_order), self.categories) for bond in molecule.bonds])
 
 
-BondFeatureType = typing.Union[
-    BondIsAromatic,
-    BondIsInRing,
-    BondInRingOfSize,
-    WibergBondOrder,
-    BondOrder,
-]
+BondFeatureType = BondIsAromatic | BondIsInRing | BondInRingOfSize | WibergBondOrder | BondOrder
 
-DiscriminatedBondFeatureType = typing.Annotated[
-    BondFeatureType, Field(..., discriminator="name")
-]
+DiscriminatedBondFeatureType = typing.Annotated[BondFeatureType, Field(..., discriminator="name")]

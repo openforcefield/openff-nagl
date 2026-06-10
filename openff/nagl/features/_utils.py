@@ -1,11 +1,11 @@
-from typing import List, TypeVar
+from typing import TypeVar
 
 import torch
 
 T = TypeVar("T")
 
 
-def one_hot_encode(value: T, categories: List[T]) -> torch.tensor:
+def one_hot_encode[T](value: T, categories: list[T]) -> torch.tensor:
     """
     One-hot encode a value.
     """

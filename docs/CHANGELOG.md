@@ -40,7 +40,7 @@ The rules for this file:
 ## v0.5.3 -- 2025-08-18
 
 ### Fixed
-- Updated openeye_wrapper for behavior changes in reaction 
+- Updated openeye_wrapper for behavior changes in reaction
   functionality in the 2025.1.1 openeye-toolkits package.
 
 ### Authors

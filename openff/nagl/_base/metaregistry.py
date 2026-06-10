@@ -1,8 +1,8 @@
-from typing import Any, ClassVar, Dict, Type
+from typing import Any, ClassVar
 
 
 class MetaRegistryMixin(type):
-    registry: ClassVar[Dict[str, Type]] = {}
+    registry: ClassVar[dict[str, type]] = {}
 
     @classmethod
     def _key_transform(cls, key):
@@ -13,10 +13,7 @@ class MetaRegistryMixin(type):
         try:
             return cls.registry[cls._key_transform(key)]
         except KeyError:
-            raise KeyError(
-                f"Unknown {cls.__name__} type: {key}. "
-                f"Supported types: {list(cls.registry.keys())}"
-            )
+            raise KeyError(f"Unknown {cls.__name__} type: {key}. Supported types: {list(cls.registry.keys())}")
 
     @classmethod
     def _get_class(cls, obj: Any):
@@ -44,7 +41,7 @@ def create_registry_metaclass(name_attribute: str = "name", ignore_case: bool = 
     base_class = MetaRegistryMixinAnyCase if ignore_case else MetaRegistryMixin
 
     class RegistryMeta(base_class):
-        registry: ClassVar[Dict[str, Type]] = {}
+        registry: ClassVar[dict[str, type]] = {}
         _key_attribute: ClassVar[str] = name_attribute
 
         def __init__(cls, name, bases, namespace, **kwargs):

@@ -3,34 +3,35 @@ import typing
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import ConcatDataset
 from openff.units import unit
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
-from openff.nagl.features.bonds import BondIsInRing, BondOrder
-from openff.nagl.nn._dataset import (
-    DGLMoleculeDatasetEntry,
-    DGLMoleculeDataset,
-    _LazyDGLMoleculeDataset,
-    DGLMoleculeDataLoader,
-    DataHash,
-    _get_hashed_arrow_dataset_path
+from openff.nagl.features.atoms import (
+    AtomConnectivity,
 )
-from openff.nagl.tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
+from openff.nagl.features.bonds import BondIsInRing
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
+from openff.nagl.nn._dataset import (
+    DataHash,
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    DGLMoleculeDatasetEntry,
+    _LazyDGLMoleculeDataset,
+)
+from openff.nagl.tests.data.files import (
+    EXAMPLE_FEATURIZED_PARQUET_DATASET,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
+)
 
 pytest.importorskip("dgl")
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology.molecule import Molecule
 
+
 def label_formal_charge(molecule: "Molecule"):
     return {
         "formal_charges": torch.tensor(
-            [
-                atom.formal_charge.m_as(unit.elementary_charge)
-                for atom in molecule.atoms
-            ],
+            [atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms],
             dtype=torch.float,
         ),
     }
@@ -99,7 +100,6 @@ def featurized_dataset():
 
 
 class TestDGLMoleculeDatasetEntry:
-
     def test_from_openff(self, openff_methyl_methanoate):
         entry = DGLMoleculeDatasetEntry.from_openff(
             openff_methyl_methanoate,
@@ -144,7 +144,7 @@ class TestDGLMoleculeDatasetEntry:
         assert entry.molecule.n_atoms == 15
         assert entry.molecule.graph.ndata["feat"].shape == (15, 14)
         self._assert_label_shapes(entry)
-    
+
     # def test_from_featurized_row(
     #     self,
     #     example_featurized_pyarrow_table
@@ -160,11 +160,9 @@ class TestDGLMoleculeDatasetEntry:
     #     assert entry.molecule.n_atoms == 15
     #     assert entry.molecule.graph.ndata["feat"].shape == (15, 14)
     #     self._assert_label_shapes(entry)
-    
 
-        
+
 class TestDGLMoleculeDataset:
-
     def test_from_featurized_parquet(self, featurized_dataset):
         assert len(featurized_dataset) == 10
         for entry in featurized_dataset.entries:
@@ -184,15 +182,18 @@ class TestDGLMoleculeDataset:
 
         assert len(ds) == 10
         expected = {
-            "am1bcc_charges", "conformers", "am1bcc_esps",
-            "esp_lengths", "am1bcc_dipoles", "n_conformers",
+            "am1bcc_charges",
+            "conformers",
+            "am1bcc_esps",
+            "esp_lengths",
+            "am1bcc_dipoles",
+            "n_conformers",
             "esp_grid_inverse_distances",
         }
         for entry in ds:
             assert entry.molecule.graph.ndata["feat"].shape[1] == 14
             assert len(entry.labels) == 7
             assert set(entry.labels.keys()) == expected
-
 
     def test_to_pyarrow(
         self,
@@ -234,9 +235,7 @@ class TestDGLMoleculeDataset:
         assert label.numpy().shape == (5,)
 
 
-
 class TestLazyDGLMoleculeDataset:
-
     def test_from_featurized_parquet(self, tmpdir):
         with tmpdir.as_cwd():
             featurized_dataset = _LazyDGLMoleculeDataset.from_arrow_dataset(
@@ -249,12 +248,7 @@ class TestLazyDGLMoleculeDataset:
                 assert entry.molecule.graph.ndata["feat"].shape[1] == 14
                 assert len(entry.labels) == 7
 
-    def test_from_arrow_dataset(
-        self,
-        example_atom_features,
-        example_bond_features,
-        tmpdir
-    ):
+    def test_from_arrow_dataset(self, example_atom_features, example_bond_features, tmpdir):
         with tmpdir.as_cwd():
             ds = _LazyDGLMoleculeDataset.from_arrow_dataset(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
@@ -264,8 +258,12 @@ class TestLazyDGLMoleculeDataset:
 
             assert len(ds) == 10
             expected = {
-                "am1bcc_charges", "conformers", "am1bcc_esps",
-                "esp_lengths", "am1bcc_dipoles", "n_conformers",
+                "am1bcc_charges",
+                "conformers",
+                "am1bcc_esps",
+                "esp_lengths",
+                "am1bcc_dipoles",
+                "n_conformers",
                 "esp_grid_inverse_distances",
             }
             for entry in ds:
@@ -283,5 +281,3 @@ class TestDGLMoleculeDataLoader:
         for dgl_molecule, labels in entries:
             assert isinstance(dgl_molecule, DGLMoleculeBatch)
             assert len(labels) == 7
-
-

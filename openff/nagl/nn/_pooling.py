@@ -1,10 +1,13 @@
 import abc
 import functools
-from typing import ClassVar, Dict, Union, TYPE_CHECKING, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, ClassVar
 
 import torch.nn
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
+from openff.nagl.molecule._dgl import (
+    DGLMoleculeOrBatch,
+)
 from openff.nagl.nn._sequential import SequentialLayers
 
 if TYPE_CHECKING:
@@ -22,10 +25,10 @@ class PoolingLayer(torch.nn.Module, abc.ABC):
     def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         """Returns the pooled feature vector."""
 
-    
     @abc.abstractmethod
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         """Returns the number of values per molecule."""
+
 
 class PoolAtomFeatures(PoolingLayer):
     """A convenience class for pooling the node feature vectors produced by
@@ -38,7 +41,6 @@ class PoolAtomFeatures(PoolingLayer):
 
     def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         return molecule.graph.ndata[molecule._graph_feature_name]
-    
 
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         return molecule.n_atoms_per_molecule
@@ -56,9 +58,7 @@ class PoolBondFeatures(PoolingLayer):
         self.layers = layers
 
     @staticmethod
-    def _apply_edges(
-        edges: "dgl.udf.EdgeBatch", feature_name: str = "h"
-    ) -> Dict[str, torch.Tensor]:
+    def _apply_edges(edges: "dgl.udf.EdgeBatch", feature_name: str = "h") -> dict[str, torch.Tensor]:
         h_u = edges.src[feature_name]
         h_v = edges.dst[feature_name]
         return {feature_name: torch.cat([h_u, h_v], 1)}
@@ -106,9 +106,9 @@ class PoolBondFeatures(PoolingLayer):
 
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         return molecule.n_bonds_per_molecule
-    
 
-def get_pooling_layer(layer: Union[str, PoolingLayer]) -> PoolingLayer:
+
+def get_pooling_layer(layer: str | PoolingLayer) -> PoolingLayer:
     if isinstance(layer, PoolingLayer):
         return layer
     if isinstance(layer, str):

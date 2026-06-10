@@ -2,7 +2,9 @@ import typing
 
 import numpy as np
 
-FloatArrayLike = typing.Union[typing.List, np.ndarray, float]
+from openff.nagl.tests import _rng
+
+FloatArrayLike = list | np.ndarray | float
 
 
 def round_floats(
@@ -41,7 +43,8 @@ def as_iterable(obj: typing.Any) -> typing.Iterable:
         return [obj]
     return obj
 
-def potential_dict_to_list(d: typing.Union[dict, list]) -> list:
+
+def potential_dict_to_list(d: dict | list) -> list:
     """Convert a possible dictionary to a list of items."""
     try:
         return list(d.values())
@@ -52,8 +55,8 @@ def potential_dict_to_list(d: typing.Union[dict, list]) -> list:
 def transform_coordinates(
     coordinates: np.ndarray,
     scale: float = 1.0,
-    translate: typing.Optional[float] = 0.0,
-    rotate: typing.Optional[float] = 0.0,
+    translate: float | None = 0.0,
+    rotate: float | None = 0.0,
 ) -> np.ndarray:
     """
     Transform the coordinates by a scale, translation, and rotation.
@@ -76,11 +79,11 @@ def transform_coordinates(
         using numpy.random.random
     """
     if rotate is None:
-        rotate = np.random.random()
+        rotate = _rng.random()
     if translate is None:
-        translate = np.random.random()
+        translate = _rng.random()
     if scale is None:
-        scale = np.random.random()
+        scale = _rng.random()
 
     cos_theta, sin_theta = np.cos(rotate), np.sin(rotate)
     rot_matrix = np.array(

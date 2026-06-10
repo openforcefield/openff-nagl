@@ -1,39 +1,39 @@
 "Classes for handling featurized molecule data to train GNN models"
 
-from collections import defaultdict
 import functools
-import glob
 import hashlib
 import io
 import logging
+import pathlib
 import pickle
 import tempfile
 import typing
+from collections import defaultdict
 
-import tqdm
+import numpy as np
 import torch
+import tqdm
 from openff.utilities import requires_package
-from torch.utils.data import Dataset, DataLoader, ConcatDataset
+from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.config.training import TrainingConfig
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
-from openff.nagl.utils._parallelization import get_mapper_to_processes
+from openff.nagl.molecule._dgl import (
+    DGLMolecule,
+    DGLMoleculeBatch,
+)
 from openff.nagl.utils._hash import digest_file
-
-import pathlib
-import numpy as np
+from openff.nagl.utils._parallelization import get_mapper_to_processes
 
 if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule
 
 
 __all__ = [
-    "DataHash",
     "DGLMoleculeDataset",
     "DGLMoleculeDatasetEntry",
+    "DataHash",
 ]
 
 logger = logging.getLogger(__name__)
@@ -41,18 +41,19 @@ logger = logging.getLogger(__name__)
 
 class DataHash(ImmutableModel):
     """A class for computing the hash of a dataset."""
+
     path_hash: str
-    columns: typing.List[str]
-    atom_features: typing.List[AtomFeature]
-    bond_features: typing.List[BondFeature]
+    columns: list[str]
+    atom_features: list[AtomFeature]
+    bond_features: list[BondFeature]
 
     @classmethod
     def from_file(
         cls,
-        *paths: typing.Union[str, pathlib.Path],
-        columns: typing.Optional[typing.List[str]] = None,
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
+        *paths: str | pathlib.Path,
+        columns: list[str] | None = None,
+        atom_features: list[AtomFeature] | None = None,
+        bond_features: list[BondFeature] | None = None,
     ):
         path_hash = ""
 
@@ -82,7 +83,7 @@ class DataHash(ImmutableModel):
             atom_features=atom_features,
             bond_features=bond_features,
         )
-    
+
     def to_hash(self):
         json_str = self.json().encode("utf-8")
         hashed = hashlib.sha256(json_str).hexdigest()
@@ -91,10 +92,10 @@ class DataHash(ImmutableModel):
 
 def _get_hashed_arrow_dataset_path(
     path: pathlib.Path,
-    atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-    bond_features: typing.Optional[typing.List[BondFeature]] = None,
-    columns: typing.Optional[typing.List[str]] = None,
-    directory: typing.Optional[pathlib.Path] = None
+    atom_features: list[AtomFeature] | None = None,
+    bond_features: list[BondFeature] | None = None,
+    columns: list[str] | None = None,
+    directory: pathlib.Path | None = None,
 ) -> pathlib.Path:
     hash_value = DataHash.from_file(
         path,
@@ -109,25 +110,23 @@ def _get_hashed_arrow_dataset_path(
     return pathlib.Path(file_path)
 
 
-
 class DGLMoleculeDatasetEntry(typing.NamedTuple):
     """A named tuple containing a featurized molecule graph, a tensor of the atom
     features, and a tensor of the molecule label.
     """
 
     molecule: DGLMolecule
-    labels: typing.Dict[str, torch.Tensor]
+    labels: dict[str, torch.Tensor]
 
     @classmethod
     def from_openff(
         cls,
         openff_molecule: "Molecule",
-        labels: typing.Dict[str, typing.Any],
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
-        atom_feature_tensor: typing.Optional[torch.Tensor] = None,
-        bond_feature_tensor: typing.Optional[torch.Tensor] = None,
-        
+        labels: dict[str, typing.Any],
+        atom_features: list[AtomFeature],
+        bond_features: list[BondFeature],
+        atom_feature_tensor: torch.Tensor | None = None,
+        bond_feature_tensor: torch.Tensor | None = None,
     ):
         dglmol = DGLMolecule.from_openff(
             openff_molecule,
@@ -157,15 +156,15 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
     def from_mapped_smiles(
         cls,
         mapped_smiles: str,
-        labels: typing.Dict[str, typing.Any],
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
-        atom_feature_tensor: typing.Optional[torch.Tensor] = None,
-        bond_feature_tensor: typing.Optional[torch.Tensor] = None,
+        labels: dict[str, typing.Any],
+        atom_features: list[AtomFeature],
+        bond_features: list[BondFeature],
+        atom_feature_tensor: torch.Tensor | None = None,
+        bond_feature_tensor: torch.Tensor | None = None,
     ):
         """
         Create a dataset entry from a mapped SMILES string.
-        
+
         Parameters
         ----------
         mapped_smiles
@@ -210,9 +209,9 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
     @classmethod
     def _from_unfeaturized_pyarrow_row(
         cls,
-        row: typing.Dict[str, typing.Any],
-        atom_features: typing.List[AtomFeature],
-        bond_features: typing.List[BondFeature],
+        row: dict[str, typing.Any],
+        atom_features: list[AtomFeature],
+        bond_features: list[BondFeature],
         smiles_column: str = "mapped_smiles",
     ):
         labels = dict(row)
@@ -223,11 +222,11 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             atom_features,
             bond_features,
         )
-    
+
     @classmethod
     def _from_featurized_pyarrow_row(
         cls,
-        row: typing.Dict[str, typing.Any],
+        row: dict[str, typing.Any],
         atom_feature_column: str,
         bond_feature_column: str,
         smiles_column: str = "mapped_smiles",
@@ -247,11 +246,10 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         if atom_features is not None:
             atom_features = torch.tensor(atom_features).float()
             atom_features = atom_features.reshape(len(molecule.atoms), -1)
-        
+
         if bond_features is not None:
             bond_features = torch.tensor(bond_features).float()
             bond_features = bond_features.reshape(len(molecule.bonds), -1)
-
 
         return cls.from_mapped_smiles(
             mapped_smiles,
@@ -269,14 +267,12 @@ class _LazyDGLMoleculeDataset(Dataset):
     @property
     def schema(self):
         self.get_schema()
-    
+
     @classmethod
     def get_schema(cls):
         import pyarrow as pa
 
         return pa.schema([pa.field("pickled", pa.binary())])
-    
-
 
     def __len__(self):
         return self.n_entries
@@ -285,7 +281,7 @@ class _LazyDGLMoleculeDataset(Dataset):
         row = self.table.slice(index, length=1).to_pydict()["pickled"][0]
         entry = pickle.loads(row)
         return entry
-    
+
     @requires_package("pyarrow")
     def __init__(
         self,
@@ -298,12 +294,7 @@ class _LazyDGLMoleculeDataset(Dataset):
             reader = pa.ipc.open_file(src)
             self.table = reader.read_all()
         self.n_entries = self.table.num_rows
-        self.n_atom_features = (
-            self[0].molecule.atom_features.shape[1]
-            if len(self)
-            else 0
-        )
-    
+        self.n_atom_features = self[0].molecule.atom_features.shape[1] if len(self) else 0
 
     @classmethod
     @requires_package("pyarrow")
@@ -311,13 +302,13 @@ class _LazyDGLMoleculeDataset(Dataset):
         cls,
         path: pathlib.Path,
         format: str = "parquet",
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-        atom_feature_column: typing.Optional[str] = None,
-        bond_feature_column: typing.Optional[str] = None,
+        atom_features: list[AtomFeature] | None = None,
+        bond_features: list[BondFeature] | None = None,
+        atom_feature_column: str | None = None,
+        bond_feature_column: str | None = None,
         smiles_column: str = "mapped_smiles",
-        columns: typing.Optional[typing.List[str]] = None,
-        cache_directory: typing.Optional[pathlib.Path] = None,
+        columns: list[str] | None = None,
+        cache_directory: pathlib.Path | None = None,
         use_cached_data: bool = True,
         n_processes: int = 0,
     ):
@@ -345,16 +336,15 @@ class _LazyDGLMoleculeDataset(Dataset):
         if use_cached_data:
             if output_path.exists():
                 return cls(output_path)
-            
+
         else:
             tempdir = tempfile.TemporaryDirectory()
             output_path = pathlib.Path(tempdir.name) / file_path
 
         logger.info(f"Featurizing dataset to {output_path}")
-        
 
         if atom_feature_column is None and bond_feature_column is None:
-        # set featurizer function
+            # set featurizer function
             converter = functools.partial(
                 cls._pickle_entry_from_unfeaturized_row,
                 atom_features=atom_features,
@@ -382,12 +372,9 @@ class _LazyDGLMoleculeDataset(Dataset):
                     with get_mapper_to_processes(n_processes=n_processes) as mapper:
                         pickled = list(mapper(converter, input_batch.to_pylist()))
 
-                    output_batch = pa.RecordBatch.from_arrays(
-                        [pa.array(pickled)],
-                        schema=cls.get_schema()
-                    )
+                    output_batch = pa.RecordBatch.from_arrays([pa.array(pickled)], schema=cls.get_schema())
                     writer.write_batch(output_batch)
-                    
+
         return cls(output_path)
 
     @staticmethod
@@ -423,7 +410,6 @@ class _LazyDGLMoleculeDataset(Dataset):
         f = io.BytesIO()
         pickle.dump(entry, f)
         return f.getvalue()
-        
 
 
 class DGLMoleculeDataset(Dataset):
@@ -433,7 +419,7 @@ class DGLMoleculeDataset(Dataset):
     def __getitem__(self, index_or_slice):
         return self.entries[index_or_slice]
 
-    def __init__(self, entries: typing.Tuple[DGLMoleculeDatasetEntry, ...] = tuple()):
+    def __init__(self, entries: tuple[DGLMoleculeDatasetEntry, ...] = tuple()):
         self.entries = entries
 
     @property
@@ -449,12 +435,12 @@ class DGLMoleculeDataset(Dataset):
         cls,
         path: pathlib.Path,
         format: str = "parquet",
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-        atom_feature_column: typing.Optional[str] = None,
-        bond_feature_column: typing.Optional[str] = None,
+        atom_features: list[AtomFeature] | None = None,
+        bond_features: list[BondFeature] | None = None,
+        atom_feature_column: str | None = None,
+        bond_feature_column: str | None = None,
         smiles_column: str = "mapped_smiles",
-        columns: typing.Optional[typing.List[str]] = None,
+        columns: list[str] | None = None,
         n_processes: int = 0,
     ):
         import pyarrow.dataset as ds
@@ -483,8 +469,6 @@ class DGLMoleculeDataset(Dataset):
             if columns is not None and bond_feature_column not in columns:
                 columns.append(bond_feature_column)
 
-        
-
         input_dataset = ds.dataset(path, format=format)
         entries = []
 
@@ -498,20 +482,17 @@ class DGLMoleculeDataset(Dataset):
             #     row_entries = list(mapper(converter, input_batch.to_pylist()))
             #     entries.extend(row_entries)
         return cls(entries)
-        
 
     @classmethod
     def from_openff(
         cls,
         molecules: typing.Iterable["Molecule"],
-        atom_features: typing.Optional[typing.List[AtomFeature]] = None,
-        bond_features: typing.Optional[typing.List[BondFeature]] = None,
-        atom_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
-        bond_feature_tensors: typing.Optional[typing.List[torch.Tensor]] = None,
-        labels: typing.Optional[typing.List[typing.Dict[str, typing.Any]]] = None,
-        label_function: typing.Optional[
-            typing.Callable[["Molecule"], typing.Dict[str, typing.Any]]
-        ] = None,
+        atom_features: list[AtomFeature] | None = None,
+        bond_features: list[BondFeature] | None = None,
+        atom_feature_tensors: list[torch.Tensor] | None = None,
+        bond_feature_tensors: list[torch.Tensor] | None = None,
+        labels: list[dict[str, typing.Any]] | None = None,
+        label_function: typing.Callable[["Molecule"], dict[str, typing.Any]] | None = None,
     ):
         if labels is None:
             labels = [{} for _ in molecules]
@@ -519,8 +500,7 @@ class DGLMoleculeDataset(Dataset):
             labels = [dict(label) for label in labels]
         if len(labels) != len(molecules):
             raise ValueError(
-                f"The number of labels ({len(labels)}) must match the number of "
-                f"molecules ({len(molecules)})."
+                f"The number of labels ({len(labels)}) must match the number of molecules ({len(molecules)})."
             )
         if atom_feature_tensors is not None:
             if len(atom_feature_tensors) != len(molecules):
@@ -573,7 +553,7 @@ class DGLMoleculeDataset(Dataset):
         This will contain at minimum the smiles, atom features,
         and bond features, using the column names specified as
         arguments. It will also contain any labels that in the entry.
-        
+
         Parameters
         ----------
         atom_feature_column
@@ -582,8 +562,8 @@ class DGLMoleculeDataset(Dataset):
             The name of the column to use for the bond features.
         smiles_column
             The name of the column to use for the SMILES strings.
-        
-        
+
+
         Returns
         -------
         table
@@ -597,7 +577,7 @@ class DGLMoleculeDataset(Dataset):
             label_columns = list(first_labels.keys())
 
         label_set = set(label_columns)
-        
+
         rows = []
         for dglmol, labels in self.entries:
             atom_features = None
@@ -608,35 +588,29 @@ class DGLMoleculeDataset(Dataset):
             if dglmol.bond_features is not None:
                 bond_features = dglmol.bond_features.detach().numpy()
                 bond_features = bond_features.astype(float).flatten()
-            
+
             mol_label_set = set(labels.keys())
             if label_set != mol_label_set:
-                raise ValueError(
-                    f"The label sets are not consistent. "
-                    f"Expected {label_set}, got {mol_label_set}."
-                )
+                raise ValueError(f"The label sets are not consistent. Expected {label_set}, got {mol_label_set}.")
 
             row = [dglmol.mapped_smiles, atom_features, bond_features]
             for label in label_columns:
                 row.append(labels[label].detach().numpy().tolist())
-            
+
             rows.append(row)
-        
+
         table = pa.table(
             [*zip(*rows)],
             names=required_columns + label_columns,
         )
         return table
-    
-
-
 
 
 class DGLMoleculeDataLoader(DataLoader):
     def __init__(
         self,
-        dataset: typing.Union[DGLMoleculeDataset, _LazyDGLMoleculeDataset, ConcatDataset],
-        batch_size: typing.Optional[int] = 1,
+        dataset: DGLMoleculeDataset | _LazyDGLMoleculeDataset | ConcatDataset,
+        batch_size: int | None = 1,
         **kwargs,
     ):
         super().__init__(
@@ -647,7 +621,7 @@ class DGLMoleculeDataLoader(DataLoader):
         )
 
     @staticmethod
-    def _collate(graph_entries: typing.List[DGLMoleculeDatasetEntry]):
+    def _collate(graph_entries: list[DGLMoleculeDatasetEntry]):
         if isinstance(graph_entries[0], DGLMolecule):
             graph_entries = [graph_entries]
 

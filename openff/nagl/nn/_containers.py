@@ -1,14 +1,12 @@
 import copy
-from typing import List, Optional, Union, Tuple, Callable
 
 import torch
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-
-from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
-from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.nn.activation import ActivationFunction
+from openff.nagl.nn.gcn._base import _GCNStackMeta
 from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 
@@ -16,11 +14,11 @@ class ConvolutionModule(torch.nn.Module):
     def __init__(
         self,
         n_input_features: int,
-        hidden_feature_sizes: List[int],
+        hidden_feature_sizes: list[int],
         architecture: str = "SAGEConv",
-        layer_activation_functions: Optional[List[ActivationFunction]] = None,
-        layer_dropout: Optional[List[float]] = None,
-        layer_aggregator_types: Optional[List[str]] = None,
+        layer_activation_functions: list[ActivationFunction] | None = None,
+        layer_dropout: list[float] | None = None,
+        layer_aggregator_types: list[str] | None = None,
     ):
         super().__init__()
         self.n_input_features = n_input_features
@@ -52,7 +50,7 @@ class ConvolutionModule(torch.nn.Module):
             copied.load_state_dict(self.state_dict())
         return copied
 
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]):
+    def forward(self, molecule: DGLMolecule | DGLMoleculeBatch):
         # The input graph will be heterogeneous - the edges are split into forward
         # edge types and their symmetric reverse counterparts. The convolution layer
         # doesn't need this information and hence we produce a homogeneous graph for
@@ -71,25 +69,13 @@ class ConvolutionModule(torch.nn.Module):
         if self._is_dgl:
             copied.gcn_layers = copied.gcn_layers._as_nagl(copy_weights=copy_weights)
         return copied
-    
+
     @classmethod
-    def from_config(
-        cls,
-        convolution_config,
-        n_input_features: int
-    ):
-        hidden_feature_sizes = [
-            layer.hidden_feature_size for layer in convolution_config.layers
-        ]
-        layer_activation_functions = [
-            layer.activation_function for layer in convolution_config.layers
-        ]
-        layer_dropout = [
-            layer.dropout for layer in convolution_config.layers
-        ]
-        layer_aggregator_types = [
-            layer.aggregator_type for layer in convolution_config.layers
-        ]
+    def from_config(cls, convolution_config, n_input_features: int):
+        hidden_feature_sizes = [layer.hidden_feature_size for layer in convolution_config.layers]
+        layer_activation_functions = [layer.activation_function for layer in convolution_config.layers]
+        layer_dropout = [layer.dropout for layer in convolution_config.layers]
+        layer_aggregator_types = [layer.aggregator_type for layer in convolution_config.layers]
         return cls(
             n_input_features,
             hidden_feature_sizes,
@@ -110,7 +96,7 @@ class ReadoutModule(torch.nn.Module):
         self,
         pooling_layer: PoolingLayer,
         readout_layers: SequentialLayers,
-        postprocess_layer: Optional[PostprocessLayer] = None,
+        postprocess_layer: PostprocessLayer | None = None,
     ):
         """
 
@@ -135,16 +121,14 @@ class ReadoutModule(torch.nn.Module):
                 postprocess_layer = _PostprocessLayerMeta._get_object(postprocess_layer)
         self.postprocess_layer = postprocess_layer
 
-    def forward(self, molecule: Union[DGLMolecule, DGLMoleculeBatch]) -> torch.Tensor:
+    def forward(self, molecule: DGLMolecule | DGLMoleculeBatch) -> torch.Tensor:
         x = self._forward_unpostprocessed(molecule)
         if self.postprocess_layer is not None:
             x = self.postprocess_layer.forward(molecule, x)
 
         return x
-    
-    def _forward_unpostprocessed(
-        self, molecule: Union[DGLMolecule, DGLMoleculeBatch]
-    ) -> torch.Tensor:
+
+    def _forward_unpostprocessed(self, molecule: DGLMolecule | DGLMoleculeBatch) -> torch.Tensor:
         """
         Forward pass without postprocessing the readout modules.
         This is quality-of-life method for debugging and testing.
@@ -153,7 +137,7 @@ class ReadoutModule(torch.nn.Module):
         x = self.pooling_layer.forward(molecule)
         x = self.readout_layers.forward(x)
         return x
-    
+
     def copy(self, copy_weights: bool = False):
         pooling = type(self.pooling_layer)()
         readout = self.readout_layers.copy(copy_weights=copy_weights)
@@ -162,23 +146,13 @@ class ReadoutModule(torch.nn.Module):
         if copy_weights:
             copied.load_state_dict(self.state_dict())
         return copied
-    
+
     @classmethod
-    def from_config(
-        cls,
-        readout_config,
-        n_input_features: int
-    ):
+    def from_config(cls, readout_config, n_input_features: int):
         pooling_layer = readout_config.pooling
-        hidden_feature_sizes = [
-            layer.hidden_feature_size for layer in readout_config.layers
-        ]
-        layer_activation_functions = [
-            layer.activation_function for layer in readout_config.layers
-        ]
-        layer_dropout = [
-            layer.dropout for layer in readout_config.layers
-        ]
+        hidden_feature_sizes = [layer.hidden_feature_size for layer in readout_config.layers]
+        layer_activation_functions = [layer.activation_function for layer in readout_config.layers]
+        layer_dropout = [layer.dropout for layer in readout_config.layers]
         postprocess_layer = None
         if readout_config.postprocess is not None:
             postprocess_layer = _PostprocessLayerMeta._get_object(readout_config.postprocess)
@@ -192,8 +166,4 @@ class ReadoutModule(torch.nn.Module):
             layer_activation_functions,
             layer_dropout,
         )
-        return cls(
-            pooling_layer,
-            readout_layers,
-            postprocess_layer
-        )
+        return cls(pooling_layer, readout_layers, postprocess_layer)

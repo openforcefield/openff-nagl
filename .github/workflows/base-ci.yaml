@@ -60,7 +60,7 @@ jobs:
         openeye-license-text: ${{ secrets.OE_LICENSE }}
         openeye-license-file: ${{ env.OE_LICENSE }}
 
-      
+
     - name: Uninstall OpenEye
       if: matrix.include-openeye == false
       run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
