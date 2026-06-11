@@ -25,7 +25,7 @@ dependencies:
 
   # gcn
   - dgl >=2.1
-  - pytorch >=2.11
+  - pytorch >=2.3
   - pytorch-lightning
 
   # parallelism
