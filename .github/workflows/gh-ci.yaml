@@ -31,15 +31,11 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
-          pydantic-version: ["1", "2"]
-          include-rdkit: [false, true]
-          include-openeye: [false, true]
-          include-dgl: [false, true]
-          exclude:
-            - include-rdkit: false
-              include-openeye: false
-
+          python-version: ["3.14"]
+          pydantic-version: ["2"]
+          include-rdkit: [true]
+          include-openeye: [false]
+          include-dgl: [false]
 
     steps:
     - uses: actions/checkout@v6

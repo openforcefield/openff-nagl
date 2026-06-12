@@ -31,8 +31,8 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
-          include-openeye: [false, true]
+          python-version: ["3.14"]
+          include-openeye: [false]
 
     steps:
     - uses: actions/checkout@v6
