@@ -18,7 +18,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -l {0}
+    shell: bash -leo pipefail {0}
 
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -78,6 +78,9 @@ jobs:
       run: |
         mkdir -p ~/.dgl
         echo '{"backend": "pytorch"}' > ~/.dgl/config.json
+
+    - name: Target Pydantic error?
+      run: python -c "from openff.nagl.training.loss import TargetType"
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"
