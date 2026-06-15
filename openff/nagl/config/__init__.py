@@ -1,6 +1,7 @@
 """
 Classes that define configuration options for training or using a GNN Model.
 """
+from __future__ import annotations
 
 from .data import DataConfig, DatasetConfig
 from .model import ModelConfig

@@ -1,15 +1,18 @@
 """Defining the NAGLToolkitRegistry class."""
+from __future__ import annotations
 
 from typing import List, Optional
 
 from openff.toolkit.utils.toolkit_registry import (
     ToolkitRegistry as _ToolkitRegistry,
+)
+from openff.toolkit.utils.toolkit_registry import (
     ToolkitUnavailableException,
 )
 
 from openff.nagl.toolkits._base import (
-    NAGLToolkitWrapperMeta,
     NAGLToolkitWrapperBase,
+    NAGLToolkitWrapperMeta,
     ToolkitWrapperType,
 )
 
@@ -87,6 +90,7 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
             A NAGLToolkitRegistry with the same toolkits as the input registry
         """
         from openff.toolkit.utils import OpenEyeToolkitWrapper, RDKitToolkitWrapper
+
         from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
         from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
 

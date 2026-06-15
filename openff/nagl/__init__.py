@@ -8,7 +8,10 @@ properties.
 # importing any openff.nagl.toolkits submodule triggers a circular import:
 # toolkits._base → openff.toolkit.utils → GLOBAL_TOOLKIT_REGISTRY creation
 # → NAGLToolkitWrapper() → `from openff.nagl import __version__` → ImportError.
+from __future__ import annotations
+
 from . import _version
+
 __version__ = _version.get_versions()['version']
 
 from openff.nagl.nn._models import GNNModel

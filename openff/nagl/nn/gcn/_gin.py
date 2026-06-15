@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from typing import TYPE_CHECKING, Union
 
@@ -5,8 +7,9 @@ import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
-from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
 import openff.nagl.nn.gcn._function as _fn
+
+from ._base import ActivationFunction, BaseConvModule, BaseGCNStack
 
 if TYPE_CHECKING:
     import dgl

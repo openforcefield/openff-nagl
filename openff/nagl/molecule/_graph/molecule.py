@@ -1,11 +1,14 @@
-from typing import List, TYPE_CHECKING, Tuple, Optional
+from __future__ import annotations
 
-from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
+from typing import TYPE_CHECKING, List, Optional, Tuple
+
+from openff.nagl.molecule._base import BatchMixin, MoleculeMixin, NAGLMoleculeBase
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry

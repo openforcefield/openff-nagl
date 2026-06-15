@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from numpy.testing import assert_allclose
 
 from openff.nagl.features._utils import one_hot_encode

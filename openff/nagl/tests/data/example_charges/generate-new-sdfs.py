@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import pathlib
 
 import click
 import tqdm
-
 from openff.toolkit import Molecule
 from openff.units import unit
+
 from openff.nagl import GNNModel
 
 

@@ -10,14 +10,15 @@
 # https://github.com/python-versioneer/python-versioneer
 
 """Git implementation of _version.py."""
+from __future__ import annotations
 
 import errno
+import functools
 import os
 import re
 import subprocess
 import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
-import functools
 
 
 def get_keywords() -> Dict[str, str]:

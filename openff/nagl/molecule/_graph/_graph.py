@@ -1,19 +1,22 @@
+from __future__ import annotations
+
 import contextlib
 import copy
 from collections import defaultdict
-from typing import List, Tuple, TYPE_CHECKING
-
-from openff.nagl.features.atoms import AtomFeature
-from openff.nagl.features.bonds import BondFeature
-from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
-from openff.nagl.toolkits.openff import ensure_toolkit_registry
+from typing import TYPE_CHECKING, List, Tuple
 
 import networkx as nx
 import numpy as np
 import torch
+
+from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
+from openff.nagl.features.atoms import AtomFeature
+from openff.nagl.features.bonds import BondFeature
+from openff.nagl.molecule._utils import FEATURE, FORWARD, REVERSE
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
+
 from ._batch import FrameDict
 
-from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
 

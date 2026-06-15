@@ -1,6 +1,7 @@
 """
 Postprocessing functions to convert a graph representation to a predicted property
 """
+from __future__ import annotations
 
 import abc
 from typing import ClassVar, Dict, Type, Union

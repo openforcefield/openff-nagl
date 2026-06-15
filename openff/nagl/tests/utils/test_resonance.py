@@ -1,9 +1,10 @@
-import pytest
+from __future__ import annotations
 
+import pytest
 from openff.units import unit
 
-from openff.nagl.utils.resonance import ResonanceEnumerator, FragmentEnumerator
 from openff.nagl.tests.testing.utils import assert_smiles_equal
+from openff.nagl.utils.resonance import FragmentEnumerator, ResonanceEnumerator
 
 
 @pytest.fixture

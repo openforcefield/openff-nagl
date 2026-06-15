@@ -37,7 +37,10 @@ class MetaRegistryMixin(type):
 class MetaRegistryMixinAnyCase(MetaRegistryMixin):
     @classmethod
     def _key_transform(cls, key):
-        return key.lower()
+        try:
+            return key.lower()
+        except AttributeError as error:
+            raise AttributeError(f"Expected a string key, got {key} of type {type(key)}") from error
 
 
 def create_registry_metaclass(name_attribute: str = "name", ignore_case: bool = True):

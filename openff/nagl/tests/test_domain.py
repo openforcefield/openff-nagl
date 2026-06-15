@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import pytest
 
 from openff.nagl.domains import ChemicalDomain
+
 
 class TestChemicalDomain:
 

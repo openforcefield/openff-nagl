@@ -13,12 +13,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 # In case the project was not installed
+from __future__ import annotations
+
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 import openff.nagl
-
 
 # -- Project information -----------------------------------------------------
 

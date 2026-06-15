@@ -5,13 +5,14 @@ analogous to DGL's functionality.
 Functions here are not intended to be called directly
 and may be fragile.
 """
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional, List, Callable
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
-import torch
 import numpy as np
+import torch
 
-from ._batch import EdgeBatch, NodeBatch, FrameDict
+from ._batch import EdgeBatch, FrameDict, NodeBatch
 
 if TYPE_CHECKING:
     from ._graph import NXMolGraph

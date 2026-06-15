@@ -7,6 +7,7 @@ Use as ::
     from openff.nagl.tests.data.files import *
 
 """
+from __future__ import annotations
 
 __all__ = [
     # "EXAMPLE_MODEL_CONFIG",

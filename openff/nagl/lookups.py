@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import types
 import typing
 
@@ -14,6 +16,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 

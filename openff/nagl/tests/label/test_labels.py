@@ -1,15 +1,16 @@
-import pytest
+from __future__ import annotations
 
 import numpy as np
+import pytest
+from openff.toolkit.utils import OPENEYE_AVAILABLE
 
 from openff.nagl.label.dataset import LabelledDataset
 from openff.nagl.label.labels import (
-    LabelConformers,
     LabelCharges,
+    LabelConformers,
     LabelMultipleDipoles,
     LabelMultipleESPs,
 )
-from openff.toolkit.utils import OPENEYE_AVAILABLE
 
 pytest.importorskip("pyarrow")
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from numpy.testing import assert_allclose, assert_array_almost_equal
 

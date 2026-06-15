@@ -1,4 +1,5 @@
 """Config classes for defining optimizers"""
+from __future__ import annotations
 
 import typing
 
