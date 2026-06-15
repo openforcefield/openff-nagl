@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 
 from openff.nagl._base.base import ImmutableModel
@@ -10,6 +12,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 class ChemicalDomain(ImmutableModel):

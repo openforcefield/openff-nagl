@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import abc
 import functools
-from typing import ClassVar, Dict, Union, TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Union
 
 import torch.nn
 

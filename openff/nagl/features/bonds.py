@@ -19,11 +19,13 @@ to implement your own features.
 """
 
 # from typing import ClassVar, Dict, Type
+from __future__ import annotations
+
 import typing
 
 import torch
 
-from ._base import CategoricalMixin, Feature #, FeatureMeta
+from ._base import CategoricalMixin, Feature  #, FeatureMeta
 from ._utils import one_hot_encode
 
 try:

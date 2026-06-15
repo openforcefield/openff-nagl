@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_almost_equal
 import pytest
 import torch
-
+from numpy.testing import assert_allclose, assert_array_almost_equal
 from openff.utilities import requires_package
+
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn import SAGEConvStack
 from openff.nagl.nn.gcn._sage import SAGEConv

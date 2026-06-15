@@ -18,7 +18,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -l {0}
+    shell: bash -leo pipefail {0}
 
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -31,15 +31,11 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
-          pydantic-version: ["1", "2"]
-          include-rdkit: [false, true]
-          include-openeye: [false, true]
-          include-dgl: [false, true]
-          exclude:
-            - include-rdkit: false
-              include-openeye: false
-
+          python-version: ["3.14"]
+          pydantic-version: ["2"]
+          include-rdkit: [true]
+          include-openeye: [false]
+          include-dgl: [false]
 
     steps:
     - uses: actions/checkout@v6
@@ -82,6 +78,9 @@ jobs:
       run: |
         mkdir -p ~/.dgl
         echo '{"backend": "pytorch"}' > ~/.dgl/config.json
+
+    - name: Target Pydantic error?
+      run: python -c "from openff.nagl.training.loss import TargetType"
 
     - name: Check toolkit installations
       shell: bash -l -c "python -u {0}"

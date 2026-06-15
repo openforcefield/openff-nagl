@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 
 from torch.testing import assert_close

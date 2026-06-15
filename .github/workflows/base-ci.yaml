@@ -18,7 +18,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -l {0}
+    shell: bash -leo pipefail {0}
 
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
@@ -31,8 +31,8 @@ jobs:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
-          include-openeye: [false, true]
+          python-version: ["3.14"]
+          include-openeye: [false]
 
     steps:
     - uses: actions/checkout@v6

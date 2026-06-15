@@ -71,3 +71,9 @@ versionfile_source = "openff/nagl/_version.py"
 versionfile_build = "openff/nagl/_version.py"
 tag_prefix = "v"
 parentdir_prefix = "openff-nagl-"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 119
+lint.select = [ "I" ]
+lint.isort.required-imports = [ "from __future__ import annotations" ]

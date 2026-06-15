@@ -1,20 +1,24 @@
+from __future__ import annotations
+
 import typing
 from typing import Dict, List
-import pytest
-from openff.nagl.nn._containers import ReadoutModule
-import torch
-import numpy as np
 
-from openff.nagl.training.metrics import RMSEMetric
+import numpy as np
+import pytest
+import torch
+
+from openff.nagl.nn._containers import ReadoutModule
 from openff.nagl.training.loss import (
-    _BaseTarget,
-    MultipleDipoleTarget,
-    SingleDipoleTarget,
+    GeneralLinearFitTarget,
     HeavyAtomReadoutTarget,
-    ReadoutTarget,
+    MultipleDipoleTarget,
     MultipleESPTarget,
-    GeneralLinearFitTarget
+    ReadoutTarget,
+    SingleDipoleTarget,
+    _BaseTarget,
 )
+from openff.nagl.training.metrics import RMSEMetric
+
 
 class TestBaseTarget:
 

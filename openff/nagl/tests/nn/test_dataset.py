@@ -1,23 +1,25 @@
+from __future__ import annotations
+
 import typing
 
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import ConcatDataset
 from openff.units import unit
+from torch.utils.data import ConcatDataset
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing, BondOrder
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn._dataset import (
-    DGLMoleculeDatasetEntry,
-    DGLMoleculeDataset,
-    _LazyDGLMoleculeDataset,
-    DGLMoleculeDataLoader,
     DataHash,
-    _get_hashed_arrow_dataset_path
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    DGLMoleculeDatasetEntry,
+    _get_hashed_arrow_dataset_path,
+    _LazyDGLMoleculeDataset,
 )
-from openff.nagl.tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
+from openff.nagl.tests.data.files import EXAMPLE_FEATURIZED_PARQUET_DATASET, EXAMPLE_UNFEATURIZED_PARQUET_DATASET
 
 pytest.importorskip("dgl")
 

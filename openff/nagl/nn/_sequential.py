@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from typing import ClassVar, List, Optional
 
 import torch.nn
 
-from .activation import ActivationFunction
 from ._base import ContainsLayersMixin
+from .activation import ActivationFunction
 
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):

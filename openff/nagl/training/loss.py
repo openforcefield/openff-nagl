@@ -1,28 +1,26 @@
 """Targets for calculating loss when training neural networks"""
+from __future__ import annotations
 
 import abc
 import pathlib
 import typing
 
 import torch
+
+from openff.nagl._base.base import ImmutableModel
 from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
-from openff.nagl.training.metrics import MetricType #MetricMeta, BaseMetric
-from openff.nagl._base.base import ImmutableModel
-from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
+from openff.nagl.nn._pooling import PoolingLayer
+from openff.nagl.training.metrics import MetricType  #MetricMeta, BaseMetric
 
-try:
-    from pydantic.v1 import Field, validator
-    from pydantic.v1.main import ModelMetaclass
-except ImportError:
-    from pydantic import Field, validator
-    from pydantic.main import ModelMetaclass
+from pydantic import Field, field_validator
 
 if typing.TYPE_CHECKING:
     import torch
-    from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
     from openff.toolkit import Molecule
+
+    from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 
 
 __all__ = [
@@ -56,7 +54,7 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         )
     )
 
-    @validator("metric", pre=True)
+    @field_validator("metric")
     def _validate_metric(cls, v):
         if isinstance(v, str):
             v = {"name": v}

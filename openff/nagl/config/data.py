@@ -1,15 +1,15 @@
 """
 Config classes for defining datasets.
 """
+from __future__ import annotations
 
 import pathlib
 import typing
 
+from openff.nagl._base.base import ImmutableModel
 from openff.nagl.training.loss import (
     TargetType,
-
 )
-from openff.nagl._base.base import ImmutableModel
 from openff.nagl.utils._types import FromYamlMixin
 
 try:

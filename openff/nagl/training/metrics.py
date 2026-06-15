@@ -1,13 +1,14 @@
 """
 Metrics for evaluating loss
 """
+from __future__ import annotations
+
 import abc
 import typing
 
 import torch
 
 from openff.nagl._base.base import ImmutableModel
-
 
 if typing.TYPE_CHECKING:
     import torch

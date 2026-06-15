@@ -1,4 +1,5 @@
 "Extensions of the OpenFF Toolkit ToolkitWrappers for use with NAGL."
+from __future__ import annotations
 
 from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
 from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper

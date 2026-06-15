@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 ALLRED_ROCHOW_ELECTRONEGATIVITY = {
     # sourced from mendeleev
     1: 0.0009765625,

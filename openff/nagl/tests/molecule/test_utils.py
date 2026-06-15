@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from openff.nagl.molecule._utils import _get_openff_molecule_information
 
 

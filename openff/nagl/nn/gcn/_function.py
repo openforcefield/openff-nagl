@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def copy_u(msg: str, out: str):
     def wrapped(edges):
         return {out: edges.src[msg]}

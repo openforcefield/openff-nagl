@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib.resources
 
 data_directory = importlib.resources.files("openff.nagl") / "training" / "templates"

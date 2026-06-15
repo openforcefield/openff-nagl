@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import pytest
 
 from openff.nagl._base.metaregistry import create_registry_metaclass
+
 
 class TestMetaRegistry:
 
