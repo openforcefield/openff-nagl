@@ -7,6 +7,10 @@ dependencies:
   - python >=3.12
   - pip
 
+  # Build deps - declare so AWS runner doesn't have to pull them
+  - setuptools
+  - setuptools-scm
+
   # UI
   - tqdm
 
