@@ -5,7 +5,6 @@ dependencies:
     # Base depends
   - python
   - pip
-  - importlib_resources
 
   # UI
   - tqdm

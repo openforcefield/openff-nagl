@@ -14,6 +14,12 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## Current development
+
+### Changes
+
+- Switch to `setuptools-scm` for version handling (PR #266)
+
 ## v0.5.5 -- 2026-04-02
 
 ### Fixed

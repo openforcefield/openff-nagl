@@ -2,7 +2,7 @@
 build-backend = "setuptools.build_meta"
 requires = [
   "setuptools>=77.0.3",
-  "versioneer[toml]==0.29",
+  "setuptools-scm",
   "wheel",
 ]
 
@@ -64,10 +64,5 @@ exclude_lines = [
   "@overload",
 ]
 
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "openff/nagl/_version.py"
-versionfile_build = "openff/nagl/_version.py"
-tag_prefix = "v"
-parentdir_prefix = "openff-nagl-"
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
