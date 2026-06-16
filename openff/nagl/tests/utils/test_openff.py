@@ -513,7 +513,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     )
 
 
-@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
 def test_toolkit_registry_passes_through_nagl_and_fails():
     """
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
