@@ -1,10 +1,11 @@
+import math
 import os
 import pathlib
-import math
 import pickle
-from typing import Dict, Any, Tuple
+from typing import Any, Dict, Tuple
 
 import click
+
 
 def train_model(
     config: Dict[str, Any] = {},
@@ -165,11 +166,9 @@ def tune_model(
     partial_charge_method: str = "am1",
     postprocess_layer: str = "compute_partial_charges"
 ):
-    import yaml
-
     import ray
-    from ray import air
-    from ray import tune
+    import yaml
+    from ray import air, tune
     from ray.tune import CLIReporter
     from ray.tune.schedulers import ASHAScheduler
 

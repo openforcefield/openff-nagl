@@ -1,14 +1,13 @@
 import copy
-from typing import List, Optional, Union, Tuple, Callable
+from typing import Callable, List, Optional, Tuple, Union
 
 import torch
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-
-from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._base import _GCNStackMeta, BaseConvModule
-from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.nn._pooling import PoolingLayer, get_pooling_layer
+from openff.nagl.nn._sequential import SequentialLayers
+from openff.nagl.nn.activation import ActivationFunction
+from openff.nagl.nn.gcn._base import BaseConvModule, _GCNStackMeta
 from openff.nagl.nn.postprocess import PostprocessLayer, _PostprocessLayerMeta
 
 

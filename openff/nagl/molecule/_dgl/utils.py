@@ -1,19 +1,19 @@
-from typing import Dict, List, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-import torch
 import numpy as np
+import torch
 from openff.utilities import requires_package
 
+from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
-from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
+from openff.nagl.molecule._utils import FEATURE, FORWARD, REVERSE
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
-
 
 if TYPE_CHECKING:
     import dgl
     from openff.toolkit.topology.molecule import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
@@ -28,6 +28,7 @@ def openff_molecule_to_base_dgl_graph(
     Convert an OpenFF Molecule to a DGL graph.
     """
     import dgl
+
     from openff.nagl.toolkits.openff import get_openff_molecule_bond_indices
 
     bonds = get_openff_molecule_bond_indices(molecule)
@@ -128,7 +129,7 @@ def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata
     """
     import dgl
     from dgl import backend as F
-    from dgl.base import EID, NID, ETYPE, NTYPE
+    from dgl.base import EID, ETYPE, NID, NTYPE
     from dgl.heterograph import combine_frames
 
     # TODO: revisit in case DGL accounts for this in the future

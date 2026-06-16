@@ -3,7 +3,6 @@ from numpy.testing import assert_allclose, assert_array_almost_equal
 
 from openff.nagl.molecule._dgl.batch import DGLMolecule, DGLMoleculeBatch
 
-
 dgl = pytest.importorskip("dgl")
 
 

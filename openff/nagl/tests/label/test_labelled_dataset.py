@@ -1,10 +1,7 @@
 import pytest
 
 from openff.nagl.label.dataset import LabelledDataset
-from openff.nagl.label.labels import (
-    LabelConformers,
-    LabelCharges
-)
+from openff.nagl.label.labels import LabelCharges, LabelConformers
 
 pa = pytest.importorskip("pyarrow")
 class TestLabelledDataset:

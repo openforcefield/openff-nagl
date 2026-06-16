@@ -1,9 +1,10 @@
-from typing import ClassVar, TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, ClassVar, Optional, Tuple
 
 from openff.nagl.molecule._utils import FEATURE
 
 if TYPE_CHECKING:
     import torch
+
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
 

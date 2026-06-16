@@ -1,8 +1,10 @@
-from openff.nagl._base.base import MutableModel
-from openff.units import unit
-import numpy as np
 import json
 import textwrap
+
+import numpy as np
+from openff.units import unit
+
+from openff.nagl._base.base import MutableModel
 
 try:
     from pydantic.v1 import Field, validator

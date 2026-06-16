@@ -4,32 +4,32 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from openff.toolkit import AmberToolsToolkitWrapper, Molecule, OpenEyeToolkitWrapper, RDKitToolkitWrapper
 from openff.toolkit.topology import Molecule
-from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapper, OpenEyeToolkitWrapper
-from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
-from openff.nagl.toolkits.registry import NAGLToolkitRegistry
-from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
-from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
+from openff.toolkit.utils.toolkit_registry import ToolkitRegistry, toolkit_registry_manager
+from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
 from openff.units import unit
 
+from openff.nagl.tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
 from openff.nagl.toolkits.openff import (
+    _molecule_from_dict,
+    _molecule_to_dict,
+    calculate_circular_fingerprint_similarity,
+    capture_toolkit_warnings,
     get_best_rmsd,
     get_openff_molecule_bond_indices,
     is_conformer_identical,
     map_indexed_smiles,
+    molecule_from_networkx,
     normalize_molecule,
     smiles_to_inchi_key,
-    calculate_circular_fingerprint_similarity,
-    capture_toolkit_warnings,
-    molecule_from_networkx,
-    _molecule_from_dict,
-    _molecule_to_dict,
     split_up_molecule,
 )
+from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 from openff.nagl.utils._utils import transform_coordinates
 
-from openff.nagl.tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
 
 def _load_rdkit_molecule_exactly(mapped_smiles: str):
     """
@@ -278,8 +278,8 @@ def test_calculate_circular_fingerprint_similarity(
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_best_rmsd():
-    from rdkit.Chem import rdMolAlign
     from openff.toolkit.topology.molecule import Molecule
+    from rdkit.Chem import rdMolAlign
 
     offmol = Molecule.from_smiles("CCC")
     offmol._conformers = [
@@ -468,8 +468,8 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
     """
 
-    from rdkit.Chem import ForwardSDMolSupplier
     from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from rdkit.Chem import ForwardSDMolSupplier
 
 
     suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
@@ -498,8 +498,9 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
     """
 
-    from rdkit.Chem import ForwardSDMolSupplier
     from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from rdkit.Chem import ForwardSDMolSupplier
+
     from openff.nagl import GNNModel
 
     suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
@@ -524,10 +525,10 @@ def test_toolkit_registry_passes_through_nagl_and_fails():
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
     """
 
-    from rdkit.Chem import ForwardSDMolSupplier
     from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
-    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
     from openff.toolkit.utils.exceptions import InconsistentStereochemistryError
+    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
+    from rdkit.Chem import ForwardSDMolSupplier
 
     suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
     rdmol = list(suppl)[0]

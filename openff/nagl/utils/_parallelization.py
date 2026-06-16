@@ -4,8 +4,9 @@ import itertools
 import logging
 import math
 import multiprocessing
-import tqdm
 import typing
+
+import tqdm
 
 _S = typing.TypeVar("_S")
 _T = typing.TypeVar("_T")
@@ -106,9 +107,9 @@ def batch_distributed(
     **kwargs
 ):
     import dask
-    from distributed import LocalCluster
     from dask import distributed
     from dask_jobqueue import LSFCluster, SLURMCluster
+    from distributed import LocalCluster
 
     n_workers, n_batches, batch_size = reconcile_batch_workers(
         entries, n_entries, batch_size, n_workers

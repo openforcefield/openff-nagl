@@ -1,12 +1,9 @@
-import pytest
 import numpy as np
+import pytest
 import torch
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.nn.postprocess import (
-    ComputePartialCharges,
-    RegularizedComputePartialCharges
-)
+from openff.nagl.nn.postprocess import ComputePartialCharges, RegularizedComputePartialCharges
 
 # @pytest.fixture
 # def dgl_carboxylate

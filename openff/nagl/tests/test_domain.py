@@ -2,6 +2,7 @@ import pytest
 
 from openff.nagl.domains import ChemicalDomain
 
+
 class TestChemicalDomain:
 
     @pytest.mark.parametrize(
