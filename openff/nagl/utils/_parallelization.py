@@ -32,7 +32,7 @@ def get_mapper_to_processes(
 def as_batch_function(
     func: typing.Callable[[typing.Any], typing.Any],
     desc: str = "Processing",
-    capture_errors: bool = False
+    capture_errors: bool = False,
 ):
     def wrapper(batch: typing.Iterable[typing.Any], *args, **kwargs):
         results = [
@@ -103,7 +103,7 @@ def batch_distributed(
     memory: int = 4,  # GB
     walltime: int = 32,  # hours
     package_manager: typing.Literal["conda", "micromamba"] = "conda",
-    **kwargs
+    **kwargs,
 ):
     import dask
     from distributed import LocalCluster
@@ -114,9 +114,7 @@ def batch_distributed(
         entries, n_entries, batch_size, n_workers
     )
 
-    logger.warning(
-        f"Setting n_workers={n_workers} for {n_batches} batches"
-    )
+    logger.warning(f"Setting n_workers={n_workers} for {n_batches} batches")
 
     env_extra = []
     if worker_type != "local":
@@ -124,7 +122,6 @@ def batch_distributed(
             dask.config.get(f"jobqueue.{worker_type}.job-script-prologue", default=[])
         )
     env_extra.append(f"{package_manager} activate {conda_environment}")
-
 
     if worker_type == "local":
         cluster = LocalCluster(n_workers=n_workers)
@@ -142,7 +139,7 @@ def batch_distributed(
             job_script_prologue=env_extra,
         )
         cluster.scale(n=n_workers)
-    
+
     client = distributed.Client(cluster)
 
     def wrapper(func, **kwargs):

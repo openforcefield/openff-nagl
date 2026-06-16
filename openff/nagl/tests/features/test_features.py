@@ -25,6 +25,7 @@ from openff.nagl.utils._types import HybridizationType
 @pytest.fixture()
 def openff_benzene():
     from openff.toolkit.topology.molecule import Molecule
+
     return Molecule.from_smiles("c1ccccc1")
 
 

@@ -56,7 +56,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        toolkit_registry: Optional["NAGLToolkitRegistry"] = None
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         import dgl
@@ -69,14 +69,12 @@ class DGLMolecule(MoleculeMixin, DGLBase):
 
         if len(atom_features) and atom_feature_tensor is not None:
             raise ValueError(
-                "Only one of `atom_features` or "
-                "`atom_feature_tensor` should be provided."
+                "Only one of `atom_features` or `atom_feature_tensor` should be provided."
             )
 
         if len(bond_features) and bond_feature_tensor is not None:
             raise ValueError(
-                "Only one of `bond_features` or "
-                "`bond_feature_tensor` should be provided."
+                "Only one of `bond_features` or `bond_feature_tensor` should be provided."
             )
 
         offmols = [molecule]
@@ -98,7 +96,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
                 bond_feature_tensor=bond_feature_tensor,
                 forward=cls._graph_forward_edge_type,
                 reverse=cls._graph_backward_edge_type,
-                toolkit_registry=toolkit_registry
+                toolkit_registry=toolkit_registry,
             )
             for offmol in offmols
         ]
@@ -111,10 +109,10 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             edges[e_type] = n_edge.type(torch.int32)
         graph.set_batch_num_edges(edges)
 
-        mapped_smiles = offmols[0].to_smiles(mapped=True, toolkit_registry=toolkit_registry)
+        mapped_smiles = offmols[0].to_smiles(
+            mapped=True, toolkit_registry=toolkit_registry
+        )
 
         return cls(
-            graph=graph,
-            n_representations=len(offmols),
-            mapped_smiles=mapped_smiles
+            graph=graph, n_representations=len(offmols), mapped_smiles=mapped_smiles
         )

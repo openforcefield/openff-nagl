@@ -22,10 +22,10 @@ class PoolingLayer(torch.nn.Module, abc.ABC):
     def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         """Returns the pooled feature vector."""
 
-    
     @abc.abstractmethod
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         """Returns the number of values per molecule."""
+
 
 class PoolAtomFeatures(PoolingLayer):
     """A convenience class for pooling the node feature vectors produced by
@@ -38,7 +38,6 @@ class PoolAtomFeatures(PoolingLayer):
 
     def forward(self, molecule: DGLMoleculeOrBatch) -> torch.Tensor:
         return molecule.graph.ndata[molecule._graph_feature_name]
-    
 
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         return molecule.n_atoms_per_molecule
@@ -106,7 +105,7 @@ class PoolBondFeatures(PoolingLayer):
 
     def get_nvalues_per_molecule(self, molecule: DGLMoleculeOrBatch) -> Iterable[int]:
         return molecule.n_bonds_per_molecule
-    
+
 
 def get_pooling_layer(layer: Union[str, PoolingLayer]) -> PoolingLayer:
     if isinstance(layer, PoolingLayer):

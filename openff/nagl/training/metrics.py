@@ -1,6 +1,7 @@
 """
 Metrics for evaluating loss
 """
+
 import abc
 import typing
 
@@ -24,19 +25,17 @@ class BaseMetric(ImmutableModel, abc.ABC):
     """
     Base class for metrics to evaluate loss between predicted and expected values.
     """
+
     name: typing.Literal[""]
+
     def __call__(
-        self,
-        predicted_values: "torch.Tensor",
-        expected_values: "torch.Tensor"
+        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
     ) -> "torch.Tensor":
         return self.compute(predicted_values, expected_values)
 
     @abc.abstractmethod
     def compute(
-        self,
-        predicted_values: "torch.Tensor",
-        expected_values: "torch.Tensor"
+        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
     ) -> "torch.Tensor":
         raise NotImplementedError
 
@@ -67,11 +66,7 @@ class MAEMetric(BaseMetric):
 
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
 
-METRICS = {
-    "rmse": RMSEMetric,
-    "mse": MSEMetric,
-    "mae": MAEMetric
-}
+METRICS = {"rmse": RMSEMetric, "mse": MSEMetric, "mae": MAEMetric}
 """
 Mapping from metric names to the corresponding classes.
 """

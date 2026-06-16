@@ -46,7 +46,11 @@ class Feature(ImmutableModel, abc.ABC):
         kwargs = dict(zip(cls.__fields__, args))
         return cls(**kwargs)
 
-    def encode(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+    def encode(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None,
+    ) -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
 
@@ -56,10 +60,16 @@ class Feature(ImmutableModel, abc.ABC):
         will call that one and guarantee an appropriate shape.
         """
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
-        return self._encode(molecule, toolkit_registry=toolkit_registry).reshape(self.tensor_shape)
-    
+        return self._encode(molecule, toolkit_registry=toolkit_registry).reshape(
+            self.tensor_shape
+        )
+
     @abc.abstractmethod
-    def _encode(self, molecule:  "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+    def _encode(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None,
+    ) -> "torch.Tensor":
         """
         Encode the molecule feature into a tensor.
         """

@@ -19,7 +19,7 @@ class NAGLMoleculeBase:
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
-    
+
     @property
     def bond_features(self) -> Optional["torch.Tensor"]:
         if FEATURE in self.graph.edata:
@@ -35,11 +35,11 @@ class NAGLMoleculeBase:
 
 class MoleculeMixin:
     def __init__(
-            self,
-            graph,
-            n_representations: int = 1,
-            mapped_smiles: str = "",
-        ):
+        self,
+        graph,
+        n_representations: int = 1,
+        mapped_smiles: str = "",
+    ):
         self.graph = graph
         self.n_representations = n_representations
         self.mapped_smiles = mapped_smiles
@@ -87,9 +87,10 @@ class MoleculeMixin:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
-    
+
     def to_openff(self):
         from openff.toolkit.topology import Molecule
+
         molecule = Molecule.from_mapped_smiles(
             self.mapped_smiles,
             allow_undefined_stereo=True,

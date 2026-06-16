@@ -10,14 +10,14 @@ from openff.utilities import requires_package
 if typing.TYPE_CHECKING:
     import pyarrow
 
-class LabelledDataset:
 
+class LabelledDataset:
     @requires_package("pyarrow")
     def __init__(
-            self,
-            source,
-            smiles_column: str = "mapped_smiles",
-        ):
+        self,
+        source,
+        smiles_column: str = "mapped_smiles",
+    ):
         self.source = source
         self.smiles_column = smiles_column
         self._reload()
@@ -47,13 +47,9 @@ class LabelledDataset:
         import pyarrow as pa
         import pyarrow.dataset as ds
 
-        loader = functools.partial(
-            Molecule.from_smiles,
-            allow_undefined_stereo=True
-        )
+        loader = functools.partial(Molecule.from_smiles, allow_undefined_stereo=True)
         mapped_loader = functools.partial(
-            Molecule.from_mapped_smiles,
-            allow_undefined_stereo=True
+            Molecule.from_mapped_smiles, allow_undefined_stereo=True
         )
         if not mapped:
             converter = lambda x: loader(x).to_smiles(mapped=True)
@@ -66,9 +62,7 @@ class LabelledDataset:
             smiles = tqdm.tqdm(smiles, ncols=80, desc="Iterating through SMILES")
 
         field = pa.field(smiles_column, pa.string())
-        data = {
-            smiles_column: [converter(smi) for smi in smiles]
-        }
+        data = {smiles_column: [converter(smi) for smi in smiles]}
         table = pa.Table.from_pydict(data, schema=pa.schema([field]))
         if overwrite_existing:
             existing_data_behavior = "overwrite_or_ignore"
@@ -83,14 +77,14 @@ class LabelledDataset:
             existing_data_behavior=existing_data_behavior,
         )
         return cls(dataset_path, smiles_column=smiles_column)
-    
+
     def append_columns(
         self,
         columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
         self._append_columns(columns, exist_ok=exist_ok)
-        
+
     def _append_columns(
         self,
         columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
@@ -112,10 +106,7 @@ class LabelledDataset:
         for filename in self.dataset.files:
             batch_dataset = ds.dataset(filename)
             n_rows = batch_dataset.count_rows()
-            batch_columns = {
-                k: v[:n_rows]
-                for k, v in columns.items()
-            }
+            batch_columns = {k: v[:n_rows] for k, v in columns.items()}
 
             batch_table = batch_dataset.to_table()
             for k, v in batch_columns.items():
@@ -128,13 +119,10 @@ class LabelledDataset:
             with open(filename, "wb") as f:
                 pq.write_table(batch_table, f)
 
-            columns = {
-                k: v[n_rows:]
-                for k, v in columns.items()
-            }
+            columns = {k: v[n_rows:] for k, v in columns.items()}
         assert all(len(v) == 0 for v in columns.values())
         self._reload()
-         
+
     def apply_labellers(
         self,
         labellers: typing.Iterable[LabellerType],
@@ -158,4 +146,3 @@ class LabelledDataset:
                 )
             list(results)
         self._reload()
-        

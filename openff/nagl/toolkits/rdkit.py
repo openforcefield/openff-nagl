@@ -1,6 +1,5 @@
 """Functions using the RDKit toolkit"""
 
-
 import copy
 import functools
 from typing import Tuple, TYPE_CHECKING, List, Union
@@ -78,10 +77,11 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 for atom in rdmol.GetAtoms():
                     # reorder the rdkit mol following mapping
                     original_atom_indices = [
-                        atom.GetIntProp("react_atom_idx")
-                        for atom in rdmol.GetAtoms()
+                        atom.GetIntProp("react_atom_idx") for atom in rdmol.GetAtoms()
                     ]
-                new_order = [original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
+                new_order = [
+                    original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())
+                ]
                 rdmol = Chem.RenumberAtoms(rdmol, new_order)
                 # RDKit can assign stereochemistry differently
                 # and toolkit doesn't allow STEREOCIS and STEREOTRANS bonds
@@ -96,7 +96,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                     f"Reaction {reaction_smarts} did not converge after "
                     f"{max_iter} iterations for molecule {original_smiles}"
                 )
-            
+
         for i, atom in enumerate(rdmol.GetAtoms(), 1):
             atom.SetAtomMapNum(i)
 
@@ -105,7 +105,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Chem.SanitizeMol(rdmol, Chem.SANITIZE_SYMMRINGS)
         Chem.Kekulize(rdmol)
         Chem.AssignStereochemistry(rdmol)
-            
+
         new_mol = self.from_rdkit(
             rdmol,
             allow_undefined_stereo=True,
@@ -264,9 +264,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 )
         else:
             converter = functools.partial(
-                wrapper.from_rdkit,
-                allow_undefined_stereo=True,
-                _cls=Molecule
+                wrapper.from_rdkit, allow_undefined_stereo=True, _cls=Molecule
             )
 
         if file.endswith(".gz"):

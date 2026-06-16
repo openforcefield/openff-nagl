@@ -98,7 +98,7 @@ def enumerate_resonance_forms(
         max_path_length=max_path_length,
         include_all_transfer_pathways=include_all_transfer_pathways,
         as_dicts=as_dicts,
-        as_fragments=as_fragments
+        as_fragments=as_fragments,
     )
 
 
@@ -198,7 +198,7 @@ class ResonanceEnumerator:
             [fragment.reduced_graph for fragment in fragments]
             for fragments in all_fragments
         ]
-        
+
         if not as_fragments:
             combinations = itertools.product(*graphs)
             resonance_forms = [
@@ -218,24 +218,20 @@ class ResonanceEnumerator:
                     _molecule_from_dict(resonance_form)
                     for resonance_form in resonance_forms
                 ]
-        
+
         else:
             if not as_dicts:
                 raise NotImplementedError("as_fragments=True requires as_dicts=True")
-            
+
             molecules = []
             for fragments in graphs:
                 for subgraph in fragments:
-                    atoms = {
-                        node: subgraph.nodes[node]
-                        for node in subgraph.nodes
-                    }
+                    atoms = {node: subgraph.nodes[node] for node in subgraph.nodes}
                     bonds = {}
                     for i, j in subgraph.edges:
                         key = tuple(sorted((i, j)))
                         bonds[key] = subgraph.edges[i, j]
                     molecules.append({"atoms": atoms, "bonds": bonds})
-
 
         return molecules
 
@@ -344,7 +340,7 @@ class ResonanceEnumerator:
             if key not in bonds:
                 bonds[key] = bond
         return {"atoms": atoms, "bonds": bonds}
-        
+
     @staticmethod
     def _update_graph_attributes(source: nx.Graph, target: nx.Graph):
         """
@@ -461,7 +457,6 @@ class ResonanceEnumerator:
 
 
 class FragmentEnumerator:
-
     """
     A convenience class to enumerate resonance forms of a fragment of a molecule.
 
@@ -833,7 +828,7 @@ class FragmentEnumerator:
 
     @staticmethod
     def _select_lowest_energy_forms(
-        forms: Dict[Any, "FragmentEnumerator"]
+        forms: Dict[Any, "FragmentEnumerator"],
     ) -> Dict[Any, "FragmentEnumerator"]:
         """
         Select the resonance forms with the lowest energy.

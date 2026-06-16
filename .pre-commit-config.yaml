@@ -17,3 +17,9 @@ repos:
   rev: v2.7.0
   hooks:
     - id: pyproject-fmt
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.15.15
+  hooks:
+    - id: ruff-check
+      args: ["--fix"]
+    - id: ruff-format

@@ -49,7 +49,7 @@ class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):
                 layers.append(torch.nn.Dropout(p=layer.p))
             else:
                 raise NotImplementedError()
-        
+
         assert len(layers) == len(self)
         copied = type(self)(*layers)
 

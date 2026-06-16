@@ -50,10 +50,10 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         # case of NAGLRDKitToolkitWrapper() (instantiated)
         toolkit_function = getattr(toolkit_registry, function_name)
         return toolkit_function(*args, **kwargs)
-    
+
     elif isinstance(toolkit_registry, NAGLToolkitRegistry):
         return toolkit_registry.call(function_name, *args, **kwargs)
-    
+
     elif (
         toolkit_registry is None
         or isinstance(toolkit_registry, ToolkitRegistry)
@@ -67,7 +67,9 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
             toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
 
         # build new registry from scratch
-        new_nagl_registry = NAGLToolkitRegistry.from_openff_toolkit_registry(toolkit_registry)
+        new_nagl_registry = NAGLToolkitRegistry.from_openff_toolkit_registry(
+            toolkit_registry
+        )
         return new_nagl_registry.call(function_name, *args, **kwargs)
 
     else:
@@ -361,6 +363,7 @@ def _split_up_molecule_into_indices(
     graph = molecule.to_networkx()
     return list(map(list, nx.connected_components(graph)))
 
+
 def split_up_molecule(
     molecule: "Molecule",
     return_indices: bool = True,
@@ -384,17 +387,16 @@ def split_up_molecule(
 
     graph = molecule.to_networkx()
     indices = list(map(list, nx.connected_components(graph)))
-    
+
     fragments = []
     for ix in indices:
         subgraph = nx.convert_node_labels_to_integers(graph.subgraph(ix))
         fragment = molecule_from_networkx(subgraph)
         fragments.append(fragment)
-    
+
     if return_indices:
         return fragments, indices
     return fragments
-    
 
 
 def normalize_molecule(
@@ -782,7 +784,7 @@ def map_indexed_smiles(reference_smiles: str, target_smiles: str) -> Dict[int, i
 
 def molecule_from_networkx(graph):
     from openff.toolkit.topology import Molecule
-    
+
     molecule = Molecule()
 
     for _, info in graph.nodes(data=True):
@@ -807,7 +809,7 @@ def molecule_from_networkx(graph):
 def _molecule_to_dict(molecule: "Molecule") -> dict[str, dict]:
     """
     Convert an OpenFF molecule to a graph representation.
-    
+
     Parameters
     ----------
     molecule
@@ -848,11 +850,10 @@ def _molecule_to_dict(molecule: "Molecule") -> dict[str, dict]:
     return {"atoms": atoms, "bonds": bonds}
 
 
-
 def _molecule_from_dict(graph: dict[str, dict]) -> "Molecule":
     """
     Convert a graph representation to an OpenFF molecule.
-    
+
     Parameters
     ----------
     graph
@@ -866,7 +867,7 @@ def _molecule_from_dict(graph: dict[str, dict]) -> "Molecule":
         Each bond indices tuple is mapped to bond information.
         Each bond information dictionary contains the following keys:
         bond_order, is_aromatic, stereochemistry.
-    
+
     Returns
     -------
     molecule

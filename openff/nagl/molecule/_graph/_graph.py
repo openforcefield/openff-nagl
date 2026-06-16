@@ -14,6 +14,7 @@ import torch
 from ._batch import FrameDict
 
 from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
+
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
 
@@ -142,7 +143,7 @@ class NXMolGraph:
         mask = []
         for node in nodes:
             mask.extend(np.where(v == node)[0])
-                    
+
         U, V, I = u[mask], v[mask], i[mask]
 
         if form == "uv":
@@ -160,7 +161,9 @@ class NXMolGraph:
         except ValueError as e:
             # this may be due to there not being bonds
             if not self.graph.edges():
-                return torch.tensor([], dtype=torch.long), torch.tensor([], dtype=torch.long)
+                return torch.tensor([], dtype=torch.long), torch.tensor(
+                    [], dtype=torch.long
+                )
             raise e
         U = torch.tensor(u, dtype=torch.long)
         V = torch.tensor(v, dtype=torch.long)
@@ -176,7 +179,9 @@ class NXMolGraph:
         if edge_indices is None:
             edge_indices = torch.tensor(list(range(self.graph.edges())))
 
-        data = {k: v[edge_indices.long()].clone().detach() for k, v in self.edata.items()}
+        data = {
+            k: v[edge_indices.long()].clone().detach() for k, v in self.edata.items()
+        }
         return data
 
     def srcnodes(self):
@@ -220,7 +225,7 @@ class NXMolGraph:
 
     def num_src_nodes(self):
         return len(self.srcnodes())
-    
+
     def _unbatch(self, n_representations_per_molecule) -> List["NXMolGraph"]:
         from openff.nagl.molecule._graph._utils import _unbatch_nx_graphs
 
@@ -228,7 +233,6 @@ class NXMolGraph:
             type(self)(g)
             for g in _unbatch_nx_graphs(self.graph, n_representations_per_molecule)
         ]
-        
 
 
 class NXMolHomoGraph(NXMolGraph):
@@ -314,7 +318,7 @@ class NXMolHeteroGraph(NXMolGraph):
         molecule: "Molecule",
         atom_features: Tuple[AtomFeature, ...] = tuple(),
         bond_features: Tuple[BondFeature, ...] = tuple(),
-        toolkit_registry=None
+        toolkit_registry=None,
     ):
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._utils import _get_openff_molecule_information
@@ -325,7 +329,9 @@ class NXMolHeteroGraph(NXMolGraph):
 
         if len(atom_features):
             atom_featurizer = AtomFeaturizer(atom_features)
-            atom_features = atom_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
+            atom_features = atom_featurizer.featurize(
+                molecule, toolkit_registry=toolkit_registry
+            )
             molecule_graph.ndata[FEATURE] = atom_features
 
         molecule_info = _get_openff_molecule_information(molecule)
@@ -341,7 +347,9 @@ class NXMolHeteroGraph(NXMolGraph):
 
         if len(bond_features):
             bond_featurizer = BondFeaturizer(bond_features)
-            bond_features = bond_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
+            bond_features = bond_featurizer.featurize(
+                molecule, toolkit_registry=toolkit_registry
+            )
             molecule_graph.edges[FORWARD].data[FEATURE] = bond_features
             molecule_graph.edges[REVERSE].data[FEATURE] = bond_features
 

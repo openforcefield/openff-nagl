@@ -15,11 +15,11 @@ from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
 from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.domains import ChemicalDomain
-from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
-from openff.nagl.tests.data.files import (
-    EXAMPLE_AM1BCC_MODEL,
-    data_directory
+from openff.nagl.lookups import (
+    AtomPropertiesLookupTable,
+    AtomPropertiesLookupTableEntry,
 )
+from openff.nagl.tests.data.files import EXAMPLE_AM1BCC_MODEL, data_directory
 from openff.nagl.features.atoms import (
     AtomicElement,
     AtomConnectivity,
@@ -97,7 +97,6 @@ class TestBaseGNNModel:
         assert isinstance(readouts["atom"].pooling_layer, PoolAtomFeatures)
         assert isinstance(readouts["bond"].pooling_layer, PoolBondFeatures)
 
-
     def test_forward(self, mock_atom_model, dgl_methane):
         output = mock_atom_model.forward(dgl_methane)
         assert "atom" in output
@@ -105,7 +104,6 @@ class TestBaseGNNModel:
 
 
 class BaseTestChargeGNNModel:
-
     @pytest.fixture(scope="class")
     def model(self):
         return self.get_model()
@@ -115,11 +113,10 @@ class BaseTestChargeGNNModel:
         model_path = data_directory / "models" / f"{cls.model_name}.pt"
         model = GNNModel.load(model_path, eval_mode=True)
         return model
-    
+
     @classmethod
     def get_example_charge_directory(cls):
         return data_directory / "example_charges" / cls.model_name
-
 
     @pytest.mark.parametrize(
         "smiles",
@@ -154,7 +151,7 @@ class BaseTestChargeGNNModel:
             "[O-]S(O)(O)CC[NH+]1CCOCC1",
             "O=NN([O-])[O-]",
             "[O-]P([O-])[O-]",
-            "C#N"
+            "C#N",
         ],
     )
     def test_load_and_compute(self, smiles, model):
@@ -176,15 +173,11 @@ class TestExampleGNNModel(BaseTestChargeGNNModel):
     model_name = "example_am1bcc_model"
 
 
-    
-
 class TestGNNModel:
     @pytest.fixture()
     def am1bcc_model(self):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
-        model.chemical_domain = ChemicalDomain(
-            allowed_elements=(1, 6)
-        )
+        model.chemical_domain = ChemicalDomain(allowed_elements=(1, 6))
         lookup_table = AtomPropertiesLookupTable(
             property_name="am1bcc_charges",
             properties=[
@@ -194,7 +187,7 @@ class TestGNNModel:
                     property_value=[-0.1, 0.05, 0.05],
                     provenance={"description": "test"},
                 )
-            ]
+            ],
         )
         model.lookup_tables = {"am1bcc_charges": lookup_table}
 
@@ -202,7 +195,9 @@ class TestGNNModel:
 
     @pytest.fixture()
     def expected_methane_charges(self):
-        return np.array([-0.087334,  0.021833,  0.021833,  0.021833,  0.021833],)
+        return np.array(
+            [-0.087334, 0.021833, 0.021833, 0.021833, 0.021833],
+        )
 
     def test_init(self):
         from openff.nagl.features import atoms, bonds
@@ -226,7 +221,8 @@ class TestGNNModel:
         ]
 
         model = GNNModel(
-            {   "version": "0.1",
+            {
+                "version": "0.1",
                 "atom_features": atom_features,
                 "bond_features": bond_features,
                 "convolution": {
@@ -238,7 +234,8 @@ class TestGNNModel:
                             "dropout": 0.0,
                             "aggregator_type": "mean",
                         }
-                    ] * 3
+                    ]
+                    * 3,
                 },
                 "readouts": {
                     "am1bcc-charges": {
@@ -250,9 +247,10 @@ class TestGNNModel:
                                 "activation_function": "ReLU",
                                 "dropout": 0.0,
                             }
-                        ] * 4
+                        ]
+                        * 4,
                     }
-                }
+                },
             }
         )
 
@@ -270,30 +268,38 @@ class TestGNNModel:
         for key in original_state_dict.keys():
             assert torch.allclose(original_state_dict[key], new_state_dict[key])
 
-    def test_compute_property_dgl(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_dgl(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         pytest.importorskip("dgl")
         charges = am1bcc_model._compute_properties_dgl(openff_methane_uncharged)
         charges = charges["am1bcc_charges"].detach().numpy().flatten()
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_networkx(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_networkx(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model._compute_properties_nagl(openff_methane_uncharged)
         charges = charges["am1bcc_charges"].detach().numpy().flatten()
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-    def test_compute_property_assumed(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+    def test_compute_property_assumed(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_property(openff_methane_uncharged, as_numpy=True)
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
-    
-    def test_compute_property_specified(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+
+    def test_compute_property_specified(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_property(
-            openff_methane_uncharged,
-            as_numpy=True,
-            readout_name="am1bcc_charges"
+            openff_methane_uncharged, as_numpy=True, readout_name="am1bcc_charges"
         )
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
-    
-    def test_compute_properties(self, am1bcc_model, openff_methane_uncharged, expected_methane_charges):
+
+    def test_compute_properties(
+        self, am1bcc_model, openff_methane_uncharged, expected_methane_charges
+    ):
         charges = am1bcc_model.compute_properties(
             openff_methane_uncharged,
             as_numpy=True,
@@ -301,29 +307,34 @@ class TestGNNModel:
         assert len(charges) == 1
         assert_allclose(charges["am1bcc_charges"], expected_methane_charges, atol=1e-5)
 
-    def test_compute_properties_check_domains(self, am1bcc_model, openff_methane_uncharged):
+    def test_compute_properties_check_domains(
+        self, am1bcc_model, openff_methane_uncharged
+    ):
         am1bcc_model.compute_properties(
             openff_methane_uncharged,
             check_domains=True,
             error_if_unsupported=True,
         )
-        
-    def test_compute_properties_warning_domains(self, am1bcc_model, openff_methyl_methanoate):
+
+    def test_compute_properties_warning_domains(
+        self, am1bcc_model, openff_methyl_methanoate
+    ):
         with pytest.warns(UserWarning):
             am1bcc_model.compute_properties(
                 openff_methyl_methanoate,
                 check_domains=True,
                 error_if_unsupported=False,
             )
-    
-    def test_compute_properties_error_domains(self, am1bcc_model, openff_methyl_methanoate):
+
+    def test_compute_properties_error_domains(
+        self, am1bcc_model, openff_methyl_methanoate
+    ):
         with pytest.raises(ValueError):
             am1bcc_model.compute_properties(
                 openff_methyl_methanoate,
                 check_domains=True,
                 error_if_unsupported=True,
             )
-
 
     def test_load(self, openff_methane_uncharged, expected_methane_charges):
         model = GNNModel.load(EXAMPLE_AM1BCC_MODEL, eval_mode=True)
@@ -344,7 +355,6 @@ class TestGNNModel:
         charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
         assert_allclose(charges, expected_methane_charges, atol=1e-5)
 
-
     def test_forward_unpostprocessed(self):
         dgl = pytest.importorskip("dgl")
         from openff.toolkit import Molecule
@@ -355,20 +365,20 @@ class TestGNNModel:
         unpostprocessed = model._forward_unpostprocessed(nagl_mol)
         computed = unpostprocessed["am1bcc_charges"].detach().cpu().numpy()
         assert computed.shape == (5, 2)
-        expected = np.array([
-            [ 0.166862,  5.489722],
-            [-0.431665,  5.454424],
-            [-0.431665,  5.454424],
-            [-0.431665,  5.454424],
-            [-0.431665,  5.454424],
-        ])
+        expected = np.array(
+            [
+                [0.166862, 5.489722],
+                [-0.431665, 5.454424],
+                [-0.431665, 5.454424],
+                [-0.431665, 5.454424],
+                [-0.431665, 5.454424],
+            ]
+        )
         assert_allclose(computed, expected, atol=1e-5)
 
     def test_load_model_with_kwargs(self):
         GNNModel.load(
-            EXAMPLE_AM1BCC_MODEL,
-            eval_mode=True,
-            map_location=torch.device('cpu')
+            EXAMPLE_AM1BCC_MODEL, eval_mode=True, map_location=torch.device("cpu")
         )
 
     def test_protein_computable(self):
@@ -387,13 +397,14 @@ class TestGNNModel:
         )
         model.compute_property(protein, as_numpy=True)
 
-    def test_save(self, am1bcc_model, openff_methane_uncharged, tmpdir, expected_methane_charges):
+    def test_save(
+        self, am1bcc_model, openff_methane_uncharged, tmpdir, expected_methane_charges
+    ):
         with tmpdir.as_cwd():
             am1bcc_model.save("model.pt")
             model = GNNModel.load("model.pt", eval_mode=True)
             charges = model.compute_property(openff_methane_uncharged, as_numpy=True)
             assert_allclose(charges, expected_methane_charges, atol=1e-5)
-
 
     def test_check_lookup_table(self, am1bcc_model):
         sh2 = Molecule.from_mapped_smiles("[H:1][S:2][H:3]")
@@ -407,37 +418,38 @@ class TestGNNModel:
         charges = am1bcc_model.compute_property(
             sh2, as_numpy=True, check_lookup_table=False
         )
-        assert_allclose(charges, [0.220583, -0.441167,  0.220583], atol=1e-5)
+        assert_allclose(charges, [0.220583, -0.441167, 0.220583], atol=1e-5)
 
     def test_outside_lookup_table(self, am1bcc_model):
         nh2 = Molecule.from_smiles("N")
-        charges =am1bcc_model.compute_property(
-            nh2, as_numpy=True, check_lookup_table=True,
+        charges = am1bcc_model.compute_property(
+            nh2,
+            as_numpy=True,
+            check_lookup_table=True,
         )
-        assert_allclose(
-            charges,
-            [-0.738375,  0.246125,  0.246125,  0.246125],
-            atol=1e-5
-        )
-    
+        assert_allclose(charges, [-0.738375, 0.246125, 0.246125, 0.246125], atol=1e-5)
+
     def test_compute_long_molecule(self, am1bcc_model):
         mol = Molecule.from_smiles(341 * "C")
         charges = am1bcc_model.compute_property(mol, as_numpy=True)
         assert charges.shape == (mol.n_atoms,)
 
+
 class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
     model_name = "openff-gnn-am1bcc-0.1.0-rc.3"
 
-    
     def test_contains_lookup_tables(self, model):
         assert "am1bcc_charges" in model.lookup_tables
         assert len(model.lookup_tables) == 1
         assert len(model.lookup_tables["am1bcc_charges"]) == 13944
 
-    @pytest.mark.parametrize("lookup, expected_charges", [
-        (True, [-0.10866 ,  0.027165,  0.027165,  0.027165,  0.027165]),
-        (False, [-0.159474,  0.039869,  0.039869,  0.039869,  0.039869])
-    ])
+    @pytest.mark.parametrize(
+        "lookup, expected_charges",
+        [
+            (True, [-0.10866, 0.027165, 0.027165, 0.027165, 0.027165]),
+            (False, [-0.159474, 0.039869, 0.039869, 0.039869, 0.039869]),
+        ],
+    )
     def test_compute_property(
         self, model, openff_methane_uncharged, lookup, expected_charges
     ):
@@ -445,22 +457,21 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
             openff_methane_uncharged,
             as_numpy=True,
             check_lookup_table=lookup,
-
         )
         assert charges.shape == (5,)
         assert charges.dtype == np.float32
 
         assert_allclose(charges, expected_charges, atol=1e-5)
 
-
     @pytest.mark.filterwarnings(
         "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
     )
     @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
     @pytest.mark.parametrize(
-        "smiles, expected_formal_charges", [
+        "smiles, expected_formal_charges",
+        [
             ("CCCn1cc[n+](C)c1.C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", [1, -1]),
-        ]
+        ],
     )
     def test_multimolecule_smiles(self, model, smiles, expected_formal_charges):
         from rdkit import Chem
@@ -473,9 +484,7 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
         # assume lowest atoms are in order of left to right
         fragment_indices = []
         fragments = Chem.GetMolFrags(
-            rdmol,
-            asMols=True,
-            fragsMolAtomMapping=fragment_indices
+            rdmol, asMols=True, fragsMolAtomMapping=fragment_indices
         )
         assert len(fragment_indices) == len(expected_formal_charges)
 
@@ -494,8 +503,7 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
             assert np.allclose(sum(fragment_charges), expected_charge)
 
             individual_mol = Molecule.from_smiles(
-                individual_smiles[i],
-                allow_undefined_stereo=True
+                individual_smiles[i], allow_undefined_stereo=True
             )
             individual_charges = model.compute_property(individual_mol, as_numpy=True)
             mol_fragment = Molecule.from_rdkit(fragments[i])
@@ -507,8 +515,7 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
             assert is_iso
             # atom_mapping has k:v of mol2_index: mol_fragment_index
             remapped_fragment_charges = [
-                fragment_charges[v]
-                for _, v in sorted(atom_mapping.items())
+                fragment_charges[v] for _, v in sorted(atom_mapping.items())
             ]
             assert np.allclose(individual_charges, remapped_fragment_charges)
 
@@ -521,8 +528,7 @@ class TestChargeGNNModelRC4(BaseTestChargeGNNModel):
         assert mol.n_atoms == 1
 
         charges = model.compute_property(mol, as_numpy=True).flatten()
-        assert np.isclose(charges[-1], -1.)
-
+        assert np.isclose(charges[-1], -1.0)
 
     @pytest.mark.filterwarnings(
         "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
@@ -530,7 +536,7 @@ class TestChargeGNNModelRC4(BaseTestChargeGNNModel):
     def test_assign_partial_charges_to_hcl_salt(self, model):
         mol = Molecule.from_mapped_smiles("[Cl-:1].[H+:2]")
         assert mol.n_atoms == 2
-        
+
         charges = model.compute_property(mol, as_numpy=True).flatten()
-        assert np.isclose(charges[0], -1.)
-        assert np.isclose(charges[1], 1.)
+        assert np.isclose(charges[0], -1.0)
+        assert np.isclose(charges[1], 1.0)

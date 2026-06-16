@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class DataHash(ImmutableModel):
     """A class for computing the hash of a dataset."""
+
     path_hash: str
     columns: typing.List[str]
     atom_features: typing.List[AtomFeature]
@@ -82,7 +83,7 @@ class DataHash(ImmutableModel):
             atom_features=atom_features,
             bond_features=bond_features,
         )
-    
+
     def to_hash(self):
         json_str = self.json().encode("utf-8")
         hashed = hashlib.sha256(json_str).hexdigest()
@@ -94,7 +95,7 @@ def _get_hashed_arrow_dataset_path(
     atom_features: typing.Optional[typing.List[AtomFeature]] = None,
     bond_features: typing.Optional[typing.List[BondFeature]] = None,
     columns: typing.Optional[typing.List[str]] = None,
-    directory: typing.Optional[pathlib.Path] = None
+    directory: typing.Optional[pathlib.Path] = None,
 ) -> pathlib.Path:
     hash_value = DataHash.from_file(
         path,
@@ -107,7 +108,6 @@ def _get_hashed_arrow_dataset_path(
         directory = pathlib.Path(directory)
         return directory / file_path
     return pathlib.Path(file_path)
-
 
 
 class DGLMoleculeDatasetEntry(typing.NamedTuple):
@@ -127,7 +127,6 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         bond_features: typing.List[BondFeature],
         atom_feature_tensor: typing.Optional[torch.Tensor] = None,
         bond_feature_tensor: typing.Optional[torch.Tensor] = None,
-        
     ):
         dglmol = DGLMolecule.from_openff(
             openff_molecule,
@@ -165,7 +164,7 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
     ):
         """
         Create a dataset entry from a mapped SMILES string.
-        
+
         Parameters
         ----------
         mapped_smiles
@@ -223,7 +222,7 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
             atom_features,
             bond_features,
         )
-    
+
     @classmethod
     def _from_featurized_pyarrow_row(
         cls,
@@ -247,11 +246,10 @@ class DGLMoleculeDatasetEntry(typing.NamedTuple):
         if atom_features is not None:
             atom_features = torch.tensor(atom_features).float()
             atom_features = atom_features.reshape(len(molecule.atoms), -1)
-        
+
         if bond_features is not None:
             bond_features = torch.tensor(bond_features).float()
             bond_features = bond_features.reshape(len(molecule.bonds), -1)
-
 
         return cls.from_mapped_smiles(
             mapped_smiles,
@@ -269,14 +267,12 @@ class _LazyDGLMoleculeDataset(Dataset):
     @property
     def schema(self):
         self.get_schema()
-    
+
     @classmethod
     def get_schema(cls):
         import pyarrow as pa
 
         return pa.schema([pa.field("pickled", pa.binary())])
-    
-
 
     def __len__(self):
         return self.n_entries
@@ -285,7 +281,7 @@ class _LazyDGLMoleculeDataset(Dataset):
         row = self.table.slice(index, length=1).to_pydict()["pickled"][0]
         entry = pickle.loads(row)
         return entry
-    
+
     @requires_package("pyarrow")
     def __init__(
         self,
@@ -299,11 +295,8 @@ class _LazyDGLMoleculeDataset(Dataset):
             self.table = reader.read_all()
         self.n_entries = self.table.num_rows
         self.n_atom_features = (
-            self[0].molecule.atom_features.shape[1]
-            if len(self)
-            else 0
+            self[0].molecule.atom_features.shape[1] if len(self) else 0
         )
-    
 
     @classmethod
     @requires_package("pyarrow")
@@ -345,16 +338,15 @@ class _LazyDGLMoleculeDataset(Dataset):
         if use_cached_data:
             if output_path.exists():
                 return cls(output_path)
-            
+
         else:
             tempdir = tempfile.TemporaryDirectory()
             output_path = pathlib.Path(tempdir.name) / file_path
 
         logger.info(f"Featurizing dataset to {output_path}")
-        
 
         if atom_feature_column is None and bond_feature_column is None:
-        # set featurizer function
+            # set featurizer function
             converter = functools.partial(
                 cls._pickle_entry_from_unfeaturized_row,
                 atom_features=atom_features,
@@ -383,11 +375,10 @@ class _LazyDGLMoleculeDataset(Dataset):
                         pickled = list(mapper(converter, input_batch.to_pylist()))
 
                     output_batch = pa.RecordBatch.from_arrays(
-                        [pa.array(pickled)],
-                        schema=cls.get_schema()
+                        [pa.array(pickled)], schema=cls.get_schema()
                     )
                     writer.write_batch(output_batch)
-                    
+
         return cls(output_path)
 
     @staticmethod
@@ -423,7 +414,6 @@ class _LazyDGLMoleculeDataset(Dataset):
         f = io.BytesIO()
         pickle.dump(entry, f)
         return f.getvalue()
-        
 
 
 class DGLMoleculeDataset(Dataset):
@@ -483,8 +473,6 @@ class DGLMoleculeDataset(Dataset):
             if columns is not None and bond_feature_column not in columns:
                 columns.append(bond_feature_column)
 
-        
-
         input_dataset = ds.dataset(path, format=format)
         entries = []
 
@@ -498,7 +486,6 @@ class DGLMoleculeDataset(Dataset):
             #     row_entries = list(mapper(converter, input_batch.to_pylist()))
             #     entries.extend(row_entries)
         return cls(entries)
-        
 
     @classmethod
     def from_openff(
@@ -519,8 +506,7 @@ class DGLMoleculeDataset(Dataset):
             labels = [dict(label) for label in labels]
         if len(labels) != len(molecules):
             raise ValueError(
-                f"The number of labels ({len(labels)}) must match the number of "
-                f"molecules ({len(molecules)})."
+                f"The number of labels ({len(labels)}) must match the number of molecules ({len(molecules)})."
             )
         if atom_feature_tensors is not None:
             if len(atom_feature_tensors) != len(molecules):
@@ -573,7 +559,7 @@ class DGLMoleculeDataset(Dataset):
         This will contain at minimum the smiles, atom features,
         and bond features, using the column names specified as
         arguments. It will also contain any labels that in the entry.
-        
+
         Parameters
         ----------
         atom_feature_column
@@ -582,8 +568,8 @@ class DGLMoleculeDataset(Dataset):
             The name of the column to use for the bond features.
         smiles_column
             The name of the column to use for the SMILES strings.
-        
-        
+
+
         Returns
         -------
         table
@@ -597,7 +583,7 @@ class DGLMoleculeDataset(Dataset):
             label_columns = list(first_labels.keys())
 
         label_set = set(label_columns)
-        
+
         rows = []
         for dglmol, labels in self.entries:
             atom_features = None
@@ -608,34 +594,32 @@ class DGLMoleculeDataset(Dataset):
             if dglmol.bond_features is not None:
                 bond_features = dglmol.bond_features.detach().numpy()
                 bond_features = bond_features.astype(float).flatten()
-            
+
             mol_label_set = set(labels.keys())
             if label_set != mol_label_set:
                 raise ValueError(
-                    f"The label sets are not consistent. "
-                    f"Expected {label_set}, got {mol_label_set}."
+                    f"The label sets are not consistent. Expected {label_set}, got {mol_label_set}."
                 )
 
             row = [dglmol.mapped_smiles, atom_features, bond_features]
             for label in label_columns:
                 row.append(labels[label].detach().numpy().tolist())
-            
+
             rows.append(row)
-        
+
         table = pa.table(
             [*zip(*rows)],
             names=required_columns + label_columns,
         )
         return table
-    
-
-
 
 
 class DGLMoleculeDataLoader(DataLoader):
     def __init__(
         self,
-        dataset: typing.Union[DGLMoleculeDataset, _LazyDGLMoleculeDataset, ConcatDataset],
+        dataset: typing.Union[
+            DGLMoleculeDataset, _LazyDGLMoleculeDataset, ConcatDataset
+        ],
         batch_size: typing.Optional[int] = 1,
         **kwargs,
     ):

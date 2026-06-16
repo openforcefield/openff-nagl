@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
-
 @requires_package("dgl")
 def openff_molecule_to_base_dgl_graph(
     molecule: "Molecule",
@@ -56,21 +55,19 @@ def openff_molecule_to_dgl_graph(
     bond_feature_tensor: Optional[torch.Tensor] = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
-    toolkit_registry: Optional["NAGLToolkitRegistry"] = None
+    toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
 ) -> "dgl.DGLHeteroGraph":
     toolkit_registry = ensure_toolkit_registry(toolkit_registry)
     from openff.nagl.molecule._utils import _get_openff_molecule_information
 
     if len(atom_features) and atom_feature_tensor is not None:
         raise ValueError(
-            "Only one of `atom_features` or "
-            "`atom_feature_tensor` should be provided."
+            "Only one of `atom_features` or `atom_feature_tensor` should be provided."
         )
 
     if len(bond_features) and bond_feature_tensor is not None:
         raise ValueError(
-            "Only one of `bond_features` or "
-            "`bond_feature_tensor` should be provided."
+            "Only one of `bond_features` or `bond_feature_tensor` should be provided."
         )
 
     # create base undirected graph
@@ -83,8 +80,10 @@ def openff_molecule_to_dgl_graph(
     # add atom features
     if len(atom_features):
         atom_featurizer = AtomFeaturizer(atom_features)
-        atom_feature_tensor = atom_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
-    
+        atom_feature_tensor = atom_featurizer.featurize(
+            molecule, toolkit_registry=toolkit_registry
+        )
+
     if atom_feature_tensor is None:
         atom_feature_tensor = torch.zeros((molecule.n_atoms, 0))
     molecule_graph.ndata[FEATURE] = atom_feature_tensor.reshape(molecule.n_atoms, -1)
@@ -101,7 +100,9 @@ def openff_molecule_to_dgl_graph(
 
     if len(bond_features):
         bond_featurizer = BondFeaturizer(bond_features)
-        bond_feature_tensor = bond_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
+        bond_feature_tensor = bond_featurizer.featurize(
+            molecule, toolkit_registry=toolkit_registry
+        )
 
     for direction in (forward, reverse):
         n_bonds = len(molecule.bonds)
@@ -114,8 +115,11 @@ def openff_molecule_to_dgl_graph(
 
     return molecule_graph
 
+
 @requires_package("dgl")
-def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata=None) -> "dgl.DGLGraph":
+def heterograph_to_homograph_no_edges(
+    G: "dgl.DGLHeteroGraph", ndata=None, edata=None
+) -> "dgl.DGLGraph":
     """
     Copied and modified from dgl.python.dgl.convert.to_homogeneous,
     but with the edges removed.
@@ -170,9 +174,7 @@ def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata
         ndata = []
     if edata is None:
         edata = []
-    comb_nf = combine_frames(
-        G._node_frames, range(len(G.ntypes)), col_names=ndata
-    )
+    comb_nf = combine_frames(G._node_frames, range(len(G.ntypes)), col_names=ndata)
     if comb_nf is not None:
         retg.ndata.update(comb_nf)
 
@@ -182,8 +184,6 @@ def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata
     retg.edata[ETYPE] = F.cat(etype_ids, 0)
 
     return retg
-
-
 
 
 @requires_package("dgl")

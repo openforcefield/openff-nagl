@@ -66,3 +66,9 @@ exclude_lines = [
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
+
+[tool.ruff]
+namespace-packages = [ "openff/nagl/" ]
+
+[tool.ruff.lint]
+select = []

@@ -26,9 +26,16 @@ class Featurizer(Generic[T]):
                 feature = feature()
             self.features.append(feature)
 
-    def featurize(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
+    def featurize(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
+    ) -> torch.Tensor:
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
-        encoded = [feature.encode(molecule, toolkit_registry=toolkit_registry) for feature in self.features]
+        encoded = [
+            feature.encode(molecule, toolkit_registry=toolkit_registry)
+            for feature in self.features
+        ]
         features = torch.hstack(encoded)
         return features
 

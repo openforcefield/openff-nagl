@@ -46,11 +46,14 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                 )
 
     @classmethod
-    def _resolve_registry(cls, toolkit_registry: _ToolkitRegistry | None) -> "NAGLToolkitRegistry":
+    def _resolve_registry(
+        cls, toolkit_registry: _ToolkitRegistry | None
+    ) -> "NAGLToolkitRegistry":
         from openff.toolkit.utils.base_wrapper import ToolkitWrapper as _ToolkitWrapper
 
         if toolkit_registry is None:
             from openff.toolkit.utils import GLOBAL_TOOLKIT_REGISTRY
+
             toolkit_registry = GLOBAL_TOOLKIT_REGISTRY
         if isinstance(toolkit_registry, NAGLToolkitRegistry):
             return toolkit_registry
@@ -58,10 +61,16 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
             return cls([toolkit_registry], exception_if_unavailable=False)
         elif isinstance(toolkit_registry, NAGLToolkitWrapperBase):
             return cls([type(toolkit_registry)], exception_if_unavailable=False)
-        elif isinstance(toolkit_registry, type) and issubclass(toolkit_registry, _ToolkitWrapper):
-            return cls.from_openff_toolkit_registry(_ToolkitRegistry([toolkit_registry()]))
+        elif isinstance(toolkit_registry, type) and issubclass(
+            toolkit_registry, _ToolkitWrapper
+        ):
+            return cls.from_openff_toolkit_registry(
+                _ToolkitRegistry([toolkit_registry()])
+            )
         elif isinstance(toolkit_registry, _ToolkitWrapper):
-            return cls.from_openff_toolkit_registry(_ToolkitRegistry([toolkit_registry]))
+            return cls.from_openff_toolkit_registry(
+                _ToolkitRegistry([toolkit_registry])
+            )
         elif isinstance(toolkit_registry, _ToolkitRegistry):
             return cls.from_openff_toolkit_registry(toolkit_registry)
         else:
@@ -70,9 +79,11 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                 "ToolkitRegistry, ToolkitWrapper, NAGLToolkitWrapper, or None. "
                 f"Got {type(toolkit_registry)}"
             )
-        
+
     @classmethod
-    def from_openff_toolkit_registry(cls, toolkit_registry: _ToolkitRegistry) -> "NAGLToolkitRegistry":
+    def from_openff_toolkit_registry(
+        cls, toolkit_registry: _ToolkitRegistry
+    ) -> "NAGLToolkitRegistry":
         """
         Convert an openff.toolkit.utils.ToolkitRegistry to a NAGLToolkitRegistry
 
@@ -134,10 +145,7 @@ class NAGLToolkitRegistry(_ToolkitRegistry):
                 toolkits_to_remove.append(toolkit)
 
         if not toolkits_to_remove:
-            msg = (
-                f"Did not find {toolkit_wrapper.name} in registry. "
-                f"Currently registered toolkits are {self._toolkits}"
-            )
+            msg = f"Did not find {toolkit_wrapper.name} in registry. Currently registered toolkits are {self._toolkits}"
             raise ToolkitUnavailableException(msg)
 
         for toolkit_to_remove in toolkits_to_remove:

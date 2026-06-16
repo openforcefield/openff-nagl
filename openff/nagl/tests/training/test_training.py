@@ -15,17 +15,21 @@ from openff.nagl.config.model import (
     ReadoutModule,
     ModelConfig,
     ConvolutionLayer,
-    ConvolutionModule
+    ConvolutionModule,
 )
 from openff.nagl.features import atoms
 from openff.nagl.training.metrics import RMSEMetric
 from openff.nagl.training.loss import ReadoutTarget
-from openff.nagl.training.training import DGLMoleculeDataModule, DataHash, TrainingGNNModel
+from openff.nagl.training.training import (
+    DGLMoleculeDataModule,
+    DataHash,
+    TrainingGNNModel,
+)
 from openff.nagl.nn._models import GNNModel
 from openff.nagl.nn._dataset import (
     DGLMoleculeDataLoader,
     DGLMoleculeDataset,
-    _LazyDGLMoleculeDataset
+    _LazyDGLMoleculeDataset,
 )
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.tests.data.files import (
@@ -40,6 +44,7 @@ from openff.nagl.tests.data.files import (
 
 dgl = pytest.importorskip("dgl")
 
+
 @pytest.fixture
 def example_training_config():
     config = TrainingConfig.from_yaml(EXAMPLE_TRAINING_CONFIG)
@@ -48,14 +53,19 @@ def example_training_config():
 
 class TestDataHash:
     def test_to_hash(self, example_atom_features, example_bond_features):
-        all_filenames = [EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET]
+        all_filenames = [
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
+            EXAMPLE_FEATURIZED_PARQUET_DATASET,
+        ]
         all_atom_features = [example_atom_features, []]
         all_bond_features = [example_bond_features, []]
         all_columns = [["a", "b"], ["c"], []]
 
-        all_combinations = list(itertools.product(
-            all_filenames, all_columns, all_atom_features, all_bond_features
-        ))
+        all_combinations = list(
+            itertools.product(
+                all_filenames, all_columns, all_atom_features, all_bond_features
+            )
+        )
         all_hashers = []
         for fn, cols, atom_features, bond_features in all_combinations:
             hasher = DataHash.from_file(
@@ -96,9 +106,15 @@ class TestDGLMoleculeDataModule:
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea"),
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d"),
-        ]
+            (
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
+                "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea",
+            ),
+            (
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
+                "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d",
+            ),
+        ],
     )
     def test_hash_file(self, example_training_config, filename, hash_value):
         data_module = DGLMoleculeDataModule(example_training_config)
@@ -112,11 +128,11 @@ class TestDGLMoleculeDataModule:
         with tmpdir.as_cwd():
             shutil.copytree(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
-                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem,
             )
             shutil.copytree(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
-                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem,
             )
             for stage in ["train", "val", "test"]:
                 config = data_module._dataset_configs[stage]
@@ -154,28 +170,20 @@ class TestDGLMoleculeDataModule:
             assert len(val_dataloader) == 2  # 2 batches of 2 (total 4)
 
     def test_setup_lazy(self, tmpdir):
-        example_training_config = TrainingConfig.from_yaml(
-            EXAMPLE_TRAINING_CONFIG_LAZY
-        )
+        example_training_config = TrainingConfig.from_yaml(EXAMPLE_TRAINING_CONFIG_LAZY)
         data_module = DGLMoleculeDataModule(example_training_config)
         assert len(data_module._datasets) == 0
 
         with tmpdir.as_cwd():
-            shutil.copy(
-                EXAMPLE_FEATURIZED_LAZY_DATA.resolve(),
-                "."
-            )
-            shutil.copy(
-                EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(),
-                "."
-            )
+            shutil.copy(EXAMPLE_FEATURIZED_LAZY_DATA.resolve(), ".")
+            shutil.copy(EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(), ".")
             shutil.copytree(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
-                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem,
             )
             shutil.copytree(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
-                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+                EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem,
             )
             for stage in ["train", "val", "test"]:
                 config = data_module._dataset_configs[stage]
@@ -212,11 +220,6 @@ class TestDGLMoleculeDataModule:
             assert val_dataloader.batch_size == 2
             assert len(val_dataloader) == 2  # 2 batches of 2 (total 4)
 
-
-
-
-
-
     # def test_prepare_data_uncached(self, tmpdir, example_training_config):
     #     data_module = DGLMoleculeDataModule(example_training_config)
     #     assert len(data_module._datasets) == 0
@@ -252,19 +255,17 @@ class TestDGLMoleculeDataModule:
     #         assert data_module._datasets["test"] is None
 
 
-
-
-
 class TestTrainingGNNModel:
     @pytest.fixture()
     def example_training_model(self, example_training_config):
         model = TrainingGNNModel(example_training_config)
         return model
-    
+
     @pytest.fixture()
     def mock_training_model(self, example_training_model, monkeypatch):
         def mock_forward(_):
             return {"am1bcc_charges": torch.tensor([[1.0, 2.0, 3.0, 4.0, 5.0]])}
+
         monkeypatch.setattr(example_training_model, "forward", mock_forward)
         return example_training_model
 
@@ -274,7 +275,7 @@ class TestTrainingGNNModel:
             example_training_model.config.to_yaml(yaml_file)
             model = TrainingGNNModel.from_yaml(yaml_file)
             assert model.config == example_training_model.config
-    
+
     def test_init(self, example_training_model, example_training_config):
         assert example_training_model.config == example_training_config
         assert example_training_model.hparams["config"] == example_training_config
@@ -283,8 +284,9 @@ class TestTrainingGNNModel:
     def test_configure_optimizers(self, example_training_model):
         optimizer = example_training_model.configure_optimizers()
         assert isinstance(optimizer, torch.optim.Adam)
-        assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.001))
-
+        assert torch.isclose(
+            torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.001)
+        )
 
     def test_unweighted_readout_test_step(self, mock_training_model, dgl_methane):
         labels = {
@@ -304,39 +306,65 @@ class TestTrainingGNNModel:
 
     def test_weighted_mixed_training_step(self, mock_training_model, dgl_methane):
         fake_conformers = torch.tensor(np.arange(30)).float()
-        n_conformers = torch.tensor([2,])
+        n_conformers = torch.tensor(
+            [
+                2,
+            ]
+        )
         inv_dist = torch.tensor(
             [
-                0.05773503, 0.08247861, 0.14433757, 0.57735027, 0.28867513,
-                0.04441156, 0.05773503, 0.08247861, 0.14433757, 0.57735027,
-                0.03608439, 0.04441156, 0.05773503, 0.08247861, 0.14433757,
-                0.14433757, 0.57735027, 0.28867513, 0.11547005, 0.07216878,
-                0.08247861, 0.14433757, 0.57735027, 0.28867513, 0.11547005,
+                0.05773503,
+                0.08247861,
+                0.14433757,
+                0.57735027,
+                0.28867513,
+                0.04441156,
+                0.05773503,
+                0.08247861,
+                0.14433757,
+                0.57735027,
+                0.03608439,
+                0.04441156,
+                0.05773503,
+                0.08247861,
+                0.14433757,
+                0.14433757,
+                0.57735027,
+                0.28867513,
+                0.11547005,
+                0.07216878,
+                0.08247861,
+                0.14433757,
+                0.57735027,
+                0.28867513,
+                0.11547005,
             ]
-       )
+        )
         reference_esps = np.array(
             [5.55905831, 4.77773209, 1.71476202, 4.18578945, 5.04356699]
         )
-        reference_dipoles = np.array([150., 170., 190., 450., 470., 490.])
+        reference_dipoles = np.array([150.0, 170.0, 190.0, 450.0, 470.0, 490.0])
 
         labels = {
             "am1bcc_charges": torch.tensor([[2.0, 3.0, 4.0, 5.0, 6.0]]),
-
             # esp
             "esp_grid_inverse_distances": inv_dist,
             "am1bcc_esps": torch.tensor(reference_esps),
-            "esp_lengths": torch.tensor([3, 2,]),
-
+            "esp_lengths": torch.tensor(
+                [
+                    3,
+                    2,
+                ]
+            ),
             # multi_dipole
             "conformers": fake_conformers,
             "n_conformers": n_conformers,
             "am1bcc_dipoles": torch.tensor(reference_dipoles),
-
         }
 
-        expected_dipoles = np.array([120., 135., 150., 345., 360., 375.])
+        expected_dipoles = np.array([120.0, 135.0, 150.0, 345.0, 360.0, 375.0])
         expected_esps = np.array(
-            [4.4084817 , 3.87141906, 1.34971487, 2.98778764, 3.83525536]
+            [4.4084817, 3.87141906, 1.34971487, 2.98778764, 3.83525536]
         )
 
         mse_esps = ((reference_esps - expected_esps) ** 2).mean()
@@ -356,21 +384,15 @@ def test_train_model_no_error(example_training_config, tmpdir):
     data_module = DGLMoleculeDataModule(example_training_config)
 
     with tmpdir.as_cwd():
-        shutil.copy(
-            EXAMPLE_FEATURIZED_LAZY_DATA.resolve(),
-            "."
-        )
-        shutil.copy(
-            EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(),
-            "."
-        )
+        shutil.copy(EXAMPLE_FEATURIZED_LAZY_DATA.resolve(), ".")
+        shutil.copy(EXAMPLE_FEATURIZED_LAZY_DATA_SHORT.resolve(), ".")
         shutil.copytree(
             EXAMPLE_UNFEATURIZED_PARQUET_DATASET.resolve(),
-            EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET.stem,
         )
         shutil.copytree(
             EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
-            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem,
         )
         for stage in ["train", "val", "test"]:
             config = data_module._dataset_configs[stage]
@@ -387,52 +409,51 @@ def test_train_model_no_error(example_training_config, tmpdir):
 
         model = TrainingGNNModel(example_training_config)
         trainer = pl.Trainer(
-            accelerator="gpu", devices=1, max_epochs=2,
+            accelerator="gpu",
+            devices=1,
+            max_epochs=2,
         )
         trainer.fit(model, datamodule=data_module)
-
 
 
 @pytest.fixture()
 def forward_layer():
     single_readout_layer = ForwardLayer(
         hidden_feature_size=128,  # 128 features per hidden convolution layer
-        activation_function="ReLU", # max(0, x) activation function for layer
-        dropout=0.0, # no dropout
+        activation_function="ReLU",  # max(0, x) activation function for layer
+        dropout=0.0,  # no dropout
     )
     return single_readout_layer
+
 
 @pytest.fixture()
 def convolution_layer():
     single_convolution_layer = ConvolutionLayer(
         hidden_feature_size=128,  # 128 features per hidden convolution layer
         aggregator_type="mean",  # aggregate atom representations with mean
-        activation_function="ReLU", # max(0, x) activation function for layer
-        dropout=0.0, # no dropout
+        activation_function="ReLU",  # max(0, x) activation function for layer
+        dropout=0.0,  # no dropout
     )
     return single_convolution_layer
+
 
 @pytest.fixture()
 def convolution_module(convolution_layer):
     convolution_module = ConvolutionModule(
-        architecture="SAGEConv", # GraphSAGE GCN
-        layers=[convolution_layer] * 3, # 3 hidden convolution layers        
+        architecture="SAGEConv",  # GraphSAGE GCN
+        layers=[convolution_layer] * 3,  # 3 hidden convolution layers
     )
     return convolution_module
 
 
-def test_no_postprocess_layer(
-    convolution_module,
-    forward_layer,
-    tmpdir
-):
-    
+def test_no_postprocess_layer(convolution_module, forward_layer, tmpdir):
+
     atom_features = [atoms.AtomicElement(categories=["C", "H"])]
 
     readout_module = ReadoutModule(
         pooling="atoms",
-        layers=[forward_layer] * 4, # 4 internal readout layers
-        postprocess=None
+        layers=[forward_layer] * 4,  # 4 internal readout layers
+        postprocess=None,
     )
 
     model_config = ModelConfig(
@@ -440,26 +461,24 @@ def test_no_postprocess_layer(
         atom_features=atom_features,
         bond_features=[],
         convolution=convolution_module,
-        readouts={
-            "predicted-am1bcc-charges": readout_module
-        }
+        readouts={"predicted-am1bcc-charges": readout_module},
     )
 
     with tmpdir.as_cwd():
         # copy over the data
         shutil.copytree(
             EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.resolve(),
-            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem
+            EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT.stem,
         )
 
         dataset_name = "example-data-labelled-unfeaturized-short"
 
         charge_rmse_target = ReadoutTarget(
             metric=RMSEMetric(),  # use RMSE to calculate loss
-            target_label="am1bcc_charges", # column to use from data as reference target
-            prediction_label="predicted-am1bcc-charges", # readout value to compare to target
-            denominator=1.0, # denominator to normalise loss -- important for multi-target objectives
-            weight=1.0, # how much to weight the loss -- important for multi-target objectives
+            target_label="am1bcc_charges",  # column to use from data as reference target
+            prediction_label="predicted-am1bcc-charges",  # readout value to compare to target
+            denominator=1.0,  # denominator to normalise loss -- important for multi-target objectives
+            weight=1.0,  # how much to weight the loss -- important for multi-target objectives
         )
 
         training_dataset_config = DatasetConfig(
@@ -477,7 +496,7 @@ def test_no_postprocess_layer(
         data_config = DataConfig(
             training=training_dataset_config,
             validation=validation_dataset_config,
-            test=test_dataset_config
+            test=test_dataset_config,
         )
 
         optimizer_config = OptimizerConfig(
@@ -486,8 +505,6 @@ def test_no_postprocess_layer(
         )
 
         training_config = TrainingConfig(
-            model=model_config,
-            data=data_config,
-            optimizer=optimizer_config
+            model=model_config, data=data_config, optimizer=optimizer_config
         )
         training_model = TrainingGNNModel(training_config)

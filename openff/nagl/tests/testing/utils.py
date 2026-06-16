@@ -1,4 +1,3 @@
-
 def rdkit_molecule_to_smiles(rdkit_molecule):
     from openff.toolkit.topology.molecule import Molecule
 

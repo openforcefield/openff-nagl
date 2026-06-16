@@ -14,8 +14,7 @@ class MetaRegistryMixin(type):
             return cls.registry[cls._key_transform(key)]
         except KeyError:
             raise KeyError(
-                f"Unknown {cls.__name__} type: {key}. "
-                f"Supported types: {list(cls.registry.keys())}"
+                f"Unknown {cls.__name__} type: {key}. Supported types: {list(cls.registry.keys())}"
             )
 
     @classmethod

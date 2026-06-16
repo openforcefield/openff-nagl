@@ -12,6 +12,7 @@ try:
 except ImportError:
     from pydantic import BaseModel
 
+
 class MutableModel(BaseModel):
     """
     Base class that all classes should subclass.
@@ -73,6 +74,7 @@ class MutableModel(BaseModel):
         with open(filename, "r") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
         return cls(**data)
+
 
 class ImmutableModel(MutableModel):
     class Config(MutableModel.Config):

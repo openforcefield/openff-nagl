@@ -5,6 +5,7 @@ import pytest
 
 from openff.nagl.nn.activation import ActivationFunction
 
+
 @pytest.mark.parametrize("name", ["relu", "ReLU"])
 def test_get(name):
     assert ActivationFunction.get(name) == ActivationFunction.ReLU

@@ -36,7 +36,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         lowest_energy_only: bool = True,
         max_path_length: Optional[int] = None,
         include_all_transfer_pathways: bool = False,
-        toolkit_registry: Optional["NAGLToolkitRegistry"] = None
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.utils.resonance import ResonanceEnumerator
@@ -55,13 +55,15 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
                 offmol,
                 atom_features=atom_features,
                 bond_features=bond_features,
-                toolkit_registry=toolkit_registry
+                toolkit_registry=toolkit_registry,
             )
             for offmol in offmols
         ]
         graph = NXMolHeteroGraph._batch(graphs)
 
-        mapped_smiles = molecule.to_smiles(mapped=True, toolkit_registry=toolkit_registry)
+        mapped_smiles = molecule.to_smiles(
+            mapped=True, toolkit_registry=toolkit_registry
+        )
 
         return cls(
             graph=graph,
@@ -96,6 +98,6 @@ class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
             GraphMolecule(g, n_repr)
             for g, n_repr in zip(
                 self.graph.unbatch(self.n_representations_per_molecule),
-                self.n_representations_per_molecule
+                self.n_representations_per_molecule,
             )
         ]
