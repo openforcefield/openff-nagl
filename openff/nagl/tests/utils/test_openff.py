@@ -480,7 +480,7 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
             toolkit_registry=NAGLToolkitWrapper(),
         )
 
-@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
