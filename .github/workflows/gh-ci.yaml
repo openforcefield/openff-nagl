@@ -25,7 +25,7 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -33,13 +33,8 @@ jobs:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.12"]
           pydantic-version: ["1", "2"]
-          include-rdkit: [false, true]
           include-openeye: [false, true]
           include-dgl: [false, true]
-          exclude:
-            - include-rdkit: false
-              include-openeye: false
-
 
     steps:
     - uses: actions/checkout@v6
@@ -72,10 +67,6 @@ jobs:
       if: matrix.include-openeye == false
       run: micromamba remove --force openeye-toolkits --yes || echo "openeye not installed"
 
-    - name: Uninstall RDKit
-      if: matrix.include-rdkit == false
-      run: micromamba remove --force rdkit --yes || echo "rdkit not installed"
-
     # See https://github.com/openforcefield/openff-nagl/issues/103
     - name: Rewrite DGL config
       if: matrix.include-dgl == true
@@ -88,7 +79,7 @@ jobs:
       run: |
         from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
         assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
-        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
+        assert str(RDKIT_AVAILABLE).lower() == 'true'
 
     - name: Check DGL installation
       if: matrix.include-dgl == true

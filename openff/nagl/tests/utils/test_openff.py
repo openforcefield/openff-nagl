@@ -9,7 +9,7 @@ from openff.toolkit import Molecule, RDKitToolkitWrapper, AmberToolsToolkitWrapp
 from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
 from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 from openff.toolkit.utils.toolkit_registry import toolkit_registry_manager, ToolkitRegistry
-from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
+from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
 from openff.units import unit
 
@@ -129,7 +129,6 @@ def test_normalize_molecule_openeye(given_smiles, expected_smiles):
     assert is_isomorphic, output_molecule.to_smiles(mapped=True)
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "given_smiles, expected_smiles",
     NORMALIZATION_MOLECULE_TESTS
@@ -256,7 +255,6 @@ def test_not_is_conformer_identical():
     assert not is_conformer_identical(offmol, conformer, perturbed_conformer)
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "smiles1, smiles2, radius, similarity",
     [
@@ -276,7 +274,6 @@ def test_calculate_circular_fingerprint_similarity(
     assert_allclose(dice, similarity)
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_best_rmsd():
     from rdkit.Chem import rdMolAlign
     from openff.toolkit.topology.molecule import Molecule
@@ -327,14 +324,12 @@ def test_capture_toolkit_warnings(caplog):
         warnings.warn("test")
         assert len(records)
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_openff_toolkit_registry(openff_methane_uncharged):
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
     with toolkit_registry_manager(rdkit_registry):
         normalize_molecule(openff_methane_uncharged)
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "toolkit_registry",
     [
@@ -455,7 +450,7 @@ def test_split_up_molecule():
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
@@ -485,7 +480,7 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
             toolkit_registry=NAGLToolkitWrapper(),
         )
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
@@ -518,7 +513,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     )
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
+@pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 def test_toolkit_registry_passes_through_nagl_and_fails():
     """
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager

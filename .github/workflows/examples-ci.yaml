@@ -25,7 +25,7 @@ env:
 
 jobs:
   example_tests:
-    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: Examples CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
@@ -33,7 +33,6 @@ jobs:
           os: [ubuntu-latest]
           python-version: ["3.12"]
           pydantic-version: ["2"]
-          include-rdkit: [true]
           include-openeye: [false]
           include-dgl: [true]
 
@@ -70,10 +69,6 @@ jobs:
       if: matrix.include-openeye == false
       run: conda remove --force openeye-toolkits --yes || echo "openeye not installed"
 
-    - name: Uninstall RDKit
-      if: matrix.include-rdkit == false
-      run: conda remove --force rdkit --yes || echo "rdkit not installed"
-    
     - name: Python information
       run: |
         which python
@@ -85,7 +80,7 @@ jobs:
       run: |
         from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
         assert str(OPENEYE_AVAILABLE).lower() == '${{ matrix.include-openeye }}'
-        assert str(RDKIT_AVAILABLE).lower() == '${{ matrix.include-rdkit }}'
+        assert str(RDKIT_AVAILABLE).lower() == 'true'
 
     - name: Run example notebooks
       run: python -m pytest -r fE -v -x --tb=short -nauto --nbval-lax --nbval-cell-timeout=50000 --dist loadscope examples --ignore=examples/train-gnn-to-electric-field/
