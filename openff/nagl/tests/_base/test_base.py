@@ -4,10 +4,7 @@ import numpy as np
 import json
 import textwrap
 
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
+from pydantic import field_validator
 
 class TestMutableModel:
 
@@ -19,11 +16,13 @@ class TestMutableModel:
         tuple_type: tuple
         unit_type: unit.Quantity
 
-        @validator("np_array_type", pre=True)
+        @field_validator("np_array_type", mode="before")
+        @classmethod
         def _validate_np_array_type(cls, v):
             return np.asarray(v)
-    
-        @validator("unit_type", pre=True)
+
+        @field_validator("unit_type", mode="before")
+        @classmethod
         def _validate_unit_type(cls, v):
             if not isinstance(v, unit.Quantity):
                 return unit.Quantity.from_tuple(v)
@@ -42,7 +41,7 @@ class TestMutableModel:
     def test_to_json(self):
         arr = np.arange(10).reshape(2, 5)
         model = self.Model(int_type=1, float_type=1.0, list_type=[1, 2, 3], np_array_type=arr, tuple_type=(1, 2, 3), unit_type=unit.Quantity(1.0, "angstrom"))
-        json_dict = json.loads(model.to_json())
+        json_dict = json.loads(model.model_dump_json())
         expected = {
             "int_type": 1,
             "float_type": 1.0,

@@ -33,10 +33,7 @@ from openff.units import unit
 from ._base import CategoricalMixin, Feature
 from ._utils import one_hot_encode
 
-try:
-    from pydantic.v1 import validator, Field
-except ImportError:
-    from pydantic import validator, Field
+from pydantic import field_validator, Field
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -110,7 +107,8 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
     ]
     """The supported hybridization modes."""
 
-    @validator("categories", pre=True, each_item=True)
+    @field_validator("categories", mode="before")
+    @classmethod
     def _validate_categories(cls, v):
         if isinstance(v, str):
             return HybridizationType[v.upper()]

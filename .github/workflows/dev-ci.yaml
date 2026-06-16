@@ -44,7 +44,6 @@ jobs:
         environment-file: devtools/conda-envs/nightly.yaml
         create-args: >-
           python=${{ matrix.python-version }}
-          pydantic=2
     
     - name: Install nightly pytorch
       run: |

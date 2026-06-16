@@ -15,7 +15,7 @@ dependencies:
   - openff-toolkit-base >=0.18
   - openff-nagl-models
   - openff-units
-  - pydantic <3
+  - pydantic =2
   - rdkit
   - scipy
   - ambertools

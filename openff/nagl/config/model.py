@@ -14,10 +14,7 @@ from openff.nagl.utils._types import FromYamlMixin
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
 PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
 
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 class BaseLayer(ImmutableModel):
     """Base class for single layer in the neural network"""
@@ -36,7 +33,8 @@ class BaseLayer(ImmutableModel):
         description="The dropout to apply after each layer"
     )
 
-    @validator("activation_function", pre=True)
+    @field_validator("activation_function", mode="before")
+    @classmethod
     def _validate_activation_function(cls, v):
         return ActivationFunction._get_class(v)
 
@@ -44,7 +42,7 @@ class BaseLayer(ImmutableModel):
 class ConvolutionLayer(BaseLayer):
     """Configuration for a single convolution layer"""
     aggregator_type: AggregatorType = Field(
-        default=None,
+        default=None,  # this conflicts with the type annotation
         description="The aggregator function to apply after each convolution"
     )
 
