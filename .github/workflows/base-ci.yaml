@@ -35,7 +35,7 @@ jobs:
           include-openeye: [false, true]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Build information
       run: |
