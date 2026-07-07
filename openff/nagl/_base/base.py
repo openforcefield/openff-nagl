@@ -57,9 +57,9 @@ class MutableModel(BaseModel):
     def model_dump_json(self, **kwargs):
         # sort_keys=True removed in v2, can kinda wrap it to maintain behavior
         return json.dumps(self.model_dump(**kwargs),
-            sort_keys=True,
-            indent=2,
-            separators=(",", ": "),
+            # sort_keys=True,
+            # indent=2,
+            # separators=(",", ": "),
         )
 
     @classmethod
