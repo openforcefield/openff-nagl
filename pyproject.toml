@@ -1,10 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [
-  "setuptools>=77.0.3",
-  "setuptools-scm",
-  "wheel",
-]
+requires = [ "setuptools>=77.0.3", "setuptools-scm" ]
 
 [project]
 name = "openff-nagl"
@@ -23,9 +19,9 @@ classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
-
 optional-dependencies.doc = [
   "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
   "sphinx>=1.8",
@@ -39,30 +35,26 @@ urls.documentation = "https://docs.openforcefield.org/projects/nagl/"
 urls.source = "https://github.com/openforcefield/openff-nagl"
 
 [tool.setuptools]
+packages.find.include = [ "openff.nagl*" ]
+packages.find.exclude = [ "openff.nagl.tests.data*" ]
 include-package-data = false
-
-[tool.setuptools.packages.find]
-include = [ 'openff.nagl*' ]
-exclude = [ 'openff.nagl.tests.data*' ]
-
-[tool.pytest.ini_options]
-testpaths = [
-  "openff/nagl/tests",
-]
-
-[tool.coverage.run]
-omit = [
-  "*/*/_tests/*",
-  "openff/nagl/_version.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "if TYPE_CHECKING:",
-  "raise NotImplementedError",
-  "@overload",
-]
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
+
+[tool.pytest]
+ini_options.testpaths = [
+  "openff/nagl/tests",
+]
+
+[tool.coverage]
+run.omit = [
+  "*/*/_tests/*",
+  "openff/nagl/_version.py",
+]
+report.exclude_lines = [
+  "@overload",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "raise NotImplementedError",
+]
