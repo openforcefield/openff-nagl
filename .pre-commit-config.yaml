@@ -5,10 +5,6 @@ repos:
     - id: trailing-whitespace
     - id: end-of-file-fixer
     - id: debug-statements
-- repo: https://github.com/timothycrosley/isort
-  rev: 5.13.2
-  hooks:
-    - id: isort
 - repo: https://github.com/pycqa/flake8
   rev: 7.1.1
   hooks:
