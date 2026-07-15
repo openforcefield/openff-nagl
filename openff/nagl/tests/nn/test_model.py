@@ -6,7 +6,6 @@ from numpy.testing import assert_allclose
 
 from openff.units import unit
 from openff.toolkit.topology import Molecule
-from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
 
 from openff.nagl.nn.gcn._sage import SAGEConvStack
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -456,7 +455,6 @@ class TestChargeGNNModelRC3(BaseTestChargeGNNModel):
     @pytest.mark.filterwarnings(
         "ignore::openff.toolkit.utils.exceptions.MultipleComponentsInMoleculeWarning",
     )
-    @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
     @pytest.mark.parametrize(
         "smiles, expected_formal_charges", [
             ("CCCn1cc[n+](C)c1.C(F)(F)(F)S(=O)(=O)[N-]S(=O)(=O)C(F)(F)F", [1, -1]),
