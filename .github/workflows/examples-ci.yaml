@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - main
+      - formatting-trunk
   pull_request:
     branches:
       - main
+      - formatting-trunk
   schedule:
     # weekly tests, Sundays at midnight
     - cron: "0 0 * * 0"
@@ -39,7 +41,7 @@ jobs:
 
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Build information
       run: |
