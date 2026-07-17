@@ -2,18 +2,18 @@ import os
 import pathlib
 import math
 import pickle
-from typing import Dict, Any, Tuple
+from typing import Any
 
 import click
 
 
 def train_model(
-    config: Dict[str, Any] = {},
+    config: dict[str, Any] = {},
     output_directory: str = ".",
     checkpoint_dir: str = None,
-    metrics: Dict[str, str] = {},
-    model_config_files: Tuple[str, ...] = tuple(),
-    runtime_kwargs: Dict[str, Any] = {},
+    metrics: dict[str, str] = {},
+    model_config_files: tuple[str, ...] = tuple(),
+    runtime_kwargs: dict[str, Any] = {},
 ):
     from openff.nagl.app.trainer import Trainer
     from ray.tune.integration.pytorch_lightning import TuneReportCallback
@@ -158,7 +158,7 @@ def tune_model(
     output_directory: str = ".",
     output_config_file: str = "output.yaml",
     model_name: str = "graph",
-    model_config_files: Tuple[str, ...] = tuple(),
+    model_config_files: tuple[str, ...] = tuple(),
     partial_charge_method: str = "am1",
     postprocess_layer: str = "compute_partial_charges",
 ):
@@ -184,10 +184,7 @@ def tune_model(
         "convolution_architecture": (convolution_architecture, str),
     }
 
-    config = {
-        k: tune.choice(list(map(type_, input_.split())))
-        for k, (input_, type_) in CONFIG_TYPES.items()
-    }
+    config = {k: tune.choice(list(map(type_, input_.split()))) for k, (input_, type_) in CONFIG_TYPES.items()}
 
     print("--- Evaluating hyperparameters ---")
     print(config)

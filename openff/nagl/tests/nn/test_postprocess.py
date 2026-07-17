@@ -20,9 +20,7 @@ def test_calculate_partial_charges_neutral():
     ).numpy()
 
     assert np.isclose(charges.sum(), 0.0)
-    expected = np.array(
-        [-0.03509676, 0.00877419, 0.00877419, 0.00877419, 0.00877419]
-    ).reshape((-1, 1))
+    expected = np.array([-0.03509676, 0.00877419, 0.00877419, 0.00877419, 0.00877419]).reshape((-1, 1))
     assert np.allclose(charges, expected)
 
 
@@ -58,9 +56,7 @@ def test_calculate_partial_charges_charged():
     ).numpy()
 
     assert np.isclose(charges.sum(), -1.0)
-    expected = np.array(
-        [-0.05438471, -0.91055036, -0.01168823, -0.01168823, -0.01168823]
-    ).reshape((-1, 1))
+    expected = np.array([-0.05438471, -0.91055036, -0.01168823, -0.01168823, -0.01168823]).reshape((-1, 1))
     assert np.allclose(charges, expected)
 
 

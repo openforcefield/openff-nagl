@@ -10,10 +10,11 @@ from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing
 
+from openff.toolkit import Molecule, unit
+
 
 @pytest.fixture()
 def openff_methyl_methanoate():
-    from openff.toolkit.topology.molecule import Molecule
 
     mapped_smiles = "[H:5][C:1](=[O:2])[O:3][C:4]([H:6])([H:7])[H:8]"
     return Molecule.from_mapped_smiles(mapped_smiles)
@@ -21,7 +22,6 @@ def openff_methyl_methanoate():
 
 @pytest.fixture()
 def openff_methane_uncharged():
-    from openff.toolkit.topology.molecule import Molecule, unit
 
     molecule = Molecule.from_smiles("C")
     molecule.add_conformer(
@@ -47,7 +47,6 @@ def openff_methane_charges():
 
 @pytest.fixture()
 def openff_methane_charged(openff_methane_uncharged, openff_methane_charges):
-    from openff.toolkit.topology.molecule import unit
 
     charges = openff_methane_charges * unit.elementary_charge
     openff_methane_uncharged.partial_charges = charges
@@ -78,14 +77,12 @@ def nx_methane(openff_methane_uncharged):
 
 @pytest.fixture()
 def openff_carboxylate():
-    from openff.toolkit.topology.molecule import Molecule
 
     return Molecule.from_mapped_smiles("[H:1][C:2](=[O:3])[O-:4]")
 
 
 @pytest.fixture()
 def openff_ccnco():
-    from openff.toolkit.topology.molecule import Molecule
 
     return Molecule.from_mapped_smiles(
         "[H:6][C:1]([H:7])([H:8])[C:2]([H:9])([H:10])[N:3]([H:11])[C:4]([H:12])([H:13])[O:5][H:14]"
@@ -94,11 +91,8 @@ def openff_ccnco():
 
 @pytest.fixture()
 def openff_cnc():
-    from openff.toolkit.topology.molecule import Molecule
 
-    return Molecule.from_mapped_smiles(
-        "[H:4][C:1]([H:5])([H:6])[N:2]([H:7])[C:3]([H:8])([H:9])[H:10]"
-    )
+    return Molecule.from_mapped_smiles("[H:4][C:1]([H:5])([H:6])[N:2]([H:7])[C:3]([H:8])([H:9])[H:10]")
 
 
 @pytest.fixture()
@@ -134,6 +128,4 @@ def dgl_ccnco(openff_ccnco):
 @pytest.fixture()
 def dgl_batch(dgl_methane, dgl_carboxylate, dgl_ccnco):
     pytest.importorskip("dgl")
-    return DGLMoleculeBatch.from_dgl_molecules(
-        [dgl_methane, dgl_carboxylate, dgl_ccnco]
-    )
+    return DGLMoleculeBatch.from_dgl_molecules([dgl_methane, dgl_carboxylate, dgl_ccnco])

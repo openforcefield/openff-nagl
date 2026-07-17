@@ -3,8 +3,7 @@ import pathlib
 import click
 import tqdm
 
-from openff.toolkit import Molecule
-from openff.units import unit
+from openff.toolkit import Molecule, unit
 from openff.nagl import GNNModel
 
 
@@ -43,9 +42,7 @@ def main(
 
     for input_file in tqdm.tqdm(input_files):
         mol = Molecule.from_file(input_file, "SDF", allow_undefined_stereo=True)
-        mol._partial_charges = (
-            model.compute_property(mol, as_numpy=True) * unit.elementary_charge
-        )
+        mol._partial_charges = model.compute_property(mol, as_numpy=True) * unit.elementary_charge
         output_file = output_directory / input_file.name
         mol.to_file(output_file, "SDF")
 

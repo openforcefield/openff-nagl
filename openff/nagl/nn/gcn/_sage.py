@@ -1,5 +1,5 @@
 import copy
-from typing import Optional, Literal, Dict, TYPE_CHECKING, Union
+from typing import Literal, TYPE_CHECKING, Union
 
 import torch
 
@@ -22,14 +22,12 @@ class SAGEConv(BaseConvModule):
         aggregator_type: Literal["mean", "gcn", "pool", "lstm"],
         feat_drop: float,
         bias: bool = True,
-        norm: Optional[callable] = None,
-        activation: Optional[callable] = None,
+        norm: callable | None = None,
+        activation: callable | None = None,
     ):
         super().__init__()
         if aggregator_type not in SAGEConvStack.available_aggregator_types:
-            raise ValueError(
-                f"Aggregator type {aggregator_type} not supported by {SAGEConvStack.name}."
-            )
+            raise ValueError(f"Aggregator type {aggregator_type} not supported by {SAGEConvStack.name}.")
         self._in_src_feats, self._in_dst_feats = in_feats, in_feats
         self._out_feats = out_feats
         self._aggre_type = aggregator_type
@@ -41,9 +39,7 @@ class SAGEConv(BaseConvModule):
         if aggregator_type == "pool":
             self.fc_pool = torch.nn.Linear(self._in_src_feats, self._in_src_feats)
         if aggregator_type == "lstm":
-            self.lstm = torch.nn.LSTM(
-                self._in_src_feats, self._in_src_feats, batch_first=True
-            )
+            self.lstm = torch.nn.LSTM(self._in_src_feats, self._in_src_feats, batch_first=True)
 
         self.fc_neigh = torch.nn.Linear(self._in_src_feats, out_feats, bias=False)
 
@@ -78,7 +74,7 @@ class SAGEConv(BaseConvModule):
             torch.nn.init.xavier_uniform_(self.fc_self.weight, gain=gain)
         torch.nn.init.xavier_uniform_(self.fc_neigh.weight, gain=gain)
 
-    def _lstm_reducer(self, nodes) -> Dict[str, torch.Tensor]:
+    def _lstm_reducer(self, nodes) -> dict[str, torch.Tensor]:
         """LSTM reducer
         NOTE(zihao): lstm reducer with default schedule (degree bucketing)
         is slow, we could accelerate this with degree padding in the future.
@@ -140,18 +136,14 @@ class SAGEConv(BaseConvModule):
 
             # Handle the case of graphs without edges
             if graph.number_of_edges() == 0:
-                graph.dstdata["neigh"] = torch.zeros(
-                    feat_dst.shape[0], self._in_src_feats
-                ).to(feat_dst)
+                graph.dstdata["neigh"] = torch.zeros(feat_dst.shape[0], self._in_src_feats).to(feat_dst)
 
             # Determine whether to apply linear transformation before message passing A(XW)
             lin_before_mp = self._in_src_feats > self._out_feats
 
             # Message Passing
             if self._aggre_type == "mean":
-                graph.srcdata["h"] = (
-                    self.fc_neigh(feat_src) if lin_before_mp else feat_src
-                )
+                graph.srcdata["h"] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 graph.update_all(msg_fn, _fn.mean("m", "neigh"))
                 h_neigh = graph.dstdata["neigh"]
                 if not lin_before_mp:
@@ -160,13 +152,9 @@ class SAGEConv(BaseConvModule):
             elif self._aggre_type == "gcn":
                 if isinstance(feat, tuple):  # heterogeneous
                     assert feat[0].shape == feat[1].shape
-                graph.srcdata["h"] = (
-                    self.fc_neigh(feat_src) if lin_before_mp else feat_src
-                )
+                graph.srcdata["h"] = self.fc_neigh(feat_src) if lin_before_mp else feat_src
                 if isinstance(feat, tuple):  # heterogeneous
-                    graph.dstdata["h"] = (
-                        self.fc_neigh(feat_dst) if lin_before_mp else feat_dst
-                    )
+                    graph.dstdata["h"] = self.fc_neigh(feat_dst) if lin_before_mp else feat_dst
                 else:
                     if graph.is_block:
                         graph.dstdata["h"] = graph.srcdata["h"][: graph.num_dst_nodes()]
@@ -175,9 +163,7 @@ class SAGEConv(BaseConvModule):
                 graph.update_all(msg_fn, _fn.sum("m", "neigh"))
                 # divide in_degrees
                 degs = graph.in_degrees().to(feat_dst)
-                h_neigh = (graph.dstdata["neigh"] + graph.dstdata["h"]) / (
-                    degs.unsqueeze(-1) + 1
-                )
+                h_neigh = (graph.dstdata["neigh"] + graph.dstdata["h"]) / (degs.unsqueeze(-1) + 1)
                 if not lin_before_mp:
                     h_neigh = self.fc_neigh(h_neigh)
 
@@ -192,9 +178,7 @@ class SAGEConv(BaseConvModule):
                 h_neigh = self.fc_neigh(graph.dstdata["neigh"])
 
             else:
-                raise KeyError(
-                    "Aggregator type {} not recognized.".format(self._aggre_type)
-                )
+                raise KeyError(f"Aggregator type {self._aggre_type} not recognized.")
 
             # GraphSAGE GCN does not require fc_self.
             if self._aggre_type == "gcn":

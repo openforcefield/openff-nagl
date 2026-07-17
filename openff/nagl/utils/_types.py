@@ -1,8 +1,8 @@
 import enum
 import pathlib
-from typing import Union, Tuple, NamedTuple, Dict, Literal
+from typing import NamedTuple, Literal
 
-Pathlike = Union[str, pathlib.Path]
+Pathlike = str | pathlib.Path
 
 
 class HybridizationType(enum.Enum):
@@ -26,7 +26,7 @@ class ResonanceType:
 
         atomic_number: Literal[8, 16, 7]
         formal_charge: int
-        bond_orders: Tuple[int, ...]
+        bond_orders: tuple[int, ...]
 
     class Value(NamedTuple):
         """A convenient data structure for storing information about a possible resonance
@@ -57,16 +57,14 @@ class ResonanceType:
         Key(7, -1, (2,)): Value("D", 5.0, 10, 9),
     }
 
-    _resonance_keys_by_id = {
-        resonance_type.id: key for key, resonance_type in _registry.items()
-    }
+    _resonance_keys_by_id = {resonance_type.id: key for key, resonance_type in _registry.items()}
 
     @classmethod
     def get_resonance_type(
         cls,
         atomic_number: Literal[8, 16, 7],
         formal_charge: int,
-        bond_orders: Tuple[int, ...],
+        bond_orders: tuple[int, ...],
     ):
         bond_orders = tuple(map(int, sorted(bond_orders)))
         key = cls.Key(atomic_number, formal_charge, bond_orders)
@@ -80,7 +78,7 @@ class FromYamlMixin:
 
         yaml_kwargs = {}
         for path in paths:
-            with open(str(path), "r") as f:
+            with open(str(path)) as f:
                 dct = yaml.load(f, Loader=yaml.Loader)
                 dct = {k.replace("-", "_"): v for k, v in dct.items()}
                 yaml_kwargs.update(dct)

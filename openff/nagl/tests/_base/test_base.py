@@ -1,13 +1,13 @@
 from openff.nagl._base.base import MutableModel
-from openff.units import unit
+from openff.toolkit import unit
 import numpy as np
 import json
 import textwrap
 
 try:
-    from pydantic.v1 import Field, validator
+    from pydantic.v1 import Field, validator  # noqa
 except ImportError:
-    from pydantic import Field, validator
+    from pydantic import validator
 
 
 class TestMutableModel:
@@ -120,7 +120,7 @@ class TestMutableModel:
         )
         file_path = tmp_path / "test.yaml"
         model.to_yaml(file_path)
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             yaml_text = f.read()
         expected = textwrap.dedent("""
             float_type: 1.0

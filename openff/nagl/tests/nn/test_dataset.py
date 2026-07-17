@@ -3,19 +3,17 @@ import typing
 import numpy as np
 import pytest
 import torch
-from torch.utils.data import ConcatDataset
-from openff.units import unit
+from openff.toolkit import unit
 
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.features.atoms import AtomConnectivity, AtomFormalCharge, AtomicElement
-from openff.nagl.features.bonds import BondIsInRing, BondOrder
+from openff.nagl.features.atoms import AtomConnectivity
+from openff.nagl.features.bonds import BondIsInRing
 from openff.nagl.nn._dataset import (
     DGLMoleculeDatasetEntry,
     DGLMoleculeDataset,
     _LazyDGLMoleculeDataset,
     DGLMoleculeDataLoader,
     DataHash,
-    _get_hashed_arrow_dataset_path,
 )
 from openff.nagl.tests.data.files import (
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
@@ -31,10 +29,7 @@ if typing.TYPE_CHECKING:
 def label_formal_charge(molecule: "Molecule"):
     return {
         "formal_charges": torch.tensor(
-            [
-                atom.formal_charge.m_as(unit.elementary_charge)
-                for atom in molecule.atoms
-            ],
+            [atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms],
             dtype=torch.float,
         ),
     }
@@ -49,10 +44,7 @@ class TestDataHash:
             bond_features=[BondIsInRing()],
         )
         hash_value = hasher.to_hash()
-        assert (
-            hash_value
-            == "0c25874901b9b5fe2e16434749c9aef01ff4d53c7f04d2318052d77a70ad98bc"
-        )
+        assert hash_value == "0c25874901b9b5fe2e16434749c9aef01ff4d53c7f04d2318052d77a70ad98bc"
 
     def test_from_file(self, tmpdir):
         hasher = DataHash.from_file(
@@ -62,10 +54,7 @@ class TestDataHash:
             bond_features=None,
         )
         hash_value = hasher.to_hash()
-        assert (
-            hash_value
-            == "87780f0271b3179063105b061725bf9f0ff809a0cbb3c37bb539a4a29db19769"
-        )
+        assert hash_value == "87780f0271b3179063105b061725bf9f0ff809a0cbb3c37bb539a4a29db19769"
 
 
 # def test_get_hashed_arrow_dataset_path():
@@ -257,9 +246,7 @@ class TestLazyDGLMoleculeDataset:
                 assert entry.molecule.graph.ndata["feat"].shape[1] == 14
                 assert len(entry.labels) == 7
 
-    def test_from_arrow_dataset(
-        self, example_atom_features, example_bond_features, tmpdir
-    ):
+    def test_from_arrow_dataset(self, example_atom_features, example_bond_features, tmpdir):
         with tmpdir.as_cwd():
             ds = _LazyDGLMoleculeDataset.from_arrow_dataset(
                 EXAMPLE_UNFEATURIZED_PARQUET_DATASET,

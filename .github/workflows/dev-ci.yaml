@@ -14,7 +14,7 @@ concurrency:
 defaults:
   run:
     shell: bash -l {0}
-  
+
 env:
   OE_LICENSE: ${{ github.workspace }}/oe_license.txt
   DGL_HOME: ${{ github.workspace }}/dgl
@@ -45,15 +45,15 @@ jobs:
         create-args: >-
           python=${{ matrix.python-version }}
           pydantic=2
-    
+
     - name: Install nightly pytorch
       run: |
-        python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U 
+        python -m pip install https://github.com/Lightning-AI/lightning/archive/refs/heads/master.zip -U
 
     - name: Download DGL source
       run: |
         git clone --recurse-submodules https://github.com/dmlc/dgl.git
-      
+
     - name: Set up DGL
       if: matrix.os != 'ubuntu-latest'
       run: |
@@ -63,7 +63,7 @@ jobs:
         cmake -DUSE_OPENMP=off -DUSE_LIBXSMM=OFF ..
         make -j4
         cd ../..
-    
+
     - name: Set up DGL (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -72,7 +72,7 @@ jobs:
         cmake -DBUILD_TYPE=dev -DUSE_CUDA=OFF -DUSE_LIBXSMM=OFF ..
         make
         cd ../..
-    
+
     - name: Install DGL Python bindings
       run: |
         cd dgl/python
@@ -95,7 +95,7 @@ jobs:
     - name: Check Python environment
       run: |
         pip list
-    
+
     - name: Import DGL
       run: |
         python -c "import dgl; import dgl.nn"
@@ -107,4 +107,3 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest -n 4 -v --cov=openff/nagl --cov-config=pyproject.toml --cov-append --cov-report=xml --color=yes openff/nagl/
-

@@ -1,6 +1,5 @@
 import torch
 
-from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn import SAGEConvStack
 from openff.nagl.nn._containers import (
     ConvolutionModule,

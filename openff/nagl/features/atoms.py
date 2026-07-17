@@ -28,7 +28,7 @@ import numpy as np
 import torch
 
 from openff.nagl.utils._types import HybridizationType
-from openff.units import unit
+from openff.toolkit import unit
 
 from ._base import CategoricalMixin, Feature
 from ._utils import one_hot_encode
@@ -80,7 +80,7 @@ class AtomicElement(CategoricalMixin, AtomFeature):
     """
 
     name: typing.Literal["atomic_element"] = "atomic_element"
-    categories: typing.List[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
+    categories: list[str] = ["H", "C", "N", "O", "F", "Cl", "Br", "S", "P", "I"]
     """Elements to provide one-hot encodings for."""
 
     def _encode(
@@ -104,7 +104,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
 
     name: typing.Literal["atom_hybridization"] = "atom_hybridization"
 
-    categories: typing.List[HybridizationType] = [
+    categories: list[HybridizationType] = [
         HybridizationType.OTHER,
         HybridizationType.SP,
         HybridizationType.SP2,
@@ -120,17 +120,11 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
             return HybridizationType[v.upper()]
         return v
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_molecule_hybridizations
 
-        hybridizations = get_molecule_hybridizations(
-            molecule, toolkit_registry=toolkit_registry
-        )
-        return torch.vstack(
-            [one_hot_encode(hyb, self.categories) for hyb in hybridizations]
-        )
+        hybridizations = get_molecule_hybridizations(molecule, toolkit_registry=toolkit_registry)
+        return torch.vstack([one_hot_encode(hyb, self.categories) for hyb in hybridizations])
 
     def dict(self, *args, **kwargs):
         obj = super().dict()
@@ -154,18 +148,11 @@ class AtomConnectivity(CategoricalMixin, AtomFeature):
 
     name: typing.Literal["atom_connectivity"] = "atom_connectivity"
 
-    categories: typing.List[int] = [1, 2, 3, 4]
+    categories: list[int] = [1, 2, 3, 4]
     """Connectivities to provide one-hot encodings for."""
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
-        return torch.vstack(
-            [
-                one_hot_encode(len(atom.bonds), self.categories)
-                for atom in molecule.atoms
-            ]
-        )
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
+        return torch.vstack([one_hot_encode(len(atom.bonds), self.categories) for atom in molecule.atoms])
 
 
 class AtomIsAromatic(AtomFeature):
@@ -173,9 +160,7 @@ class AtomIsAromatic(AtomFeature):
 
     name: typing.Literal["atom_is_aromatic"] = "atom_is_aromatic"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         return torch.tensor([int(atom.is_aromatic) for atom in molecule.atoms])
 
 
@@ -191,14 +176,9 @@ class AtomIsInRing(AtomFeature):
 
     name: typing.Literal["atom_is_in_ring"] = "atom_is_in_ring"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         ring_atoms = [
-            index
-            for (index,) in molecule.chemical_environment_matches(
-                "[*r:1]", toolkit_registry=toolkit_registry
-            )
+            index for (index,) in molecule.chemical_environment_matches("[*r:1]", toolkit_registry=toolkit_registry)
         ]
         tensor = torch.zeros(molecule.n_atoms, dtype=bool)
         tensor[ring_atoms] = True
@@ -239,9 +219,7 @@ class AtomInRingOfSize(AtomFeature):
     ) -> torch.Tensor:
         from openff.nagl.toolkits.openff import get_atoms_are_in_ring_size
 
-        in_ring_size = get_atoms_are_in_ring_size(
-            molecule, self.ring_size, toolkit_registry=toolkit_registry
-        )
+        in_ring_size = get_atoms_are_in_ring_size(molecule, self.ring_size, toolkit_registry=toolkit_registry)
         # rdmol = openff_to_rdkit(molecule)
 
         # in_ring_size = [atom.IsInRingSize(self.ring_size) for atom in rdmol.GetAtoms()]
@@ -264,20 +242,14 @@ class AtomFormalCharge(CategoricalMixin, AtomFeature):
 
     name: typing.Literal["atom_formal_charge"] = "atom_formal_charge"
 
-    categories: typing.List[int] = [-3, -2, -1, 0, 1, 2, 3]
+    categories: list[int] = [-3, -2, -1, 0, 1, 2, 3]
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
-        from openff.units import unit
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
+        from openff.toolkit import unit
 
-        charges = [
-            atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms
-        ]
+        charges = [atom.formal_charge.m_as(unit.elementary_charge) for atom in molecule.atoms]
 
-        return torch.vstack(
-            [one_hot_encode(charge, self.categories) for charge in charges]
-        )
+        return torch.vstack([one_hot_encode(charge, self.categories) for charge in charges])
 
 
 class AtomAverageFormalCharge(AtomFeature):
@@ -306,13 +278,9 @@ class AtomAverageFormalCharge(AtomFeature):
             as_dicts=True,
             as_fragments=True,
         )
-        formal_charges: typing.List[float] = []
+        formal_charges: list[float] = []
         for index in range(molecule.n_atoms):
-            charges = [
-                graph["atoms"][index]["formal_charge"]
-                for graph in resonance_forms
-                if index in graph["atoms"]
-            ]
+            charges = [graph["atoms"][index]["formal_charge"] for graph in resonance_forms if index in graph["atoms"]]
             if not charges:
                 charges = [molecule.atoms[index].formal_charge]
 
@@ -333,11 +301,7 @@ class AtomGasteigerCharge(AtomFeature):
 
     name: typing.Literal["atom_gasteiger_charge"] = "atom_gasteiger_charge"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
-        from openff.units import unit
-
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         molecule = copy.deepcopy(molecule)
         molecule.assign_partial_charges("gasteiger", toolkit_registry=toolkit_registry)
         charges = molecule.partial_charges.m_as(unit.elementary_charge)
@@ -351,11 +315,9 @@ class AtomElementPeriod(CategoricalMixin, AtomFeature):
 
     name: typing.Literal["atom_element_period"] = "atom_element_period"
 
-    categories: typing.List[int] = [1, 2, 3, 4, 5]
+    categories: list[int] = [1, 2, 3, 4, 5]
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         PERIODS = {
             "H": 1,
             "He": 1,
@@ -389,11 +351,9 @@ class AtomElementGroup(CategoricalMixin, AtomFeature):
 
     name: typing.Literal["atom_element_group"] = "atom_element_group"
 
-    categories: typing.List[int] = [1, 14, 15, 16, 17]
+    categories: list[int] = [1, 14, 15, 16, 17]
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         GROUPS = {
             "H": 1,
             "C": 14,
@@ -426,13 +386,9 @@ class AtomTotalBondOrder(AtomFeature):
 
     name: typing.Literal["atom_total_bond_order"] = "atom_total_bond_order"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
 
-        bond_orders = [
-            sum(bond.bond_order for bond in atom.bonds) for atom in molecule.atoms
-        ]
+        bond_orders = [sum(bond.bond_order for bond in atom.bonds) for atom in molecule.atoms]
 
         return torch.tensor(bond_orders)
 
@@ -442,19 +398,12 @@ class AtomElectronegativityAllredRochow(AtomFeature):
     The Allred-Rochow electronegativity of the atom.
     """
 
-    name: typing.Literal["atom_electronegativity_allred_rochow"] = (
-        "atom_electronegativity_allred_rochow"
-    )
+    name: typing.Literal["atom_electronegativity_allred_rochow"] = "atom_electronegativity_allred_rochow"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from ._data import ALLRED_ROCHOW_ELECTRONEGATIVITY
 
-        electronegativities = [
-            ALLRED_ROCHOW_ELECTRONEGATIVITY[atom.atomic_number]
-            for atom in molecule.atoms
-        ]
+        electronegativities = [ALLRED_ROCHOW_ELECTRONEGATIVITY[atom.atomic_number] for atom in molecule.atoms]
 
         return torch.tensor(electronegativities)
 
@@ -466,9 +415,7 @@ class AtomElectronAffinity(AtomFeature):
 
     name: typing.Literal["atom_electron_affinity"] = "atom_electron_affinity"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from ._data import ELECTRON_AFFINITY
 
         affinities = [ELECTRON_AFFINITY[atom.atomic_number] for atom in molecule.atoms]
@@ -483,9 +430,7 @@ class AtomElectrophilicity(AtomFeature):
 
     name: typing.Literal["atom_electrophilicity"] = "atom_electrophilicity"
 
-    def _encode(
-        self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None
-    ) -> torch.Tensor:
+    def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         from ._data import ELECTROPHILICITIES
 
         affinities = [ELECTROPHILICITIES[atom.atomic_number] for atom in molecule.atoms]
@@ -493,24 +438,22 @@ class AtomElectrophilicity(AtomFeature):
         return torch.tensor(affinities)
 
 
-AtomFeatureType = typing.Union[
-    AtomicElement,
-    AtomHybridization,
-    AtomConnectivity,
-    AtomIsAromatic,
-    AtomIsInRing,
-    AtomInRingOfSize,
-    AtomFormalCharge,
-    AtomAverageFormalCharge,
-    AtomGasteigerCharge,
-    AtomElementPeriod,
-    AtomElementGroup,
-    AtomTotalBondOrder,
-    AtomElectronAffinity,
-    AtomElectrophilicity,
-    AtomElectronegativityAllredRochow,
-]
+AtomFeatureType = (
+    AtomicElement
+    | AtomHybridization
+    | AtomConnectivity
+    | AtomIsAromatic
+    | AtomIsInRing
+    | AtomInRingOfSize
+    | AtomFormalCharge
+    | AtomAverageFormalCharge
+    | AtomGasteigerCharge
+    | AtomElementPeriod
+    | AtomElementGroup
+    | AtomTotalBondOrder
+    | AtomElectronAffinity
+    | AtomElectrophilicity
+    | AtomElectronegativityAllredRochow
+)
 
-DiscriminatedAtomFeatureType = typing.Annotated[
-    AtomFeatureType, Field(..., discriminator="name")
-]
+DiscriminatedAtomFeatureType = typing.Annotated[AtomFeatureType, Field(..., discriminator="name")]

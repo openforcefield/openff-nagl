@@ -1,13 +1,11 @@
 import abc
 from collections import defaultdict
-import functools
-import logging
 import pathlib
 import tqdm
 import typing
 
 import numpy as np
-from openff.units import unit
+from openff.toolkit import unit
 from openff.utilities import requires_package
 
 from openff.nagl._base.base import ImmutableModel
@@ -100,9 +98,7 @@ class LabelConformers(_BaseLabel):
             mol.apply_elf_conformer_selection(
                 limit=self.n_conformers,
             )
-            conformers = np.ravel(
-                [conformer.m_as(unit.angstrom) for conformer in mol.conformers]
-            ).astype(float)
+            conformers = np.ravel([conformer.m_as(unit.angstrom) for conformer in mol.conformers]).astype(float)
             data[self.conformer_column].append(conformers)
             data[self.n_conformer_column].append(len(mol.conformers))
 
@@ -134,7 +130,7 @@ class LabelCharges(_BaseLabel):
     def _assign_charges(
         mapped_smiles: str = None,
         charge_method: ChargeMethodType = "formal_charge",
-        conformers: typing.Optional[unit.Quantity] = None,
+        conformers: unit.Quantity | None = None,
         use_existing_conformers: bool = False,
     ) -> np.ndarray:
         from openff.toolkit import Molecule
@@ -143,9 +139,7 @@ class LabelCharges(_BaseLabel):
         shape = (-1, mol.n_atoms, 3)
         if use_existing_conformers:
             if conformers is None:
-                raise ValueError(
-                    "Conformers must be provided if `use_existing_conformers` is True"
-                )
+                raise ValueError("Conformers must be provided if `use_existing_conformers` is True")
             if not isinstance(conformers, unit.Quantity):
                 conformers = np.asarray(conformers) * unit.angstrom
             conformers = conformers.reshape(shape)
@@ -154,9 +148,7 @@ class LabelCharges(_BaseLabel):
             for conformer in conformers:
                 mol.assign_partial_charges(
                     charge_method,
-                    use_conformers=None
-                    if charge_method == "formal_charge"
-                    else [conformer],
+                    use_conformers=None if charge_method == "formal_charge" else [conformer],
                 )
                 charges.append(mol.partial_charges.m_as(unit.elementary_charge))
             return np.mean(charges, axis=0)
@@ -256,7 +248,7 @@ class LabelMultipleESPs(_BaseLabel):
         mapped_smiles: str,
         conformers: np.ndarray,
         n_conformers: int,
-    ) -> typing.List[np.ndarray]:
+    ) -> list[np.ndarray]:
         from openff.toolkit import Molecule
         from openff.recharge.grids import GridGenerator, MSKGridSettings
 
@@ -279,10 +271,10 @@ class LabelMultipleESPs(_BaseLabel):
 
     @staticmethod
     def _split_inverse_distance_grid(
-        grid_lengths: typing.List[int],
-        inverse_distance_matrix: typing.List[float],
-        charges: typing.List[float],
-    ) -> typing.List[np.ndarray]:
+        grid_lengths: list[int],
+        inverse_distance_matrix: list[float],
+        charges: list[float],
+    ) -> list[np.ndarray]:
         charges = np.asarray(charges).flatten()
         n_atoms = len(charges)
         total_grid_length = sum(grid_lengths)
@@ -356,27 +348,16 @@ class LabelMultipleESPs(_BaseLabel):
 
         if not self.use_existing_inverse_distances:
             grid_length_field = pa.field(self.grid_length_column, pa.list_(pa.int64()))
-            inverse_distance_field = pa.field(
-                self.inverse_distance_matrix_column, pa.list_(pa.float64())
-            )
-            table = self._append_column(
-                table, grid_length_field, data[self.grid_length_column]
-            )
-            table = self._append_column(
-                table, inverse_distance_field, data[self.inverse_distance_matrix_column]
-            )
+            inverse_distance_field = pa.field(self.inverse_distance_matrix_column, pa.list_(pa.float64()))
+            table = self._append_column(table, grid_length_field, data[self.grid_length_column])
+            table = self._append_column(table, inverse_distance_field, data[self.inverse_distance_matrix_column])
 
         esp_field = pa.field(self.esp_column, pa.list_(pa.float64()))
         table = self._append_column(table, esp_field, data[self.esp_column])
         return table
 
 
-LabellerType = typing.Union[
-    LabelConformers,
-    LabelCharges,
-    LabelMultipleDipoles,
-    LabelMultipleESPs,
-]
+LabellerType = LabelConformers | LabelCharges | LabelMultipleDipoles | LabelMultipleESPs
 
 
 def apply_labellers(

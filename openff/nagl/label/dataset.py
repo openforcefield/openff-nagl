@@ -48,15 +48,19 @@ class LabelledDataset:
         import pyarrow.dataset as ds
 
         loader = functools.partial(Molecule.from_smiles, allow_undefined_stereo=True)
-        mapped_loader = functools.partial(
-            Molecule.from_mapped_smiles, allow_undefined_stereo=True
-        )
+        mapped_loader = functools.partial(Molecule.from_mapped_smiles, allow_undefined_stereo=True)
         if not mapped:
-            converter = lambda x: loader(x).to_smiles(mapped=True)
+
+            def converter(x):
+                return loader(x).to_smiles(mapped=True)
         elif validate_smiles:
-            converter = lambda x: mapped_loader(x).to_smiles(mapped=True)
+
+            def converter(x):
+                return mapped_loader(x).to_smiles(mapped=True)
         else:
-            converter = lambda x: x
+
+            def converter(x):
+                return x
 
         if verbose:
             smiles = tqdm.tqdm(smiles, ncols=80, desc="Iterating through SMILES")
@@ -80,14 +84,14 @@ class LabelledDataset:
 
     def append_columns(
         self,
-        columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
+        columns: dict["pyarrow.Field", typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
         self._append_columns(columns, exist_ok=exist_ok)
 
     def _append_columns(
         self,
-        columns: typing.Dict["pyarrow.Field", typing.Iterable[typing.Any]],
+        columns: dict["pyarrow.Field", typing.Iterable[typing.Any]],
         exist_ok: bool = False,
     ):
         import pyarrow.dataset as ds

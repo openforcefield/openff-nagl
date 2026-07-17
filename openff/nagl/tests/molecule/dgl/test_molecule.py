@@ -22,9 +22,9 @@ class TestDGLBase:
     def test_to(self, dgl_methane):
         dgl_methane_to = dgl_methane.to("cpu")
 
-        assert not dgl_methane_to is dgl_methane
+        assert dgl_methane_to is not dgl_methane
         # should be a copy.
-        assert not dgl_methane_to.graph is dgl_methane.graph
+        assert dgl_methane_to.graph is not dgl_methane.graph
         assert dgl_methane_to.n_atoms == 5
         assert dgl_methane_to.n_bonds == 4
 

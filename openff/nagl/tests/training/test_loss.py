@@ -1,7 +1,5 @@
 import typing
-from typing import Dict, List
 import pytest
-from openff.nagl.nn._containers import ReadoutModule
 import torch
 import numpy as np
 
@@ -21,12 +19,10 @@ class TestBaseTarget:
     class BaseTarget(_BaseTarget):
         name: typing.Literal["base"]
 
-        def get_required_columns(self) -> List[str]:
+        def get_required_columns(self) -> list[str]:
             return []
 
-        def evaluate_target(
-            self, molecules, labels, predictions, readout_modules
-        ) -> "torch.Tensor":
+        def evaluate_target(self, molecules, labels, predictions, readout_modules) -> "torch.Tensor":
             return torch.tensor([0.0])
 
     def test_validate_metric(self):
@@ -192,9 +188,7 @@ class TestMultipleESPTarget:
                 0.11547005,
             ]
         )
-        reference_esps = np.array(
-            [5.55905831, 4.77773209, 1.71476202, 4.18578945, 5.04356699]
-        )
+        reference_esps = np.array([5.55905831, 4.77773209, 1.71476202, 4.18578945, 5.04356699])
         n_conformers = torch.tensor(
             [
                 2,

@@ -4,11 +4,9 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from openff.toolkit.topology import Molecule
 from openff.toolkit import (
     Molecule,
     RDKitToolkitWrapper,
-    AmberToolsToolkitWrapper,
     OpenEyeToolkitWrapper,
 )
 from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
@@ -19,7 +17,7 @@ from openff.toolkit.utils.toolkit_registry import (
 )
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE, OPENEYE_AVAILABLE
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
-from openff.units import unit
+from openff.toolkit import unit
 
 from openff.nagl.toolkits.openff import (
     get_best_rmsd,
@@ -119,7 +117,6 @@ NORMALIZATION_MOLECULE_TESTS = [
 @pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
 @pytest.mark.parametrize("given_smiles, expected_smiles", NORMALIZATION_MOLECULE_TESTS)
 def test_normalize_molecule_openeye(given_smiles, expected_smiles):
-    from openff.toolkit.topology.molecule import Molecule
 
     expected_molecule = Molecule.from_mapped_smiles(expected_smiles)
 
@@ -143,7 +140,6 @@ def test_normalize_molecule_bypasses_rdkit_normalization(
     given_smiles,
     expected_smiles,
 ):
-    from openff.toolkit.topology.molecule import Molecule
 
     expected_molecule = _load_rdkit_molecule_exactly(expected_smiles)
     molecule = _load_rdkit_molecule_exactly(given_smiles)
@@ -187,7 +183,6 @@ def test_map_indexed_smiles(smiles_a, smiles_b, expected):
     ],
 )
 def test_is_conformer_identical_generated(smiles):
-    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
@@ -216,7 +211,6 @@ def test_is_conformer_identical_generated(smiles):
 
 
 def test_is_conformer_identical_linear():
-    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles("CCC")
     c_coords = np.array(
@@ -241,7 +235,6 @@ def test_is_conformer_identical_linear():
 
 
 def test_not_is_conformer_identical():
-    from openff.toolkit.topology.molecule import Molecule
 
     smiles = "[C:1]([H:4])([H:5])([H:6])[C:2]([Cl:7])=[O:3]"
     offmol = Molecule.from_mapped_smiles(smiles)
@@ -267,10 +260,7 @@ def test_not_is_conformer_identical():
         ("C", "N", 3, 0.33333333333333333),
     ],
 )
-def test_calculate_circular_fingerprint_similarity(
-    smiles1, smiles2, radius, similarity
-):
-    from openff.toolkit.topology.molecule import Molecule
+def test_calculate_circular_fingerprint_similarity(smiles1, smiles2, radius, similarity):
 
     mol1 = Molecule.from_smiles(smiles1)
     mol2 = Molecule.from_smiles(smiles2)
@@ -282,7 +272,6 @@ def test_calculate_circular_fingerprint_similarity(
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_best_rmsd():
     from rdkit.Chem import rdMolAlign
-    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles("CCC")
     offmol._conformers = [
@@ -303,11 +292,10 @@ def test_get_best_rmsd():
 
 
 def test_capture_toolkit_warnings(caplog):
-    from openff.toolkit.topology.molecule import Molecule
 
     caplog.clear()
     smiles = "ClC=CCl"
-    stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
+    _stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
 
     Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     # as of toolkit v0.14.4 this warning is no longer raised
@@ -351,19 +339,13 @@ def test_resolve_registry_from_wrapper(toolkit_registry):
 
     assert isinstance(registry, NAGLToolkitRegistry)
     assert len(registry.registered_toolkits) == 1
-    assert any(
-        isinstance(wrapper, NAGLRDKitToolkitWrapper)
-        for wrapper in registry.registered_toolkits
-    )
+    assert any(isinstance(wrapper, NAGLRDKitToolkitWrapper) for wrapper in registry.registered_toolkits)
 
     # also try with an instance
     registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry())
     assert isinstance(registry, NAGLToolkitRegistry)
     assert len(registry.registered_toolkits) == 1
-    assert any(
-        isinstance(wrapper, NAGLRDKitToolkitWrapper)
-        for wrapper in registry.registered_toolkits
-    )
+    assert any(isinstance(wrapper, NAGLRDKitToolkitWrapper) for wrapper in registry.registered_toolkits)
 
 
 def test_molecule_from_networkx(openff_methane_uncharged):
@@ -461,9 +443,7 @@ def test_split_up_molecule():
     assert indices[3] == [8, 9, 10, 24, 25, 26, 27, 28, 29, 30]
 
 
-@pytest.mark.skipif(
-    not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye"
-)
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
@@ -493,9 +473,7 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
         )
 
 
-@pytest.mark.skipif(
-    not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye"
-)
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
@@ -509,7 +487,6 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     """
 
     from rdkit.Chem import ForwardSDMolSupplier
-    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
     from openff.nagl import GNNModel
 
     suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
@@ -528,9 +505,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     )
 
 
-@pytest.mark.skipif(
-    not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye"
-)
+@pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 def test_toolkit_registry_passes_through_nagl_and_fails():
     """
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager

@@ -5,19 +5,16 @@ import pathlib
 import typing
 
 import torch
-from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 from openff.nagl.training.metrics import MetricType  # MetricMeta, BaseMetric
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
 
 try:
     from pydantic.v1 import Field, validator
-    from pydantic.v1.main import ModelMetaclass
+    from pydantic.v1.main import ModelMetaclass  # noqa
 except ImportError:
     from pydantic import Field, validator
-    from pydantic.main import ModelMetaclass
 
 if typing.TYPE_CHECKING:
     import torch
@@ -37,9 +34,7 @@ __all__ = [
 class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
     name: typing.Literal[""]
     metric: MetricType = Field(..., discriminator="name")
-    target_label: str = Field(
-        description=("The label to use for the target, or reference property. ")
-    )
+    target_label: str = Field(description=("The label to use for the target, or reference property. "))
     denominator: float = Field(
         default=1.0,
         description=(
@@ -62,7 +57,7 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
         return v
 
     @abc.abstractmethod
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         """
         Target columns used in this target.
 
@@ -73,9 +68,9 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
     def _evaluate_loss(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ):
         """
         Evaluate the target loss for a molecule or batch of molecules.
@@ -101,11 +96,7 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
             The loss for the molecule(s).
         """
         targets = (
-            self.evaluate_target(
-                molecules, labels, predictions, readout_modules=readout_modules
-            )
-            .float()
-            .squeeze()
+            self.evaluate_target(molecules, labels, predictions, readout_modules=readout_modules).float().squeeze()
         )
         reference = labels[self.target_label].float().squeeze()
         loss = self.metric(targets, reference)
@@ -114,9 +105,9 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
     def evaluate_loss(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ):
         """
         Evaluate the target loss for a molecule or batch of molecules.
@@ -148,9 +139,9 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         """
         Evaluate the target property for a molecule or batch of molecules.
@@ -182,8 +173,8 @@ class _BaseTarget(ImmutableModel, abc.ABC):  # , metaclass=_TargetMeta):
     def report_artifact(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
         output_directory: pathlib.Path,
         top_n_entries: int = 100,
         bottom_n_entries: int = 100,
@@ -224,19 +215,17 @@ class ReadoutTarget(_BaseTarget):
     # name: typing.ClassVar[str] = "readout"
     name: typing.Literal["readout"] = "readout"
 
-    prediction_label: str = Field(
-        description=("The predicted property to evaluate the target on.")
-    )
+    prediction_label: str = Field(description=("The predicted property to evaluate the target on."))
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [self.target_label]
 
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         return predictions[self.prediction_label]
 
@@ -249,19 +238,17 @@ class HeavyAtomReadoutTarget(_BaseTarget):
     # name: typing.ClassVar[str] = "heavy_atom_readout"
     name: typing.Literal["heavy_atom_readout"] = "heavy_atom_readout"
 
-    prediction_label: str = Field(
-        description=("The predicted property to evaluate the target on.")
-    )
+    prediction_label: str = Field(description=("The predicted property to evaluate the target on."))
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [self.target_label]
 
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         atomic_numbers = molecules.graph.ndata["atomic_number"]
         heavy_atom_mask = atomic_numbers != 1
@@ -272,22 +259,18 @@ class GeneralLinearFitTarget(_BaseTarget):
     """A target that is evaluated to solve the general Ax=b equation."""
 
     name: typing.Literal["general_linear_fit"] = "general_linear_fit"
-    prediction_label: str = Field(
-        description=("The predicted property to evaluate the target on.")
-    )
-    design_matrix_column: str = Field(
-        description=("The column in the labels that contains the design matrix.")
-    )
+    prediction_label: str = Field(description=("The predicted property to evaluate the target on."))
+    design_matrix_column: str = Field(description=("The column in the labels that contains the design matrix."))
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [self.target_label, self.design_matrix_column]
 
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         x_vectors = predictions[self.prediction_label].squeeze().float()
         A_matrices = labels[self.design_matrix_column].float()
@@ -316,15 +299,15 @@ class SingleDipoleTarget(_BaseTarget):
     charge_label: str
     conformation_column: str
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [self.target_label, self.conformation_column]
 
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
 
@@ -351,14 +334,14 @@ class MultipleDipoleTarget(_BaseTarget):
     conformation_column: str
     n_conformation_column: str
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [self.target_label, self.conformation_column, self.n_conformation_column]
 
     def _prepare_inputs(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
     ):
         import torch
 
@@ -372,23 +355,17 @@ class MultipleDipoleTarget(_BaseTarget):
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
 
-        conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(
-            molecules, labels, predictions
-        )
+        conformations, n_conformations, all_n_atoms, all_charges = self._prepare_inputs(molecules, labels, predictions)
         dipoles = []
-        for mol_charge, n_atoms, n_conf in zip(
-            all_charges, all_n_atoms, n_conformations
-        ):
+        for mol_charge, n_atoms, n_conf in zip(all_charges, all_n_atoms, n_conformations):
             conformer_increment = n_atoms * n_conf
-            mol_conformations = conformations[:conformer_increment].reshape(
-                n_conf, n_atoms, 3
-            )
+            mol_conformations = conformations[:conformer_increment].reshape(n_conf, n_atoms, 3)
             dipoles.append(torch.matmul(mol_charge, mol_conformations).reshape(-1))
             conformations = conformations[conformer_increment:]
 
@@ -405,7 +382,7 @@ class MultipleESPTarget(_BaseTarget):
     esp_length_column: str
     n_esp_column: str
 
-    def get_required_columns(self) -> typing.List[str]:
+    def get_required_columns(self) -> list[str]:
         return [
             self.target_label,
             self.inverse_distance_matrix_column,
@@ -416,8 +393,8 @@ class MultipleESPTarget(_BaseTarget):
     def _prepare_inputs(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
     ):
         import torch
 
@@ -425,9 +402,7 @@ class MultipleESPTarget(_BaseTarget):
         inverse_distance_matrix = inverse_distance_matrix.squeeze()
         n_grid_points = labels[self.esp_length_column].int()
         all_n_esps = labels[self.n_esp_column].int()
-        charges = (
-            predictions[self.charge_label].squeeze().to(inverse_distance_matrix.dtype)
-        )
+        charges = predictions[self.charge_label].squeeze().to(inverse_distance_matrix.dtype)
         all_n_atoms = tuple(map(int, molecules.n_atoms_per_molecule))
         all_charges = torch.split(charges, all_n_atoms)
 
@@ -442,14 +417,14 @@ class MultipleESPTarget(_BaseTarget):
     def evaluate_target(
         self,
         molecules: "DGLMoleculeOrBatch",
-        labels: typing.Dict[str, "torch.Tensor"],
-        predictions: typing.Dict[str, "torch.Tensor"],
-        readout_modules: typing.Dict[str, ReadoutModule],
+        labels: dict[str, "torch.Tensor"],
+        predictions: dict[str, "torch.Tensor"],
+        readout_modules: dict[str, ReadoutModule],
     ) -> "torch.Tensor":
         import torch
 
-        all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = (
-            self._prepare_inputs(molecules, labels, predictions)
+        all_n_atoms, all_n_esps, all_charges, n_grid_points, inverse_distance_matrix = self._prepare_inputs(
+            molecules, labels, predictions
         )
 
         esps = []
@@ -471,11 +446,11 @@ class MultipleESPTarget(_BaseTarget):
         return torch.cat(esps)
 
 
-TargetType = typing.Union[
-    MultipleDipoleTarget,
-    ReadoutTarget,
-    HeavyAtomReadoutTarget,
-    SingleDipoleTarget,
-    MultipleESPTarget,
-    GeneralLinearFitTarget,
-]
+TargetType = (
+    MultipleDipoleTarget
+    | ReadoutTarget
+    | HeavyAtomReadoutTarget
+    | SingleDipoleTarget
+    | MultipleESPTarget
+    | GeneralLinearFitTarget
+)

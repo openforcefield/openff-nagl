@@ -1,10 +1,11 @@
 import abc
 import functools
-from typing import ClassVar, Dict, Union, TYPE_CHECKING, Iterable
+from typing import ClassVar, TYPE_CHECKING
+from collections.abc import Iterable
 
 import torch.nn
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch, DGLMoleculeOrBatch
+from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 from openff.nagl.nn._sequential import SequentialLayers
 
 if TYPE_CHECKING:
@@ -55,9 +56,7 @@ class PoolBondFeatures(PoolingLayer):
         self.layers = layers
 
     @staticmethod
-    def _apply_edges(
-        edges: "dgl.udf.EdgeBatch", feature_name: str = "h"
-    ) -> Dict[str, torch.Tensor]:
+    def _apply_edges(edges: "dgl.udf.EdgeBatch", feature_name: str = "h") -> dict[str, torch.Tensor]:
         h_u = edges.src[feature_name]
         h_v = edges.dst[feature_name]
         return {feature_name: torch.cat([h_u, h_v], 1)}
@@ -107,7 +106,7 @@ class PoolBondFeatures(PoolingLayer):
         return molecule.n_bonds_per_molecule
 
 
-def get_pooling_layer(layer: Union[str, PoolingLayer]) -> PoolingLayer:
+def get_pooling_layer(layer: str | PoolingLayer) -> PoolingLayer:
     if isinstance(layer, PoolingLayer):
         return layer
     if isinstance(layer, str):

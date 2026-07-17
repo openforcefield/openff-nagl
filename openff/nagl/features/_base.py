@@ -6,7 +6,7 @@ from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 if typing.TYPE_CHECKING:
     import torch
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
@@ -60,9 +60,7 @@ class Feature(ImmutableModel, abc.ABC):
         will call that one and guarantee an appropriate shape.
         """
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
-        return self._encode(molecule, toolkit_registry=toolkit_registry).reshape(
-            self.tensor_shape
-        )
+        return self._encode(molecule, toolkit_registry=toolkit_registry).reshape(self.tensor_shape)
 
     @abc.abstractmethod
     def _encode(
@@ -96,7 +94,7 @@ class CategoricalMixin:
     Mixin class for categorical features.
     """
 
-    categories: typing.List[typing.Any]
+    categories: list[typing.Any]
 
     @property
     def _default_categories(self):

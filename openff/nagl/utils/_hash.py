@@ -2,7 +2,7 @@ import enum
 import hashlib
 import json
 import pathlib
-from typing import Any, Dict
+from typing import Any
 
 from ._types import Pathlike
 
@@ -39,7 +39,7 @@ def hash_file(path: Pathlike) -> str:
     return sha256_hash.hexdigest()
 
 
-def hash_dict(obj: Dict[str, Any]) -> str:
+def hash_dict(obj: dict[str, Any]) -> str:
     string = json.dumps(obj, sort_keys=True, cls=CustomJsonEncoder).encode()
     return hashlib.sha256(string).hexdigest()
 
@@ -65,14 +65,8 @@ def file_digest(fileobj, digest, _bufsize=2**18):
         return digestobj
 
     # Only binary files implement readinto().
-    if not (
-        hasattr(fileobj, "readinto")
-        and hasattr(fileobj, "readable")
-        and fileobj.readable()
-    ):
-        raise ValueError(
-            f"'{fileobj!r}' is not a file-like object in binary reading mode."
-        )
+    if not (hasattr(fileobj, "readinto") and hasattr(fileobj, "readable") and fileobj.readable()):
+        raise ValueError(f"'{fileobj!r}' is not a file-like object in binary reading mode.")
 
     # binary file, socket.SocketIO object
     # Note: socket I/O uses different syscalls than file I/O.

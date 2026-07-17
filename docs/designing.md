@@ -155,7 +155,7 @@ These arguments specify the featurization scheme for the model (see [](featuriza
 
 ## `convolution_architecture`
 
-The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.config.model`] module. 
+The `convolution_architecture` argument specifies the structure of the convolution module. Available options are provided in the [`openff.nagl.config.model`] module.
 
 [`openff.nagl.nn.gcn`]: openff.nagl.nn.gcn
 

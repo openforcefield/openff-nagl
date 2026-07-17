@@ -1,4 +1,4 @@
-from typing import ClassVar, Optional, Tuple, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import torch
 from openff.utilities import requires_package
@@ -15,7 +15,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
@@ -48,13 +48,13 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     def from_openff(
         cls,
         molecule: "Molecule",
-        atom_features: Tuple[AtomFeature, ...] = tuple(),
-        bond_features: Tuple[BondFeature, ...] = tuple(),
-        atom_feature_tensor: Optional[torch.Tensor] = None,
-        bond_feature_tensor: Optional[torch.Tensor] = None,
+        atom_features: tuple[AtomFeature, ...] = tuple(),
+        bond_features: tuple[BondFeature, ...] = tuple(),
+        atom_feature_tensor: torch.Tensor | None = None,
+        bond_feature_tensor: torch.Tensor | None = None,
         enumerate_resonance_forms: bool = False,
         lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
+        max_path_length: int | None = None,
         include_all_transfer_pathways: bool = False,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
@@ -68,14 +68,10 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             bond_features = tuple()
 
         if len(atom_features) and atom_feature_tensor is not None:
-            raise ValueError(
-                "Only one of `atom_features` or `atom_feature_tensor` should be provided."
-            )
+            raise ValueError("Only one of `atom_features` or `atom_feature_tensor` should be provided.")
 
         if len(bond_features) and bond_feature_tensor is not None:
-            raise ValueError(
-                "Only one of `bond_features` or `bond_feature_tensor` should be provided."
-            )
+            raise ValueError("Only one of `bond_features` or `bond_feature_tensor` should be provided.")
 
         offmols = [molecule]
         if enumerate_resonance_forms:
@@ -109,10 +105,6 @@ class DGLMolecule(MoleculeMixin, DGLBase):
             edges[e_type] = n_edge.type(torch.int32)
         graph.set_batch_num_edges(edges)
 
-        mapped_smiles = offmols[0].to_smiles(
-            mapped=True, toolkit_registry=toolkit_registry
-        )
+        mapped_smiles = offmols[0].to_smiles(mapped=True, toolkit_registry=toolkit_registry)
 
-        return cls(
-            graph=graph, n_representations=len(offmols), mapped_smiles=mapped_smiles
-        )
+        return cls(graph=graph, n_representations=len(offmols), mapped_smiles=mapped_smiles)

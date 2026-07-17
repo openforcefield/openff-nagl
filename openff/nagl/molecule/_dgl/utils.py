@@ -1,4 +1,4 @@
-from typing import Dict, List, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional
 
 import torch
 import numpy as np
@@ -13,7 +13,7 @@ from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 if TYPE_CHECKING:
     import dgl
-    from openff.toolkit.topology.molecule import Molecule
+    from openff.toolkit import Molecule
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
@@ -49,10 +49,10 @@ def openff_molecule_to_base_dgl_graph(
 
 def openff_molecule_to_dgl_graph(
     molecule: "Molecule",
-    atom_features: List[AtomFeature] = tuple(),
-    bond_features: List[BondFeature] = tuple(),
-    atom_feature_tensor: Optional[torch.Tensor] = None,
-    bond_feature_tensor: Optional[torch.Tensor] = None,
+    atom_features: list[AtomFeature] = tuple(),
+    bond_features: list[BondFeature] = tuple(),
+    atom_feature_tensor: torch.Tensor | None = None,
+    bond_feature_tensor: torch.Tensor | None = None,
     forward: str = FORWARD,
     reverse: str = REVERSE,
     toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
@@ -61,14 +61,10 @@ def openff_molecule_to_dgl_graph(
     from openff.nagl.molecule._utils import _get_openff_molecule_information
 
     if len(atom_features) and atom_feature_tensor is not None:
-        raise ValueError(
-            "Only one of `atom_features` or `atom_feature_tensor` should be provided."
-        )
+        raise ValueError("Only one of `atom_features` or `atom_feature_tensor` should be provided.")
 
     if len(bond_features) and bond_feature_tensor is not None:
-        raise ValueError(
-            "Only one of `bond_features` or `bond_feature_tensor` should be provided."
-        )
+        raise ValueError("Only one of `bond_features` or `bond_feature_tensor` should be provided.")
 
     # create base undirected graph
     molecule_graph = openff_molecule_to_base_dgl_graph(
@@ -80,9 +76,7 @@ def openff_molecule_to_dgl_graph(
     # add atom features
     if len(atom_features):
         atom_featurizer = AtomFeaturizer(atom_features)
-        atom_feature_tensor = atom_featurizer.featurize(
-            molecule, toolkit_registry=toolkit_registry
-        )
+        atom_feature_tensor = atom_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
 
     if atom_feature_tensor is None:
         atom_feature_tensor = torch.zeros((molecule.n_atoms, 0))
@@ -94,15 +88,11 @@ def openff_molecule_to_dgl_graph(
         molecule_graph.ndata[key] = value
 
     # add bond features
-    bond_orders = torch.tensor(
-        [bond.bond_order for bond in molecule.bonds], dtype=torch.uint8
-    )
+    bond_orders = torch.tensor([bond.bond_order for bond in molecule.bonds], dtype=torch.uint8)
 
     if len(bond_features):
         bond_featurizer = BondFeaturizer(bond_features)
-        bond_feature_tensor = bond_featurizer.featurize(
-            molecule, toolkit_registry=toolkit_registry
-        )
+        bond_feature_tensor = bond_featurizer.featurize(molecule, toolkit_registry=toolkit_registry)
 
     for direction in (forward, reverse):
         n_bonds = len(molecule.bonds)
@@ -117,9 +107,7 @@ def openff_molecule_to_dgl_graph(
 
 
 @requires_package("dgl")
-def heterograph_to_homograph_no_edges(
-    G: "dgl.DGLHeteroGraph", ndata=None, edata=None
-) -> "dgl.DGLGraph":
+def heterograph_to_homograph_no_edges(G: "dgl.DGLHeteroGraph", ndata=None, edata=None) -> "dgl.DGLGraph":
     """
     Copied and modified from dgl.python.dgl.convert.to_homogeneous,
     but with the edges removed.
@@ -192,7 +180,7 @@ def dgl_heterograph_to_homograph(graph: "dgl.DGLHeteroGraph") -> "dgl.DGLGraph":
 
     try:
         homo_graph = dgl.to_homogeneous(graph, ndata=[FEATURE], edata=[FEATURE])
-    except TypeError as e:
+    except TypeError:
         if graph.num_edges() == 0:
             homo_graph = heterograph_to_homograph_no_edges(graph)
     except KeyError:

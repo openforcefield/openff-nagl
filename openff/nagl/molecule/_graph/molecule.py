@@ -1,11 +1,11 @@
-from typing import List, TYPE_CHECKING, Tuple, Optional
+from typing import TYPE_CHECKING, Optional
 
 from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin, BatchMixin
 from openff.nagl.molecule._graph._graph import NXMolHeteroGraph
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
     from openff.nagl.features.atoms import AtomFeature
     from openff.nagl.features.bonds import BondFeature
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
@@ -30,11 +30,11 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
     def from_openff(
         cls,
         molecule: "Molecule",
-        atom_features: Tuple["AtomFeature", ...] = tuple(),
-        bond_features: Tuple["BondFeature", ...] = tuple(),
+        atom_features: tuple["AtomFeature", ...] = tuple(),
+        bond_features: tuple["BondFeature", ...] = tuple(),
         enumerate_resonance_forms: bool = False,
         lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
+        max_path_length: int | None = None,
         include_all_transfer_pathways: bool = False,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
     ):
@@ -61,9 +61,7 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
         ]
         graph = NXMolHeteroGraph._batch(graphs)
 
-        mapped_smiles = molecule.to_smiles(
-            mapped=True, toolkit_registry=toolkit_registry
-        )
+        mapped_smiles = molecule.to_smiles(mapped=True, toolkit_registry=toolkit_registry)
 
         return cls(
             graph=graph,
@@ -74,25 +72,19 @@ class GraphMolecule(MoleculeMixin, NAGLMoleculeBase):
 
 class GraphMoleculeBatch(BatchMixin, NAGLMoleculeBase):
     def to(self, device: str):
-        return type(self)(
-            self.graph, n_representations=self.n_representations, n_atoms=self.n_atoms
-        )
+        return type(self)(self.graph, n_representations=self.n_representations, n_atoms=self.n_atoms)
 
     @classmethod
-    def from_nx_molecules(cls, molecules: List[GraphMolecule]):
+    def from_nx_molecules(cls, molecules: list[GraphMolecule]):
         if not molecules:
             raise ValueError("No molecules were provided.")
-        batched_graph = molecules[0].graph._batch(
-            [molecule.graph for molecule in molecules]
-        )
+        batched_graph = molecules[0].graph._batch([molecule.graph for molecule in molecules])
         batched_graph.batch_size = len(molecules)
         n_representations = tuple(molecule.n_representations for molecule in molecules)
         n_atoms = tuple(molecule.n_atoms for molecule in molecules)
-        return cls(
-            graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms
-        )
+        return cls(graph=batched_graph, n_representations=n_representations, n_atoms=n_atoms)
 
-    def unbatch(self) -> List[GraphMolecule]:
+    def unbatch(self) -> list[GraphMolecule]:
 
         return [
             GraphMolecule(g, n_repr)

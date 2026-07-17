@@ -28,15 +28,11 @@ class BaseMetric(ImmutableModel, abc.ABC):
 
     name: typing.Literal[""]
 
-    def __call__(
-        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
-    ) -> "torch.Tensor":
+    def __call__(self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor") -> "torch.Tensor":
         return self.compute(predicted_values, expected_values)
 
     @abc.abstractmethod
-    def compute(
-        self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor"
-    ) -> "torch.Tensor":
+    def compute(self, predicted_values: "torch.Tensor", expected_values: "torch.Tensor") -> "torch.Tensor":
         raise NotImplementedError
 
 
@@ -64,7 +60,7 @@ class MAEMetric(BaseMetric):
         return loss(predicted_values, expected_values)
 
 
-MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
+MetricType = RMSEMetric | MSEMetric | MAEMetric
 
 METRICS = {"rmse": RMSEMetric, "mse": MSEMetric, "mae": MAEMetric}
 """
@@ -72,7 +68,7 @@ Mapping from metric names to the corresponding classes.
 """
 
 
-def get_metric_type(metric: typing.Union[MetricType, str]) -> MetricType:
+def get_metric_type(metric: MetricType | str) -> MetricType:
     """
     Get the metric class instance from a string or class.
     """

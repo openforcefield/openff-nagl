@@ -28,12 +28,8 @@ class TestMetaRegistry:
     def test_key_transform_ignore_case(self):
         assert "testkey" in self.RegistryIgnoreCase.registry
         assert "TestKey" not in self.RegistryIgnoreCase.registry
-        assert (
-            self.RegistryIgnoreCase._get_by_key("TestKey") is self.TestClassIgnoreCase
-        )
-        assert (
-            self.RegistryIgnoreCase._get_by_key("testkey") is self.TestClassIgnoreCase
-        )
+        assert self.RegistryIgnoreCase._get_by_key("TestKey") is self.TestClassIgnoreCase
+        assert self.RegistryIgnoreCase._get_by_key("testkey") is self.TestClassIgnoreCase
 
     def test_get_class(self):
         assert self.Registry._get_class(self.TestClass) is self.TestClass

@@ -9,7 +9,6 @@ from openff.nagl.label.labels import (
     LabelMultipleDipoles,
     LabelMultipleESPs,
 )
-from openff.toolkit.utils import OPENEYE_AVAILABLE
 
 pytest.importorskip("pyarrow")
 

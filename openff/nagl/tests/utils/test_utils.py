@@ -60,8 +60,6 @@ def test_assert_same_lengths_incorrect_lengths():
         assert_same_lengths([1, 2, 3], [1, 2])
 
 
-@pytest.mark.parametrize(
-    "input_value, output_value", [({"a": 1, "b": 2}, [1, 2]), ([1, 2], [1, 2])]
-)
+@pytest.mark.parametrize("input_value, output_value", [({"a": 1, "b": 2}, [1, 2]), ([1, 2], [1, 2])])
 def test_potential_dict_to_list(input_value, output_value):
     assert potential_dict_to_list(input_value) == output_value

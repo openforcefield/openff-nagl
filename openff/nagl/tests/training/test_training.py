@@ -31,7 +31,6 @@ from openff.nagl.nn._dataset import (
     DGLMoleculeDataset,
     _LazyDGLMoleculeDataset,
 )
-from openff.nagl.config.training import TrainingConfig
 from openff.nagl.tests.data.files import (
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
     EXAMPLE_FEATURIZED_PARQUET_DATASET,
@@ -61,11 +60,7 @@ class TestDataHash:
         all_bond_features = [example_bond_features, []]
         all_columns = [["a", "b"], ["c"], []]
 
-        all_combinations = list(
-            itertools.product(
-                all_filenames, all_columns, all_atom_features, all_bond_features
-            )
-        )
+        all_combinations = list(itertools.product(all_filenames, all_columns, all_atom_features, all_bond_features))
         all_hashers = []
         for fn, cols, atom_features, bond_features in all_combinations:
             hasher = DataHash.from_file(
@@ -284,9 +279,7 @@ class TestTrainingGNNModel:
     def test_configure_optimizers(self, example_training_model):
         optimizer = example_training_model.configure_optimizers()
         assert isinstance(optimizer, torch.optim.Adam)
-        assert torch.isclose(
-            torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.001)
-        )
+        assert torch.isclose(torch.tensor(optimizer.defaults["lr"]), torch.tensor(0.001))
 
     def test_unweighted_readout_test_step(self, mock_training_model, dgl_methane):
         labels = {
@@ -340,9 +333,7 @@ class TestTrainingGNNModel:
                 0.11547005,
             ]
         )
-        reference_esps = np.array(
-            [5.55905831, 4.77773209, 1.71476202, 4.18578945, 5.04356699]
-        )
+        reference_esps = np.array([5.55905831, 4.77773209, 1.71476202, 4.18578945, 5.04356699])
         reference_dipoles = np.array([150.0, 170.0, 190.0, 450.0, 470.0, 490.0])
 
         labels = {
@@ -363,9 +354,7 @@ class TestTrainingGNNModel:
         }
 
         expected_dipoles = np.array([120.0, 135.0, 150.0, 345.0, 360.0, 375.0])
-        expected_esps = np.array(
-            [4.4084817, 3.87141906, 1.34971487, 2.98778764, 3.83525536]
-        )
+        expected_esps = np.array([4.4084817, 3.87141906, 1.34971487, 2.98778764, 3.83525536])
 
         mse_esps = ((reference_esps - expected_esps) ** 2).mean()
         mae_dipoles = (np.abs(reference_dipoles - expected_dipoles)).mean()
@@ -504,7 +493,5 @@ def test_no_postprocess_layer(convolution_module, forward_layer, tmpdir):
             learning_rate=0.001,
         )
 
-        training_config = TrainingConfig(
-            model=model_config, data=data_config, optimizer=optimizer_config
-        )
-        training_model = TrainingGNNModel(training_config)
+        training_config = TrainingConfig(model=model_config, data=data_config, optimizer=optimizer_config)
+        TrainingGNNModel(training_config)

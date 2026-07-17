@@ -485,9 +485,7 @@ class TestNXMolHomoGraph:
     def test_message_passing(self, openff_cnc):
 
         atom_features = [
-            AtomicElement(
-                categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]
-            ),
+            AtomicElement(categories=["C", "O", "H", "N", "S", "F", "Br", "Cl", "I", "P"]),
             AtomConnectivity(categories=[1, 2, 3, 4]),
             AtomAverageFormalCharge(),
             AtomInRingOfSize(ring_size=3),

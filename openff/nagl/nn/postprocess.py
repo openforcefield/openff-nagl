@@ -3,7 +3,7 @@ Postprocessing functions to convert a graph representation to a predicted proper
 """
 
 import abc
-from typing import ClassVar, Dict, Type, Union
+from typing import ClassVar
 
 import torch
 
@@ -14,7 +14,7 @@ from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 class _PostprocessLayerMeta(abc.ABCMeta, create_registry_metaclass()):
     """Metaclass for registering post-processing layers for string lookup."""
 
-    registry: ClassVar[Dict[str, Type]] = {}
+    registry: ClassVar[dict[str, type]] = {}
 
     def __init__(cls, name, bases, namespace, **kwargs):
         super().__init__(name, bases, namespace, **kwargs)
@@ -29,9 +29,7 @@ class PostprocessLayer(torch.nn.Module, abc.ABC, metaclass=_PostprocessLayerMeta
     n_features: ClassVar[int] = 0
 
     @abc.abstractmethod
-    def forward(
-        self, molecule: Union[DGLMolecule, DGLMoleculeBatch], inputs: torch.Tensor
-    ) -> torch.Tensor:
+    def forward(self, molecule: DGLMolecule | DGLMoleculeBatch, inputs: torch.Tensor) -> torch.Tensor:
         """Returns the post-processed input vector."""
 
 
@@ -77,7 +75,7 @@ class ComputePartialCharges(PostprocessLayer):
 
     def forward(
         self,
-        molecule: Union[DGLMolecule, DGLMoleculeBatch],
+        molecule: DGLMolecule | DGLMoleculeBatch,
         inputs: torch.Tensor,
     ) -> torch.Tensor:
         electronegativity = inputs[:, 0]
@@ -156,7 +154,7 @@ class RegularizedComputePartialCharges(PostprocessLayer):
 
     def forward(
         self,
-        molecule: Union[DGLMolecule, DGLMoleculeBatch],
+        molecule: DGLMolecule | DGLMoleculeBatch,
         inputs: torch.Tensor,
     ) -> torch.Tensor:
         charge_priors = inputs[:, 0]

@@ -2,11 +2,11 @@
 
 import copy
 import functools
-from typing import Tuple, TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from openff.units import unit
+from openff.toolkit import unit
 
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
@@ -14,7 +14,7 @@ from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
 
 
 class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
@@ -23,7 +23,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     def _run_normalization_reactions(
         self,
         molecule,
-        normalization_reactions: Tuple[str, ...] = tuple(),
+        normalization_reactions: tuple[str, ...] = tuple(),
         max_iter: int = 200,
     ):
         """
@@ -31,7 +31,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to normalize
         normalization_reactions: Tuple[str, ...], default=tuple()
             A tuple of SMARTS reaction strings representing the reactions to apply to the molecule.
@@ -40,7 +40,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Returns
         -------
-        normalized_molecule: openff.toolkit.topology.Molecule
+        normalized_molecule: openff.toolkit.Molecule
             The normalized molecule. This is a new molecule object, not the same as the input molecule.
         """
 
@@ -70,18 +70,12 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 try:
                     ((rdmol,),) = products
                 except ValueError:
-                    raise ValueError(
-                        f"Reaction produced multiple products: {reaction_smarts}"
-                    )
+                    raise ValueError(f"Reaction produced multiple products: {reaction_smarts}")
 
                 for atom in rdmol.GetAtoms():
                     # reorder the rdkit mol following mapping
-                    original_atom_indices = [
-                        atom.GetIntProp("react_atom_idx") for atom in rdmol.GetAtoms()
-                    ]
-                new_order = [
-                    original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())
-                ]
+                    original_atom_indices = [atom.GetIntProp("react_atom_idx") for atom in rdmol.GetAtoms()]
+                new_order = [original_atom_indices.index(i) for i in range(rdmol.GetNumAtoms())]
                 rdmol = Chem.RenumberAtoms(rdmol, new_order)
                 # RDKit can assign stereochemistry differently
                 # and toolkit doesn't allow STEREOCIS and STEREOTRANS bonds
@@ -123,15 +117,13 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         return new_mol.remap(adjusted_mapping, current_to_new=True)
 
-    def get_molecule_hybridizations(
-        self, molecule: "Molecule"
-    ) -> List[HybridizationType]:
+    def get_molecule_hybridizations(self, molecule: "Molecule") -> list[HybridizationType]:
         """
         Get the hybridization of each atom in a molecule.
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to get the hybridizations of.
 
         Returns
@@ -178,10 +170,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
                 allow_undefined_stereo=True,
                 toolkit_registry=RDKitToolkitWrapper(),
             )
-            mol2_bonds = {
-                (bd.atom1_index, bd.atom2_index): bd.stereochemistry
-                for bd in mol2.bonds
-            }
+            mol2_bonds = {(bd.atom1_index, bd.atom2_index): bd.stereochemistry for bd in mol2.bonds}
 
             molecule = copy.deepcopy(molecule)
             for bond in molecule.bonds:
@@ -248,7 +237,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Returns
         -------
-        molecules: Generator[openff.toolkit.topology.Molecule or str]
+        molecules: Generator[openff.toolkit.Molecule or str]
 
         """
         from rdkit import Chem
@@ -259,20 +248,14 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             if mapped_smiles:
                 converter = cls.smiles_to_mapped_smiles
             else:
-                converter = functools.partial(
-                    Chem.MolToSmiles, allHsExplicit=explicit_hydrogens
-                )
+                converter = functools.partial(Chem.MolToSmiles, allHsExplicit=explicit_hydrogens)
         else:
-            converter = functools.partial(
-                wrapper.from_rdkit, allow_undefined_stereo=True, _cls=Molecule
-            )
+            converter = functools.partial(wrapper.from_rdkit, allow_undefined_stereo=True, _cls=Molecule)
 
         if file.endswith(".gz"):
             file = file[:-3]
 
-        for rdmol in Chem.SupplierFromFilename(
-            file, removeHs=False, sanitize=True, strictParsing=True
-        ):
+        for rdmol in Chem.SupplierFromFilename(file, removeHs=False, sanitize=True, strictParsing=True):
             if rdmol is not None:
                 yield converter(rdmol)
 
@@ -289,7 +272,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Examples
         --------
 
-        >>> from openff.toolkit.topology import Molecule
+        >>> from openff.toolkit import Molecule
         >>> from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
         >>> toolkit_wrapper = RDKitToolkitWrapper()
         >>> molecule1 = Molecule.from_smiles("CCO")
@@ -320,8 +303,8 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
     def get_best_rmsd(
         self,
         molecule: "Molecule",
-        reference_conformer: Union[np.ndarray, unit.Quantity],
-        target_conformer: Union[np.ndarray, unit.Quantity],
+        reference_conformer: np.ndarray | unit.Quantity,
+        target_conformer: np.ndarray | unit.Quantity,
     ) -> unit.Quantity:
         """
         Compute the lowest all-atom RMSD between a reference and target conformer,
@@ -329,12 +312,12 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to compute the RMSD for
-        reference_conformer: np.ndarray or openff.units.unit.Quantity
+        reference_conformer: np.ndarray or openff.toolkit.Quantity
             The reference conformer to compare to the target conformer.
             If a numpy array, it is assumed to be in units of angstrom.
-        target_conformer: np.ndarray or openff.units.unit.Quantity
+        target_conformer: np.ndarray or openff.toolkit.Quantity
             The target conformer to compare to the reference conformer.
             If a numpy array, it is assumed to be in units of angstrom.
 
@@ -344,8 +327,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Examples
         --------
-        >>> from openff.units import unit
-        >>> from openff.toolkit.topology import Molecule
+        >>> from openff.toolkit import Molecule, unit
         >>> from openff.toolkit.utils.toolkits import RDKitToolkitWrapper
         >>> toolkit_wrapper = RDKitToolkitWrapper()
         >>> molecule = Molecule.from_smiles("CCCCO")
@@ -377,13 +359,13 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each atom in a molecule is in a ring of a given size.
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
@@ -401,13 +383,13 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         self,
         molecule: "Molecule",
         ring_size: int,
-    ) -> List[bool]:
+    ) -> list[bool]:
         """
         Determine whether each bond in a molecule is in a ring of a given size.
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to compute ring perception for
         ring_size: int
             The size of the ring to check for.
@@ -442,7 +424,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
         Parameters
         ----------
 
-        molecule : openff.toolkit.topology.Molecule
+        molecule : openff.toolkit.Molecule
             Molecule for which partial charges are to be computed
         partial_charge_method : str, optional, default=None
             The charge model to use. One of ['mmff94', 'gasteiger']. If None, 'mmff94' will be used.
@@ -493,10 +475,7 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         rdkit_molecule = self.to_rdkit(molecule)
         AllChem.ComputeGasteigerCharges(rdkit_molecule)
-        charges = [
-            float(rdatom.GetProp("_GasteigerCharge"))
-            for rdatom in rdkit_molecule.GetAtoms()
-        ]
+        charges = [float(rdatom.GetProp("_GasteigerCharge")) for rdatom in rdkit_molecule.GetAtoms()]
 
         charges = np.asarray(charges)
         molecule.partial_charges = unit.Quantity(charges, unit.elementary_charge)
@@ -517,9 +496,9 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
 
         Parameters
         ----------
-        molecule: openff.toolkit.topology.Molecule
+        molecule: openff.toolkit.Molecule
             The molecule to compute the fingerprint for.
-        reference_molecule: openff.toolkit.topology.Molecule
+        reference_molecule: openff.toolkit.Molecule
             The molecule to compute the fingerprint for.
         radius: int, default 3
             The radius of the fingerprint to use.
@@ -532,7 +511,6 @@ class NAGLRDKitToolkitWrapper(NAGLToolkitWrapperBase, RDKitToolkitWrapper):
             The Dice similarity between the two molecules.
 
         """
-        from rdkit import Chem
         from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
         from rdkit.DataStructs import DiceSimilarity
 

@@ -1,7 +1,7 @@
 import collections
 import logging
 import types
-from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optional
+from typing import TYPE_CHECKING, Optional
 import warnings
 
 import torch
@@ -18,7 +18,7 @@ from openff.nagl.toolkits.openff import ensure_toolkit_registry
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
@@ -33,12 +33,11 @@ class BaseGNNModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
 
-    def forward(self, molecule: "DGLMoleculeOrBatch") -> Dict[str, torch.Tensor]:
+    def forward(self, molecule: "DGLMoleculeOrBatch") -> dict[str, torch.Tensor]:
         self.convolution_module(molecule)
 
-        readouts: Dict[str, torch.Tensor] = {
-            readout_type: readout_module(molecule)
-            for readout_type, readout_module in self.readout_modules.items()
+        readouts: dict[str, torch.Tensor] = {
+            readout_type: readout_module(molecule) for readout_type, readout_module in self.readout_modules.items()
         }
         return readouts
 
@@ -49,7 +48,7 @@ class BaseGNNModel(pl.LightningModule):
         It is *not* intended for public use.
         """
         self.convolution_module(molecule)
-        readouts: Dict[str, torch.Tensor] = {
+        readouts: dict[str, torch.Tensor] = {
             readout_type: readout_module._forward_unpostprocessed(molecule)
             for readout_type, readout_module in self.readout_modules.items()
         }
@@ -77,7 +76,7 @@ class GNNModel(BaseGNNModel):
     def __init__(
         self,
         config: ModelConfig,
-        chemical_domain: Optional[ChemicalDomain] = None,
+        chemical_domain: ChemicalDomain | None = None,
         lookup_tables: dict[str, LookupTableType] = None,
     ):
         if not isinstance(config, ModelConfig):
@@ -110,7 +109,7 @@ class GNNModel(BaseGNNModel):
         lookup_tables = potential_dict_to_list(lookup_tables)
         for lookup_table in lookup_tables:
             lookup_table = _as_lookup_table(lookup_table)
-            if not lookup_table.property_name in readout_modules:
+            if lookup_table.property_name not in readout_modules:
                 raise ValueError(
                     f"The lookup table property name {lookup_table.property_name} is not in the readout modules."
                 )
@@ -161,13 +160,13 @@ class GNNModel(BaseGNNModel):
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         as_numpy: bool
             Whether to return the result as a numpy array.
@@ -222,9 +221,7 @@ class GNNModel(BaseGNNModel):
         else:
             tensor = torch.empty
         for property_name, value in results[0].items():
-            combined_results[property_name] = tensor(
-                molecule.n_atoms, dtype=value.dtype
-            )
+            combined_results[property_name] = tensor(molecule.n_atoms, dtype=value.dtype)
 
         seen_indices = collections.defaultdict(set)
 
@@ -250,13 +247,13 @@ class GNNModel(BaseGNNModel):
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         as_numpy: bool
             Whether to return the result as a numpy array.
@@ -321,13 +318,9 @@ class GNNModel(BaseGNNModel):
                     warnings.warn(error)
 
         try:
-            values = self._compute_properties_dgl(
-                molecule, toolkit_registry=toolkit_registry
-            )
+            values = self._compute_properties_dgl(molecule, toolkit_registry=toolkit_registry)
         except (MissingOptionalDependencyError, TypeError):
-            values = self._compute_properties_nagl(
-                molecule, toolkit_registry=toolkit_registry
-            )
+            values = self._compute_properties_nagl(molecule, toolkit_registry=toolkit_registry)
 
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
@@ -344,7 +337,7 @@ class GNNModel(BaseGNNModel):
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to check.
         readout_name: str
             The name of the readout to check.
@@ -371,7 +364,7 @@ class GNNModel(BaseGNNModel):
     def compute_property(
         self,
         molecule: "Molecule",
-        readout_name: Optional[str] = None,
+        readout_name: str | None = None,
         as_numpy: bool = True,
         check_domains: bool = False,
         error_if_unsupported: bool = True,
@@ -383,7 +376,7 @@ class GNNModel(BaseGNNModel):
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         readout_name: str
             The name of the readout property to return.
@@ -424,9 +417,7 @@ class GNNModel(BaseGNNModel):
         if readout_name is None:
             if len(properties) == 1:
                 return next(iter(properties.values()))
-            raise ValueError(
-                "The readout name must be specified if the model has multiple readouts"
-            )
+            raise ValueError("The readout name must be specified if the model has multiple readouts")
         return properties[readout_name]
 
     def _compute_properties_nagl(

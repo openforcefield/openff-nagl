@@ -1,4 +1,4 @@
-from typing import ClassVar, TYPE_CHECKING, Tuple, Optional
+from typing import ClassVar, TYPE_CHECKING, Optional
 
 from openff.nagl.molecule._utils import FEATURE
 
@@ -65,11 +65,11 @@ class MoleculeMixin:
         cls,
         smiles: str,
         mapped: bool = False,
-        atom_features: Tuple["AtomFeature"] = tuple(),
-        bond_features: Tuple["BondFeature"] = tuple(),
+        atom_features: tuple["AtomFeature"] = tuple(),
+        bond_features: tuple["BondFeature"] = tuple(),
         enumerate_resonance_forms: bool = False,
         lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
+        max_path_length: int | None = None,
         include_all_transfer_pathways: bool = False,
     ):
         from openff.toolkit import Molecule
@@ -89,7 +89,7 @@ class MoleculeMixin:
         )
 
     def to_openff(self):
-        from openff.toolkit.topology import Molecule
+        from openff.toolkit import Molecule
 
         molecule = Molecule.from_mapped_smiles(
             self.mapped_smiles,
@@ -99,9 +99,7 @@ class MoleculeMixin:
 
 
 class BatchMixin:
-    def __init__(
-        self, graph, n_representations: Tuple[int, ...], n_atoms: Tuple[int, ...]
-    ):
+    def __init__(self, graph, n_representations: tuple[int, ...], n_atoms: tuple[int, ...]):
         self.graph = graph
         self.n_representations = n_representations
         self.n_atoms = n_atoms

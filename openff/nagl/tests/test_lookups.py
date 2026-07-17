@@ -43,9 +43,7 @@ class TestAtomPropertiesLookupTable:
             },
         )
 
-    def test_validate_property_lookup_table_conversion_from_list(
-        self, CNO2_entry, SH2_entry
-    ):
+    def test_validate_property_lookup_table_conversion_from_list(self, CNO2_entry, SH2_entry):
         lookup_table = AtomPropertiesLookupTable(
             property_name="test",
             properties=[CNO2_entry, SH2_entry],
@@ -88,9 +86,7 @@ class TestAtomPropertiesLookupTable:
             lookup_table.lookup(molecule)
 
     def test_lookup_with_different_connectivity(self, lookup_table):
-        mol = Molecule.from_mapped_smiles(
-            "[H:5][C:1]([H:6])([H:7])[N+2:2](-[O-:3])[O-:4]"
-        )
+        mol = Molecule.from_mapped_smiles("[H:5][C:1]([H:6])([H:7])[N+2:2](-[O-:3])[O-:4]")
         properties = lookup_table.lookup(mol)
         assert_allclose(
             properties.numpy(),
