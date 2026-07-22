@@ -18,6 +18,7 @@ except ImportError:
 
 DiscriminatedTargetType = typing.Annotated[TargetType, Field(discriminator="name")]
 
+
 class DatasetConfig(ImmutableModel, FromYamlMixin):
     """
     A config class for a single dataset. Datasets can be combined from
@@ -25,26 +26,24 @@ class DatasetConfig(ImmutableModel, FromYamlMixin):
     Multiple targets can be defined that read different columns from the training
     sets. The required columns must be present in all `sources`.
     """
-    sources: typing.Optional[list[str]] = Field(
+
+    sources: list[str] | None = Field(
         None,
         description=(
             "Paths to data sources. "
             "The data should be formatted to be readable as PyArrow dataset. "
             "Sources can be a single file or a directory of files."
-        )
+        ),
     )
     targets: list[DiscriminatedTargetType] = Field(
         description="Targets to train or evaluate against",
     )
-    batch_size: typing.Optional[int] = Field(
-        None,
-        description="Batch size to use"
-    )
+    batch_size: int | None = Field(None, description="Batch size to use")
     use_cached_data: bool = Field(
         default=False,
         description="Whether to use cached data",
     )
-    cache_directory: typing.Optional[pathlib.Path] = Field(
+    cache_directory: pathlib.Path | None = Field(
         default=None,
         description="Directory to read cached data from, or cache data in",
     )
@@ -69,16 +68,17 @@ class DataConfig(ImmutableModel, FromYamlMixin):
     """
     A config class for setting up training, validation, and test datasets.
     """
+
     training: DatasetConfig = Field(description="Training dataset")
-    validation: typing.Optional[DatasetConfig] = Field(
+    validation: DatasetConfig | None = Field(
         default=None,
         description="Validation dataset",
     )
-    test: typing.Optional[DatasetConfig] = Field(
+    test: DatasetConfig | None = Field(
         default=None,
         description="Test dataset",
     )
-    
+
     def get_required_target_columns(self) -> list[str]:
         """Get all required columns from the datasets for the targets"""
         columns = set()

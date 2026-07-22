@@ -133,4 +133,4 @@ We are grateful to those projects for contributing these
 materials under open licensing terms for us to easily reuse.
 
 All content on this page is licensed under a [*Creative Commons
-Attribution*](http://creativecommons.org/licenses/by/3.0/) license. 
+Attribution*](http://creativecommons.org/licenses/by/3.0/) license.

@@ -25,11 +25,11 @@ The environment will be deactivated when the shell session is closed, but it can
 pip install -e .
 ```
 
-To keep the environment safe, consistent, and able to be updated, it is helpful to constrain the environment to prefer packages in Conda Forge to those from the default channels: 
+To keep the environment safe, consistent, and able to be updated, it is helpful to constrain the environment to prefer packages in Conda Forge to those from the default channels:
 
 ```shell
 conda config --env --add channels conda-forge
-conda config --env --set channel_priority strict 
+conda config --env --set channel_priority strict
 ```
 
 If you want to update your dependencies (which can be risky if you have a mixed-channel environment), delete and rebuild the environment or run:

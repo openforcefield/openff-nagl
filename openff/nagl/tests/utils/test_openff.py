@@ -4,12 +4,18 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from openff.toolkit import AmberToolsToolkitWrapper, Molecule, OpenEyeToolkitWrapper, RDKitToolkitWrapper
-from openff.toolkit.topology import Molecule
+from openff.toolkit import (
+    Molecule,
+    OpenEyeToolkitWrapper,
+    RDKitToolkitWrapper,
+    unit,
+)
 from openff.toolkit.utils.exceptions import MultipleComponentsInMoleculeWarning
-from openff.toolkit.utils.toolkit_registry import ToolkitRegistry, toolkit_registry_manager
+from openff.toolkit.utils.toolkit_registry import (
+    ToolkitRegistry,
+    toolkit_registry_manager,
+)
 from openff.toolkit.utils.toolkits import OPENEYE_AVAILABLE, RDKIT_AVAILABLE
-from openff.units import unit
 
 from openff.nagl.tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
 from openff.nagl.toolkits.openff import (
@@ -62,6 +68,7 @@ def _load_rdkit_molecule_exactly(mapped_smiles: str):
 
     return molecule
 
+
 def test_get_openff_molecule_bond_indices(openff_methane_charged):
     bond_indices = get_openff_molecule_bond_indices(openff_methane_charged)
     assert bond_indices == [(0, 1), (0, 2), (0, 3), (0, 4)]
@@ -85,11 +92,10 @@ NORMALIZATION_MOLECULE_TESTS = [
     (
         r"[H:6][C:1]([H:7])([H:8])[S+2:2]([C:5]([H:9])([H:10])[H:11])([O-:3])[O-:4]",
         r"[H:6][C:1]([H:7])([H:8])[S:2](=[O:3])(=[O:4])[C:5]([H:9])([H:10])[H:11]",
-
     ),
     (
         r"[H:22][c:7]1[c:6]([c:12]([n:10](=[O:11])[c:9]([n:8]1)[H:23])[C:13]([H:24])([H:25])[N:14](=[O:15])=[O:16])[C:5]([H:20])([H:21])[S+2:2]([C:1]([H:17])([H:18])[H:19])([O-:3])[O-:4]",
-        r"[H:22][c:7]1[c:6]([c:12]([n+:10]([c:9]([n:8]1)[H:23])[O-:11])[C:13]([H:24])([H:25])[N+:14](=[O:16])[O-:15])[C:5]([H:20])([H:21])[S:2](=[O:3])(=[O:4])[C:1]([H:17])([H:18])[H:19]"
+        r"[H:22][c:7]1[c:6]([c:12]([n+:10]([c:9]([n:8]1)[H:23])[O-:11])[C:13]([H:24])([H:25])[N+:14](=[O:16])[O-:15])[C:5]([H:20])([H:21])[S:2](=[O:3])(=[O:4])[C:1]([H:17])([H:18])[H:19]",
     ),
     # Issue 119
     (
@@ -98,22 +104,19 @@ NORMALIZATION_MOLECULE_TESTS = [
     ),
     (
         r"[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N-:28][c:29]4[c:30]([c:31]([c:32]([c:33]([n+:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]",
-        r"[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N:28]=[C:29]4[C:30](=[C:31]([C:32](=[C:33]([N:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]"
+        r"[H:1][c:2]1[c:3]([c:4]([c:5]2[c:6]([c:7]1[H:8])/[C:9](=[N:10]/[C:11](=[O:12])[c:13]3[c:14]([c:15]([c:16]([c:17]([c:18]3[N+:19](=[O:20])[O-:21])[H:22])[N+:23](=[O:24])[O-:25])[H:26])[H:27])/[N:28]=[C:29]4[C:30](=[C:31]([C:32](=[C:33]([N:34]4[C:35]2([H:36])[H:37])[H:38])[Br:39])[H:40])[H:41])[H:42])[H:43]",
     ),
     (
         r"[H:21][c:1]1[c:2]([c:3]([c:4]([c:5]([c:6]1[C:7]2=[N:8][N+:9]3=[C:15]([S:16]2)[N:14]([C:12](=[O:13])[C:11](=[C:10]3[O-:17])[H:25])[H:26])[H:24])[H:23])[N:18](=[O:19])=[O:20])[H:22]",
-        r"[H:21][c:1]1[c:2]([c:3]([c:4]([c:5]([c:6]1[C:7]2=[N:8][N:9]3[C:10](=[C:11]([C:12](=[O:13])[N+:14](=[C:15]3[S:16]2)[H:26])[H:25])[O-:17])[H:24])[H:23])[N+:18](=[O:20])[O-:19])[H:22]"
-    )
-
+        r"[H:21][c:1]1[c:2]([c:3]([c:4]([c:5]([c:6]1[C:7]2=[N:8][N:9]3[C:10](=[C:11]([C:12](=[O:13])[N+:14](=[C:15]3[S:16]2)[H:26])[H:25])[O-:17])[H:24])[H:23])[N+:18](=[O:20])[O-:19])[H:22]",
+    ),
 ]
 
+
 @pytest.mark.skipif(not OPENEYE_AVAILABLE, reason="requires openeye")
-@pytest.mark.parametrize(
-    "given_smiles, expected_smiles",
-    NORMALIZATION_MOLECULE_TESTS
-)
+@pytest.mark.parametrize("given_smiles, expected_smiles", NORMALIZATION_MOLECULE_TESTS)
 def test_normalize_molecule_openeye(given_smiles, expected_smiles):
-    from openff.toolkit.topology.molecule import Molecule
+
     expected_molecule = Molecule.from_mapped_smiles(expected_smiles)
 
     molecule = Molecule.from_mapped_smiles(given_smiles)
@@ -124,25 +127,22 @@ def test_normalize_molecule_openeye(given_smiles, expected_smiles):
     # reload molecule to avoid spurious failures from different kekulization
     output_molecule = Molecule.from_mapped_smiles(output_smiles)
     is_isomorphic = Molecule.are_isomorphic(
-        output_molecule, expected_molecule,
+        output_molecule,
+        expected_molecule,
     )[0]
     assert is_isomorphic, output_molecule.to_smiles(mapped=True)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "given_smiles, expected_smiles",
-    NORMALIZATION_MOLECULE_TESTS
-)
+@pytest.mark.parametrize("given_smiles, expected_smiles", NORMALIZATION_MOLECULE_TESTS)
 def test_normalize_molecule_bypasses_rdkit_normalization(
     given_smiles,
     expected_smiles,
 ):
-    from openff.toolkit.topology.molecule import Molecule
 
     expected_molecule = _load_rdkit_molecule_exactly(expected_smiles)
     molecule = _load_rdkit_molecule_exactly(given_smiles)
-    
+
     assert not Molecule.are_isomorphic(molecule, expected_molecule)[0]
     output_molecule = normalize_molecule(molecule)
     is_isomorphic = Molecule.are_isomorphic(output_molecule, expected_molecule)[0]
@@ -154,13 +154,11 @@ def test_normalize_molecule_bypasses_rdkit_normalization(
         # reload molecule to avoid spurious failures from different kekulization
         output_molecule = _load_rdkit_molecule_exactly(output_smiles)
         is_isomorphic = Molecule.are_isomorphic(
-            output_molecule, expected_molecule,
+            output_molecule,
+            expected_molecule,
         )[0]
 
     assert is_isomorphic, output_molecule.to_smiles(mapped=True)
-
-
-        
 
 
 @pytest.mark.parametrize(
@@ -184,7 +182,6 @@ def test_map_indexed_smiles(smiles_a, smiles_b, expected):
     ],
 )
 def test_is_conformer_identical_generated(smiles):
-    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles(smiles)
     offmol.generate_conformers(n_conformers=1)
@@ -213,7 +210,6 @@ def test_is_conformer_identical_generated(smiles):
 
 
 def test_is_conformer_identical_linear():
-    from openff.toolkit.topology.molecule import Molecule
 
     offmol = Molecule.from_smiles("CCC")
     c_coords = np.array(
@@ -238,7 +234,6 @@ def test_is_conformer_identical_linear():
 
 
 def test_not_is_conformer_identical():
-    from openff.toolkit.topology.molecule import Molecule
 
     smiles = "[C:1]([H:4])([H:5])([H:6])[C:2]([Cl:7])=[O:3]"
     offmol = Molecule.from_mapped_smiles(smiles)
@@ -264,10 +259,7 @@ def test_not_is_conformer_identical():
         ("C", "N", 3, 0.33333333333333333),
     ],
 )
-def test_calculate_circular_fingerprint_similarity(
-    smiles1, smiles2, radius, similarity
-):
-    from openff.toolkit.topology.molecule import Molecule
+def test_calculate_circular_fingerprint_similarity(smiles1, smiles2, radius, similarity):
 
     mol1 = Molecule.from_smiles(smiles1)
     mol2 = Molecule.from_smiles(smiles2)
@@ -278,7 +270,6 @@ def test_calculate_circular_fingerprint_similarity(
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_best_rmsd():
-    from openff.toolkit.topology.molecule import Molecule
     from rdkit.Chem import rdMolAlign
 
     offmol = Molecule.from_smiles("CCC")
@@ -300,11 +291,10 @@ def test_get_best_rmsd():
 
 
 def test_capture_toolkit_warnings(caplog):
-    from openff.toolkit.topology.molecule import Molecule
 
     caplog.clear()
     smiles = "ClC=CCl"
-    stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
+    _stereo_warning = "Warning (not error because allow_undefined_stereo=True)"
 
     Molecule.from_smiles(smiles, allow_undefined_stereo=True)
     # as of toolkit v0.14.4 this warning is no longer raised
@@ -327,6 +317,7 @@ def test_capture_toolkit_warnings(caplog):
         warnings.warn("test")
         assert len(records)
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_openff_toolkit_registry(openff_methane_uncharged):
     rdkit_registry = ToolkitRegistry([NAGLRDKitToolkitWrapper()])
@@ -347,25 +338,20 @@ def test_resolve_registry_from_wrapper(toolkit_registry):
 
     assert isinstance(registry, NAGLToolkitRegistry)
     assert len(registry.registered_toolkits) == 1
-    assert any(
-        isinstance(wrapper, NAGLRDKitToolkitWrapper)
-        for wrapper in registry.registered_toolkits
-    )
+    assert any(isinstance(wrapper, NAGLRDKitToolkitWrapper) for wrapper in registry.registered_toolkits)
 
     # also try with an instance
     registry = NAGLToolkitRegistry._resolve_registry(toolkit_registry())
     assert isinstance(registry, NAGLToolkitRegistry)
     assert len(registry.registered_toolkits) == 1
-    assert any(
-        isinstance(wrapper, NAGLRDKitToolkitWrapper)        for wrapper in registry.registered_toolkits
-    )
+    assert any(isinstance(wrapper, NAGLRDKitToolkitWrapper) for wrapper in registry.registered_toolkits)
 
 
 def test_molecule_from_networkx(openff_methane_uncharged):
     graph = openff_methane_uncharged.to_networkx()
     molecule = molecule_from_networkx(graph)
     assert len(molecule.atoms) == 5
-    
+
     atomic_numbers = [atom.atomic_number for atom in molecule.atoms]
     assert atomic_numbers == [6, 1, 1, 1, 1]
     is_aromatic = [atom.is_aromatic for atom in molecule.atoms]
@@ -389,13 +375,13 @@ def test_molecule_to_dict(openff_methane_uncharged):
         "atomic_number": 6,
         "is_aromatic": False,
         "formal_charge": 0,
-        "stereochemistry": None
+        "stereochemistry": None,
     }
     h = {
         "atomic_number": 1,
         "is_aromatic": False,
         "formal_charge": 0,
-        "stereochemistry": None
+        "stereochemistry": None,
     }
     assert atoms[0] == c
     assert atoms[1] == h
@@ -419,6 +405,7 @@ def test_molecule_from_dict(openff_methane_uncharged):
     graph = _molecule_to_dict(openff_methane_uncharged)
     molecule = _molecule_from_dict(graph)
     assert molecule.is_isomorphic_with(openff_methane_uncharged)
+
 
 def test_split_up_molecule():
     # "N.c1ccccc1.C.CCN"
@@ -460,8 +447,8 @@ def test_split_up_molecule():
     "toolkit_combinations",
     [
         [RDKitToolkitWrapper],
-        [RDKitToolkitWrapper, OpenEyeToolkitWrapper], # check precedence
-    ]
+        [RDKitToolkitWrapper, OpenEyeToolkitWrapper],  # check precedence
+    ],
 )
 def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
     """
@@ -470,7 +457,6 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
 
     from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
     from rdkit.Chem import ForwardSDMolSupplier
-
 
     suppl = ForwardSDMolSupplier(gzip.open(COFACTOR_SDF_GZ), removeHs=False)
     rdmol = list(suppl)[0]
@@ -485,20 +471,20 @@ def test_toolkit_registry_passes_through_nagl(toolkit_combinations):
             toolkit_registry=NAGLToolkitWrapper(),
         )
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE or not OPENEYE_AVAILABLE, reason="requires rdkit and openeye")
 @pytest.mark.parametrize(
     "toolkit_combinations",
     [
         [RDKitToolkitWrapper],
-        [RDKitToolkitWrapper, OpenEyeToolkitWrapper], # check precedence
-    ]
+        [RDKitToolkitWrapper, OpenEyeToolkitWrapper],  # check precedence
+    ],
 )
 def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
     """
     Tests issue #177: OpenEye being called when disallowed by the native toolkit registry manager
     """
 
-    from openff.toolkit.utils.nagl_wrapper import NAGLToolkitWrapper
     from rdkit.Chem import ForwardSDMolSupplier
 
     from openff.nagl import GNNModel
@@ -515,7 +501,7 @@ def test_compute_partial_charges_with_toolkit_registry(toolkit_combinations):
         readout_name="am1bcc_charges",
         check_domains=True,
         error_if_unsupported=True,
-        toolkit_registry=registry
+        toolkit_registry=registry,
     )
 
 
@@ -536,7 +522,7 @@ def test_toolkit_registry_passes_through_nagl_and_fails():
 
     with pytest.raises(
         InconsistentStereochemistryError,
-        match="OpenEye atom stereochemistry assumptions failed"
+        match="OpenEye atom stereochemistry assumptions failed",
     ):
         with toolkit_registry_manager(GLOBAL_TOOLKIT_REGISTRY):
             m.assign_partial_charges(

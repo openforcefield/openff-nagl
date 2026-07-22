@@ -13,7 +13,7 @@ except ImportError:
     from pydantic import Field, validator
 
 if typing.TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
 
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
@@ -24,56 +24,47 @@ __all__ = [
     "AtomPropertiesLookupTable",
 ]
 
+
 class PropertyProvenance(ImmutableModel):
     """
     Class for storing the provenance of a property
     """
-    description: str = Field(
-        description="A description of the provenance"
-    )
+
+    description: str = Field(description="A description of the provenance")
     versions: dict[str, str] = Field(
         default_factory=dict,
-        description="The versions of the relevant software packages used to compute the property"
+        description="The versions of the relevant software packages used to compute the property",
     )
 
+
 class BasePropertiesLookupTableEntry(ImmutableModel):
-    inchi: str = Field(
-        description="The InChI of the molecule"
-    )
-    provenance: PropertyProvenance = Field(
-        description="The provenance of the property value"
-    )
+    inchi: str = Field(description="The InChI of the molecule")
+    provenance: PropertyProvenance = Field(description="The provenance of the property value")
+
 
 class AtomPropertiesLookupTableEntry(BasePropertiesLookupTableEntry):
     """
     Class for storing property lookup table entries
     """
-    property_type: typing.Literal["atom"] = Field(
-        default="atom",
-        description="The type of the property"
-    )
-    
-    mapped_smiles: str = Field(
-        description="The mapped SMILES of the molecule"
-    )
+
+    property_type: typing.Literal["atom"] = Field(default="atom", description="The type of the property")
+
+    mapped_smiles: str = Field(description="The mapped SMILES of the molecule")
 
     property_value: tuple[float, ...] = Field(
-        description=(
-            "The values of the property, ordered according to mapped SMILES"
-        )
+        description=("The values of the property, ordered according to mapped SMILES")
     )
 
     def __len__(self):
         return len(self.property_value)
+
 
 class BaseLookupTable(ImmutableModel):
     """
     Class for storing property lookup tables
     """
 
-    property_name: str = Field(
-        description="The name of the property"
-    )
+    property_name: str = Field(description="The name of the property")
 
 
 class AtomPropertiesLookupTable(BaseLookupTable):
@@ -81,10 +72,7 @@ class AtomPropertiesLookupTable(BaseLookupTable):
     Class for storing property lookup tables for atom properties
     """
 
-    property_type: typing.Literal["atom"] = Field(
-        default="atom",
-        description="The type of the property"
-    )
+    property_type: typing.Literal["atom"] = Field(default="atom", description="The type of the property")
 
     properties: types.MappingProxyType[str, AtomPropertiesLookupTableEntry] = Field(
         description="The property lookup table"
@@ -94,46 +82,47 @@ class AtomPropertiesLookupTable(BaseLookupTable):
     def _convert_property_lookup_table(cls, v):
         """
         Do two things:
-        
+
             1. Account for an iterable being passed instead of a mapping
             2. Ignore the keys of the mapping and re-generate them from inchi
-            
+
         """
         v = potential_dict_to_list(v)
         if not is_iterable(v):
             raise ValueError("The property lookup table must be an iterable")
-            
+
         if not all(isinstance(entry, AtomPropertiesLookupTableEntry) for entry in v):
             raise ValueError("All entries must be AtomPropertiesLookupTableEntry instances")
 
-        return types.MappingProxyType({
-            entry.inchi: entry
-            for entry in v
-        })
-    
+        return types.MappingProxyType({entry.inchi: entry for entry in v})
+
     def __len__(self) -> int:
         return len(self.properties)
-    
+
     def __getitem__(self, key: str) -> AtomPropertiesLookupTableEntry:
         return self.properties[key]
-    
+
     def __contains__(self, key: str) -> bool:
         return key in self.properties
 
-    def lookup(self, molecule: "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
+    def lookup(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None,
+    ) -> torch.Tensor:
         """
         Look up the property value for a molecule
 
         Parameters
         ----------
-        molecule : openff.toolkit.topology.Molecule
+        molecule : openff.toolkit.Molecule
             The molecule to look up
-        
+
         Returns
         -------
         torch.Tensor
             The property values, in the order of the molecule's atoms
-        
+
         Raises
         ------
         KeyError
@@ -149,20 +138,17 @@ class AtomPropertiesLookupTable(BaseLookupTable):
             from rdkit import RDLogger
 
         try:
-
             if rdkit_only:
-                RDLogger.DisableLog('rdApp.*')
+                RDLogger.DisableLog("rdApp.*")
 
             inchi_key = molecule.to_inchi(fixed_hydrogens=True, toolkit_registry=toolkit_registry)
 
         except EmptyInChiError as e:
-
             raise KeyError(e.msg)
 
         finally:
-
             if rdkit_only:
-                RDLogger.EnableLog('rdApp.*')
+                RDLogger.EnableLog("rdApp.*")
 
         try:
             entry = self.properties[inchi_key]
@@ -217,17 +203,13 @@ class AtomPropertiesLookupTable(BaseLookupTable):
 
         # remap the property values to the query order
         property_values = [
-            entry.property_value[query_to_entry_mapping[atom_index]]
-            for atom_index in range(molecule.n_atoms)
+            entry.property_value[query_to_entry_mapping[atom_index]] for atom_index in range(molecule.n_atoms)
         ]
         return torch.tensor(property_values, dtype=torch.float32)
 
 
-
-
-
-LookupTableEntryType = typing.Union[AtomPropertiesLookupTableEntry]
-LookupTableType = typing.Union[AtomPropertiesLookupTable]
+LookupTableEntryType = AtomPropertiesLookupTableEntry
+LookupTableType = AtomPropertiesLookupTable
 
 LOOKUP_TABLE_CLASSES = {
     "atom": AtomPropertiesLookupTable,

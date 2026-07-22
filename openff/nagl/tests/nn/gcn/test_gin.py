@@ -6,7 +6,7 @@ from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn.gcn._gin import DGLGINConv, GINConv, GINConvStack
 
 try:
-    import dgl
+    import dgl  # noqa
 
     _BASE_GINCONV_CLASS = DGLGINConv
 except ImportError:

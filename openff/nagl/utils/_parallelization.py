@@ -1,5 +1,4 @@
 import contextlib
-import functools
 import itertools
 import logging
 import math
@@ -17,9 +16,7 @@ logger = logging.getLogger(__name__)
 @contextlib.contextmanager
 def get_mapper_to_processes(
     n_processes: int = 0,
-) -> typing.Callable[
-    [typing.Callable[[_S], _T], typing.Iterable[_S]], typing.Iterable[_T]
-]:
+) -> typing.Callable[[typing.Callable[[_S], _T], typing.Iterable[_S]], typing.Iterable[_T]]:
     """Returns either an interactive parallel map or a standard map depending on the
     number of processes"""
 
@@ -33,13 +30,10 @@ def get_mapper_to_processes(
 def as_batch_function(
     func: typing.Callable[[typing.Any], typing.Any],
     desc: str = "Processing",
-    capture_errors: bool = False
+    capture_errors: bool = False,
 ):
     def wrapper(batch: typing.Iterable[typing.Any], *args, **kwargs):
-        results = [
-            func(entry, *args, **kwargs)
-            for entry in tqdm.tqdm(batch, ncols=80, desc=desc)
-        ]
+        results = [func(entry, *args, **kwargs) for entry in tqdm.tqdm(batch, ncols=80, desc=desc)]
         return results
 
     def error_wrapper(batch: typing.Iterable[typing.Any], *args, **kwargs):
@@ -59,8 +53,8 @@ def as_batch_function(
     return wrapper
 
 
-def batch_entries(
-    entries: typing.Iterable[_S],
+def batch_entries[S](
+    entries: typing.Iterable[S],
     batch_size: int = 1,
 ):
     size = batch_size - 1
@@ -69,9 +63,9 @@ def batch_entries(
         yield list(itertools.chain([x], itertools.islice(entries, size)))
 
 
-def reconcile_batch_workers(
-    entries: typing.Iterable[_S],
-    n_entries: typing.Optional[int] = None,
+def reconcile_batch_workers[S](
+    entries: typing.Iterable[S],
+    n_entries: int | None = None,
     batch_size: int = -1,
     n_workers: int = -1,
 ):
@@ -94,38 +88,31 @@ def reconcile_batch_workers(
 @contextlib.contextmanager
 def batch_distributed(
     entries: typing.Iterable[typing.Any],
-    n_entries: typing.Optional[int] = None,
+    n_entries: int | None = None,
     batch_size: int = -1,
     n_workers: int = -1,
     worker_type: typing.Literal["lsf", "slurm", "local"] = "local",
     queue: str = "cpuqueue",
-    account: typing.Optional[str] = None,
+    account: str | None = None,
     conda_environment: str = "openff-nagl",
     memory: int = 4,  # GB
     walltime: int = 32,  # hours
     package_manager: typing.Literal["conda", "micromamba"] = "conda",
-    **kwargs
+    **kwargs,
 ):
     import dask
     from dask import distributed
     from dask_jobqueue import LSFCluster, SLURMCluster
     from distributed import LocalCluster
 
-    n_workers, n_batches, batch_size = reconcile_batch_workers(
-        entries, n_entries, batch_size, n_workers
-    )
+    n_workers, n_batches, batch_size = reconcile_batch_workers(entries, n_entries, batch_size, n_workers)
 
-    logger.warning(
-        f"Setting n_workers={n_workers} for {n_batches} batches"
-    )
+    logger.warning(f"Setting n_workers={n_workers} for {n_batches} batches")
 
     env_extra = []
     if worker_type != "local":
-        env_extra.extend(
-            dask.config.get(f"jobqueue.{worker_type}.job-script-prologue", default=[])
-        )
+        env_extra.extend(dask.config.get(f"jobqueue.{worker_type}.job-script-prologue", default=[]))
     env_extra.append(f"{package_manager} activate {conda_environment}")
-
 
     if worker_type == "local":
         cluster = LocalCluster(n_workers=n_workers)
@@ -143,7 +130,7 @@ def batch_distributed(
             job_script_prologue=env_extra,
         )
         cluster.scale(n=n_workers)
-    
+
     client = distributed.Client(cluster)
 
     def wrapper(func, **kwargs):

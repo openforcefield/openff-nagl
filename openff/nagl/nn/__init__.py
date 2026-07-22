@@ -2,7 +2,6 @@
 Components for constructing and processing GNN models
 """
 
-
 from ._containers import ConvolutionModule, ReadoutModule
 from ._dataset import (
     DGLMoleculeDataLoader,

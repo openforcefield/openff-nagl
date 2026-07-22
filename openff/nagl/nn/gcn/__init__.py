@@ -4,6 +4,6 @@ from ._base import BaseGCNStack, _GCNStackMeta
 from ._gin import GINConvStack
 from ._sage import SAGEConvStack
 
-__all__ = ["BaseGCNStack", "SAGEConvStack", "GINConvStack"]
+__all__ = ("_GCNStackMeta", "BaseGCNStack", "SAGEConvStack", "GINConvStack")
 
 # TODO: eventually migrate out DGL?

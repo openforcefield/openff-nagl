@@ -13,6 +13,7 @@ class TrainingConfig(ImmutableModel, FromYamlMixin):
     """
     Overall config class for training a model
     """
+
     model: ModelConfig
     data: DataConfig
     optimizer: OptimizerConfig

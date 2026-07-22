@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from openff.nagl.utils._utils import is_iterable
 
@@ -10,8 +10,8 @@ class ContainsLayersMixin:
     def _check_input_lengths(
         cls,
         n_layers: int,
-        layer_activation_functions: Optional[List[ActivationFunction]] = None,
-        layer_dropout: Optional[List[float]] = None,
+        layer_activation_functions: list[ActivationFunction] | None = None,
+        layer_dropout: list[float] | None = None,
     ):
         if layer_activation_functions is None:
             layer_activation_functions = cls.default_activation_function

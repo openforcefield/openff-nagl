@@ -1,5 +1,5 @@
 import abc
-from typing import ClassVar, Dict, Generic, List, Optional, Type, TypeVar
+from typing import Generic, TypeVar
 
 import torch.nn
 import torch.nn.functional
@@ -49,7 +49,7 @@ class _GCNStackMeta(abc.ABCMeta, create_registry_metaclass("name")):
 
 class BaseGCNStack(
     torch.nn.ModuleList,
-    Generic[GCNLayerType],
+    Generic[GCNLayerType],  # noqa
     ContainsLayersMixin,
     abc.ABC,
     metaclass=_GCNStackMeta,
@@ -96,9 +96,9 @@ class BaseGCNStack(
     def _check_input_lengths(
         cls,
         n_layers: int,
-        layer_activation_functions: Optional[List[ActivationFunction]] = None,
-        layer_dropout: Optional[List[float]] = None,
-        layer_aggregator_types: Optional[List[str]] = None,
+        layer_activation_functions: list[ActivationFunction] | None = None,
+        layer_dropout: list[float] | None = None,
+        layer_aggregator_types: list[str] | None = None,
     ):
         layer_activation_functions, layer_dropout = super()._check_input_lengths(
             n_layers,
@@ -119,10 +119,10 @@ class BaseGCNStack(
     def with_layers(
         cls,
         n_input_features: int,
-        hidden_feature_sizes: List[int],
-        layer_activation_functions: Optional[List[ActivationFunction]] = None,
-        layer_dropout: Optional[List[float]] = None,
-        layer_aggregator_types: Optional[List[str]] = None,
+        hidden_feature_sizes: list[int],
+        layer_activation_functions: list[ActivationFunction] | None = None,
+        layer_dropout: list[float] | None = None,
+        layer_aggregator_types: list[str] | None = None,
     ):
         """Create this model with layers with the specified parameters."""
         obj = cls()
@@ -162,19 +162,17 @@ class BaseGCNStack(
     def append_gcn_layer(
         self,
         n_output_features: int,
-        n_input_features: Optional[int] = None,
-        aggregator_type: Optional[str] = None,
-        dropout: Optional[float] = None,
-        activation_function: Optional[ActivationFunction] = None,
+        n_input_features: int | None = None,
+        aggregator_type: str | None = None,
+        dropout: float | None = None,
+        activation_function: ActivationFunction | None = None,
     ):
         """Add a new layer to the stack."""
         if n_input_features is None:
             try:
                 n_input_features = self.hidden_feature_sizes[-1]
             except IndexError:
-                raise ValueError(
-                    "Must specify n_input_features if no layers have been created yet."
-                )
+                raise ValueError("Must specify n_input_features if no layers have been created yet.")
 
         self.hidden_feature_sizes.append(n_output_features)
         self.append(
@@ -192,9 +190,9 @@ class BaseGCNStack(
         cls,
         n_input_features: int,
         n_output_features: int,
-        aggregator_type: Optional[str] = None,
-        dropout: Optional[float] = None,
-        activation_function: Optional[ActivationFunction] = None,
+        aggregator_type: str | None = None,
+        dropout: float | None = None,
+        activation_function: ActivationFunction | None = None,
         **kwargs,
     ) -> GCNLayerType:
         """Create a new GCN layer."""

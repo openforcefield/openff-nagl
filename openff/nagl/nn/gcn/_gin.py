@@ -1,11 +1,9 @@
 import copy
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
-
-import openff.nagl.nn.gcn._function as _fn
 
 from ._base import ActivationFunction, BaseConvModule, BaseGCNStack
 
@@ -179,7 +177,7 @@ class GINConvStack(BaseGCNStack[GINConv]):
         init_eps: float = 0.0,
         learn_eps: bool = False,
         **kwargs,
-    ) -> Union[GINConv, DGLGINConv]:
+    ) -> GINConv | DGLGINConv:
         try:
             return cls._create_gcn_layer_dgl(
                 n_input_features=n_input_features,

@@ -7,24 +7,21 @@ from openff.nagl.features.atoms import (
     AtomConnectivity,
     AtomFormalCharge,
     AtomHybridization,
-    AtomicElement,
-    AtomInRingOfSize,
     AtomIsAromatic,
     AtomIsInRing,
 )
 from openff.nagl.features.bonds import (
-    BondInRingOfSize,
     BondIsAromatic,
     BondIsInRing,
     BondOrder,
     WibergBondOrder,
 )
-from openff.nagl.utils._types import HybridizationType
 
 
 @pytest.fixture()
 def openff_benzene():
     from openff.toolkit.topology.molecule import Molecule
+
     return Molecule.from_smiles("c1ccccc1")
 
 
@@ -95,9 +92,7 @@ def test_atom_average_formal_charge():
     assert_allclose(charges.T, expected)
 
 
-@pytest.mark.parametrize(
-    "feature_class", [AtomIsAromatic, AtomIsInRing, BondIsAromatic, BondIsInRing]
-)
+@pytest.mark.parametrize("feature_class", [AtomIsAromatic, AtomIsInRing, BondIsAromatic, BondIsInRing])
 def test_is_aromatic_and_is_in_ring(openff_benzene, feature_class):
     feature = feature_class()
     assert len(feature) == 1

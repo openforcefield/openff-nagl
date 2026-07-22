@@ -10,12 +10,12 @@ from collections import defaultdict
 import pytorch_lightning as pl
 import torch
 
-from openff.nagl._base.base import ImmutableModel
-from openff.nagl.config.data import DatasetConfig
 from openff.nagl.config.training import TrainingConfig
-from openff.nagl.features.atoms import AtomFeature
-from openff.nagl.features.bonds import BondFeature
-from openff.nagl.nn._dataset import DataHash, DGLMoleculeDataset, _LazyDGLMoleculeDataset
+from openff.nagl.nn._dataset import (
+    DataHash,
+    DGLMoleculeDataset,
+    _LazyDGLMoleculeDataset,
+)
 from openff.nagl.nn._models import GNNModel
 
 if typing.TYPE_CHECKING:
@@ -24,15 +24,14 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-
-
 class TrainingGNNModel(pl.LightningModule):
     """A convenience class for training a GNN model"""
+
     def __init__(self, config: TrainingConfig):
         super().__init__()
         if not isinstance(config, TrainingConfig):
             config = TrainingConfig(**config)
-        
+
         self.save_hyperparameters({"config": config.dict()})
         self.config = config
 
@@ -43,7 +42,7 @@ class TrainingGNNModel(pl.LightningModule):
             "test": self.config.data.test,
         }
 
-    def forward(self, molecule: "DGLMoleculeOrBatch") -> typing.Dict[str, torch.Tensor]:
+    def forward(self, molecule: "DGLMoleculeOrBatch") -> dict[str, torch.Tensor]:
         """
         Forward pass through the model.
 
@@ -64,21 +63,21 @@ class TrainingGNNModel(pl.LightningModule):
     def from_yaml(cls, filename):
         config = TrainingConfig.from_yaml(filename)
         return cls(config)
-    
+
     def to_yaml(self, filename):
         self.config.to_yaml(filename)
 
     def _default_step(
         self,
-        batch: typing.Tuple["DGLMoleculeOrBatch", typing.Dict[str, torch.Tensor]],
+        batch: tuple["DGLMoleculeOrBatch", dict[str, torch.Tensor]],
         step_type: typing.Literal["train", "val", "test"],
-    ) -> torch.Tensor:       
+    ) -> torch.Tensor:
         molecule, labels = batch
         predictions = self.forward(molecule)
         targets = self._data_config[step_type].targets
 
         batch_size = self._data_config[step_type].batch_size
-        
+
         loss = torch.zeros(1).type_as(next(iter(predictions.values())))
         for target in targets:
             target_loss = target.evaluate_loss(
@@ -96,7 +95,7 @@ class TrainingGNNModel(pl.LightningModule):
 
         self.log(f"{step_type}/loss", loss, batch_size=batch_size)
         return loss
-    
+
     def training_step(self, train_batch, batch_idx):
         """
         Training step for PyTorch Lightning.
@@ -153,25 +152,23 @@ class TrainingGNNModel(pl.LightningModule):
         """
         loss = self._default_step(test_batch, "test")
         return {"test_loss": loss}
-    
+
     def configure_optimizers(self):
         config = self.config.optimizer
         if config.optimizer.lower() != "adam":
-            raise NotImplementedError(
-                f"Optimizer {self.config.optimizer.optimizer} not implemented"
-            )
+            raise NotImplementedError(f"Optimizer {self.config.optimizer.optimizer} not implemented")
         optimizer = torch.optim.Adam(self.parameters(), lr=config.learning_rate)
         return optimizer
-    
+
     @property
     def _torch_optimizer(self):
         optimizer = self.optimizers()
         return optimizer.optimizer
-    
+
     def create_data_module(self, n_processes: int = 0, verbose: bool = True):
         return DGLMoleculeDataModule(self.config, n_processes=n_processes, verbose=verbose)
-    
-    
+
+
 class DGLMoleculeDataModule(pl.LightningDataModule):
     def __init__(
         self,
@@ -183,7 +180,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
 
         if not isinstance(config, TrainingConfig):
             config = TrainingConfig(**config)
-        
+
         self.config = config
         self.n_processes = n_processes
         self.verbose = verbose
@@ -273,10 +270,7 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
 
             if pickle_hash.exists():
                 if not config.use_cached_data:
-                    raise ValueError(
-                        "Cached data found but use_cached_data is False: "
-                        f"{pickle_hash}"
-                    )
+                    raise ValueError(f"Cached data found but use_cached_data is False: {pickle_hash}")
                 else:
                     logger.info(f"Loading cached data from {pickle_hash}")
                     continue
@@ -303,14 +297,14 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
                 paths=config.sources,
                 columns=columns,
                 cache_directory=cache_dir,
-                extension=".pkl"
+                extension=".pkl",
             )
 
             if pickle_hash.exists():
                 with open(pickle_hash, "rb") as f:
                     ds = pickle.load(f)
                     return ds
-        
+
         dataset = self._get_dgl_molecule_dataset(
             config=config,
             cache_dir=cache_dir,
@@ -318,7 +312,6 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
         )
         return dataset
 
-        
     def setup(self, **kwargs):
         for stage, config in self._dataset_configs.items():
             dataset = self._setup_stage(config, stage)
@@ -341,15 +334,13 @@ class DGLMoleculeDataModule(pl.LightningDataModule):
             # with open(pickle_hash, "rb") as f:
             #     ds = pickle.load(f)
             self._datasets[stage] = dataset
-            
 
-    
     def _get_hash_file(
         self,
-        paths: typing.Tuple[typing.Union[str, pathlib.Path], ...] = tuple(),
-        columns: typing.Tuple[str, ...] = tuple(),
-        cache_directory: typing.Union[pathlib.Path, str] = ".",
-        extension: str = ""
+        paths: tuple[str | pathlib.Path, ...] = tuple(),
+        columns: tuple[str, ...] = tuple(),
+        cache_directory: pathlib.Path | str = ".",
+        extension: str = "",
     ) -> pathlib.Path:
         dhash = DataHash.from_file(
             *paths,

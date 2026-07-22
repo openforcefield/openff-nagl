@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, ClassVar, Optional, Tuple
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from openff.nagl.molecule._utils import FEATURE
 
@@ -20,7 +20,7 @@ class NAGLMoleculeBase:
     @property
     def atom_features(self) -> "torch.Tensor":
         return self.graph.ndata[FEATURE].float()
-    
+
     @property
     def bond_features(self) -> Optional["torch.Tensor"]:
         if FEATURE in self.graph.edata:
@@ -36,11 +36,11 @@ class NAGLMoleculeBase:
 
 class MoleculeMixin:
     def __init__(
-            self,
-            graph,
-            n_representations: int = 1,
-            mapped_smiles: str = "",
-        ):
+        self,
+        graph,
+        n_representations: int = 1,
+        mapped_smiles: str = "",
+    ):
         self.graph = graph
         self.n_representations = n_representations
         self.mapped_smiles = mapped_smiles
@@ -66,11 +66,11 @@ class MoleculeMixin:
         cls,
         smiles: str,
         mapped: bool = False,
-        atom_features: Tuple["AtomFeature"] = tuple(),
-        bond_features: Tuple["BondFeature"] = tuple(),
+        atom_features: tuple["AtomFeature"] = tuple(),
+        bond_features: tuple["BondFeature"] = tuple(),
         enumerate_resonance_forms: bool = False,
         lowest_energy_only: bool = True,
-        max_path_length: Optional[int] = None,
+        max_path_length: int | None = None,
         include_all_transfer_pathways: bool = False,
     ):
         from openff.toolkit import Molecule
@@ -88,9 +88,10 @@ class MoleculeMixin:
             max_path_length=max_path_length,
             include_all_transfer_pathways=include_all_transfer_pathways,
         )
-    
+
     def to_openff(self):
-        from openff.toolkit.topology import Molecule
+        from openff.toolkit import Molecule
+
         molecule = Molecule.from_mapped_smiles(
             self.mapped_smiles,
             allow_undefined_stereo=True,
@@ -99,9 +100,7 @@ class MoleculeMixin:
 
 
 class BatchMixin:
-    def __init__(
-        self, graph, n_representations: Tuple[int, ...], n_atoms: Tuple[int, ...]
-    ):
+    def __init__(self, graph, n_representations: tuple[int, ...], n_atoms: tuple[int, ...]):
         self.graph = graph
         self.n_representations = n_representations
         self.n_atoms = n_atoms

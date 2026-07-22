@@ -2,7 +2,7 @@ import collections
 import logging
 import types
 import warnings
-from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional
 
 import pytorch_lightning as pl
 import torch
@@ -18,7 +18,7 @@ from openff.nagl.utils._utils import potential_dict_to_list
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from openff.toolkit.topology import Molecule
+    from openff.toolkit import Molecule
 
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
@@ -34,14 +34,11 @@ class BaseGNNModel(pl.LightningModule):
         self.convolution_module = convolution_module
         self.readout_modules = torch.nn.ModuleDict(readout_modules)
 
-    def forward(
-        self, molecule: "DGLMoleculeOrBatch"
-    ) -> Dict[str, torch.Tensor]:
+    def forward(self, molecule: "DGLMoleculeOrBatch") -> dict[str, torch.Tensor]:
         self.convolution_module(molecule)
 
-        readouts: Dict[str, torch.Tensor] = {
-            readout_type: readout_module(molecule)
-            for readout_type, readout_module in self.readout_modules.items()
+        readouts: dict[str, torch.Tensor] = {
+            readout_type: readout_module(molecule) for readout_type, readout_module in self.readout_modules.items()
         }
         return readouts
 
@@ -52,7 +49,7 @@ class BaseGNNModel(pl.LightningModule):
         It is *not* intended for public use.
         """
         self.convolution_module(molecule)
-        readouts: Dict[str, torch.Tensor] = {
+        readouts: dict[str, torch.Tensor] = {
             readout_type: readout_module._forward_unpostprocessed(molecule)
             for readout_type, readout_module in self.readout_modules.items()
         }
@@ -76,10 +73,11 @@ class GNNModel(BaseGNNModel):
         The keys should be the property names, and the values
         should be instances of :class:`~openff.nagl.lookups.BaseLookupTable`.
     """
+
     def __init__(
         self,
         config: ModelConfig,
-        chemical_domain: Optional[ChemicalDomain] = None,
+        chemical_domain: ChemicalDomain | None = None,
         lookup_tables: dict[str, LookupTableType] = None,
     ):
         if not isinstance(config, ModelConfig):
@@ -92,7 +90,6 @@ class GNNModel(BaseGNNModel):
             )
         elif not isinstance(chemical_domain, ChemicalDomain):
             chemical_domain = ChemicalDomain(**chemical_domain)
-
 
         convolution_module = ConvolutionModule.from_config(
             config.convolution,
@@ -113,13 +110,11 @@ class GNNModel(BaseGNNModel):
         lookup_tables = potential_dict_to_list(lookup_tables)
         for lookup_table in lookup_tables:
             lookup_table = _as_lookup_table(lookup_table)
-            if not lookup_table.property_name in readout_modules:
+            if lookup_table.property_name not in readout_modules:
                 raise ValueError(
-                    f"The lookup table property name {lookup_table.property_name} "
-                    f"is not in the readout modules."
+                    f"The lookup table property name {lookup_table.property_name} is not in the readout modules."
                 )
             valid_lookup_tables[lookup_table.property_name] = lookup_table
-            
 
         super().__init__(
             convolution_module=convolution_module,
@@ -132,31 +127,32 @@ class GNNModel(BaseGNNModel):
             v_["properties"] = dict(v_["properties"])
             lookup_tables_dict[k] = v_
 
-        self.save_hyperparameters({
-            "config": config.dict(),
-            "chemical_domain": chemical_domain.dict(),
-            "lookup_tables": lookup_tables_dict,
-        })
+        self.save_hyperparameters(
+            {
+                "config": config.dict(),
+                "chemical_domain": chemical_domain.dict(),
+                "lookup_tables": lookup_tables_dict,
+            }
+        )
         self.config = config
         self.chemical_domain = chemical_domain
         self.lookup_tables = types.MappingProxyType(valid_lookup_tables)
-        
 
     @classmethod
     def from_yaml(cls, filename):
         config = ModelConfig.from_yaml(filename)
         return cls(config)
-    
+
     @property
     def _is_dgl(self):
         return self.convolution_module._is_dgl
-    
+
     def _as_nagl(self):
         copied = type(self)(self.config)
         copied.convolution_module = self.convolution_module._as_nagl(copy_weights=True)
         copied.load_state_dict(self.state_dict())
         return copied
-    
+
     def compute_properties(
         self,
         molecule: "Molecule",
@@ -165,13 +161,13 @@ class GNNModel(BaseGNNModel):
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         as_numpy: bool
             Whether to return the result as a numpy array.
@@ -201,7 +197,7 @@ class GNNModel(BaseGNNModel):
 
         # split up molecule in case it's fragments
         from openff.nagl.toolkits.openff import split_up_molecule
-        
+
         fragments, all_indices = split_up_molecule(molecule)
         # TODO: this assumes atom-wise properties
         # we should add support for bond-wise/more general properties
@@ -226,30 +222,23 @@ class GNNModel(BaseGNNModel):
         else:
             tensor = torch.empty
         for property_name, value in results[0].items():
-            combined_results[property_name] = tensor(
-                molecule.n_atoms,
-                dtype=value.dtype
-            )
-        
+            combined_results[property_name] = tensor(molecule.n_atoms, dtype=value.dtype)
+
         seen_indices = collections.defaultdict(set)
-        
+
         for result, indices in zip(results, all_indices):
             for property_name, value in result.items():
                 combined_results[property_name][indices] = value
                 if seen_indices[property_name] & set(indices):
-                    raise ValueError(
-                        "Overlapping indices in the fragments"
-                    )
+                    raise ValueError("Overlapping indices in the fragments")
                 seen_indices[property_name].update(indices)
 
         expected_indices = list(range(molecule.n_atoms))
         for property_name, seen_indices in seen_indices.items():
             assert sorted(seen_indices) == expected_indices, (
-                f"Missing indices for property {property_name}: "
-                f"{set(expected_indices) - seen_indices}"
+                f"Missing indices for property {property_name}: {set(expected_indices) - seen_indices}"
             )
         return combined_results
-
 
     def _compute_properties(
         self,
@@ -259,13 +248,13 @@ class GNNModel(BaseGNNModel):
         error_if_unsupported: bool = True,
         check_lookup_table: bool = True,
         toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Compute the trained property for a molecule.
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         as_numpy: bool
             Whether to return the result as a numpy array.
@@ -305,23 +294,18 @@ class GNNModel(BaseGNNModel):
                         toolkit_registry=toolkit_registry,
                     )
                 except KeyError as e:
-                    logger.info(
-                        f"Could not find property in lookup table: {e}"
-                    )
+                    logger.info(f"Could not find property in lookup table: {e}")
                     continue
                 else:
-                    logger.info(
-                        f"Using lookup table for property {property_name}"
-                    )
+                    logger.info(f"Using lookup table for property {property_name}")
                     values[property_name] = value
 
-        
         computed_value_keys = set(values.keys())
         if computed_value_keys == set(expected_value_keys):
             if as_numpy:
                 values = {k: v.detach().numpy().flatten() for k, v in values.items()}
             return values
-        
+
         if check_domains:
             is_supported, error = self.chemical_domain.check_molecule(
                 molecule,
@@ -338,12 +322,11 @@ class GNNModel(BaseGNNModel):
             values = self._compute_properties_dgl(molecule, toolkit_registry=toolkit_registry)
         except (MissingOptionalDependencyError, TypeError):
             values = self._compute_properties_nagl(molecule, toolkit_registry=toolkit_registry)
-        
 
         if as_numpy:
             values = {k: v.detach().numpy().flatten() for k, v in values.items()}
         return values
-    
+
     def _check_property_lookup_table(
         self,
         molecule: "Molecule",
@@ -355,7 +338,7 @@ class GNNModel(BaseGNNModel):
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to check.
         readout_name: str
             The name of the readout to check.
@@ -382,7 +365,7 @@ class GNNModel(BaseGNNModel):
     def compute_property(
         self,
         molecule: "Molecule",
-        readout_name: Optional[str] = None,
+        readout_name: str | None = None,
         as_numpy: bool = True,
         check_domains: bool = False,
         error_if_unsupported: bool = True,
@@ -394,7 +377,7 @@ class GNNModel(BaseGNNModel):
 
         Parameters
         ----------
-        molecule: :class:`~openff.toolkit.topology.Molecule`
+        molecule: :class:`~openff.toolkit.Molecule`
             The molecule to compute the property for.
         readout_name: str
             The name of the readout property to return.
@@ -435,12 +418,14 @@ class GNNModel(BaseGNNModel):
         if readout_name is None:
             if len(properties) == 1:
                 return next(iter(properties.values()))
-            raise ValueError(
-                "The readout name must be specified if the model has multiple readouts"
-            )
+            raise ValueError("The readout name must be specified if the model has multiple readouts")
         return properties[readout_name]
 
-    def _compute_properties_nagl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+    def _compute_properties_nagl(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
+    ) -> "torch.Tensor":
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
 
@@ -455,14 +440,17 @@ class GNNModel(BaseGNNModel):
             model = self._as_nagl()
         return model.forward(nxmol)
 
-    def _compute_properties_dgl(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None) -> "torch.Tensor":
+    def _compute_properties_dgl(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
+    ) -> "torch.Tensor":
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
         if not self._is_dgl:
             raise TypeError(
-                "This model is not a DGL-based model "
-                 "and cannot be used to compute properties with the DGL backend"
+                "This model is not a DGL-based model and cannot be used to compute properties with the DGL backend"
             )
 
         dglmol = DGLMolecule.from_openff(
@@ -472,10 +460,15 @@ class GNNModel(BaseGNNModel):
             toolkit_registry=toolkit_registry,
         )
         return self.forward(dglmol)
-    
-    def _convert_to_nagl_molecule(self, molecule: "Molecule", toolkit_registry: Optional["NAGLToolkitRegistry"] = None):
+
+    def _convert_to_nagl_molecule(
+        self,
+        molecule: "Molecule",
+        toolkit_registry: Optional["NAGLToolkitRegistry"] = None,
+    ):
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         from openff.nagl.molecule._graph.molecule import GraphMolecule
+
         if self._is_dgl:
             from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
@@ -491,7 +484,7 @@ class GNNModel(BaseGNNModel):
             bond_features=self.config.bond_features,
             toolkit_registry=toolkit_registry,
         )
-    
+
     @classmethod
     def load(cls, model: str, eval_mode: bool = True, **kwargs):
         """
@@ -566,5 +559,3 @@ class GNNModel(BaseGNNModel):
             },
             str(path),
         )
-
-

@@ -6,7 +6,8 @@ Functions here are not intended to be called directly
 and may be fragile.
 """
 
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
@@ -21,7 +22,7 @@ __all__ = ["message_passing"]
 
 def apply_edge_function(
     nx_molecule: "NXMolGraph",
-    edge_function: Callable[[EdgeBatch], Dict[str, torch.Tensor]],
+    edge_function: Callable[[EdgeBatch], dict[str, torch.Tensor]],
 ):
     """
     Apply custom edge function to NXMolGraph.
@@ -59,9 +60,9 @@ def _order_edge_index_buckets(nx_molecule, degree, node_bucket):
 
 def apply_reduce_function(
     nx_molecule: "NXMolGraph",
-    reduce_function: Callable[["NodeBatch"], Dict[str, torch.Tensor]],
-    message_data: Dict[str, torch.Tensor],
-    original_node_ids: Optional[torch.Tensor] = None,
+    reduce_function: Callable[["NodeBatch"], dict[str, torch.Tensor]],
+    message_data: dict[str, torch.Tensor],
+    original_node_ids: torch.Tensor | None = None,
 ) -> FrameDict:
     """
     Apply custom reduce function to NXMolGraph.
@@ -107,11 +108,9 @@ def apply_reduce_function(
     node_buckets = bucketor(nodes)
     original_node_buckets = bucketor(nodes)
 
-    bucket_nodes: List[torch.Tensor] = []
-    bucket_results: List[torch.Tensor] = []
-    for degree, node_bucket, original_node_bucket in zip(
-        unique_degrees, node_buckets, original_node_buckets
-    ):
+    bucket_nodes: list[torch.Tensor] = []
+    bucket_results: list[torch.Tensor] = []
+    for degree, node_bucket, original_node_bucket in zip(unique_degrees, node_buckets, original_node_buckets):
         if degree == 0:  # skip 0-degree nodes
             continue
 
@@ -122,9 +121,7 @@ def apply_reduce_function(
         edge_index_buckets = _order_edge_index_buckets(nx_molecule, degree, node_bucket)
 
         maildata = message_data.subframe(edge_index_buckets)
-        node_batch = NodeBatch(
-            nx_molecule, original_node_bucket, "_N", node_data, maildata
-        )
+        node_batch = NodeBatch(nx_molecule, original_node_bucket, "_N", node_data, maildata)
         bucket_results.append(reduce_function(node_batch))
 
     # concatenate results into a new frame
@@ -143,7 +140,7 @@ def message_passing(
     nx_molecule: "NXMolGraph",
     message_func,
     reduce_func,
-    apply_func: Optional[callable] = None,
+    apply_func: callable | None = None,
 ) -> FrameDict:
     """
     Perform message passing on a NXMolGraph.

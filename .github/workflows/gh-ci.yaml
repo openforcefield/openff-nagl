@@ -159,7 +159,7 @@ jobs:
         test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff_nagl-*.tar.gz found"; exit 1; }
         echo "twine check $DISTRIBUTION"
         twine check $DISTRIBUTION
-  
+
   install_from_source_conda:
     runs-on: ubuntu-latest
     strategy:

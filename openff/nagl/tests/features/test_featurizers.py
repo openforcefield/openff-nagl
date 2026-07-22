@@ -1,6 +1,5 @@
 import numpy as np
-import pytest
-from numpy.testing import assert_allclose, assert_equal
+from numpy.testing import assert_equal
 
 from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.features.atoms import (
@@ -30,9 +29,7 @@ def test_atomfeaturizer(openff_methane_uncharged):
 
 
 def test_bondfeaturizer(openff_methane_uncharged):
-    featurizer = BondFeaturizer(
-        features=[BondOrder(categories=[0, 1, 2]), BondIsInRing()]
-    )
+    featurizer = BondFeaturizer(features=[BondOrder(categories=[0, 1, 2]), BondIsInRing()])
     features = featurizer(openff_methane_uncharged).numpy()
     assert features.shape == (4, 4)
 

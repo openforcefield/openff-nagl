@@ -2,7 +2,7 @@ import typing
 
 import numpy as np
 
-FloatArrayLike = typing.Union[typing.List, np.ndarray, float]
+FloatArrayLike = list | np.ndarray | float
 
 
 def round_floats(
@@ -41,7 +41,8 @@ def as_iterable(obj: typing.Any) -> typing.Iterable:
         return [obj]
     return obj
 
-def potential_dict_to_list(d: typing.Union[dict, list]) -> list:
+
+def potential_dict_to_list(d: dict | list) -> list:
     """Convert a possible dictionary to a list of items."""
     try:
         return list(d.values())
@@ -52,8 +53,8 @@ def potential_dict_to_list(d: typing.Union[dict, list]) -> list:
 def transform_coordinates(
     coordinates: np.ndarray,
     scale: float = 1.0,
-    translate: typing.Optional[float] = 0.0,
-    rotate: typing.Optional[float] = 0.0,
+    translate: float | None = 0.0,
+    rotate: float | None = 0.0,
 ) -> np.ndarray:
     """
     Transform the coordinates by a scale, translation, and rotation.
