@@ -1,25 +1,22 @@
 """Classes for training a GNN"""
 
-from collections import defaultdict
 import functools
 import logging
 import pathlib
 import pickle
 import typing
+from collections import defaultdict
 
-import torch
 import pytorch_lightning as pl
+import torch
 
-from openff.nagl.config.training import TrainingConfig
-from openff.nagl.config.data import DatasetConfig
-from openff.nagl.nn._models import GNNModel
 from openff.nagl._base.base import ImmutableModel
+from openff.nagl.config.data import DatasetConfig
+from openff.nagl.config.training import TrainingConfig
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.nn._dataset import (
-    DGLMoleculeDataset, DataHash,
-    _LazyDGLMoleculeDataset
-)
+from openff.nagl.nn._dataset import DataHash, DGLMoleculeDataset, _LazyDGLMoleculeDataset
+from openff.nagl.nn._models import GNNModel
 
 if typing.TYPE_CHECKING:
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch

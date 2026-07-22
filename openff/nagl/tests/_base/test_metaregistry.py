@@ -2,6 +2,7 @@ import pytest
 
 from openff.nagl._base.metaregistry import create_registry_metaclass
 
+
 class TestMetaRegistry:
 
     Registry = create_registry_metaclass(ignore_case=False)

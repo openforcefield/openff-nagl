@@ -8,6 +8,7 @@ from openff.nagl.config.model import ModelConfig
 from openff.nagl.config.optimizer import OptimizerConfig
 from openff.nagl.utils._types import FromYamlMixin
 
+
 class TrainingConfig(ImmutableModel, FromYamlMixin):
     """
     Overall config class for training a model

@@ -3,15 +3,13 @@
 
 import copy
 import functools
-from typing import Tuple, TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 import numpy as np
-
+from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.units import unit
 
-
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
 
 if TYPE_CHECKING:

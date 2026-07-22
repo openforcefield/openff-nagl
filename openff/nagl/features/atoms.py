@@ -26,20 +26,21 @@ import typing
 
 import numpy as np
 import torch
+from openff.units import unit
 
 from openff.nagl.utils._types import HybridizationType
-from openff.units import unit
 
 from ._base import CategoricalMixin, Feature
 from ._utils import one_hot_encode
 
 try:
-    from pydantic.v1 import validator, Field
+    from pydantic.v1 import Field, validator
 except ImportError:
-    from pydantic import validator, Field
+    from pydantic import Field, validator
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 __all__ = [
@@ -262,8 +263,8 @@ class AtomAverageFormalCharge(AtomFeature):
     name: typing.Literal["atom_average_formal_charge"] = "atom_average_formal_charge"
 
     def _encode(self, molecule:  "Molecule", toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
-        from openff.nagl.utils.resonance import enumerate_resonance_forms
         from openff.nagl.toolkits.openff import normalize_molecule
+        from openff.nagl.utils.resonance import enumerate_resonance_forms
 
         molecule = normalize_molecule(molecule, toolkit_registry=toolkit_registry)
         resonance_forms = enumerate_resonance_forms(
