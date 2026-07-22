@@ -1,11 +1,10 @@
-import pytest
-
 import numpy as np
+import pytest
 
 from openff.nagl.label.dataset import LabelledDataset
 from openff.nagl.label.labels import (
-    LabelConformers,
     LabelCharges,
+    LabelConformers,
     LabelMultipleDipoles,
     LabelMultipleESPs,
 )

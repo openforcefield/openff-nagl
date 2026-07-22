@@ -1,24 +1,25 @@
 import collections
 import logging
 import types
-from typing import TYPE_CHECKING, Optional
 import warnings
+from typing import TYPE_CHECKING, Optional
 
-import torch
 import pytorch_lightning as pl
-
+import torch
 from openff.utilities.exceptions import MissingOptionalDependencyError
-from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
+
 from openff.nagl.config.model import ModelConfig
 from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import LookupTableType, _as_lookup_table
-from openff.nagl.utils._utils import potential_dict_to_list
+from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
+from openff.nagl.utils._utils import potential_dict_to_list
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
+
     from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 

@@ -1,18 +1,19 @@
 import typing
+
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from openff.nagl.training.metrics import RMSEMetric
 from openff.nagl.training.loss import (
-    _BaseTarget,
-    MultipleDipoleTarget,
-    SingleDipoleTarget,
-    HeavyAtomReadoutTarget,
-    ReadoutTarget,
-    MultipleESPTarget,
     GeneralLinearFitTarget,
+    HeavyAtomReadoutTarget,
+    MultipleDipoleTarget,
+    MultipleESPTarget,
+    ReadoutTarget,
+    SingleDipoleTarget,
+    _BaseTarget,
 )
+from openff.nagl.training.metrics import RMSEMetric
 
 
 class TestBaseTarget:

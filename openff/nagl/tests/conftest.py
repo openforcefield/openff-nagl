@@ -4,13 +4,12 @@ Global pytest fixtures
 
 import numpy as np
 import pytest
+from openff.toolkit import Molecule, unit
 
-from openff.nagl.molecule._dgl.molecule import DGLMolecule
-from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity, AtomicElement
 from openff.nagl.features.bonds import BondIsInRing
-
-from openff.toolkit import Molecule, unit
+from openff.nagl.molecule._dgl.batch import DGLMoleculeBatch
+from openff.nagl.molecule._dgl.molecule import DGLMolecule
 
 
 @pytest.fixture()

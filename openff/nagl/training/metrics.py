@@ -9,7 +9,6 @@ import torch
 
 from openff.nagl._base.base import ImmutableModel
 
-
 if typing.TYPE_CHECKING:
     import torch
 

@@ -4,13 +4,11 @@ import copy
 from typing import TYPE_CHECKING
 
 import numpy as np
-
 from openff.toolkit import unit
+from openff.toolkit.utils.toolkits import OpenEyeToolkitWrapper
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.openeye_wrapper import OpenEyeToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
-
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
@@ -127,6 +125,7 @@ class NAGLOpenEyeToolkitWrapper(NAGLToolkitWrapperBase, OpenEyeToolkitWrapper):
         """
 
         from openff.toolkit import Molecule
+        from openff.toolkit.utils.toolkits import OpenEyeToolkitWrapper
 
         has_charges = OpenEyeToolkitWrapper._turn_oemolbase_sd_charges_into_partial_charges(oemol)
         offmol = self.from_openeye(

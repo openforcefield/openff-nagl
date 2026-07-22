@@ -1,10 +1,10 @@
 import abc
-from collections import defaultdict
 import pathlib
-import tqdm
 import typing
+from collections import defaultdict
 
 import numpy as np
+import tqdm
 from openff.toolkit import unit
 from openff.utilities import requires_package
 
@@ -70,8 +70,8 @@ class LabelConformers(_BaseLabel):
         table: "pyarrow.Table",
         verbose: bool = False,
     ):
-        from openff.toolkit import Molecule
         import pyarrow as pa
+        from openff.toolkit import Molecule
 
         rms_cutoff = self.rms_cutoff
         if not isinstance(rms_cutoff, unit.Quantity):
@@ -249,8 +249,8 @@ class LabelMultipleESPs(_BaseLabel):
         conformers: np.ndarray,
         n_conformers: int,
     ) -> list[np.ndarray]:
-        from openff.toolkit import Molecule
         from openff.recharge.grids import GridGenerator, MSKGridSettings
+        from openff.toolkit import Molecule
 
         mol = Molecule.from_mapped_smiles(mapped_smiles, allow_undefined_stereo=True)
 

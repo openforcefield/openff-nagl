@@ -14,6 +14,7 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 

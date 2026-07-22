@@ -1,7 +1,6 @@
+import pytest
 import torch
 import torch.nn.functional as F
-
-import pytest
 
 from openff.nagl.nn.activation import ActivationFunction
 

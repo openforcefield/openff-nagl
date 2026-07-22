@@ -2,8 +2,8 @@ from typing import ClassVar
 
 import torch.nn
 
-from .activation import ActivationFunction
 from ._base import ContainsLayersMixin
+from .activation import ActivationFunction
 
 
 class SequentialLayers(torch.nn.Sequential, ContainsLayersMixin):

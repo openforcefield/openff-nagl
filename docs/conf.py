@@ -14,12 +14,10 @@
 # In case the project was not installed
 import os
 import sys
-
 from importlib.util import find_spec as find_import_spec
 
 sys.path.insert(0, os.path.abspath(".."))
 import openff.nagl
-
 
 # -- Project information -----------------------------------------------------
 

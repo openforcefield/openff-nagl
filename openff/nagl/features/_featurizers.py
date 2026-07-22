@@ -1,15 +1,16 @@
-from typing import TYPE_CHECKING, TypeVar, Optional
+from typing import TYPE_CHECKING, Optional, TypeVar
 
 import torch
 
-from .atoms import AtomFeature
-from ._base import Feature
-from .bonds import BondFeature
-
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
+
+from ._base import Feature
+from .atoms import AtomFeature
+from .bonds import BondFeature
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 

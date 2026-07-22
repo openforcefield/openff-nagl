@@ -2,7 +2,6 @@ import pytest
 
 from openff.nagl.molecule._dgl.batch import DGLMolecule, DGLMoleculeBatch
 
-
 dgl = pytest.importorskip("dgl")
 
 

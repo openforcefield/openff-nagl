@@ -1,28 +1,27 @@
 "Classes for handling featurized molecule data to train GNN models"
 
-from collections import defaultdict
 import functools
 import hashlib
 import io
 import logging
+import pathlib
 import pickle
 import tempfile
 import typing
+from collections import defaultdict
 
-import tqdm
+import numpy as np
 import torch
+import tqdm
 from openff.utilities import requires_package
-from torch.utils.data import Dataset, DataLoader, ConcatDataset
+from torch.utils.data import ConcatDataset, DataLoader, Dataset
 
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
 from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
-from openff.nagl.utils._parallelization import get_mapper_to_processes
 from openff.nagl.utils._hash import digest_file
-
-import pathlib
-import numpy as np
+from openff.nagl.utils._parallelization import get_mapper_to_processes
 
 if typing.TYPE_CHECKING:
     from openff.toolkit import Molecule

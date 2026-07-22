@@ -1,8 +1,8 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
-import torch
 import networkx as nx
+import torch
 
 
 def nonzero_1d(values):
@@ -49,8 +49,9 @@ def _bucketing(val: torch.Tensor) -> tuple[torch.Tensor, callable]:
 
 
 def _batch_nx_graphs(graphs):
-    import torch
     import networkx as nx
+    import torch
+
     from openff.nagl.molecule._graph._batch import FrameDict
 
     if not len(graphs):
@@ -91,6 +92,7 @@ def _unbatch_nx_graphs(
     n_representations_per_molecule: Iterable[int],
 ) -> list[nx.Graph]:
     import networkx as nx
+
     from openff.nagl.molecule._graph._batch import FrameDict
 
     unbatched_graphs = []

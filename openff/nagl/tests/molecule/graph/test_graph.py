@@ -1,24 +1,24 @@
-import pytest
-
 from collections import defaultdict
+
 import networkx as nx
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
+import pytest
 import torch
+from numpy.testing import assert_allclose, assert_equal
 
-from openff.nagl.molecule._graph._batch import FrameDict
-from openff.nagl.molecule._graph._graph import (
-    NXMolGraph,
-    NXMolHomoGraph,
-    NXMolHeteroGraph,
-)
 from openff.nagl.features.atoms import (
-    AtomicElement,
-    AtomConnectivity,
     AtomAverageFormalCharge,
+    AtomConnectivity,
+    AtomicElement,
     AtomInRingOfSize,
 )
 from openff.nagl.features.bonds import BondOrder
+from openff.nagl.molecule._graph._batch import FrameDict
+from openff.nagl.molecule._graph._graph import (
+    NXMolGraph,
+    NXMolHeteroGraph,
+    NXMolHomoGraph,
+)
 from openff.nagl.molecule._graph.molecule import GraphMolecule
 from openff.nagl.nn.gcn import _function as _fn
 

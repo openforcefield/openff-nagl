@@ -2,8 +2,8 @@ import pathlib
 
 import click
 import tqdm
-
 from openff.toolkit import Molecule, unit
+
 from openff.nagl import GNNModel
 
 

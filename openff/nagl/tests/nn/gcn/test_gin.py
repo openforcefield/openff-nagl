@@ -3,7 +3,7 @@ import pytest
 import torch
 
 from openff.nagl.nn.activation import ActivationFunction
-from openff.nagl.nn.gcn._gin import GINConvStack, GINConv, DGLGINConv
+from openff.nagl.nn.gcn._gin import DGLGINConv, GINConv, GINConvStack
 
 try:
     import dgl  # noqa

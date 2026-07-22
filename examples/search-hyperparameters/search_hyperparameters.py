@@ -1,6 +1,6 @@
+import math
 import os
 import pathlib
-import math
 import pickle
 from typing import Any
 
@@ -15,8 +15,9 @@ def train_model(
     model_config_files: tuple[str, ...] = tuple(),
     runtime_kwargs: dict[str, Any] = {},
 ):
-    from openff.nagl.app.trainer import Trainer
     from ray.tune.integration.pytorch_lightning import TuneReportCallback
+
+    from openff.nagl.app.trainer import Trainer
 
     tune_report = TuneReportCallback(metrics, on="validation_end")
     callbacks = [tune_report]
@@ -162,11 +163,9 @@ def tune_model(
     partial_charge_method: str = "am1",
     postprocess_layer: str = "compute_partial_charges",
 ):
-    import yaml
-
     import ray
-    from ray import air
-    from ray import tune
+    import yaml
+    from ray import air, tune
     from ray.tune import CLIReporter
     from ray.tune.schedulers import ASHAScheduler
 

@@ -5,12 +5,10 @@ import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
-
 from openff.toolkit import unit
-
+from openff.toolkit.utils import RDKitToolkitWrapper
 
 from openff.nagl.toolkits._base import NAGLToolkitWrapperBase
-from openff.toolkit.utils.rdkit_wrapper import RDKitToolkitWrapper
 from openff.nagl.utils._types import HybridizationType
 
 if TYPE_CHECKING:

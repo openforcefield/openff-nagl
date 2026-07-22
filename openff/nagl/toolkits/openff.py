@@ -1,20 +1,23 @@
-import warnings
+from __future__ import annotations
+
 import contextlib
 import copy
 import functools
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
-
 from openff.toolkit import unit
-
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
+from openff.nagl.toolkits._base import NAGLToolkitWrapperBase, NAGLToolkitWrapperMeta
+
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
-    from openff.nagl.utils._types import HybridizationType
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
+    from openff.nagl.utils._types import HybridizationType
 
 
 def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
@@ -34,11 +37,6 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         The keyword arguments to pass to the function.
     """
     from openff.toolkit import GLOBAL_TOOLKIT_REGISTRY, ToolkitRegistry
-    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
-    from openff.nagl.toolkits._base import (
-        NAGLToolkitWrapperMeta,
-        NAGLToolkitWrapperBase,
-    )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
@@ -85,7 +83,7 @@ def toolkit_registry_function(function):
     return wrapper
 
 
-def ensure_toolkit_registry(toolkit_registry=None) -> "NAGLToolkitRegistry":
+def ensure_toolkit_registry(toolkit_registry=None) -> NAGLToolkitRegistry:
     """Resolve a toolkit registry argument to a NAGLToolkitRegistry.
 
     Converts ``None`` or a standard ``ToolkitRegistry`` to a
@@ -606,8 +604,8 @@ def stream_molecules_from_smiles_file(
     -------
         A generator of openff.toolkit.Molecule objects or SMILES strings
     """
-    from openff.toolkit.topology.molecule import SmilesParsingError
     from openff.toolkit import Molecule
+    from openff.toolkit.topology.molecule import SmilesParsingError
 
     with open(file) as f:
         smiles = [x.strip() for x in f.readlines()]

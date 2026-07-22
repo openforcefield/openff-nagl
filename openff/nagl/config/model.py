@@ -4,9 +4,9 @@ import pathlib
 import typing
 
 from openff.nagl._base.base import ImmutableModel
-from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.features.atoms import DiscriminatedAtomFeatureType
 from openff.nagl.features.bonds import DiscriminatedBondFeatureType
+from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.utils._types import FromYamlMixin
 
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]

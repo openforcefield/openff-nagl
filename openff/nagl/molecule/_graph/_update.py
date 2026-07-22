@@ -6,13 +6,13 @@ Functions here are not intended to be called directly
 and may be fragile.
 """
 
-from typing import TYPE_CHECKING
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-import torch
 import numpy as np
+import torch
 
-from ._batch import EdgeBatch, NodeBatch, FrameDict
+from ._batch import EdgeBatch, FrameDict, NodeBatch
 
 if TYPE_CHECKING:
     from ._graph import NXMolGraph

@@ -5,19 +5,19 @@ import pytest
 import torch
 from openff.toolkit import unit
 
-from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.features.atoms import AtomConnectivity
 from openff.nagl.features.bonds import BondIsInRing
+from openff.nagl.molecule._dgl import DGLMolecule, DGLMoleculeBatch
 from openff.nagl.nn._dataset import (
-    DGLMoleculeDatasetEntry,
-    DGLMoleculeDataset,
-    _LazyDGLMoleculeDataset,
-    DGLMoleculeDataLoader,
     DataHash,
+    DGLMoleculeDataLoader,
+    DGLMoleculeDataset,
+    DGLMoleculeDatasetEntry,
+    _LazyDGLMoleculeDataset,
 )
 from openff.nagl.tests.data.files import (
-    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
     EXAMPLE_FEATURIZED_PARQUET_DATASET,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
 )
 
 pytest.importorskip("dgl")

@@ -1,11 +1,10 @@
 import enum
-import pathlib
 import json
-import yaml
+import pathlib
 
 import numpy as np
+import yaml
 from openff.toolkit import unit
-
 
 try:
     from pydantic.v1 import BaseModel

@@ -1,12 +1,14 @@
 import abc
 import typing
 
-from .._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
+
+from .._base.base import ImmutableModel
 
 if typing.TYPE_CHECKING:
     import torch
     from openff.toolkit import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 

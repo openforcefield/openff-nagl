@@ -5,7 +5,7 @@ import torch
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
-from ._base import ActivationFunction, BaseGCNStack, BaseConvModule
+from ._base import ActivationFunction, BaseConvModule, BaseGCNStack
 
 if TYPE_CHECKING:
     import dgl

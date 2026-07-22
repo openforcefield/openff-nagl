@@ -1,44 +1,38 @@
 import itertools
 import pathlib
-import pytest
 import shutil
 
-import torch
 import numpy as np
+import pytest
 import pytorch_lightning as pl
+import torch
 
-from openff.nagl.config.data import DatasetConfig, DataConfig
+from openff.nagl.config.data import DataConfig, DatasetConfig
+from openff.nagl.config.model import ConvolutionLayer, ConvolutionModule, ForwardLayer, ModelConfig, ReadoutModule
 from openff.nagl.config.optimizer import OptimizerConfig
 from openff.nagl.config.training import TrainingConfig
-from openff.nagl.config.model import (
-    ForwardLayer,
-    ReadoutModule,
-    ModelConfig,
-    ConvolutionLayer,
-    ConvolutionModule,
-)
 from openff.nagl.features import atoms
-from openff.nagl.training.metrics import RMSEMetric
-from openff.nagl.training.loss import ReadoutTarget
-from openff.nagl.training.training import (
-    DGLMoleculeDataModule,
-    DataHash,
-    TrainingGNNModel,
-)
-from openff.nagl.nn._models import GNNModel
 from openff.nagl.nn._dataset import (
     DGLMoleculeDataLoader,
     DGLMoleculeDataset,
     _LazyDGLMoleculeDataset,
 )
+from openff.nagl.nn._models import GNNModel
 from openff.nagl.tests.data.files import (
-    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
-    EXAMPLE_FEATURIZED_PARQUET_DATASET,
-    EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
-    EXAMPLE_TRAINING_CONFIG,
-    EXAMPLE_TRAINING_CONFIG_LAZY,
     EXAMPLE_FEATURIZED_LAZY_DATA,
     EXAMPLE_FEATURIZED_LAZY_DATA_SHORT,
+    EXAMPLE_FEATURIZED_PARQUET_DATASET,
+    EXAMPLE_TRAINING_CONFIG,
+    EXAMPLE_TRAINING_CONFIG_LAZY,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
+    EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
+)
+from openff.nagl.training.loss import ReadoutTarget
+from openff.nagl.training.metrics import RMSEMetric
+from openff.nagl.training.training import (
+    DataHash,
+    DGLMoleculeDataModule,
+    TrainingGNNModel,
 )
 
 dgl = pytest.importorskip("dgl")

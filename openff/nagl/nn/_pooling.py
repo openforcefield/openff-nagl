@@ -1,7 +1,7 @@
 import abc
 import functools
-from typing import ClassVar, TYPE_CHECKING
 from collections.abc import Iterable
+from typing import TYPE_CHECKING, ClassVar
 
 import torch.nn
 

@@ -1,9 +1,9 @@
 import torch
 
 from openff.nagl.training.metrics import (
-    RMSEMetric,
-    MSEMetric,
     MAEMetric,
+    MSEMetric,
+    RMSEMetric,
 )
 
 

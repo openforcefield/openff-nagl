@@ -1,11 +1,11 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import torch
 from openff.utilities import requires_package
 
 from openff.nagl.features.atoms import AtomFeature
 from openff.nagl.features.bonds import BondFeature
-from openff.nagl.molecule._base import NAGLMoleculeBase, MoleculeMixin
+from openff.nagl.molecule._base import MoleculeMixin, NAGLMoleculeBase
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
 from .utils import (
@@ -16,6 +16,7 @@ from .utils import (
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
+
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
@@ -60,6 +61,7 @@ class DGLMolecule(MoleculeMixin, DGLBase):
     ):
         toolkit_registry = ensure_toolkit_registry(toolkit_registry)
         import dgl
+
         from openff.nagl.utils.resonance import ResonanceEnumerator
 
         if atom_features is None:

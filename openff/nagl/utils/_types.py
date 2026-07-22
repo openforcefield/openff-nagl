@@ -1,6 +1,6 @@
 import enum
 import pathlib
-from typing import NamedTuple, Literal
+from typing import Literal, NamedTuple
 
 Pathlike = str | pathlib.Path
 

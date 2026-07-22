@@ -5,10 +5,11 @@ import pathlib
 import typing
 
 import torch
-from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
-from openff.nagl.training.metrics import MetricType  # MetricMeta, BaseMetric
+
 from openff.nagl._base.base import ImmutableModel
+from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 from openff.nagl.nn._containers import ReadoutModule
+from openff.nagl.training.metrics import MetricType  # MetricMeta, BaseMetric
 
 try:
     from pydantic.v1 import Field, validator
@@ -18,8 +19,9 @@ except ImportError:
 
 if typing.TYPE_CHECKING:
     import torch
-    from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
     from openff.toolkit import Molecule
+
+    from openff.nagl.molecule._dgl import DGLMoleculeOrBatch
 
 
 __all__ = [

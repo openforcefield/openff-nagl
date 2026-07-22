@@ -3,17 +3,17 @@ import copy
 from collections import defaultdict
 from typing import TYPE_CHECKING
 
-from openff.nagl.features.atoms import AtomFeature
-from openff.nagl.features.bonds import BondFeature
-from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
-from openff.nagl.toolkits.openff import ensure_toolkit_registry
-
 import networkx as nx
 import numpy as np
 import torch
-from ._batch import FrameDict
 
-from openff.nagl.molecule._utils import FORWARD, REVERSE, FEATURE
+from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
+from openff.nagl.features.atoms import AtomFeature
+from openff.nagl.features.bonds import BondFeature
+from openff.nagl.molecule._utils import FEATURE, FORWARD, REVERSE
+from openff.nagl.toolkits.openff import ensure_toolkit_registry
+
+from ._batch import FrameDict
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
