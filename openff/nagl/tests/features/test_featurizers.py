@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_equal
 
+from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 from openff.nagl.features.atoms import (
     AtomConnectivity,
     AtomIsAromatic,
@@ -10,7 +11,6 @@ from openff.nagl.features.bonds import (
     BondIsInRing,
     BondOrder,
 )
-from openff.nagl.features._featurizers import AtomFeaturizer, BondFeaturizer
 
 
 def test_atomfeaturizer(openff_methane_uncharged):

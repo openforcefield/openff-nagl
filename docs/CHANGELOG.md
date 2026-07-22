@@ -19,6 +19,7 @@ The rules for this file:
 ### Changes
 
 - Switch to `setuptools-scm` for version handling (PR #266)
+- Reformat codebase (PR #XYZ)
 
 ## v0.5.5 -- 2026-04-02
 

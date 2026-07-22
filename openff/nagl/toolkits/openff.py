@@ -1,18 +1,17 @@
-import warnings
 import contextlib
 import copy
 import functools
-from typing import TYPE_CHECKING, Tuple, List, Union, Dict, NamedTuple, Any, Optional
+import warnings
+from typing import TYPE_CHECKING, Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import numpy as np
-
 from openff.units import unit
-
 from openff.utilities import requires_package
 from openff.utilities.exceptions import MissingOptionalDependencyError
 
 if TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
+
     from openff.nagl.utils._types import HybridizationType
 
 
@@ -33,14 +32,15 @@ def call_toolkit_function(function_name, toolkit_registry, *args, **kwargs):
         The keyword arguments to pass to the function.
     """
     from openff.toolkit import GLOBAL_TOOLKIT_REGISTRY, ToolkitRegistry
-    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
-    from openff.nagl.toolkits._base import (
-        NAGLToolkitWrapperMeta,
-        NAGLToolkitWrapperBase,
-    )
     from openff.toolkit.utils.exceptions import InvalidToolkitRegistryError
-    from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+
+    from openff.nagl.toolkits._base import (
+        NAGLToolkitWrapperBase,
+        NAGLToolkitWrapperMeta,
+    )
     from openff.nagl.toolkits.openeye import NAGLOpenEyeToolkitWrapper
+    from openff.nagl.toolkits.rdkit import NAGLRDKitToolkitWrapper
+    from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
     if isinstance(toolkit_registry, NAGLToolkitWrapperMeta):
         # case of NAGLRDKitToolkitWrapper (not instantiated)
@@ -617,8 +617,8 @@ def stream_molecules_from_smiles_file(
     -------
         A generator of openff.toolkit.topology.Molecule objects or SMILES strings
     """
-    from openff.toolkit.topology.molecule import SmilesParsingError
     from openff.toolkit.topology import Molecule
+    from openff.toolkit.topology.molecule import SmilesParsingError
 
     with open(file, "r") as f:
         smiles = [x.strip() for x in f.readlines()]

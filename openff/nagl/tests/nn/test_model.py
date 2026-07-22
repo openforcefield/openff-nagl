@@ -1,31 +1,28 @@
 import importlib.resources
+
 import numpy as np
 import pytest
 import torch
 from numpy.testing import assert_allclose
-
-from openff.units import unit
 from openff.toolkit.topology import Molecule
 from openff.toolkit.utils.toolkits import RDKIT_AVAILABLE
+from openff.units import unit
 
-from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.domains import ChemicalDomain
+from openff.nagl.features.atoms import (
+    AtomAverageFormalCharge,
+    AtomConnectivity,
+    AtomicElement,
+    AtomInRingOfSize,
+)
+from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
 from openff.nagl.nn._models import BaseGNNModel, GNNModel
 from openff.nagl.nn._pooling import PoolAtomFeatures, PoolBondFeatures
-from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
-from openff.nagl.domains import ChemicalDomain
-from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
-from openff.nagl.tests.data.files import (
-    EXAMPLE_AM1BCC_MODEL,
-    data_directory
-)
-from openff.nagl.features.atoms import (
-    AtomicElement,
-    AtomConnectivity,
-    AtomAverageFormalCharge,
-    AtomInRingOfSize,
-)
+from openff.nagl.nn.gcn._sage import SAGEConvStack
+from openff.nagl.nn.postprocess import ComputePartialCharges
+from openff.nagl.tests.data.files import EXAMPLE_AM1BCC_MODEL, data_directory
 
 
 @pytest.fixture()

@@ -23,7 +23,7 @@ import typing
 
 import torch
 
-from ._base import CategoricalMixin, Feature #, FeatureMeta
+from ._base import CategoricalMixin, Feature  #, FeatureMeta
 from ._utils import one_hot_encode
 
 try:

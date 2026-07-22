@@ -1,11 +1,11 @@
 import types
-import pytest
 
-import torch
 import numpy as np
+import pytest
+import torch
 from numpy.testing import assert_allclose
-
 from openff.toolkit import Molecule
+
 from openff.nagl.lookups import (
     AtomPropertiesLookupTable,
     AtomPropertiesLookupTableEntry,
@@ -99,9 +99,9 @@ class TestAtomPropertiesLookupTable:
         assert_allclose(properties.numpy(), np.array([-0.103, 0.234, -0.209, -0.209, 0.096, 0.096, 0.096]))
 
     def test_lookup_long(self, lookup_table):
-        from packaging.version import Version
         from openff.toolkit import __version__ as toolkit_version
         from openff.utilities import has_package
+        from packaging.version import Version
 
 
         mol = Molecule.from_smiles(341 * "C")

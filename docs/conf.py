@@ -19,7 +19,6 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 import openff.nagl
 
-
 # -- Project information -----------------------------------------------------
 
 project = "OpenFF NAGL"

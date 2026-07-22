@@ -3,16 +3,15 @@
 import copy
 import itertools
 import json
-from typing import Dict, Optional, List, Generator, Tuple, Any, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import networkx as nx
 import numpy as np
-
-from openff.units import unit
 from openff.toolkit.topology import Molecule
+from openff.units import unit
 
-from openff.nagl.utils._types import ResonanceType, ResonanceAtomType
 from openff.nagl.toolkits.openff import _molecule_from_dict, _molecule_to_dict
+from openff.nagl.utils._types import ResonanceAtomType, ResonanceType
 
 __all__ = ["ResonanceEnumerator", "enumerate_resonance_forms"]
 

@@ -1,11 +1,12 @@
 import functools
 import pathlib
-import tqdm
 import typing
 
-from openff.nagl.utils._parallelization import get_mapper_to_processes
-from openff.nagl.label.labels import LabellerType
+import tqdm
 from openff.utilities import requires_package
+
+from openff.nagl.label.labels import LabellerType
+from openff.nagl.utils._parallelization import get_mapper_to_processes
 
 if typing.TYPE_CHECKING:
     import pyarrow
@@ -42,10 +43,9 @@ class LabelledDataset:
         verbose: bool = False,
         overwrite_existing: bool = False,
     ):
-        from openff.toolkit import Molecule
-
         import pyarrow as pa
         import pyarrow.dataset as ds
+        from openff.toolkit import Molecule
 
         loader = functools.partial(
             Molecule.from_smiles,
