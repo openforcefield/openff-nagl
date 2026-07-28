@@ -3,7 +3,7 @@ Metrics for evaluating loss
 """
 import abc
 import typing
-
+import pydantic
 import torch
 
 from openff.nagl._base.base import ImmutableModel
@@ -65,6 +65,12 @@ class MAEMetric(BaseMetric):
         return loss(predicted_values, expected_values)
 
 
+"""
+MetricType = typing.Annotated[
+    typing.Union[RMSEMetric, MSEMetric, MAEMetric],
+    pydantic.Field(discriminator="name"),
+]
+"""
 MetricType = typing.Union[RMSEMetric, MSEMetric, MAEMetric]
 
 METRICS = {

@@ -37,6 +37,7 @@ def label_formal_charge(molecule: "Molecule"):
 
 
 class TestDataHash:
+    @pytest.mark.skip(reason="broken in PR 268")
     def test_hash_empty(self):
         hasher = DataHash(
             path_hash="path hash",

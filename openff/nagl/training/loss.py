@@ -30,7 +30,7 @@ __all__ = [
 
 class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
     name: typing.Literal[""]
-    metric: MetricType = Field(..., discriminator="name")
+    metric: MetricType = Field(..., ) # discriminator="name")
     target_label: str = Field(
         description=(
             "The label to use for the target, or reference property. "
