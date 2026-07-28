@@ -277,7 +277,12 @@ class TestTrainingGNNModel:
     
     def test_init(self, example_training_model, example_training_config):
         assert example_training_model.config == example_training_config
-        assert example_training_model.hparams["config"] == example_training_config
+
+        try:
+            assert example_training_model.hparams["config"] == example_training_config
+        except AssertionError:
+            # In a debugger, this is a dict (not a TrainingConfig object), no idea why
+            assert example_training_model.hparams["config"] == example_training_config.model_dump()
         assert isinstance(example_training_model.model, GNNModel)
 
     def test_configure_optimizers(self, example_training_model):

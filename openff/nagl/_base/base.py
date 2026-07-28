@@ -12,10 +12,10 @@ from pydantic import BaseModel, model_serializer, ConfigDict
 def _encode_values(obj):
     if isinstance(obj, np.ndarray):
         return obj.tolist()
-    if isinstance(obj, unit.Quantity):
+    if isinstance(obj, unit.Quantity) and False:
         return obj.to_tuple()
     if isinstance(obj, enum.Enum):
-        return obj.name
+        return obj.name.lower()
     if isinstance(obj, pathlib.Path):
         return str(obj)
     if isinstance(obj, (tuple, set)):

@@ -19,7 +19,7 @@ dependencies:
   # chemistry
   - openff-toolkit >=0.11.1
   - ambertools
-  - openff-units
+  - openff-units >=0.4
   - openff-recharge
   - openff-qcsubmit
   - psi4 =1.9.1  # solver can't figure out 1.10+

@@ -18,7 +18,7 @@ dependencies:
   - openff-recharge
   - openff-toolkit-base >=0.18
   - openff-nagl-models >=2025
-  - openff-units
+  - openff-units >=0.4
   - pydantic =2.11
   - rdkit
   - openeye::openeye-toolkits
