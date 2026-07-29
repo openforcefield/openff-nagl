@@ -19,7 +19,7 @@ dependencies:
   - openff-toolkit-base >=0.18
   - openff-nagl-models >=2025
   - openff-units >=0.4
-  - pydantic =2.11
+  - pydantic =2
   - rdkit
   - openeye::openeye-toolkits
 
