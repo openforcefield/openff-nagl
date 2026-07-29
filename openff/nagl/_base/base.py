@@ -12,8 +12,6 @@ from pydantic import BaseModel, model_serializer, ConfigDict
 def _encode_values(obj):
     if isinstance(obj, np.ndarray):
         return obj.tolist()
-    if isinstance(obj, unit.Quantity) and False:
-        return obj.to_tuple()
     if isinstance(obj, enum.Enum):
         return obj.name.lower()
     if isinstance(obj, pathlib.Path):
@@ -55,12 +53,12 @@ class MutableModel(BaseModel):
         pass
 
     def model_dump_json(self, **kwargs):
-        # sort_keys=True removed in v2, can kinda wrap it to maintain behavior
-        return json.dumps(self.model_dump(**kwargs),
-            # sort_keys=True,
-            # indent=2,
-            # separators=(",", ": "),
-        )
+        return json.dumps(
+            self.model_dump(**kwargs),
+            sort_keys=True,
+            indent=2,
+            separators=(",", ": "),
+     )
 
     @classmethod
     def from_json(cls, string_or_file):

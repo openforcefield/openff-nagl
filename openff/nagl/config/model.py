@@ -41,8 +41,8 @@ class BaseLayer(ImmutableModel):
 
 class ConvolutionLayer(BaseLayer):
     """Configuration for a single convolution layer"""
-    aggregator_type: AggregatorType = Field(
-        default=None,  # this conflicts with the type annotation
+    aggregator_type: AggregatorType | None = Field(
+        default=None,
         description="The aggregator function to apply after each convolution"
     )
 

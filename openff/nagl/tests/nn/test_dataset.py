@@ -45,7 +45,7 @@ class TestDataHash:
             bond_features=[BondIsInRing()],
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "7befbf8e5114d3e8f360147fb2fadce15c97042a86592f8cf0316badc4e66816"
+        assert hash_value == "df150bfab37efca196c4a041709e2cf6c3e392804c82eb09345edafce480e872"
 
     def test_from_file(self, tmpdir):
         hasher = DataHash.from_file(
@@ -55,7 +55,7 @@ class TestDataHash:
             bond_features=None,
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "87780f0271b3179063105b061725bf9f0ff809a0cbb3c37bb539a4a29db19769"
+        assert hash_value == "5c188f82daeb159c60eb0f5f12a209cee0d605c731f2525ae2d0985829d0a838"
 
 
 # def test_get_hashed_arrow_dataset_path():

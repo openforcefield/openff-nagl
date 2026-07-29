@@ -96,8 +96,8 @@ class TestDGLMoleculeDataModule:
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "92908f14e24dbc41cf60a395543823dcdeb22253934a2c2f411240e2c924ff98"),
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "17111452013d0fe18de4e155ff341956424de0a5fbcc1fe7c0a56a1f5b2a1c4e"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "5156299faba58a78780098323176e0b4c942f6cf4d963ed62ace923632a2d823"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "15f3eefb66cfbbe25dd87c2dd075cd4abf74e1fd0cb28de5a57790c68f091d18"),
         ]
     )
     def test_hash_file(self, example_training_config, filename, hash_value):
@@ -121,7 +121,7 @@ class TestDGLMoleculeDataModule:
             )
             for stage in ["train", "val", "test"]:
                 config = data_module._dataset_configs[stage]
-                config = config.copy(
+                config = config.model_copy(
                     update={
                         "use_cached_data": True,
                         "cache_directory": ".",
@@ -180,7 +180,7 @@ class TestDGLMoleculeDataModule:
             )
             for stage in ["train", "val", "test"]:
                 config = data_module._dataset_configs[stage]
-                config = config.copy(
+                config = config.model_copy(
                     update={
                         "use_cached_data": True,
                         "cache_directory": ".",
@@ -279,11 +279,8 @@ class TestTrainingGNNModel:
     def test_init(self, example_training_model, example_training_config):
         assert example_training_model.config == example_training_config
 
-        try:
-            assert example_training_model.hparams["config"] == example_training_config
-        except AssertionError:
-            # In a debugger, this is a dict (not a TrainingConfig object), no idea why
-            assert example_training_model.hparams["config"] == example_training_config.model_dump()
+        # In a debugger, this is a dict (not a TrainingConfig object), surprising change
+        assert example_training_model.hparams["config"] == example_training_config.model_dump()
         assert isinstance(example_training_model.model, GNNModel)
 
     def test_configure_optimizers(self, example_training_model):

@@ -26,7 +26,6 @@ class TestBaseTarget:
         def evaluate_target(self, molecules, labels, predictions, readout_modules) -> "torch.Tensor":
             return torch.tensor([0.0])
 
-    @pytest.mark.skip(reason="TODO")
     def test_validate_metric(self):
         input_text = '{"metric": "rmse", "name": "readout", "prediction_label": "charges", "target_label": "charges"}'
         target = ReadoutTarget.model_validate_json(input_text)
