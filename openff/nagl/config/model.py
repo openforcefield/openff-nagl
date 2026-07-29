@@ -98,17 +98,17 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
 
         This simplifies the representation of atom and bond features
         """
-        dct = self.dict()
+        dct = self.model_dump()
         dct["atom_features"] = tuple(
             [
-                {f.feature_name: f.dict(exclude={"feature_name"})}
+                {f.feature_name: f.model_dump(exclude={"feature_name"})}
                 for f in self.atom_features
             ]
         )
 
         dct["bond_features"] = tuple(
             [
-                {f.feature_name: f.dict(exclude={"feature_name"})}
+                {f.feature_name: f.model_dump(exclude={"feature_name"})}
                 for f in self.bond_features
             ]
         )

@@ -37,7 +37,6 @@ def label_formal_charge(molecule: "Molecule"):
 
 
 class TestDataHash:
-    @pytest.mark.xfail(reason="broken in PR 268")
     def test_hash_empty(self):
         hasher = DataHash(
             path_hash="path hash",
@@ -46,7 +45,7 @@ class TestDataHash:
             bond_features=[BondIsInRing()],
         )
         hash_value = hasher.to_hash()
-        assert hash_value == "0c25874901b9b5fe2e16434749c9aef01ff4d53c7f04d2318052d77a70ad98bc"
+        assert hash_value == "7befbf8e5114d3e8f360147fb2fadce15c97042a86592f8cf0316badc4e66816"
 
     def test_from_file(self, tmpdir):
         hasher = DataHash.from_file(

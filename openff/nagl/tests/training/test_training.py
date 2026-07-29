@@ -93,17 +93,17 @@ class TestDGLMoleculeDataModule:
         assert data_module.val_dataloader().batch_size == 2
         assert data_module.test_dataloader is None
 
-    @pytest.mark.xfail(reason="broken in PR 268")
     @pytest.mark.parametrize(
         "filename, hash_value",
         [
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "9e89f05d67df7ba8efbfd7d27eea31b436218fb5f0387b24dfa0cc9552c764ea"),
-            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "95da5126cc02a66d5f34388ac2aa735046622ba7b248c67168c3ae37a287321d"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET, "92908f14e24dbc41cf60a395543823dcdeb22253934a2c2f411240e2c924ff98"),
+            (EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT, "17111452013d0fe18de4e155ff341956424de0a5fbcc1fe7c0a56a1f5b2a1c4e"),
         ]
     )
     def test_hash_file(self, example_training_config, filename, hash_value):
         data_module = DGLMoleculeDataModule(example_training_config)
         file_hash = data_module._get_hash_file([filename], ["a", "b"])
+
         assert file_hash == pathlib.Path(hash_value)
 
     def test_setup(self, tmpdir, example_training_config):

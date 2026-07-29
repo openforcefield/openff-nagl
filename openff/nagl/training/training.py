@@ -36,7 +36,7 @@ class TrainingGNNModel(pl.LightningModule):
         if not isinstance(config, TrainingConfig):
             config = TrainingConfig(**config)
         
-        self.save_hyperparameters({"config": config.dict()})
+        self.save_hyperparameters({"config": config.model_dump()})
         self.config = config
 
         self.model = GNNModel(config.model)

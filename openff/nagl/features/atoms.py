@@ -123,7 +123,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
         )
 
     def dict(self, *args, **kwargs):
-        obj = super().dict()
+        obj = super().model_dump()
         obj["categories"] = [hyb.name for hyb in self.categories]
         return obj
 
