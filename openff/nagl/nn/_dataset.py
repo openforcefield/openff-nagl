@@ -84,7 +84,7 @@ class DataHash(ImmutableModel):
         )
     
     def to_hash(self):
-        json_str = self.model_dump_json().encode("utf-8")
+        json_str = json.dumps(self.model_dump(serialize_as_any=True)).encode("utf-8")
         hashed = hashlib.sha256(json_str).hexdigest()
         return hashed
 
