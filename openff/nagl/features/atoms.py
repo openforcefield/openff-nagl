@@ -109,7 +109,7 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
 
     @field_validator("categories", mode="before")
     @classmethod
-    def _validate_categories(cls, v):
+    def _validate_categories(cls, v: str | list[str]) -> HybridizationType | list[HybridizationType]:
         if isinstance(v, str):
             return HybridizationType[v.upper()]
         elif isinstance(v, list):
