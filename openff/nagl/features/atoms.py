@@ -112,6 +112,8 @@ class AtomHybridization(CategoricalMixin, AtomFeature):
     def _validate_categories(cls, v):
         if isinstance(v, str):
             return HybridizationType[v.upper()]
+        elif isinstance(v, list):
+            return [HybridizationType[x.upper()] if isinstance(x, str) else x for x in v]
         return v
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
