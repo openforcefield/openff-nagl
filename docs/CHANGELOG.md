@@ -14,10 +14,11 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## Current development
+## v0.6.0 -- 2026-08-DD
 
 ### Changes
 
+- Use Pydantic v2 API (PR #268) which may cause datasets to hash to different values
 - Switch to `setuptools-scm` for version handling (PR #266)
 
 ## v0.5.5 -- 2026-04-02
