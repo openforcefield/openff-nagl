@@ -12,7 +12,7 @@ dependencies:
   - tqdm
 
   # chemistry
-  - pydantic <3
+  - pydantic =2
   - rdkit
   - scipy
   - openeye-toolkits

@@ -12,12 +12,7 @@ from openff.nagl._base.base import ImmutableModel
 from openff.nagl.nn._pooling import PoolingLayer
 from openff.nagl.nn._containers import ReadoutModule
 
-try:
-    from pydantic.v1 import Field, validator
-    from pydantic.v1.main import ModelMetaclass
-except ImportError:
-    from pydantic import Field, validator
-    from pydantic.main import ModelMetaclass
+from pydantic import Field, field_validator
 
 if typing.TYPE_CHECKING:
     import torch
@@ -56,7 +51,8 @@ class _BaseTarget(ImmutableModel, abc.ABC): #, metaclass=_TargetMeta):
         )
     )
 
-    @validator("metric", pre=True)
+    @field_validator("metric", mode="before")
+    @classmethod
     def _validate_metric(cls, v):
         if isinstance(v, str):
             v = {"name": v}

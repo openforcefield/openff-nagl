@@ -14,10 +14,7 @@ from openff.nagl.utils._types import FromYamlMixin
 AggregatorType = typing.Literal["mean", "gcn", "pool", "lstm", "sum"]
 PostprocessType = typing.Literal["readout", "compute_partial_charges", "regularized_compute_partial_charges"]
 
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 class BaseLayer(ImmutableModel):
     """Base class for single layer in the neural network"""
@@ -36,14 +33,15 @@ class BaseLayer(ImmutableModel):
         description="The dropout to apply after each layer"
     )
 
-    @validator("activation_function", pre=True)
+    @field_validator("activation_function", mode="before")
+    @classmethod
     def _validate_activation_function(cls, v):
         return ActivationFunction._get_class(v)
 
 
 class ConvolutionLayer(BaseLayer):
     """Configuration for a single convolution layer"""
-    aggregator_type: AggregatorType = Field(
+    aggregator_type: AggregatorType | None = Field(
         default=None,
         description="The aggregator function to apply after each convolution"
     )
@@ -100,17 +98,17 @@ class ModelConfig(ImmutableModel, FromYamlMixin):
 
         This simplifies the representation of atom and bond features
         """
-        dct = self.dict()
+        dct = self.model_dump()
         dct["atom_features"] = tuple(
             [
-                {f.feature_name: f.dict(exclude={"feature_name"})}
+                {f.feature_name: f.model_dump(exclude={"feature_name"})}
                 for f in self.atom_features
             ]
         )
 
         dct["bond_features"] = tuple(
             [
-                {f.feature_name: f.dict(exclude={"feature_name"})}
+                {f.feature_name: f.model_dump(exclude={"feature_name"})}
                 for f in self.bond_features
             ]
         )

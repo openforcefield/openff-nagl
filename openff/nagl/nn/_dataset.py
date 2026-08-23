@@ -9,6 +9,7 @@ import logging
 import pickle
 import tempfile
 import typing
+import json
 
 import tqdm
 import torch
@@ -84,7 +85,7 @@ class DataHash(ImmutableModel):
         )
     
     def to_hash(self):
-        json_str = self.json().encode("utf-8")
+        json_str = json.dumps(self.model_dump(serialize_as_any=True)).encode("utf-8")
         hashed = hashlib.sha256(json_str).hexdigest()
         return hashed
 

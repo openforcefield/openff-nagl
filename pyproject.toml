@@ -52,6 +52,7 @@ testpaths = [
 
 [tool.coverage.run]
 omit = [
+  "*/*/tests/*",
   "*/*/_tests/*",
   "openff/nagl/_version.py",
 ]

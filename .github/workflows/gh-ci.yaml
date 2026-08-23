@@ -25,14 +25,13 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, rdkit=${{ matrix.include-rdkit }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.12"]
-          pydantic-version: ["1", "2"]
           include-rdkit: [false, true]
           include-openeye: [false, true]
           include-dgl: [false, true]
@@ -56,7 +55,6 @@ jobs:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
           python=${{ matrix.python-version }}
-          pydantic=${{ matrix.pydantic-version }}
 
     - name: Install package
       run: |

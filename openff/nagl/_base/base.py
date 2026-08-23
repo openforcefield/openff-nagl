@@ -7,30 +7,39 @@ import numpy as np
 from openff.units import unit
 
 
-try:
-    from pydantic.v1 import BaseModel
-except ImportError:
-    from pydantic import BaseModel
+from pydantic import BaseModel, model_serializer, ConfigDict
+
+def _encode_values(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, enum.Enum):
+        return obj.name.lower()
+    if isinstance(obj, pathlib.Path):
+        return str(obj)
+    if isinstance(obj, (tuple, set)):
+        return list(obj)
+    if isinstance(obj, dict):
+        return {k: _encode_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_encode_values(i) for i in obj]
+    return obj
 
 class MutableModel(BaseModel):
     """
     Base class that all classes should subclass.
     """
 
-    class Config:
-        validate_all = True
-        arbitrary_types_allowed = True
-        underscore_attrs_are_private = True
-        validate_assignment = True
-        extra = "forbid"
-        json_encoders = {
-            np.ndarray: lambda x: x.tolist(),
-            tuple: list,
-            set: list,
-            unit.Quantity: lambda x: x.to_tuple(),
-            enum.Enum: lambda x: x.name,
-            pathlib.Path: str,
-        }
+    model_config = ConfigDict(
+        validate_default=True,
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+        extra="forbid",
+    )
+
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler):
+        data = handler(self)
+        return _encode_values(data)
 
     def __init__(self, *args, **kwargs):
         self.__pre_init__(*args, **kwargs)
@@ -43,12 +52,13 @@ class MutableModel(BaseModel):
     def __post_init__(self, *args, **kwargs):
         pass
 
-    def to_json(self):
-        return self.json(
+    def model_dump_json(self, **kwargs):
+        return json.dumps(
+            self.model_dump(**kwargs),
             sort_keys=True,
             indent=2,
             separators=(",", ": "),
-        )
+     )
 
     @classmethod
     def from_json(cls, string_or_file):
@@ -64,7 +74,7 @@ class MutableModel(BaseModel):
         return validator(string_or_file)
 
     def to_yaml(self, filename):
-        data = json.loads(self.json())
+        data = json.loads(self.model_dump_json())
         with open(filename, "w") as f:
             yaml.dump(data, f)
 
@@ -75,5 +85,5 @@ class MutableModel(BaseModel):
         return cls(**data)
 
 class ImmutableModel(MutableModel):
-    class Config(MutableModel.Config):
-        allow_mutation = False
+    # other options are **merged** with parent's config_dict
+    model_config = ConfigDict(frozen=True)
