@@ -18,7 +18,8 @@ The rules for this file:
 
 ### Changes
 
-- Use Pydantic v2 API (PR #268, Issue #262) which may cause datasets to hash to different values
+- Use Pydantic v2 API (PR #268, Issue #262) which may cause datasets to hash
+  to different values
 - Add `toolkit_registry` kwargs throughout internals (PR #242, Issue #241)
 - Switch to `setuptools-scm` for version handling (PR #266)
 - Drop Python 3.11 support (PR #253, Issue #252)
