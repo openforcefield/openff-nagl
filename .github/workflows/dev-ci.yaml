@@ -24,10 +24,9 @@ jobs:
     name: Nightly check
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
+          python-version: ["3.13"]
 
     steps:
     - uses: actions/checkout@v7

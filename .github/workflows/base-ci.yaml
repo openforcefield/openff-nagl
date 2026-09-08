@@ -28,10 +28,9 @@ jobs:
     name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
-          python-version: ["3.12"]
+          python-version: ["3.13"]
           include-openeye: [false, true]
 
     steps:
