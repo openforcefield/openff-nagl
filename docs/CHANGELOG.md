@@ -14,6 +14,10 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
+## Current development
+
+- Treat RDKit as required in testing (PR #267)
+
 ## v0.6.0 -- 2026-09-09
 
 ### Changes
