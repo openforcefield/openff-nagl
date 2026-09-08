@@ -31,7 +31,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest]
-          python-version: ["3.12"]
+          python-version: ["3.12", "3.13"]
           include-rdkit: [true]
           include-openeye: [false]
           include-dgl: [true]
