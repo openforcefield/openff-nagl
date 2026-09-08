@@ -14,12 +14,16 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## v0.6.0 -- 2026-08-DD
+## v0.6.0 -- 2026-09-09
 
 ### Changes
 
-- Use Pydantic v2 API (PR #268) which may cause datasets to hash to different values
+- Use Pydantic v2 API (PR #268, Issue #262) which may cause datasets to hash
+  to different values
+- Add `toolkit_registry` kwargs throughout internals (PR #242, Issue #241)
 - Switch to `setuptools-scm` for version handling (PR #266)
+- Drop Python 3.11 support (PR #253, Issue #252)
+- Test with PyTorch 2.10+ (PR #261, Issue #255)
 
 ## v0.5.5 -- 2026-04-02
 
