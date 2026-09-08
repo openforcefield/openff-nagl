@@ -28,7 +28,6 @@ jobs:
     name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
-        fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.12", "3.13"]
@@ -99,7 +98,6 @@ jobs:
   install_from_source_conda:
     runs-on: ubuntu-latest
     strategy:
-        fail-fast: false
         matrix:
           python-version: ["3.12", "3.13"]
 
