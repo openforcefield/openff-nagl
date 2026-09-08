@@ -14,7 +14,7 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## v0.6.0 -- 2026-08-DD
+## v0.6.0 -- 2026-09-09
 
 ### Changes
 
