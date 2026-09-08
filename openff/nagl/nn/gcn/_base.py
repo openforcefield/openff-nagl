@@ -8,6 +8,9 @@ from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn._base import ContainsLayersMixin
 
+# Source - https://stackoverflow.com/a/5192374
+# Posted by jchl
+# Retrieved 2026-09-08, License - CC BY-SA 2.5
 class classproperty:
     def __init__(self, func):
         self.func = func
