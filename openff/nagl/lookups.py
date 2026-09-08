@@ -7,10 +7,7 @@ from openff.nagl._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
 from openff.nagl.utils._utils import is_iterable, potential_dict_to_list
 
-try:
-    from pydantic.v1 import Field, validator
-except ImportError:
-    from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
@@ -89,7 +86,8 @@ class AtomPropertiesLookupTable(BaseLookupTable):
         description="The property lookup table"
     )
 
-    @validator("properties", pre=True)
+    @field_validator("properties", mode="before")
+    @classmethod
     def _convert_property_lookup_table(cls, v):
         """
         Do two things:

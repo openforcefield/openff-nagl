@@ -3,7 +3,6 @@ Metrics for evaluating loss
 """
 import abc
 import typing
-
 import torch
 
 from openff.nagl._base.base import ImmutableModel

@@ -127,13 +127,13 @@ class GNNModel(BaseGNNModel):
 
         lookup_tables_dict = {}
         for k, v in valid_lookup_tables.items():
-            v_ = v.dict()
+            v_ = v.model_dump()
             v_["properties"] = dict(v_["properties"])
             lookup_tables_dict[k] = v_
 
         self.save_hyperparameters({
-            "config": config.dict(),
-            "chemical_domain": chemical_domain.dict(),
+            "config": config.model_dump(),
+            "chemical_domain": chemical_domain.model_dump(),
             "lookup_tables": lookup_tables_dict,
         })
         self.config = config

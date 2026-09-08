@@ -103,7 +103,7 @@ class TestLabelCharges:
         columns = ["mapped_smiles", "conformers", "n_conformers", "charges"]
         assert small_dataset.dataset.schema.names == columns
 
-    def test_label_alkane_dataset(self):
+    def test_label_alkane_dataset(self, tmp_path):
         # test conformer generation and labelling
         # as in examples
 
@@ -121,7 +121,7 @@ class TestLabelCharges:
         ]
 
         training_dataset = LabelledDataset.from_smiles(
-            "training_data",
+            tmp_path / "training_data",
             training_alkanes,
             mapped=False,
             overwrite_existing=True,

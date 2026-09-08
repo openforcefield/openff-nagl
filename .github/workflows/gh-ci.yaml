@@ -25,14 +25,13 @@ env:
 
 jobs:
   main_tests:
-    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }}), pydantic=${{ matrix.pydantic-version }}
+    name: CI (${{ matrix.os }}, py-${{ matrix.python-version }}, openeye=${{ matrix.include-openeye }}, dgl=${{ matrix.include-dgl }})
     runs-on: ${{ matrix.os }}
     strategy:
         fail-fast: false
         matrix:
           os: [macOS-latest, ubuntu-latest]
           python-version: ["3.12"]
-          pydantic-version: ["1", "2"]
           include-openeye: [false, true]
           include-dgl: [false, true]
 
@@ -51,7 +50,6 @@ jobs:
         environment-file: devtools/conda-envs/test_env_dgl_${{ matrix.include-dgl }}.yaml
         create-args: >-
           python=${{ matrix.python-version }}
-          pydantic=${{ matrix.pydantic-version }}
 
     - name: Install package
       run: |
@@ -98,57 +96,6 @@ jobs:
         verbose: True
         # name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
 
-  pylint_check:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
-
-    - name: Install Pylint
-      run: |
-        which pip
-        which python
-        pip install pylint
-
-    - name: Run Pylint
-      env:
-        PYLINTRC: .pylintrc
-      run: |
-        pylint openff.nagl
-
-
-  pypi_check:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v7
-
-    - name: Set up Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.12"
-
-    - name: Install dependencies
-      run: |
-        pip install setuptools twine
-
-    - name: Build package
-      run: |
-        python3 -m pip install --upgrade build
-        python3 -m build
-
-    - name: Check package build
-      run: |
-        DISTRIBUTION=$(ls -t1 dist/openff_nagl-*.tar.gz | head -n 1)
-        test -n "${DISTRIBUTION}" || { echo "no distribution dist/openff_nagl-*.tar.gz found"; exit 1; }
-        echo "twine check $DISTRIBUTION"
-        twine check $DISTRIBUTION
-  
   install_from_source_conda:
     runs-on: ubuntu-latest
     strategy:

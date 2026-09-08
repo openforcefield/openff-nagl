@@ -26,10 +26,7 @@ import torch
 from ._base import CategoricalMixin, Feature #, FeatureMeta
 from ._utils import one_hot_encode
 
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
+from pydantic import Field
 
 if typing.TYPE_CHECKING:
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
@@ -155,7 +152,7 @@ class BondOrder(CategoricalMixin, BondFeature):
     """
     name: typing.Literal["bond_order"] = "bond_order"
 
-    categories = [1, 2, 3]
+    categories: typing.List[int] = [1, 2, 3]
 
     def _encode(self, molecule, toolkit_registry: typing.Optional["NAGLToolkitRegistry"] = None) -> torch.Tensor:
         return torch.vstack(

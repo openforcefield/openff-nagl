@@ -12,8 +12,8 @@ dependencies:
   # chemistry
   - openff-toolkit-base >=0.18
   - openff-nagl-models
-  - openff-units
-  - pydantic <3
+  - openff-units >=0.4
+  - pydantic =2
   - rdkit
   - scipy
 

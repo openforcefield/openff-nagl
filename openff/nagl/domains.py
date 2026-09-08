@@ -3,10 +3,7 @@ import typing
 from openff.nagl._base.base import ImmutableModel
 from openff.nagl.toolkits.openff import ensure_toolkit_registry
 
-try:
-    from pydantic.v1 import Field
-except ImportError:
-    from pydantic import Field
+from pydantic import Field
 
 if typing.TYPE_CHECKING:
     from openff.toolkit.topology import Molecule
