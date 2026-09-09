@@ -4,7 +4,7 @@ Location of data files for tests
 
 Use as ::
 
-    from openff.nagl.tests.data.files import *
+    from openff.nagl._tests.data.files import *
 
 """
 
