@@ -17,6 +17,7 @@ The rules for this file:
 ## Current development
 
 - Treat RDKit as required in testing (PR #267)
+- Make test module(s) private (PR #2XX)
 
 ## v0.6.0 -- 2026-09-09
 

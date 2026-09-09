@@ -43,11 +43,11 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 include = [ 'openff.nagl*' ]
-exclude = [ 'openff.nagl.tests.data*' ]
+exclude = [ 'openff.nagl._tests.data*' ]
 
 [tool.pytest.ini_options]
 testpaths = [
-  "openff/nagl/tests",
+  "openff/nagl/_tests",
 ]
 
 [tool.coverage.run]

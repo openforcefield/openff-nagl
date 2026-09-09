@@ -2,7 +2,7 @@ from openff.nagl.molecule._utils import _get_openff_molecule_information
 
 
 def test_get_openff_molecule_information(openff_methane_charged):
-    # from openff.nagl.tests.testing.torch import assert_equal
+    # from openff.nagl._tests.testing.torch import assert_equal
     from numpy.testing import assert_equal
 
     info = _get_openff_molecule_information(openff_methane_charged)

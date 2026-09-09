@@ -15,7 +15,7 @@ from openff.nagl.nn.postprocess import ComputePartialCharges
 from openff.nagl.nn._sequential import SequentialLayers
 from openff.nagl.domains import ChemicalDomain
 from openff.nagl.lookups import AtomPropertiesLookupTable, AtomPropertiesLookupTableEntry
-from openff.nagl.tests.data.files import (
+from openff.nagl._tests.data.files import (
     EXAMPLE_AM1BCC_MODEL,
     data_directory
 )

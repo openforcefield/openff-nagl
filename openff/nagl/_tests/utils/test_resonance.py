@@ -3,7 +3,7 @@ import pytest
 from openff.units import unit
 
 from openff.nagl.utils.resonance import ResonanceEnumerator, FragmentEnumerator
-from openff.nagl.tests.testing.utils import assert_smiles_equal
+from openff.nagl._tests.testing.utils import assert_smiles_equal
 
 
 @pytest.fixture
@@ -293,7 +293,7 @@ class TestResonanceEnumerator:
         n_expected,
         expected_smiles,
     ):
-        from openff.nagl.tests.testing import utils
+        from openff.nagl._tests.testing import utils
 
         resonance_forms = resonance_enumerator.enumerate_resonance_forms(
             lowest_energy_only=lowest_energy_only,

@@ -17,7 +17,7 @@ from openff.nagl.nn._dataset import (
     DataHash,
     _get_hashed_arrow_dataset_path
 )
-from openff.nagl.tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
+from openff.nagl._tests.data.files import EXAMPLE_UNFEATURIZED_PARQUET_DATASET, EXAMPLE_FEATURIZED_PARQUET_DATASET
 
 pytest.importorskip("dgl")
 

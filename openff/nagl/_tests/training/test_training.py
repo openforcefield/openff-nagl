@@ -28,7 +28,7 @@ from openff.nagl.nn._dataset import (
     _LazyDGLMoleculeDataset
 )
 from openff.nagl.config.training import TrainingConfig
-from openff.nagl.tests.data.files import (
+from openff.nagl._tests.data.files import (
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET,
     EXAMPLE_FEATURIZED_PARQUET_DATASET,
     EXAMPLE_UNFEATURIZED_PARQUET_DATASET_SHORT,
