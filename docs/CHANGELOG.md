@@ -14,9 +14,10 @@ The rules for this file:
   * accompany each entry with github issue/PR number (Issue #xyz)
 -->
 
-## Current development
+## v0.6.1 -- 2026-09-10
 
 - Treat RDKit as required in testing (PR #267)
+- Fix issues with Python 3.13 caused by chaining `@property` and `@classmethod` (#287)
 
 ## v0.6.0 -- 2026-09-09
 
