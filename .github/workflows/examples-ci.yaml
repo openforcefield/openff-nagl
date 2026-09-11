@@ -31,10 +31,17 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest]
-          python-version: ["3.12"]
+          python-version: ["3.12", "3.13", "3.14"]
           include-rdkit: [true]
           include-openeye: [false]
           include-dgl: [true]
+          exclude:
+            # only dgl=true always, at some point we may add back dgl=false into matrix
+            - python-version: "3.13"
+              include-dgl: true
+            - python-version: "3.14"
+              include-dgl: true
+
 
     steps:
     - uses: actions/checkout@v7
