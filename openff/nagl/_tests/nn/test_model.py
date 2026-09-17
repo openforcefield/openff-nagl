@@ -106,8 +106,9 @@ class TestBaseGNNModel:
 class BaseTestChargeGNNModel:
 
     @pytest.fixture(scope="class")
-    def model(self):
-        return self.get_model()
+    @classmethod
+    def model(cls):
+        return cls.get_model()
 
     @classmethod
     def get_model(cls):

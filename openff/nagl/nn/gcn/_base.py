@@ -8,6 +8,14 @@ from openff.nagl._base.metaregistry import create_registry_metaclass
 from openff.nagl.nn.activation import ActivationFunction
 from openff.nagl.nn._base import ContainsLayersMixin
 
+class classproperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, owner):
+        return self.func(owner)
+
+
 GCNLayerType = TypeVar("GCNLayerType", bound=torch.nn.Module)
 
 
@@ -62,32 +70,27 @@ class BaseGCNStack(
 
     # hidden_feature_sizes: List[GCNLayerType]
 
-    @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def name(cls) -> str:
         pass
 
-    @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def available_aggregator_types(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
-    @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def default_aggregator_type(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
-    @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def default_dropout(cls) -> str:
         """The aggregator options to use for the GCN layers."""
 
-    @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def default_activation_function(cls) -> str:
         """The aggregator options to use for the GCN layers."""
