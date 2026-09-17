@@ -8,7 +8,7 @@ import pickle
 import typing
 
 import torch
-import pytorch_lightning as pl
+from pytorch_lightning import LightningModule, LightningDataModule
 
 from openff.nagl.config.training import TrainingConfig
 from openff.nagl.config.data import DatasetConfig
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class TrainingGNNModel(pl.LightningModule):
+class TrainingGNNModel(LightningModule):
     """A convenience class for training a GNN model"""
     def __init__(self, config: TrainingConfig):
         super().__init__()
@@ -175,7 +175,7 @@ class TrainingGNNModel(pl.LightningModule):
         return DGLMoleculeDataModule(self.config, n_processes=n_processes, verbose=verbose)
     
     
-class DGLMoleculeDataModule(pl.LightningDataModule):
+class DGLMoleculeDataModule(LightningDataModule):
     def __init__(
         self,
         config: TrainingConfig,

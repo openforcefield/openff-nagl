@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Tuple, Dict, Union, Callable, Literal, Optiona
 import warnings
 
 import torch
-import pytorch_lightning as pl
+from pytorch_lightning import LightningModule
 
 from openff.utilities.exceptions import MissingOptionalDependencyError
 from openff.nagl.nn._containers import ConvolutionModule, ReadoutModule
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from openff.nagl.toolkits.registry import NAGLToolkitRegistry
 
 
-class BaseGNNModel(pl.LightningModule):
+class BaseGNNModel(LightningModule):
     def __init__(
         self,
         convolution_module: ConvolutionModule,

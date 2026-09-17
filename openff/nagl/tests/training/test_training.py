@@ -5,7 +5,7 @@ import shutil
 
 import torch
 import numpy as np
-import pytorch_lightning as pl
+from pytorch_lightning import Trainer
 
 from openff.nagl.config.data import DatasetConfig, DataConfig
 from openff.nagl.config.optimizer import OptimizerConfig
@@ -389,7 +389,7 @@ def test_train_model_no_error(example_training_config, tmpdir):
         assert isinstance(data_module.train_dataloader(), DGLMoleculeDataLoader)
 
         model = TrainingGNNModel(example_training_config)
-        trainer = pl.Trainer(
+        trainer = Trainer(
             accelerator="gpu", devices=1, max_epochs=2,
         )
         trainer.fit(model, datamodule=data_module)
