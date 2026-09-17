@@ -27,7 +27,7 @@ __all__ = [
 
 import importlib.resources
 
-data_directory = importlib.resources.files("openff.nagl") / "tests" / "data"
+data_directory = importlib.resources.files("openff.nagl") / "_tests" / "data"
 
 EXAMPLE_AM1BCC_MODEL = data_directory / "models" / "example_am1bcc_model.pt"
 EXAMPLE_UNFEATURIZED_PARQUET_DATASET = data_directory / "example-data-labelled-unfeaturized"
