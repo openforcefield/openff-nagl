@@ -16,12 +16,13 @@ The rules for this file:
 
 ## Current development
 
-- Test on Python 3.13 and 3.14 (without DGL) (PR #282)
+- Make test module(s) private (PR #290)
 
 ## v0.6.1 -- 2026-09-10
 
 - Treat RDKit as required in testing (PR #267)
 - Fix issues with Python 3.13 caused by chaining `@property` and `@classmethod` (PR #287)
+- Test on Python 3.13 and 3.14 (without DGL) (PR #292)
 
 ## v0.6.0 -- 2026-09-09
 
