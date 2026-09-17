@@ -29,7 +29,7 @@ from openff.nagl.toolkits.openff import (
 )
 from openff.nagl.utils._utils import transform_coordinates
 
-from openff.nagl.tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
+from openff.nagl._tests.data.files import COFACTOR_SDF_GZ, EXAMPLE_MODEL_RC4
 
 def _load_rdkit_molecule_exactly(mapped_smiles: str):
     """

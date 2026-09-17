@@ -65,7 +65,7 @@ autosummary_ignore_module_all = False
 autosummary_context = {
     # Modules to exclude from API docs
     "exclude_modules": [
-        "openff.nagl.tests",
+        "openff.nagl._tests",
         "openff.nagl.data",
     ],
     "show_inheritance": True,
