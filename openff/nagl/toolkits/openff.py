@@ -786,20 +786,22 @@ def molecule_from_networkx(graph):
     molecule = Molecule()
 
     for _, info in graph.nodes(data=True):
-        molecule.add_atom(
+        molecule._add_atom(
             atomic_number=info["atomic_number"],
             formal_charge=info["formal_charge"],
             is_aromatic=info["is_aromatic"],
             stereochemistry=info.get("stereochemistry", None),
+            invalidate_cache=False,
         )
 
     for u, v, info in graph.edges(data=True):
-        molecule.add_bond(
+        molecule._add_bond(
             u,
             v,
             bond_order=info["bond_order"],
             is_aromatic=info["is_aromatic"],
             stereochemistry=info.get("stereochemistry", None),
+            invalidate_cache=False,
         )
     return molecule
 
@@ -877,19 +879,21 @@ def _molecule_from_dict(graph: dict[str, dict]) -> "Molecule":
     molecule = Molecule()
     for atom_index in sorted(graph["atoms"]):
         atom = graph["atoms"][atom_index]
-        molecule.add_atom(
+        molecule._add_atom(
             atomic_number=atom["atomic_number"],
             formal_charge=atom["formal_charge"],
             is_aromatic=atom["is_aromatic"],
             stereochemistry=atom.get("stereochemistry", None),
+            invalidate_cache=False,
         )
 
     for (u, v), info in graph["bonds"].items():
-        molecule.add_bond(
+        molecule._add_bond(
             u,
             v,
             bond_order=info["bond_order"],
             is_aromatic=info["is_aromatic"],
             stereochemistry=info.get("stereochemistry", None),
+            invalidate_cache=False,
         )
     return molecule
