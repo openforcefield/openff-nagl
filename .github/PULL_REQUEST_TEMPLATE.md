@@ -8,6 +8,10 @@ Changes made in this Pull Request:
  - 
  - 
 
+LLM use (required, see [AI_POLICY.md](https://github.com/openforcefield/openff-nagl/blob/main/AI_POLICY.md)):
+<!-- Write "None", or name the tool(s) and what they generated (code, docs, PR/issue text) -->
+ - 
+
 
 PR Checklist
 ------------
