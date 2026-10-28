@@ -36,6 +36,7 @@ openff-sphinx-theme = {
   git = "https://github.com/openforcefield/openff-sphinx-theme",
   rev = "main",
 }
+openff-nagl = { path = ".", editable = true }
 
 [environments]
 docs = [ "docs" ]

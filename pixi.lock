@@ -356,6 +356,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/xmltodict-1.0.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zict-3.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.2-pyh5ded981_0.conda
+      - pypi: ./
       - pypi: git+https://github.com/openforcefield/openff-sphinx-theme?rev=main#7211f3ec83412afb20ce1ca2873fbb3e5dee18ea
       - pypi: https://files.pythonhosted.org/packages/07/66/473f7ca0be0b06e38ee8c85ee2db184e3981bd769fac2e7c19c8a8865211/soupsieve-3.0.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0a/20/e022dbc6b4753a9bc9fc5fb28a27163430c1731b9913997f6544c1b2518c/lxml-6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl
@@ -685,6 +686,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-h31dac16_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstandard-0.25.0-py312hbd136b4_4.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
+      - pypi: ./
       - pypi: git+https://github.com/openforcefield/openff-sphinx-theme?rev=main#7211f3ec83412afb20ce1ca2873fbb3e5dee18ea
       - pypi: https://files.pythonhosted.org/packages/07/66/473f7ca0be0b06e38ee8c85ee2db184e3981bd769fac2e7c19c8a8865211/soupsieve-3.0.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/47/67/5598c98725332a6a4084c7b622d5a1ebe7d6745c1d2f434c9e4e89e04cba/python_slugify-9.1.3-py3-none-any.whl
@@ -8946,6 +8948,15 @@ packages:
     - zstd >=1.5.7,<1.6.0a0
   size: 433687
   timestamp: 1786599629846
+- pypi: ./
+  name: openff-nagl
+  requires_dist:
+  - openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main ; extra == 'doc'
+  - sphinx>=1.8 ; extra == 'doc'
+  - pytest>=6 ; extra == 'test'
+  - pytest-cov>=3 ; extra == 'test'
+  - pytest-xdist>=2.5 ; extra == 'test'
+  requires_python: '>=3.12'
 - pypi: git+https://github.com/openforcefield/openff-sphinx-theme?rev=main#7211f3ec83412afb20ce1ca2873fbb3e5dee18ea
   name: openff-sphinx-theme
   version: 0.0.32+318.g7211f3e
