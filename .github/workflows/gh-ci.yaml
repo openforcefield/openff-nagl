@@ -120,7 +120,7 @@ jobs:
 
     - name: Build from source
       run: |
-        micromamba env update --name openff-nagl --file devtools/conda-envs/docs_env.yaml
+        micromamba env update --name openff-nagl --file devtools/conda-envs/base.yaml
         python --version
         python -m pip install . --no-deps
         micromamba list
