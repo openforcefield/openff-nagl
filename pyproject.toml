@@ -27,13 +27,12 @@ classifiers = [
 dynamic = [ "version" ]
 dependencies = [
 "openff-toolkit",
-"pytorch",
 "openff-nagl-models",
 "click",
 "click-option-group",
 "tqdm",
-"pydantic =2.*",
-"pytorch >=2.6",
+"pydantic ==2.*",
+"torch >=2.6",
 "pytorch-lightning",
 "rdkit",
 ]
