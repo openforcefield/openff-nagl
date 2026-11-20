@@ -3,4 +3,5 @@ include MANIFEST.in
 include AUTHORS.md CHANGELOG.md CODE_OF_CONDUCT.md README.md
 
 graft openff
+prune openff/nagl/tests/data/models/
 global-exclude *.py[cod] __pycache__ *.so
