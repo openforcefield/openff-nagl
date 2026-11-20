@@ -25,7 +25,17 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dynamic = [ "version" ]
-
+dependencies = [
+"openff-toolkit",
+"openff-nagl-models",
+"click",
+"click-option-group",
+"tqdm",
+"pydantic ==2.*",
+"torch >=2.6",
+"pytorch-lightning",
+"rdkit",
+]
 optional-dependencies.doc = [
   "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
   "sphinx>=1.8",
