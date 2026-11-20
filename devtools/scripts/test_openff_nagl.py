@@ -2,17 +2,30 @@ from openff.nagl import GNNModel, __version__
 from openff.nagl_models import list_available_nagl_models
 
 from openff.toolkit import Molecule, ForceField
+from packaging.version import Version
 
-assert __version__ != "0.0.0", f"Version check failed! Found {__version__=}"
+def test_versions_sane():
+    # partially safeguard against a malformed version number;
+    # 0.minor.patch and major.0.patch should be okay but not 0.0.patch
+    found_version = Version(__version__)
+    assert not (found_version.minor == 0 and found_version.major == 0), found_version
 
-assert len(list_available_nagl_models()) > 0
+    print(f"found version {found_version}")
 
-[GNNModel.load(model) for model in list_available_nagl_models()]
+def test_find_and_load_models():
 
-molecule = Molecule.from_smiles("CC(=O)OC1=CC=CC=C1C(=O)O")
+    assert len(list_available_nagl_models()) > 0
 
-molecule.assign_partial_charges(
-    partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
-)
+    [GNNModel.load(model) for model in list_available_nagl_models()]
 
-# ForceField("openff-2.3.0.offxml").create_interchange(molecule)
+def test_assign_ashgc():
+    molecule = Molecule.from_smiles("CC(=O)OC1=CC=CC=C1C(=O)O")
+    
+    molecule.assign_partial_charges(
+        partial_charge_method="openff-gnn-am1bcc-1.0.0.pt",
+    )
+    
+def test_build_interchange():
+    molecule = Molecule.from_smiles("CC(=O)OC1=CC=CC=C1C(=O)O")
+    
+    ForceField("openff-2.3.0.offxml").create_interchange(molecule.to_topology())
