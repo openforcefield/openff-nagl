@@ -36,10 +36,11 @@ dependencies = [
 "pytorch-lightning",
 "rdkit",
 ]
-optional-dependencies.doc = [
-  "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
-  "sphinx>=1.8",
-]
+# TODO: Add back if/when this is on PyPI?
+# optional-dependencies.doc = [
+#   "openff-sphinx-theme @ git+https://github.com/openforcefield/openff-sphinx-theme.git@main",
+#   "sphinx>=1.8",
+# ]
 optional-dependencies.test = [
   "pytest>=6",
   "pytest-cov>=3",
